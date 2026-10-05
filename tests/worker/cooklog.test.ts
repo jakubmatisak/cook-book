@@ -1,0 +1,63 @@
+import { describe, expect, it } from 'vitest'
+import type { MeResponse, PlanEntryDto, RecipeDetailDto, RecipeListDto } from '@shared/api'
+import { createApp } from '../../worker/app'
+import { api, count, send } from './helpers'
+
+const app = createApp()
+
+async function setup() {
+  const me = await (await send(app, 'GET', api('/me'))).json<MeResponse>()
+  const slotId = me.slots[0]!.id
+  const make = async (title: string) =>
+    (await (await send(app, 'POST', api('/recipes'), { title, servings: 4 })).json<RecipeDetailDto>()).id
+  const plan = async (recipeId: string, date: string) => {
+    const res = await send(app, 'POST', api('/plan/entries'), { date, slotId, recipeId })
+    expect(res.status).toBe(201)
+    return res.json<PlanEntryDto>()
+  }
+  return { make, plan }
+}
+
+const list = async (query = '') => (await send(app, 'GET', api(`/recipes${query}`))).json<RecipeListDto>()
+
+describe('uvarené z jedálnička', () => {
+  it('uloží posledné varenie podľa minulých dní a budúce ignoruje', async () => {
+    const { make, plan } = await setup()
+    const gulas = await make('Guláš')
+    const rizoto = await make('Rizoto')
+    await make('Palacinky')
+    await plan(gulas, '2020-01-05')
+    await plan(gulas, '2020-03-09')
+    await plan(rizoto, '2099-01-01')
+
+    const { items } = await list()
+    const by = Object.fromEntries(items.map((r) => [r.title, r.lastCookedAt]))
+    expect(by).toEqual({ Guláš: '2020-03-09', Rizoto: null, Palacinky: null })
+    expect(await count('cook_log')).toBe(2)
+  })
+
+  it('je idempotentné a dopĺňa len nové záznamy', async () => {
+    const { make, plan } = await setup()
+    const gulas = await make('Guláš')
+    await plan(gulas, '2020-01-05')
+    await list()
+    await list()
+    expect(await count('cook_log')).toBe(1)
+    await plan(gulas, '2020-02-01')
+    await list()
+    expect(await count('cook_log')).toBe(2)
+  })
+
+  it('záznam v jedálničku bez receptu sa nezapočíta', async () => {
+    const { make } = await setup()
+    await make('Guláš')
+    const me = await (await send(app, 'GET', api('/me'))).json<MeResponse>()
+    await send(app, 'POST', api('/plan/entries'), {
+      date: '2020-01-05',
+      slotId: me.slots[0]!.id,
+      freeText: 'Zvyšky',
+    })
+    await list()
+    expect(await count('cook_log')).toBe(0)
+  })
+})

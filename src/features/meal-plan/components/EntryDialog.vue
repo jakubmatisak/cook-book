@@ -32,7 +32,8 @@ const slotId = ref('')
 const error = ref('')
 const confirmDelete = ref(false)
 
-const { data: recipes } = useRecipes(() => ({}))
+const { data: recipeList } = useRecipes(() => ({}))
+const recipes = computed(() => recipeList.value?.items)
 const save = useSaveEntry()
 const remove = useDeleteEntry()
 

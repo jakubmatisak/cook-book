@@ -19,3 +19,9 @@ export function plural(n: number, one: string, few: string, many: string): strin
   if (n >= 2 && n <= 4) return `${shown} ${few}`
   return `${shown} ${many}`
 }
+
+/** "2026-10-05" na "5. 10. 2026". */
+export function formatDate(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number)
+  return `${d}. ${m}. ${y}`
+}

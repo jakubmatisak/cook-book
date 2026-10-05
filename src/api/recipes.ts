@@ -1,17 +1,22 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import type { ImageDto, RecipeDetailDto, RecipeSummaryDto } from '@shared/api'
+import type { ImageDto, RecipeDetailDto, RecipeListDto } from '@shared/api'
+import type { SortDir, SortKey, TimeBucket } from '@shared/recipeFacets'
 import type { RecipeCategory } from '@shared/recipes'
 import type { RecipeInputRaw } from '@shared/schemas/recipe'
 import { apiFetch } from './http'
 
 export interface RecipeFilters {
-  q?: string
-  category?: RecipeCategory
-  tag?: string
-  favorite?: boolean
+  q?: string | undefined
+  category?: RecipeCategory[] | undefined
+  tag?: string[] | undefined
+  difficulty?: number[] | undefined
+  time?: TimeBucket[] | undefined
+  sort?: SortKey | undefined
+  dir?: SortDir | undefined
+  favorite?: boolean | undefined
   /** „Čo viem uvariť“: zoradiť podľa toho, čo je doma, s chýbajúcimi ingredienciami. */
-  pantry?: boolean
+  pantry?: boolean | undefined
 }
 
 export const recipeKeys = {
@@ -23,8 +28,12 @@ export const recipeKeys = {
 function toQuery(filters: RecipeFilters): string {
   const params = new URLSearchParams()
   if (filters.q?.trim()) params.set('q', filters.q.trim())
-  if (filters.category) params.set('category', filters.category)
-  if (filters.tag) params.set('tag', filters.tag)
+  if (filters.category?.length) params.set('category', filters.category.join(','))
+  if (filters.tag?.length) params.set('tag', filters.tag.join(','))
+  if (filters.difficulty?.length) params.set('difficulty', filters.difficulty.join(','))
+  if (filters.time?.length) params.set('time', filters.time.join(','))
+  if (filters.sort) params.set('sort', filters.sort)
+  if (filters.dir) params.set('dir', filters.dir)
   if (filters.favorite) params.set('favorite', '1')
   if (filters.pantry) params.set('pantry', '1')
   const query = params.toString()
@@ -34,7 +43,7 @@ function toQuery(filters: RecipeFilters): string {
 export function useRecipes(filters: MaybeRefOrGetter<RecipeFilters>) {
   return useQuery({
     queryKey: computed(() => recipeKeys.list(toValue(filters))),
-    queryFn: () => apiFetch<RecipeSummaryDto[]>(`/recipes${toQuery(toValue(filters))}`),
+    queryFn: () => apiFetch<RecipeListDto>(`/recipes${toQuery(toValue(filters))}`),
     placeholderData: (previous) => previous,
   })
 }
@@ -90,8 +99,8 @@ export function useToggleFavorite(): UseMutationReturnType<void, Error, Favorite
   const client = useQueryClient()
   const patch = (id: string, isFavorite: boolean) => {
     client.setQueryData<RecipeDetailDto>(recipeKeys.detail(id), (old) => (old ? { ...old, isFavorite } : old))
-    client.setQueriesData<RecipeSummaryDto[]>({ queryKey: ['recipes', 'list'] }, (old) =>
-      old?.map((r) => (r.id === id ? { ...r, isFavorite } : r)),
+    client.setQueriesData<RecipeListDto>({ queryKey: ['recipes', 'list'] }, (old) =>
+      old ? { ...old, items: old.items.map((r) => (r.id === id ? { ...r, isFavorite } : r)) } : old,
     )
   }
   return useMutation({

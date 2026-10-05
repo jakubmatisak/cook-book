@@ -6,6 +6,7 @@ import {
   formatWeekRange,
   isIsoDate,
   startOfWeek,
+  todayInZone,
   todayIso,
   weekDates,
   weekday,
@@ -73,5 +74,13 @@ describe('popisy po slovensky', () => {
     expect(formatWeekRange('2026-10-05')).toBe('5. – 11. 10. 2026')
     expect(formatWeekRange('2026-10-26')).toBe('26. 10. – 1. 11. 2026')
     expect(formatWeekRange('2026-12-28')).toBe('28. 12. 2026 – 3. 1. 2027')
+  })
+})
+
+describe('todayInZone', () => {
+  it('vráti dátum v danom pásme, nie v UTC', () => {
+    const lateEvening = new Date('2026-10-05T23:30:00Z')
+    expect(todayInZone(lateEvening, 'UTC')).toBe('2026-10-05')
+    expect(todayInZone(lateEvening, 'Europe/Bratislava')).toBe('2026-10-06')
   })
 })

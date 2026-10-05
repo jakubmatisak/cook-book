@@ -1,30 +1,54 @@
 <script setup lang="ts">
-import { mdiBookOpenPageVariantOutline, mdiFridgeOutline, mdiHeart, mdiMagnify, mdiPlus } from '@mdi/js'
+import {
+  mdiBookOpenPageVariantOutline,
+  mdiCheck,
+  mdiFilterVariant,
+  mdiFridgeOutline,
+  mdiHeart,
+  mdiMagnify,
+  mdiPlus,
+  mdiSortAscending,
+  mdiSortDescending,
+  mdiTable,
+  mdiViewGridOutline,
+} from '@mdi/js'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type RecipeCategory } from '@shared/recipes'
+import {
+  defaultSortDir,
+  SORT_KEYS,
+  SORT_LABELS,
+  TIME_BUCKET_LABELS,
+  type SortKey,
+} from '@shared/recipeFacets'
+import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS, type RecipeCategory } from '@shared/recipes'
+import type { TimeBucket } from '@shared/recipeFacets'
 import { useTags } from '@/api/catalog'
-import { useRecipes, type RecipeFilters } from '@/api/recipes'
+import { useRecipes } from '@/api/recipes'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { plural } from '@/lib/format'
 import RecipeCard from '../components/RecipeCard.vue'
+import RecipeFilterPanel from '../components/RecipeFilterPanel.vue'
+import RecipeTable from '../components/RecipeTable.vue'
+import {
+  activeFilterCount,
+  listToParam,
+  parseListQuery,
+  parseRecipeView,
+  stateToTableSort,
+  tableSortToState,
+  toggleValue,
+  type FilterDimension,
+  type RecipeView,
+  type TableSort,
+} from '../listQuery'
 
 const route = useRoute()
 const router = useRouter()
 
-const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined)
-
-/** Filtre žijú v URL, aby prežili návrat z detailu a dali sa zdieľať. */
-const filters = computed<RecipeFilters>(() => ({
-  q: str(route.query.q),
-  category: RECIPE_CATEGORIES.includes(route.query.kategoria as RecipeCategory)
-    ? (route.query.kategoria as RecipeCategory)
-    : undefined,
-  tag: str(route.query.tag),
-  favorite: route.query.oblubene === '1',
-  pantry: route.query.doma === '1',
-}))
+/** Filtre a zoradenie žijú v URL, aby prežili návrat z detailu a dali sa zdieľať. */
+const state = computed(() => parseListQuery(route.query))
 
 function setQuery(patch: Record<string, string | undefined>) {
   const query = { ...route.query, ...patch }
@@ -32,39 +56,123 @@ function setQuery(patch: Record<string, string | undefined>) {
   void router.replace({ query })
 }
 
-const search = ref(filters.value.q ?? '')
+const search = ref(state.value.q ?? '')
 let timer: ReturnType<typeof setTimeout> | undefined
 watch(search, (value) => {
   clearTimeout(timer)
   timer = setTimeout(() => setQuery({ q: value?.trim() || undefined }), 250)
 })
 watch(
-  () => filters.value.q,
+  () => state.value.q,
   (q) => {
     if ((q ?? '') !== (search.value ?? '').trim()) search.value = q ?? ''
   },
 )
 onBeforeUnmount(() => clearTimeout(timer))
 
-const { data: recipes, isPending, error } = useRecipes(filters)
+const { data: list, isPending, error } = useRecipes(state)
 const { data: tags } = useTags()
+const recipes = computed(() => list.value?.items)
 
-const category = computed({
-  get: () => filters.value.category ?? null,
-  set: (value: RecipeCategory | null | undefined) => setQuery({ kategoria: value ?? undefined }),
+// ─── Pohľad: mriežka alebo tabuľka (pamätá sa v prehliadači) ──────────────────
+const VIEW_KEY = 'kniha:recipes-view'
+const readView = (): RecipeView => {
+  try {
+    return parseRecipeView(localStorage.getItem(VIEW_KEY))
+  } catch {
+    return 'grid'
+  }
+}
+const view = ref<RecipeView>(readView())
+watch(view, (value) => {
+  try {
+    localStorage.setItem(VIEW_KEY, value)
+  } catch {
+    // súkromné okno a pod.
+  }
 })
-const tag = computed({
-  get: () => filters.value.tag ?? null,
-  set: (value: string | null | undefined) => setQuery({ tag: value ?? undefined }),
-})
+
+// ─── Filtre ───────────────────────────────────────────────────────────────────
+const filtersOpen = ref(false)
+const filterCount = computed(() => activeFilterCount(state.value))
+
+function toggleFilter(dimension: FilterDimension, value: string | number) {
+  const s = state.value
+  if (dimension === 'category') {
+    setQuery({ kategoria: listToParam(toggleValue(s.category, value as RecipeCategory)) })
+  } else if (dimension === 'tag') {
+    setQuery({ tag: listToParam(toggleValue(s.tag, value as string)) })
+  } else if (dimension === 'difficulty') {
+    setQuery({ narocnost: listToParam(toggleValue(s.difficulty, value as number)) })
+  } else {
+    setQuery({ cas: listToParam(toggleValue(s.time, value as TimeBucket)) })
+  }
+}
+
 const favorite = computed({
-  get: () => filters.value.favorite,
+  get: () => state.value.favorite,
   set: (value: boolean) => setQuery({ oblubene: value ? '1' : undefined }),
 })
-
 const pantryMode = computed({
-  get: () => filters.value.pantry,
+  get: () => state.value.pantry,
   set: (value: boolean) => setQuery({ doma: value ? '1' : undefined }),
+})
+
+function clearFilters() {
+  setQuery({
+    kategoria: undefined,
+    tag: undefined,
+    narocnost: undefined,
+    cas: undefined,
+    oblubene: undefined,
+  })
+}
+
+function clearAll() {
+  search.value = ''
+  void router.replace({ query: {} })
+}
+
+/** Zvolené filtre ako odstrániteľné čipy nad zoznamom, aby bolo vidno, čo je zapnuté. */
+const activeChips = computed(() => {
+  const s = state.value
+  const tagName = (id: string) => tags.value?.find((t) => t.id === id)?.name ?? id
+  const chips: {
+    key: string
+    label: string
+    dimension: FilterDimension | 'favorite'
+    value: string | number
+  }[] = []
+  for (const c of s.category)
+    chips.push({ key: `c${c}`, label: RECIPE_CATEGORY_LABELS[c], dimension: 'category', value: c })
+  for (const t of s.time)
+    chips.push({ key: `t${t}`, label: TIME_BUCKET_LABELS[t], dimension: 'time', value: t })
+  for (const d of s.difficulty) {
+    chips.push({ key: `d${d}`, label: DIFFICULTY_LABELS[d as 1 | 2 | 3], dimension: 'difficulty', value: d })
+  }
+  for (const t of s.tag) chips.push({ key: `g${t}`, label: `#${tagName(t)}`, dimension: 'tag', value: t })
+  return chips
+})
+
+// ─── Zoradenie ────────────────────────────────────────────────────────────────
+const sortItems = SORT_KEYS.map((key) => ({ title: SORT_LABELS[key], value: key }))
+/** „Čo viem uvariť“ bez vlastného zoradenia radí podľa toho, čo chýba – vtedy nie je zvolený nič. */
+const sortKey = computed<SortKey | null>(() => state.value.sort ?? (state.value.pantry ? null : 'name'))
+const sortDir = computed(() => state.value.dir ?? defaultSortDir(sortKey.value ?? 'name'))
+
+function setSort(key: SortKey | null) {
+  setQuery({ zoradit: key ?? undefined, smer: undefined })
+}
+function flipSortDir() {
+  setQuery({ zoradit: sortKey.value ?? 'name', smer: sortDir.value === 'asc' ? 'desc' : 'asc' })
+}
+
+const tableSort = computed<TableSort[]>({
+  get: () => stateToTableSort(state.value.sort, state.value.dir),
+  set: (value) => {
+    const next = tableSortToState(value)
+    if (next) setQuery({ zoradit: next.sort, smer: next.dir })
+  },
 })
 
 const onboarding = [
@@ -74,20 +182,7 @@ const onboarding = [
   { to: '/nakup', title: 'Vygeneruj nákup', text: 'Zoznam z jedálnička podľa porcií rodiny.' },
 ]
 
-const hasFilters = computed(() =>
-  Boolean(
-    filters.value.q ||
-    filters.value.category ||
-    filters.value.tag ||
-    filters.value.favorite ||
-    filters.value.pantry,
-  ),
-)
-
-function clearFilters() {
-  search.value = ''
-  void router.replace({ query: {} })
-}
+const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry || filterCount.value))
 </script>
 
 <template>
@@ -114,37 +209,81 @@ function clearFilters() {
     class="mb-3"
   />
 
-  <div class="d-flex flex-wrap align-center ga-1 mb-1">
+  <div class="d-flex flex-wrap align-center ga-2 mb-3">
+    <v-btn
+      :prepend-icon="mdiFilterVariant"
+      :color="filterCount ? 'primary' : undefined"
+      variant="tonal"
+      data-test="filters-button"
+      @click="filtersOpen = true"
+    >
+      Filtre<template v-if="filterCount">&nbsp;({{ filterCount }})</template>
+    </v-btn>
     <v-chip
-      :prepend-icon="mdiHeart"
+      :prepend-icon="favorite ? mdiCheck : mdiHeart"
       :color="favorite ? 'primary' : undefined"
       :variant="favorite ? 'flat' : 'outlined'"
-      class="me-1"
       @click="favorite = !favorite"
     >
       Obľúbené
     </v-chip>
     <v-chip
-      :prepend-icon="mdiFridgeOutline"
+      :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
       :color="pantryMode ? 'primary' : undefined"
       :variant="pantryMode ? 'flat' : 'outlined'"
-      class="me-1"
       @click="pantryMode = !pantryMode"
     >
       Čo viem uvariť
     </v-chip>
-    <v-chip-group v-model="category" column selected-class="text-primary">
-      <v-chip v-for="c in RECIPE_CATEGORIES" :key="c" :value="c" filter variant="outlined">
-        {{ RECIPE_CATEGORY_LABELS[c] }}
-      </v-chip>
-    </v-chip-group>
+
+    <v-spacer />
+
+    <v-select
+      :model-value="sortKey"
+      :items="sortItems"
+      label="Zoradiť"
+      hide-details
+      density="compact"
+      style="max-width: 14rem"
+      data-test="sort-select"
+      @update:model-value="setSort"
+    />
+    <v-btn
+      :icon="sortDir === 'asc' ? mdiSortAscending : mdiSortDescending"
+      variant="tonal"
+      :aria-label="
+        sortDir === 'asc'
+          ? 'Zoradené vzostupne, zmeniť na zostupne'
+          : 'Zoradené zostupne, zmeniť na vzostupne'
+      "
+      @click="flipSortDir"
+    />
+    <v-btn-toggle
+      v-model="view"
+      mandatory
+      density="comfortable"
+      selected-class="bg-primary"
+      data-test="view-toggle"
+    >
+      <v-btn :icon="mdiViewGridOutline" value="grid" aria-label="Zobraziť ako mriežku" />
+      <v-btn :icon="mdiTable" value="table" aria-label="Zobraziť ako tabuľku" />
+    </v-btn-toggle>
   </div>
 
-  <v-chip-group v-if="tags?.length" v-model="tag" column selected-class="text-secondary" class="mb-3">
-    <v-chip v-for="t in tags" :key="t.id" :value="t.id" filter size="small" variant="tonal" color="secondary">
-      #{{ t.name }}
+  <div v-if="activeChips.length" class="d-flex flex-wrap align-center ga-2 mb-3" data-test="active-filters">
+    <v-chip
+      v-for="chip in activeChips"
+      :key="chip.key"
+      closable
+      size="small"
+      color="primary"
+      variant="tonal"
+      @click:close="toggleFilter(chip.dimension as FilterDimension, chip.value)"
+    >
+      {{ chip.label }}
     </v-chip>
-  </v-chip-group>
+    <v-btn size="small" variant="text" @click="clearFilters">Zrušiť filtre</v-btn>
+  </div>
 
   <v-alert v-if="error" type="error" :text="error.message" />
 
@@ -161,7 +300,7 @@ function clearFilters() {
       title="Nič sa nenašlo"
       text="Skús iné slovo alebo zruš filtre."
     >
-      <v-btn variant="tonal" color="primary" @click="clearFilters">Zrušiť filtre</v-btn>
+      <v-btn variant="tonal" color="primary" @click="clearAll">Zrušiť filtre</v-btn>
     </EmptyState>
     <EmptyState
       v-else
@@ -182,9 +321,22 @@ function clearFilters() {
     </EmptyState>
   </template>
 
-  <v-row v-else>
+  <RecipeTable v-else-if="recipes && view === 'table'" v-model:sort-by="tableSort" :items="recipes" />
+
+  <v-row v-else-if="recipes">
     <v-col v-for="recipe in recipes" :key="recipe.id" cols="12" sm="6" lg="4">
       <RecipeCard :recipe="recipe" />
     </v-col>
   </v-row>
+
+  <RecipeFilterPanel
+    v-if="list"
+    v-model="filtersOpen"
+    :state="state"
+    :facets="list.facets"
+    :tags="tags ?? []"
+    :result-count="recipes?.length ?? 0"
+    @toggle="toggleFilter"
+    @clear="clearFilters"
+  />
 </template>

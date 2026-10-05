@@ -1,7 +1,15 @@
 import { and, asc, eq, exists, inArray, isNull, ne, or, sql, type SQL } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
-import type { RecipeDetailDto, RecipeSummaryDto, TagDto } from '../../shared/api'
-import type { RecipeCategory } from '../../shared/recipes'
+import type { RecipeDetailDto, RecipeListDto, RecipeSummaryDto, TagDto } from '../../shared/api'
+import {
+  applyRecipeFilters,
+  computeFacets,
+  sortRecipes,
+  type FacetRow,
+  type RecipeFilters as FacetFilters,
+  type SortDir,
+  type SortKey,
+} from '../../shared/recipeFacets'
 import type { RecipeInput } from '../../shared/schemas/recipe'
 import { normalizeText, slugify } from '../../shared/text'
 import { newId } from '../../shared/ids'
@@ -24,12 +32,12 @@ import { pantryIngredientIds } from './pantry'
 
 type RecipeRow = typeof recipes.$inferSelect
 
-export interface RecipeFilters {
+export interface RecipeListOptions extends FacetFilters {
   q?: string
-  category?: RecipeCategory
-  tag?: string
-  favorite?: boolean
+  /** Pridať chýbajúce ingrediencie a (bez explicitného zoradenia) zoradiť podľa nich. */
   pantry?: boolean
+  sort?: SortKey
+  dir?: SortDir
 }
 
 export const imageUrl = (r2Key: string) => `/img/${r2Key}`
@@ -180,6 +188,10 @@ export async function setFavorite(db: Db, user: UserRow, id: string, favorite: b
   }
 }
 
+const lastCookedSql = sql<
+  string | null
+>`(select max(c.cooked_on) from cook_log c where c.recipe_id = "recipes"."id")`
+
 const isFavoriteSql = (userId: string) =>
   sql<number>`exists (select 1 from recipe_favorites f where f.recipe_id = "recipes"."id" and f.user_id = ${userId})`.mapWith(
     (v) => Boolean(Number(v)),
@@ -190,6 +202,7 @@ function toSummary(
   r2Key: string | null,
   isFavorite: boolean,
   tagList: TagDto[],
+  lastCookedAt: string | null,
 ): RecipeSummaryDto {
   return {
     id: row.id,
@@ -203,7 +216,9 @@ function toSummary(
     coverImageUrl: r2Key ? imageUrl(r2Key) : null,
     tags: tagList,
     isFavorite,
+    createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    lastCookedAt,
   }
 }
 
@@ -215,7 +230,12 @@ export async function getRecipeDetail(
 ): Promise<RecipeDetailDto> {
   const [head, ingredientRows, stepRows, tagRows] = await db.batch([
     db
-      .select({ recipe: recipes, r2Key: images.r2Key, isFavorite: isFavoriteSql(userId) })
+      .select({
+        recipe: recipes,
+        r2Key: images.r2Key,
+        isFavorite: isFavoriteSql(userId),
+        lastCookedAt: lastCookedSql,
+      })
       .from(recipes)
       .leftJoin(images, eq(images.id, recipes.coverImageId))
       .where(liveRecipe(householdId, id)),
@@ -238,12 +258,11 @@ export async function getRecipeDetail(
   const pantry = await pantryIngredientIds(db, householdId)
   const r = found.recipe
   return {
-    ...toSummary(r, found.r2Key, found.isFavorite, tagRows),
+    ...toSummary(r, found.r2Key, found.isFavorite, tagRows, found.lastCookedAt),
     description: r.description,
     sourceUrl: r.sourceUrl,
     sourceText: r.sourceText,
     coverImageId: r.coverImageId,
-    createdAt: r.createdAt,
     ingredients: ingredientRows.map(({ row, name }) => ({
       id: row.id,
       ingredientId: row.ingredientId,
@@ -264,15 +283,53 @@ export async function getRecipeDetail(
   }
 }
 
+const emptyList = (): RecipeListDto => ({
+  items: [],
+  facets: { category: {}, tag: {}, difficulty: {}, time: {} },
+})
+
+const totalMinutes = (r: Pick<RecipeSummaryDto, 'prepMinutes' | 'cookMinutes'>): number | null =>
+  r.prepMinutes === null && r.cookMinutes === null ? null : (r.prepMinutes ?? 0) + (r.cookMinutes ?? 0)
+
+/** Chýbajúce povinné ingrediencie (to, čo nie je v špajzi) po receptoch. */
+async function missingByRecipe(db: Db, householdId: string, ids: string[]): Promise<Map<string, string[]>> {
+  const pantry = await pantryIngredientIds(db, householdId)
+  const missing = new Map<string, string[]>()
+  for (const part of chunk(ids, 90)) {
+    const ingRows = await db
+      .select({
+        recipeId: recipeIngredients.recipeId,
+        ingredientId: recipeIngredients.ingredientId,
+        name: ingredients.name,
+      })
+      .from(recipeIngredients)
+      .innerJoin(ingredients, eq(ingredients.id, recipeIngredients.ingredientId))
+      .where(and(inArray(recipeIngredients.recipeId, part), eq(recipeIngredients.isOptional, false)))
+      .orderBy(asc(recipeIngredients.sortOrder))
+    for (const row of ingRows) {
+      if (pantry.has(row.ingredientId)) continue
+      const list = missing.get(row.recipeId) ?? []
+      if (!list.includes(row.name)) list.push(row.name)
+      missing.set(row.recipeId, list)
+    }
+  }
+  return missing
+}
+
+/**
+ * Zoznam receptov s počtami pre filtre. SQL vyberie recepty domácnosti (a hľadaný text),
+ * filtre, počty a zoradenie robí čistá logika zo `shared/recipeFacets` – domácnosť má
+ * desiatky až stovky receptov, takže to ide v pamäti.
+ */
 export async function listRecipes(
   db: Db,
   householdId: string,
   userId: string,
-  filters: RecipeFilters,
-): Promise<RecipeSummaryDto[]> {
+  options: RecipeListOptions,
+): Promise<RecipeListDto> {
   const conditions: (SQL | undefined)[] = [eq(recipes.householdId, householdId), isNull(recipes.deletedAt)]
-  const needle = filters.q ? normalizeText(filters.q).replace(/[%_\\]/g, '') : ''
-  if (filters.q !== undefined && filters.q.trim() !== '' && !needle) return []
+  const needle = options.q ? normalizeText(options.q).replace(/[%_\\]/g, '') : ''
+  if (options.q !== undefined && options.q.trim() !== '' && !needle) return emptyList()
   if (needle) {
     const like = `%${needle}%`
     conditions.push(
@@ -293,26 +350,18 @@ export async function listRecipes(
       ),
     )
   }
-  if (filters.category) conditions.push(eq(recipes.category, filters.category))
-  if (filters.tag) {
-    conditions.push(
-      exists(
-        db
-          .select({ one: sql`1` })
-          .from(recipeTags)
-          .where(and(eq(recipeTags.recipeId, recipes.id), eq(recipeTags.tagId, filters.tag))),
-      ),
-    )
-  }
-  if (filters.favorite) conditions.push(isFavoriteSql(userId))
 
   const rows = await db
-    .select({ recipe: recipes, r2Key: images.r2Key, isFavorite: isFavoriteSql(userId) })
+    .select({
+      recipe: recipes,
+      r2Key: images.r2Key,
+      isFavorite: isFavoriteSql(userId),
+      lastCookedAt: lastCookedSql,
+    })
     .from(recipes)
     .leftJoin(images, eq(images.id, recipes.coverImageId))
     .where(and(...conditions))
-    .orderBy(asc(recipes.titleNormalized))
-  if (rows.length === 0) return []
+  if (rows.length === 0) return emptyList()
 
   const ids = rows.map((r) => r.recipe.id)
   const tagsByRecipe = new Map<string, TagDto[]>()
@@ -338,36 +387,36 @@ export async function listRecipes(
     tagsByRecipe.set(t.recipeId, list)
   }
 
-  const summaries = rows.map((r) =>
-    toSummary(r.recipe, r.r2Key, r.isFavorite, tagsByRecipe.get(r.recipe.id) ?? []),
-  )
-  if (!filters.pantry) return summaries
-
-  // „Čo viem uvariť“: povinné ingrediencie, ktoré nie sú v špajzi; zoradené od najmenej chýbajúcich.
-  const pantry = await pantryIngredientIds(db, householdId)
-  const missingByRecipe = new Map<string, string[]>()
-  for (const part of chunk(ids, 90)) {
-    const ingRows = await db
-      .select({
-        recipeId: recipeIngredients.recipeId,
-        ingredientId: recipeIngredients.ingredientId,
-        name: ingredients.name,
-      })
-      .from(recipeIngredients)
-      .innerJoin(ingredients, eq(ingredients.id, recipeIngredients.ingredientId))
-      .where(and(inArray(recipeIngredients.recipeId, part), eq(recipeIngredients.isOptional, false)))
-      .orderBy(asc(recipeIngredients.sortOrder))
-    for (const row of ingRows) {
-      if (pantry.has(row.ingredientId)) continue
-      const list = missingByRecipe.get(row.recipeId) ?? []
-      if (!list.includes(row.name)) list.push(row.name)
-      missingByRecipe.set(row.recipeId, list)
+  const missing = options.pantry ? await missingByRecipe(db, householdId, ids) : null
+  const candidates = rows.map((r) => {
+    const tagList = tagsByRecipe.get(r.recipe.id) ?? []
+    const summary: RecipeSummaryDto = {
+      ...toSummary(r.recipe, r.r2Key, r.isFavorite, tagList, r.lastCookedAt),
+      ...(missing ? { missing: missing.get(r.recipe.id) ?? [] } : {}),
     }
-  }
-  return summaries
-    .map((s) => ({ ...s, missing: missingByRecipe.get(s.id) ?? [] }))
-    .sort(
-      (a, b) =>
-        a.missing.length - b.missing.length || normalizeText(a.title).localeCompare(normalizeText(b.title)),
-    )
+    const facetRow: FacetRow & { summary: RecipeSummaryDto } = {
+      id: summary.id,
+      title: summary.title,
+      category: summary.category,
+      difficulty: summary.difficulty,
+      totalMinutes: totalMinutes(summary),
+      tagIds: tagList.map((t) => t.id),
+      isFavorite: summary.isFavorite,
+      createdAt: summary.createdAt,
+      lastCookedAt: summary.lastCookedAt,
+      summary,
+    }
+    return facetRow
+  })
+
+  const filtered = applyRecipeFilters(candidates, options)
+  // „Čo viem uvariť“ bez vlastného zoradenia: najmenej chýbajúceho ako prvé.
+  const ordered =
+    missing && !options.sort
+      ? sortRecipes(filtered, 'name').sort(
+          (a, b) => (a.summary.missing?.length ?? 0) - (b.summary.missing?.length ?? 0),
+        )
+      : sortRecipes(filtered, options.sort ?? 'name', options.dir)
+
+  return { items: ordered.map((c) => c.summary), facets: computeFacets(candidates, options) }
 }

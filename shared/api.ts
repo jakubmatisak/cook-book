@@ -1,4 +1,5 @@
 import type { MemberKind, PlanAudience } from './family'
+import type { RecipeFacets } from './recipeFacets'
 import type { RecipeCategory } from './recipes'
 import type { UnitCode } from './units'
 
@@ -130,7 +131,10 @@ export interface RecipeSummaryDto {
   coverImageUrl: string | null
   tags: TagDto[]
   isFavorite: boolean
+  createdAt: string
   updatedAt: string
+  /** Dátum posledného varenia (z jedálnička), alebo null, keď ešte nebolo uvarené. */
+  lastCookedAt: string | null
   /** Pri filtri „čo mám doma“: povinné ingrediencie, ktoré chýbajú. */
   missing?: string[]
 }
@@ -162,7 +166,12 @@ export interface RecipeDetailDto extends RecipeSummaryDto {
   coverImageId: string | null
   ingredients: RecipeIngredientDto[]
   steps: RecipeStepDto[]
-  createdAt: string
+}
+
+export interface RecipeListDto {
+  items: RecipeSummaryDto[]
+  /** Počty pri možnostiach filtra (podľa ostatných aktívnych filtrov). */
+  facets: RecipeFacets
 }
 
 export interface IngredientDto {

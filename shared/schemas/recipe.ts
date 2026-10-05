@@ -1,4 +1,5 @@
 import { z } from './zod'
+import { SORT_KEYS, TIME_BUCKETS } from '../recipeFacets'
 import { RECIPE_CATEGORIES } from '../recipes'
 import { normalizeText } from '../text'
 import { UNIT_CODES } from '../units'
@@ -74,10 +75,28 @@ export type RecipeInput = z.output<typeof recipeInputSchema>
 export type RecipeInputRaw = z.input<typeof recipeInputSchema>
 export type RecipeIngredientInput = z.output<typeof recipeIngredientInputSchema>
 
+/** Zoznam hodnôt oddelených čiarkou (`?category=hlavne,dezert`); chýbajúci parameter = prázdny zoznam. */
+const csv = <T extends z.ZodType>(item: T) =>
+  z.preprocess(
+    (v) =>
+      typeof v === 'string'
+        ? v
+            .split(',')
+            .map((part) => part.trim())
+            .filter(Boolean)
+            .slice(0, 50)
+        : [],
+    z.array(item),
+  )
+
 export const recipeListQuerySchema = z.object({
   q: z.string().trim().max(100).optional(),
-  category: z.enum(RECIPE_CATEGORIES).optional(),
-  tag: z.string().max(40).optional(),
+  category: csv(z.enum(RECIPE_CATEGORIES)),
+  tag: csv(z.string().max(40)),
+  difficulty: csv(z.coerce.number().int().min(1).max(3)),
+  time: csv(z.enum(TIME_BUCKETS)),
+  sort: z.enum(SORT_KEYS).optional(),
+  dir: z.enum(['asc', 'desc']).optional(),
   favorite: z
     .enum(['1', 'true'])
     .optional()

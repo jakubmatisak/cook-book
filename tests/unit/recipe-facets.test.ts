@@ -1,0 +1,167 @@
+import { describe, expect, it } from 'vitest'
+import {
+  applyRecipeFilters,
+  computeFacets,
+  defaultSortDir,
+  sortRecipes,
+  timeBucket,
+  type FacetRow,
+} from '@shared/recipeFacets'
+
+const row = (id: string, extra: Partial<FacetRow> = {}): FacetRow => ({
+  id,
+  title: id,
+  category: 'hlavne',
+  difficulty: 1,
+  totalMinutes: 30,
+  tagIds: [],
+  isFavorite: false,
+  createdAt: '2026-10-01T10:00:00.000Z',
+  lastCookedAt: null,
+  missing: undefined,
+  ...extra,
+})
+
+const rows: FacetRow[] = [
+  row('Guláš', { category: 'hlavne', difficulty: 2, totalMinutes: 140, tagIds: ['klasika', 'vikend'] }),
+  row('Palacinky', { category: 'dezert', difficulty: 1, totalMinutes: 30, tagIds: ['detske', 'rychle'] }),
+  row('Rizoto', { category: 'hlavne', difficulty: 2, totalMinutes: 45, tagIds: ['rychle'] }),
+  row('Polievka', { category: 'polievka', difficulty: 1, totalMinutes: null, tagIds: [] }),
+]
+
+describe('timeBucket', () => {
+  it('rozdelí čas do košov a chýbajúci čas nepatrí nikam', () => {
+    expect(timeBucket(0)).toBe('do30')
+    expect(timeBucket(30)).toBe('do30')
+    expect(timeBucket(31)).toBe('do60')
+    expect(timeBucket(60)).toBe('do60')
+    expect(timeBucket(61)).toBe('nad60')
+    expect(timeBucket(null)).toBeNull()
+  })
+})
+
+describe('applyRecipeFilters', () => {
+  it('bez filtrov vráti všetko', () => {
+    expect(applyRecipeFilters(rows, {})).toHaveLength(4)
+  })
+
+  it('viac hodnôt v jednom rozmere je „alebo“, rôzne rozmery „a“', () => {
+    expect(applyRecipeFilters(rows, { category: ['dezert', 'polievka'] }).map((r) => r.id)).toEqual([
+      'Palacinky',
+      'Polievka',
+    ])
+    expect(applyRecipeFilters(rows, { tag: ['rychle', 'klasika'] }).map((r) => r.id)).toEqual([
+      'Guláš',
+      'Palacinky',
+      'Rizoto',
+    ])
+    expect(
+      applyRecipeFilters(rows, { category: ['hlavne'], difficulty: [2], time: ['do60'] }).map((r) => r.id),
+    ).toEqual(['Rizoto'])
+  })
+
+  it('časový filter vylúči recepty bez času a obľúbené filtruje samostatne', () => {
+    expect(applyRecipeFilters(rows, { time: ['do30', 'do60', 'nad60'] })).toHaveLength(3)
+    const withFav = rows.map((r) => (r.id === 'Rizoto' ? { ...r, isFavorite: true } : r))
+    expect(applyRecipeFilters(withFav, { favorite: true }).map((r) => r.id)).toEqual(['Rizoto'])
+  })
+})
+
+describe('computeFacets', () => {
+  it('počty bez filtrov sú počty receptov pri každej možnosti', () => {
+    const f = computeFacets(rows, {})
+    expect(f.category).toEqual({ hlavne: 2, dezert: 1, polievka: 1 })
+    expect(f.tag).toEqual({ klasika: 1, vikend: 1, detske: 1, rychle: 2 })
+    expect(f.difficulty).toEqual({ 1: 2, 2: 2 })
+    expect(f.time).toEqual({ do30: 1, do60: 1, nad60: 1 })
+  })
+
+  it('počet pri možnosti rešpektuje ostatné rozmery, ale nie vlastný', () => {
+    const f = computeFacets(rows, { category: ['hlavne'] })
+    // kategórie sa nezužujú vlastným filtrom
+    expect(f.category).toEqual({ hlavne: 2, dezert: 1, polievka: 1 })
+    // ostatné rozmery vidia len hlavné jedlá
+    expect(f.tag).toEqual({ klasika: 1, vikend: 1, rychle: 1 })
+    expect(f.difficulty).toEqual({ 2: 2 })
+    expect(f.time).toEqual({ do60: 1, nad60: 1 })
+  })
+
+  it('výber v jednom rozmere zužuje druhý a naopak', () => {
+    const f = computeFacets(rows, { tag: ['rychle'], difficulty: [1] })
+    expect(f.category).toEqual({ dezert: 1 })
+    expect(f.tag).toEqual({ detske: 1, rychle: 1 })
+    expect(f.difficulty).toEqual({ 1: 1, 2: 1 })
+  })
+
+  it('obľúbené sa berie ako filter pre všetky rozmery', () => {
+    const withFav = rows.map((r) => (r.id === 'Guláš' ? { ...r, isFavorite: true } : r))
+    expect(computeFacets(withFav, { favorite: true }).category).toEqual({ hlavne: 1 })
+  })
+})
+
+describe('sortRecipes', () => {
+  const sorted = (key: Parameters<typeof sortRecipes>[1], dir?: 'asc' | 'desc') =>
+    sortRecipes(
+      [
+        row('B', {
+          title: 'Bryndza',
+          totalMinutes: 20,
+          difficulty: 3,
+          createdAt: '2026-10-02T00:00:00.000Z',
+          lastCookedAt: '2026-09-01',
+        }),
+        row('A', {
+          title: 'Ťava',
+          totalMinutes: null,
+          difficulty: 1,
+          createdAt: '2026-10-03T00:00:00.000Z',
+          lastCookedAt: null,
+        }),
+        row('C', {
+          title: 'čaj',
+          totalMinutes: 90,
+          difficulty: 2,
+          createdAt: '2026-10-01T00:00:00.000Z',
+          lastCookedAt: '2026-10-04',
+        }),
+      ],
+      key,
+      dir,
+    ).map((r) => r.id)
+
+  it('názov bez ohľadu na diakritiku a veľkosť písmen', () => {
+    expect(sorted('name')).toEqual(['B', 'C', 'A'])
+    expect(sorted('name', 'desc')).toEqual(['A', 'C', 'B'])
+  })
+
+  it('dátum pridania: predvolene od najnovšieho', () => {
+    expect(sorted('created')).toEqual(['A', 'B', 'C'])
+    expect(sorted('created', 'asc')).toEqual(['C', 'B', 'A'])
+  })
+
+  it('čas a náročnosť od najmenšej, chýbajúci čas vždy na konci', () => {
+    expect(sorted('time')).toEqual(['B', 'C', 'A'])
+    expect(sorted('time', 'desc')).toEqual(['C', 'B', 'A'])
+    expect(sorted('difficulty')).toEqual(['A', 'C', 'B'])
+  })
+
+  it('naposledy varené: najdávnejšie prvé, nikdy nevarené na konci v oboch smeroch', () => {
+    expect(sorted('cooked')).toEqual(['B', 'C', 'A'])
+    expect(sorted('cooked', 'desc')).toEqual(['C', 'B', 'A'])
+  })
+
+  it('predvolený smer podľa kľúča', () => {
+    expect(defaultSortDir('name')).toBe('asc')
+    expect(defaultSortDir('created')).toBe('desc')
+    expect(defaultSortDir('time')).toBe('asc')
+    expect(defaultSortDir('cooked')).toBe('asc')
+  })
+
+  it('stabilné poradie pri rovnakej hodnote (podľa názvu)', () => {
+    const result = sortRecipes(
+      [row('x', { title: 'Zebra', difficulty: 1 }), row('y', { title: 'Avokádo', difficulty: 1 })],
+      'difficulty',
+    )
+    expect(result.map((r) => r.title)).toEqual(['Avokádo', 'Zebra'])
+  })
+})

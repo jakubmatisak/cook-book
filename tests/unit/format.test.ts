@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatMinutes, plural, totalMinutes } from '@/lib/format'
+import { formatDate, formatMinutes, plural, totalMinutes } from '@/lib/format'
 
 describe('formatMinutes', () => {
   it('pod hodinu ukáže minúty, inak hodiny a minúty', () => {
@@ -30,5 +30,12 @@ describe('plural', () => {
       '11 porcií',
     ])
     expect(porcie(1.5)).toBe('1,5 porcie')
+  })
+})
+
+describe('formatDate', () => {
+  it('prevedie ISO dátum aj čas na slovenský zápis', () => {
+    expect(formatDate('2026-10-05')).toBe('5. 10. 2026')
+    expect(formatDate('2026-01-15T10:30:00.000Z')).toBe('15. 1. 2026')
   })
 })

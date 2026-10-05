@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers'
 import { describe, expect, it } from 'vitest'
-import type { IngredientDto, PantryDto, RecipeDetailDto, RecipeSummaryDto } from '@shared/api'
+import type { IngredientDto, PantryDto, RecipeDetailDto, RecipeListDto } from '@shared/api'
 import { createApp } from '../../worker/app'
 import { api, send } from './helpers'
 
@@ -60,7 +60,7 @@ describe('recepty – čo viem uvariť', () => {
     }
     const res = await send(app, 'GET', api('/recipes?pantry=1'))
     expect(res.status).toBe(200)
-    const list = await res.json<RecipeSummaryDto[]>()
+    const list = (await res.json<RecipeListDto>()).items
     expect(list.map((r) => [r.title, r.missing])).toEqual([
       ['Praženica', []],
       ['Palacinky', ['Múka']],
@@ -71,18 +71,19 @@ describe('recepty – čo viem uvariť', () => {
 
   it('bez filtra sa chýbajúce ingrediencie neposielajú a recept bez ingrediencií je „viem uvariť“', async () => {
     await send(app, 'POST', api('/recipes'), { title: 'Voda' })
-    const plain = await (await send(app, 'GET', api('/recipes'))).json<RecipeSummaryDto[]>()
+    const plain = (await (await send(app, 'GET', api('/recipes'))).json<RecipeListDto>()).items
     expect(plain[0]!.missing).toBeUndefined()
-    const withPantry = await (await send(app, 'GET', api('/recipes?pantry=1'))).json<RecipeSummaryDto[]>()
+    const withPantry = (await (await send(app, 'GET', api('/recipes?pantry=1'))).json<RecipeListDto>()).items
     expect(withPantry[0]).toMatchObject({ title: 'Voda', missing: [] })
   })
 
   it('kombinuje sa s vyhľadávaním a zmazaný recept sa neukáže', async () => {
     await seedRecipes()
-    const recipes = await (await send(app, 'GET', api('/recipes'))).json<RecipeSummaryDto[]>()
+    const recipes = (await (await send(app, 'GET', api('/recipes'))).json<RecipeListDto>()).items
     const gulas = recipes.find((r) => r.title === 'Guláš')!
     await send(app, 'DELETE', api(`/recipes/${gulas.id}`))
-    const list = await (await send(app, 'GET', api('/recipes?pantry=1&q=cibul'))).json<RecipeSummaryDto[]>()
+    const list = (await (await send(app, 'GET', api('/recipes?pantry=1&q=cibul'))).json<RecipeListDto>())
+      .items
     expect(list.map((r) => r.title)).toEqual(['Praženica'])
   })
 })
@@ -91,7 +92,7 @@ describe('detail receptu', () => {
   it('vracia, ktoré ingrediencie sú doma', async () => {
     await seedRecipes()
     await send(app, 'PUT', api(`/pantry/${await ingredientId('Vajcia')}`))
-    const recipes = await (await send(app, 'GET', api('/recipes'))).json<RecipeSummaryDto[]>()
+    const recipes = (await (await send(app, 'GET', api('/recipes'))).json<RecipeListDto>()).items
     const id = recipes.find((r) => r.title === 'Praženica')!.id
     const detail = await (await send(app, 'GET', api(`/recipes/${id}`))).json<RecipeDetailDto>()
     expect(detail.ingredients.map((i) => [i.name, i.inPantry])).toEqual([

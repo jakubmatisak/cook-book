@@ -91,6 +91,7 @@ describe('formulár receptu', () => {
       isFavorite: true,
       updatedAt: 'x',
       createdAt: 'x',
+      lastCookedAt: null,
       description: 'Popis',
       sourceUrl: 'https://example.com/gulas',
       sourceText: null,

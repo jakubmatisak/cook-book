@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers'
 import { describe, expect, it } from 'vitest'
-import type { ApiErrorBody, IngredientDto, RecipeDetailDto, RecipeSummaryDto, TagDto } from '@shared/api'
+import type { ApiErrorBody, IngredientDto, RecipeDetailDto, RecipeListDto, TagDto } from '@shared/api'
 import type { RecipeInputRaw } from '@shared/schemas/recipe'
 import { createApp } from '../../worker/app'
 import { api, send } from './helpers'
@@ -31,11 +31,12 @@ async function create(input: RecipeInputRaw = gulas, as?: string) {
 }
 
 const get = (id: string, as?: string) => send(app, 'GET', api(`/recipes/${id}`), undefined, { as })
-const list = async (query = '', as?: string) => {
+const listFull = async (query = '', as?: string) => {
   const res = await send(app, 'GET', api(`/recipes${query}`), undefined, { as })
   expect(res.status).toBe(200)
-  return res.json<RecipeSummaryDto[]>()
+  return res.json<RecipeListDto>()
 }
+const list = async (query = '', as?: string) => (await listFull(query, as)).items
 
 describe('recepty – vytvorenie a detail', () => {
   it('uloží recept s ingredienciami, krokmi a tagmi v poradí', async () => {
@@ -218,5 +219,73 @@ describe('recepty – súbežné ukladanie', () => {
     expect(results.map((r) => r.status)).toEqual([201, 201, 201])
     const slugs = await Promise.all(results.map(async (r) => (await r.json<RecipeDetailDto>()).slug))
     expect(new Set(slugs).size).toBe(3)
+  })
+})
+
+describe('recepty – filtre, počty a zoradenie', () => {
+  const seed = async () => {
+    await create({
+      title: 'Palacinky',
+      category: 'dezert',
+      prepMinutes: 10,
+      cookMinutes: 10,
+      difficulty: 1,
+      tags: ['Detské'],
+    })
+    await create({
+      title: 'Rizoto',
+      category: 'hlavne',
+      prepMinutes: 15,
+      cookMinutes: 30,
+      difficulty: 2,
+      tags: ['Rýchle'],
+    })
+    await create({
+      title: 'Guláš',
+      category: 'hlavne',
+      prepMinutes: 20,
+      cookMinutes: 120,
+      difficulty: 3,
+      tags: ['Klasika', 'Rýchle'],
+    })
+    await create({ title: 'Polievka', category: 'polievka', difficulty: 1 })
+  }
+  const titles = (items: { title: string }[]) => items.map((r) => r.title)
+
+  it('viac hodnôt oddelených čiarkou je „alebo“, rôzne filtre „a“', async () => {
+    await seed()
+    expect(titles(await list('?category=dezert,polievka'))).toEqual(['Palacinky', 'Polievka'])
+    expect(titles(await list('?category=hlavne&difficulty=3'))).toEqual(['Guláš'])
+    expect(titles(await list('?time=do30'))).toEqual(['Palacinky'])
+    expect(titles(await list('?time=do60,nad60'))).toEqual(['Guláš', 'Rizoto'])
+  })
+
+  it('vráti počty, ktoré sa neznižujú vlastným filtrom', async () => {
+    await seed()
+    const { facets } = await listFull('?category=hlavne')
+    expect(facets.category).toEqual({ hlavne: 2, dezert: 1, polievka: 1 })
+    expect(facets.difficulty).toEqual({ 2: 1, 3: 1 })
+    expect(facets.time).toEqual({ do60: 1, nad60: 1 })
+    const tagCounts = Object.values(facets.tag).sort()
+    expect(tagCounts).toEqual([1, 2])
+  })
+
+  it('zoradí podľa času a náročnosti, recept bez času na konci', async () => {
+    await seed()
+    expect(titles(await list('?sort=time'))).toEqual(['Palacinky', 'Rizoto', 'Guláš', 'Polievka'])
+    expect(titles(await list('?sort=time&dir=desc'))).toEqual(['Guláš', 'Rizoto', 'Palacinky', 'Polievka'])
+    expect(titles(await list('?sort=difficulty&dir=desc'))).toEqual([
+      'Guláš',
+      'Rizoto',
+      'Palacinky',
+      'Polievka',
+    ])
+    expect(titles(await list('?sort=created'))).toEqual(['Polievka', 'Guláš', 'Rizoto', 'Palacinky'])
+  })
+
+  it('odmietne neplatnú hodnotu filtra', async () => {
+    const res = await send(app, 'GET', api('/recipes?difficulty=9'))
+    expect(res.status).toBe(400)
+    expect((await send(app, 'GET', api('/recipes?sort=nic'))).status).toBe(400)
   })
 })

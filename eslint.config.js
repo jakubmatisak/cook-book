@@ -34,6 +34,8 @@ export default tseslint.config(
   {
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      // Sloty tabuľky Vuetify majú názov s bodkou (item.title).
+      'vue/valid-v-slot': ['error', { allowModifiers: true }],
       // Prettier rieši formátovanie šablón.
       'vue/max-attributes-per-line': 'off',
       'vue/singleline-html-element-content-newline': 'off',

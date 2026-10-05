@@ -56,3 +56,13 @@ export function formatWeekRange(startIso: string): string {
   if (a.m !== b.m) return `${a.d}. ${a.m}. – ${b.d}. ${b.m}. ${b.y}`
   return `${a.d}. – ${b.d}. ${b.m}. ${b.y}`
 }
+
+/** Dnešný dátum v danom časovom pásme (na serveri, kde „lokálny čas“ nedáva zmysel). */
+export function todayInZone(now: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now)
+}
