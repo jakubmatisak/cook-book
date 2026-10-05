@@ -17,6 +17,8 @@ export function createQueryClient() {
           return failureCount < 2
         },
       },
+      // Úpravy bez signálu čakajú a odošlú sa po pripojení, namiesto zlyhania.
+      mutations: { networkMode: 'online' },
     },
   })
 }

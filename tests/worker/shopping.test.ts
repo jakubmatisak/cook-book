@@ -89,7 +89,9 @@ describe('nákupný zoznam – generovanie', () => {
       ['Hovädzie mäso', 600, 'g', 'generated', false],
       ['Vajcia', 3, 'ks', 'generated', false],
     ])
-    expect(byName(list, 'Hovädzie mäso').sources).toEqual([{ date: '2026-10-05', recipeTitle: 'Guláš' }])
+    expect(byName(list, 'Hovädzie mäso').sources).toEqual([
+      { date: '2026-10-05', recipeTitle: 'Guláš', coverImageUrl: null },
+    ])
   })
 
   it('sčíta ingrediencie z viacerých jedál a ignoruje jedlá mimo rozsahu', async () => {
@@ -271,5 +273,27 @@ describe('nákupný zoznam – úprava položky', () => {
     const empty = await send(app, 'PATCH', api(`/shopping/items/${item.id}`), {})
     expect(empty.status).toBe(200)
     expect((await empty.json<ShoppingItemDto>()).name).toBe('Chlieb')
+  })
+})
+
+describe('nákupný zoznam – fotky zdrojov', () => {
+  it('zdroj položky nesie fotku receptu, keď ju má', async () => {
+    const { obed, listId } = await setup()
+    const webp = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 9, 9])
+    const form = new FormData()
+    form.append('file', new File([webp], 'fotka.webp', { type: 'image/webp' }))
+    const image = await (await send(app, 'POST', api('/images'), form)).json<{ id: string; url: string }>()
+    const recipe = await (
+      await send(app, 'POST', api('/recipes'), {
+        title: 'Fotený',
+        servings: 2,
+        coverImageId: image.id,
+        ingredients: [{ name: 'Ryža', quantity: 200, unit: 'g', isOptional: false }],
+      })
+    ).json<RecipeDetailDto>()
+    await send(app, 'POST', api('/plan/entries'), { date: '2026-10-05', slotId: obed, recipeId: recipe.id })
+    await generate(listId)
+    const rice = (await items(listId)).find((i) => i.name === 'Ryža')!
+    expect(rice.sources).toEqual([{ date: '2026-10-05', recipeTitle: 'Fotený', coverImageUrl: image.url }])
   })
 })

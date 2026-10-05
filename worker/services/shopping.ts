@@ -16,6 +16,7 @@ import {
 import { normalizeText } from '../../shared/text'
 import type { Db } from '../db/client'
 import {
+  images,
   ingredients,
   mealPlanEntries,
   recipeIngredients,
@@ -29,6 +30,7 @@ import type { UserRow } from '../env'
 import { HttpError } from '../errors'
 import { chunk } from '../http'
 import { listMembers } from './family'
+import { imageUrl } from './recipes'
 
 type ItemRow = typeof shoppingItems.$inferSelect
 
@@ -107,17 +109,22 @@ export async function listItems(db: Db, householdId: string, listId: string): Pr
         itemId: shoppingItemSources.itemId,
         date: mealPlanEntries.date,
         recipeTitle: recipes.title,
+        r2Key: images.r2Key,
       })
       .from(shoppingItemSources)
       .innerJoin(shoppingItems, eq(shoppingItems.id, shoppingItemSources.itemId))
       .innerJoin(mealPlanEntries, eq(mealPlanEntries.id, shoppingItemSources.planEntryId))
       .innerJoin(recipes, eq(recipes.id, mealPlanEntries.recipeId))
+      .leftJoin(images, eq(images.id, recipes.coverImageId))
       .where(eq(shoppingItems.listId, listId))
       .orderBy(asc(mealPlanEntries.date)),
   ])
   const sources = new Map<string, ShoppingItemDto['sources']>()
   for (const s of sourceRows) {
-    sources.set(s.itemId, [...(sources.get(s.itemId) ?? []), { date: s.date, recipeTitle: s.recipeTitle }])
+    sources.set(s.itemId, [
+      ...(sources.get(s.itemId) ?? []),
+      { date: s.date, recipeTitle: s.recipeTitle, coverImageUrl: s.r2Key ? imageUrl(s.r2Key) : null },
+    ])
   }
   return rows
     .sort(

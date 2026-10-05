@@ -67,6 +67,13 @@ const pantryMode = computed({
   set: (value: boolean) => setQuery({ doma: value ? '1' : undefined }),
 })
 
+const onboarding = [
+  { to: '/recepty/novy', title: 'Pridaj recepty', text: 'Napíš vlastné alebo ich neskôr importuj z webu.' },
+  { to: '/rodina', title: 'Pridaj rodinu', text: 'Dospelých a deti s veľkosťou porcie.' },
+  { to: '/plan', title: 'Naplánuj týždeň', text: 'Recepty do raňajok, obedov a večerí.' },
+  { to: '/nakup', title: 'Vygeneruj nákup', text: 'Zoznam z jedálnička podľa porcií rodiny.' },
+]
+
 const hasFilters = computed(() =>
   Boolean(
     filters.value.q ||
@@ -159,10 +166,19 @@ function clearFilters() {
     <EmptyState
       v-else
       :icon="mdiBookOpenPageVariantOutline"
-      title="Zatiaľ žiadne recepty"
-      text="Pridaj prvý obľúbený recept vašej rodiny."
+      title="Vitaj v kuchárskej knihe"
+      text="Začni receptami, potom pridaj rodinu a naplánuj týždeň. Nákupný zoznam sa vygeneruje sám."
     >
-      <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">Pridať recept</v-btn>
+      <v-list lines="two" class="text-start mb-4" max-width="26rem">
+        <v-list-item
+          v-for="(step, i) in onboarding"
+          :key="step.to"
+          :to="step.to"
+          :title="`${i + 1}. ${step.title}`"
+          :subtitle="step.text"
+        />
+      </v-list>
+      <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">Pridať prvý recept</v-btn>
     </EmptyState>
   </template>
 

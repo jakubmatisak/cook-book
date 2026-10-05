@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiFormatListChecks, mdiMagnify } from '@mdi/js'
+import { mdiCheck, mdiFormatListChecks, mdiMagnify } from '@mdi/js'
 import { computed, ref } from 'vue'
 import type { IngredientDto } from '@shared/api'
 import { normalizeText } from '@shared/text'
@@ -65,6 +65,7 @@ const usage = (item: IngredientDto) =>
     <v-chip
       :color="onlyUncategorized ? 'primary' : undefined"
       :variant="onlyUncategorized ? 'flat' : 'outlined'"
+      :prepend-icon="onlyUncategorized ? mdiCheck : undefined"
       @click="onlyUncategorized = !onlyUncategorized"
     >
       Bez kategórie ({{ uncategorizedCount }})

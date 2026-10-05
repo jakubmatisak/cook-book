@@ -8,6 +8,7 @@ import { recipeInputSchema } from '@shared/schemas/recipe'
 import { useTags } from '@/api/catalog'
 import { ApiError } from '@/api/http'
 import { useRecipe, useSaveRecipe } from '@/api/recipes'
+import { createDraftStore } from '@/composables/useDraft'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import ImagePicker from '../components/ImagePicker.vue'
 import IngredientRows from '../components/IngredientRows.vue'
@@ -42,6 +43,36 @@ const dirty = computed(() => JSON.stringify(formToInput(form.value)) !== snapsho
 const saved = ref(false)
 useUnsavedChangesGuard(() => dirty.value && !saved.value)
 
+// Koncept v úložisku prehliadača: prežije obnovenie stránky aj na iPhone, kde beforeunload nefunguje.
+const draft = createDraftStore<RecipeForm>(`recipe:${id.value ?? 'new'}`)
+const pendingDraft = ref<RecipeForm | null>(null)
+watch(
+  loaded,
+  (isLoaded) => {
+    if (!isLoaded) return
+    const stored = draft.load()
+    if (stored && JSON.stringify(formToInput(stored)) !== snapshot.value) pendingDraft.value = stored
+  },
+  { immediate: true },
+)
+watch(
+  form,
+  (value) => {
+    if (loaded.value && dirty.value && !saved.value && !pendingDraft.value) draft.save(value)
+  },
+  { deep: true },
+)
+
+function restoreDraft() {
+  if (pendingDraft.value) form.value = pendingDraft.value
+  pendingDraft.value = null
+}
+
+function discardDraft() {
+  pendingDraft.value = null
+  draft.clear()
+}
+
 const categoryItems = RECIPE_CATEGORIES.map((value) => ({ value, title: RECIPE_CATEGORY_LABELS[value] }))
 const tagNames = computed(() => tags.value?.map((t) => t.name) ?? [])
 
@@ -63,6 +94,7 @@ async function onSubmit() {
   try {
     const detail = await save.mutateAsync({ id: id.value, input: formToInput(form.value) })
     saved.value = true
+    draft.clear()
     await router.replace(`/recepty/${detail.id}`)
   } catch (e) {
     if (e instanceof ApiError && Array.isArray(e.details)) {
@@ -76,7 +108,9 @@ async function onSubmit() {
 
 onBeforeRouteLeave(() => {
   if (saved.value || !dirty.value) return true
-  return window.confirm('Máš neuložené zmeny. Naozaj odísť?')
+  const leave = window.confirm('Máš neuložené zmeny. Naozaj odísť?')
+  if (leave) draft.clear()
+  return leave
 })
 
 function cancel() {
@@ -101,6 +135,14 @@ function cancel() {
         <ul class="mt-1 ps-5">
           <li v-for="message in errors" :key="message">{{ message }}</li>
         </ul>
+      </v-alert>
+
+      <v-alert v-if="pendingDraft" type="info" title="Našiel sa rozpísaný recept">
+        Minule si začal písať tento recept a neuložil si ho. Chceš pokračovať?
+        <template #append>
+          <v-btn variant="text" @click="discardDraft">Zahodiť</v-btn>
+          <v-btn color="primary" @click="restoreDraft">Obnoviť</v-btn>
+        </template>
       </v-alert>
 
       <ImagePicker v-model:image-id="form.coverImageId" v-model:image-url="form.coverImageUrl" />
@@ -152,6 +194,7 @@ function cancel() {
             v-model="form.difficulty"
             mandatory
             color="primary"
+            selected-class="bg-primary"
             variant="outlined"
             divided
             aria-label="Náročnosť"

@@ -111,12 +111,13 @@ const usage = (tag: TagDto) =>
         <v-text-field v-model="name" label="Názov" autofocus hide-details="auto" @keydown.enter="onSave" />
         <div>
           <div class="text-caption text-medium-emphasis mb-1">Farba (voliteľná)</div>
-          <v-chip-group v-model="color" column>
+          <v-chip-group v-model="color" column selected-class="elevation-6">
             <v-chip
               v-for="c in MEMBER_COLORS"
               :key="c"
               :value="c"
               :color="c"
+              :base-color="c"
               variant="flat"
               size="large"
               :aria-label="`Farba ${c}`"

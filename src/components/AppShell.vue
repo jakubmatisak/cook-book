@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { mdiChefHat, mdiMenu } from '@mdi/js'
+import { mdiChefHat, mdiCloudOffOutline, mdiMenu } from '@mdi/js'
 import { ref, watch } from 'vue'
 import { useDisplay } from 'vuetify'
+import { useOnline } from '@/composables/useOnline'
 import { PRIMARY_NAV, SECONDARY_NAV } from './navigation'
 
 const { mdAndUp } = useDisplay()
+const online = useOnline()
 
 const RAIL_KEY = 'kniha:menu-rail'
 const readRail = () => {
@@ -86,6 +88,9 @@ const mobileMenu = ref(false)
 
     <v-main>
       <v-container class="pa-4 pa-md-6" style="max-width: 1200px">
+        <v-alert v-if="!online" type="warning" density="compact" class="mb-4" :icon="mdiCloudOffOutline">
+          Bez signálu. Zmeny sa odošlú po pripojení, odškrtávanie nákupu funguje aj teraz.
+        </v-alert>
         <slot />
       </v-container>
     </v-main>

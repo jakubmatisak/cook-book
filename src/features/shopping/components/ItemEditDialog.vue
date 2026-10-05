@@ -14,6 +14,7 @@ const quantity = ref('')
 const unit = ref<UnitCode | null>(null)
 const categoryId = ref<string | null>(null)
 const error = ref('')
+const confirmDelete = ref(false)
 
 const { data: categories } = useShopCategories()
 const update = useUpdateItem()
@@ -26,6 +27,7 @@ watch(open, (isOpen) => {
   unit.value = props.item.unit
   categoryId.value = props.item.shopCategoryId
   error.value = ''
+  confirmDelete.value = false
 })
 
 const unitItems = UNITS.map((u) => ({ title: u.code, value: u.code, subtitle: u.label }))
@@ -81,7 +83,8 @@ async function onDelete() {
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
       <v-card-actions>
-        <v-btn color="error" variant="text" :loading="remove.isPending.value" @click="onDelete">Zmazať</v-btn>
+        <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true">Zmazať</v-btn>
+        <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete">Naozaj zmazať</v-btn>
         <v-spacer />
         <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
         <v-btn color="primary" :loading="update.isPending.value" @click="onSave">Uložiť</v-btn>

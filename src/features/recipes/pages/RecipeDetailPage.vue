@@ -4,6 +4,7 @@ import {
   mdiChefHat,
   mdiCheckCircle,
   mdiClockOutline,
+  mdiCalendarPlus,
   mdiDeleteOutline,
   mdiDotsVertical,
   mdiLinkVariant,
@@ -15,10 +16,14 @@ import {
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { RecipeIngredientDto } from '@shared/api'
+import { addDays } from '@shared/dates'
 import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS } from '@shared/recipes'
 import { formatQuantity } from '@shared/units'
 import { ApiError } from '@/api/http'
+import { useMe } from '@/api/me'
 import { useDeleteRecipe, useRecipe } from '@/api/recipes'
+import { useToday } from '@/composables/useToday'
+import EntryDialog from '@/features/meal-plan/components/EntryDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { formatMinutes, plural } from '@/lib/format'
 import FavoriteButton from '../components/FavoriteButton.vue'
@@ -70,6 +75,17 @@ const chips = computed<Chip[]>(() => {
   return list
 })
 
+const { data: me } = useMe()
+const today = useToday()
+const planOpen = ref(false)
+const planDates = computed(() => Array.from({ length: 14 }, (_, i) => addDays(today.value, i)))
+const defaultSlotId = computed(
+  () =>
+    me.value?.slots.find((s) => s.name === 'Obed' && s.isEnabled)?.id ??
+    me.value?.slots.find((s) => s.isEnabled)?.id ??
+    '',
+)
+
 const confirmDelete = ref(false)
 const deleteError = ref('')
 
@@ -102,6 +118,7 @@ function goBack() {
         :to="`/recepty/${recipe.id}/upravit`"
         aria-label="Upraviť"
       />
+      <v-btn :icon="mdiCalendarPlus" variant="text" aria-label="Naplánovať" @click="planOpen = true" />
       <v-menu>
         <template #activator="{ props }">
           <v-btn v-bind="props" :icon="mdiDotsVertical" variant="text" aria-label="Ďalšie akcie" />
@@ -240,6 +257,18 @@ function goBack() {
       </v-col>
     </v-row>
   </template>
+
+  <EntryDialog
+    v-if="recipe && me"
+    v-model="planOpen"
+    :entry="null"
+    :initial-date="today"
+    :initial-slot-id="defaultSlotId"
+    :initial-recipe-id="recipe.id"
+    :slots="me.slots"
+    :dates="planDates"
+    :members="me.members"
+  />
 
   <v-dialog v-model="confirmDelete" max-width="420">
     <v-card title="Zmazať recept?">

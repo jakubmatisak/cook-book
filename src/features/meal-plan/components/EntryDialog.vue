@@ -15,6 +15,8 @@ const props = defineProps<{
   entry: PlanEntryDto | null
   initialDate: string
   initialSlotId: string
+  /** Predvolený recept pri pridávaní nového jedla (napr. z detailu receptu). */
+  initialRecipeId?: string | null
   slots: MealSlotDto[]
   dates: string[]
   members: FamilyMemberDto[]
@@ -38,7 +40,7 @@ watch(open, (isOpen) => {
   if (!isOpen) return
   const e = props.entry
   mode.value = e && !e.recipeId ? 'text' : 'recipe'
-  recipeId.value = e?.recipeId ?? null
+  recipeId.value = e ? e.recipeId : (props.initialRecipeId ?? null)
   freeText.value = e?.freeText ?? ''
   servings.value = e?.servingsOverride ?? null
   note.value = e?.note ?? ''
@@ -126,6 +128,7 @@ async function onDelete() {
           v-model="mode"
           mandatory
           color="primary"
+          selected-class="bg-primary"
           variant="outlined"
           divided
           density="comfortable"
@@ -172,14 +175,12 @@ async function onDelete() {
           <v-col cols="12" sm="6">
             <v-text-field v-model="note" label="Poznámka" hide-details />
           </v-col>
-          <template v-if="entry">
-            <v-col cols="12" sm="6">
-              <v-select v-model="date" :items="dateItems" label="Deň" hide-details />
-            </v-col>
-            <v-col cols="12" sm="6">
-              <v-select v-model="slotId" :items="slotItems" label="Jedlo" hide-details />
-            </v-col>
-          </template>
+          <v-col cols="12" sm="6">
+            <v-select v-model="date" :items="dateItems" label="Deň" hide-details />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-select v-model="slotId" :items="slotItems" label="Jedlo" hide-details />
+          </v-col>
         </v-row>
 
         <v-alert v-if="error" type="error" density="compact" :text="error" />

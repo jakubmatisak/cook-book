@@ -218,6 +218,7 @@ export interface ShoppingListDto {
 export interface ShoppingItemSourceDto {
   date: string
   recipeTitle: string
+  coverImageUrl: string | null
 }
 
 export interface ShoppingItemDto {

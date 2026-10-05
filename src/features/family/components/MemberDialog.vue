@@ -83,6 +83,7 @@ async function onDelete() {
             :model-value="kind"
             mandatory
             color="primary"
+            selected-class="bg-primary"
             variant="outlined"
             divided
             aria-label="Dospelý alebo dieťa"
@@ -106,12 +107,13 @@ async function onDelete() {
 
         <div>
           <div class="text-caption text-medium-emphasis mb-1">Farba</div>
-          <v-chip-group v-model="color" mandatory column>
+          <v-chip-group v-model="color" mandatory column selected-class="elevation-6">
             <v-chip
               v-for="c in MEMBER_COLORS"
               :key="c"
               :value="c"
               :color="c"
+              :base-color="c"
               variant="flat"
               size="large"
               :aria-label="`Farba ${c}`"

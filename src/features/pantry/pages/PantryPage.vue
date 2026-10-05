@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiFridgeOutline, mdiMagnify, mdiPotSteamOutline } from '@mdi/js'
+import { mdiCheck, mdiFridgeOutline, mdiMagnify, mdiPotSteamOutline } from '@mdi/js'
 import { computed, ref } from 'vue'
 import type { IngredientDto } from '@shared/api'
 import { normalizeText } from '@shared/text'
@@ -80,6 +80,7 @@ async function onToggle(item: IngredientDto) {
     <v-chip
       :color="onlyHome ? 'primary' : undefined"
       :variant="onlyHome ? 'flat' : 'outlined'"
+      :prepend-icon="onlyHome ? mdiCheck : undefined"
       @click="onlyHome = !onlyHome"
     >
       Len čo mám doma
@@ -108,16 +109,15 @@ async function onToggle(item: IngredientDto) {
           :key="item.id"
           :title="item.name"
           link
-          role="checkbox"
-          :aria-checked="inPantry.has(item.id)"
           @click="onToggle(item)"
         >
           <template #prepend>
             <v-checkbox-btn
               :model-value="inPantry.has(item.id)"
               color="primary"
-              tabindex="-1"
-              aria-hidden="true"
+              :aria-label="item.name"
+              @click.stop
+              @update:model-value="onToggle(item)"
             />
           </template>
         </v-list-item>

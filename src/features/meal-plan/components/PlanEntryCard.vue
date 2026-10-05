@@ -30,6 +30,11 @@ const subtitle = computed(() => {
     @click="$emit('edit', entry)"
   >
     <v-card-item class="pa-2">
+      <template v-if="entry.recipe?.coverImageUrl" #prepend>
+        <v-avatar :size="dense ? 28 : 40" rounded="sm">
+          <v-img :src="entry.recipe.coverImageUrl" cover />
+        </v-avatar>
+      </template>
       <v-card-title class="text-body-2 font-weight-bold text-wrap" :class="{ 'font-italic': !entry.recipe }">
         {{ title }}
       </v-card-title>
