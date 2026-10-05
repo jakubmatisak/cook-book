@@ -52,7 +52,9 @@ describe('schéma', () => {
 describe('schéma – unikátnosť (migrácia 0001)', () => {
   const seed = () =>
     env.DB.batch([
-      env.DB.prepare("insert into households (id, name, created_at, updated_at) values ('h1', 'H', 'x', 'x')"),
+      env.DB.prepare(
+        "insert into households (id, name, created_at, updated_at) values ('h1', 'H', 'x', 'x')",
+      ),
     ])
 
   it('dva recepty jednej domácnosti nemôžu mať rovnaký slug', async () => {

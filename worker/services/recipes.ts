@@ -1,0 +1,332 @@
+import { and, asc, eq, exists, inArray, isNull, ne, or, sql, type SQL } from 'drizzle-orm'
+import type { BatchItem } from 'drizzle-orm/batch'
+import type { RecipeDetailDto, RecipeSummaryDto, TagDto } from '../../shared/api'
+import type { RecipeCategory } from '../../shared/recipes'
+import type { RecipeInput } from '../../shared/schemas/recipe'
+import { normalizeText, slugify } from '../../shared/text'
+import { newId } from '../../shared/ids'
+import type { Db } from '../db/client'
+import {
+  images,
+  ingredients,
+  recipeFavorites,
+  recipeIngredients,
+  recipes,
+  recipeSteps,
+  recipeTags,
+  tags,
+} from '../db/schema'
+import type { UserRow } from '../env'
+import { HttpError } from '../errors'
+import { resolveIngredients, resolveTags } from './catalog'
+
+type RecipeRow = typeof recipes.$inferSelect
+
+export interface RecipeFilters {
+  q?: string
+  category?: RecipeCategory
+  tag?: string
+  favorite?: boolean
+}
+
+export const imageUrl = (r2Key: string) => `/img/${r2Key}`
+
+const notFound = () => new HttpError(404, 'not_found', 'Recept neexistuje.')
+
+const liveRecipe = (householdId: string, id: string) =>
+  and(eq(recipes.id, id), eq(recipes.householdId, householdId), isNull(recipes.deletedAt))
+
+async function findLive(db: Db, householdId: string, id: string): Promise<RecipeRow> {
+  const row = await db.select().from(recipes).where(liveRecipe(householdId, id)).get()
+  if (!row) throw notFound()
+  return row
+}
+
+async function uniqueSlug(db: Db, householdId: string, base: string, exceptId?: string): Promise<string> {
+  const rows = await db
+    .select({ slug: recipes.slug })
+    .from(recipes)
+    .where(
+      and(
+        eq(recipes.householdId, householdId),
+        or(eq(recipes.slug, base), sql`${recipes.slug} like ${`${base}-%`}`),
+        exceptId ? ne(recipes.id, exceptId) : undefined,
+      ),
+    )
+  const taken = new Set(rows.map((r) => r.slug))
+  if (!taken.has(base)) return base
+  for (let n = 2; ; n++) if (!taken.has(`${base}-${n}`)) return `${base}-${n}`
+}
+
+async function assertImage(db: Db, householdId: string, imageId: string | null) {
+  if (!imageId) return
+  const found = await db
+    .select({ id: images.id })
+    .from(images)
+    .where(and(eq(images.id, imageId), eq(images.householdId, householdId)))
+    .get()
+  if (!found) throw new HttpError(400, 'invalid_image', 'Fotka neexistuje.')
+}
+
+/** Vytvorí alebo prepíše recept vrátane ingrediencií, krokov a tagov; vráti jeho id. */
+export async function saveRecipe(db: Db, user: UserRow, input: RecipeInput, id?: string): Promise<string> {
+  const householdId = user.householdId
+  const existing = id ? await findLive(db, householdId, id) : undefined
+  await assertImage(db, householdId, input.coverImageId)
+
+  const ingredientIds = await resolveIngredients(
+    db,
+    householdId,
+    input.ingredients.map((i) => ({ name: i.name, unit: i.unit })),
+  )
+  const tagIds = [...new Set(await resolveTags(db, householdId, input.tags))]
+  const slug =
+    existing && existing.title === input.title
+      ? existing.slug
+      : await uniqueSlug(db, householdId, slugify(input.title), existing?.id)
+
+  const recipeId = existing?.id ?? newId()
+  const values = {
+    title: input.title,
+    titleNormalized: normalizeText(input.title),
+    slug,
+    description: input.description,
+    category: input.category,
+    servings: input.servings,
+    prepMinutes: input.prepMinutes,
+    cookMinutes: input.cookMinutes,
+    difficulty: input.difficulty,
+    sourceUrl: input.sourceUrl,
+    sourceText: input.sourceText,
+    coverImageId: input.coverImageId,
+  }
+
+  const statements: BatchItem<'sqlite'>[] = existing
+    ? [
+        db.update(recipes).set(values).where(eq(recipes.id, recipeId)),
+        db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId)),
+        db.delete(recipeSteps).where(eq(recipeSteps.recipeId, recipeId)),
+        db.delete(recipeTags).where(eq(recipeTags.recipeId, recipeId)),
+      ]
+    : [db.insert(recipes).values({ id: recipeId, householdId, createdBy: user.id, ...values })]
+
+  // Po jednom riadku na príkaz – D1 dovolí max 100 viazaných parametrov.
+  input.ingredients.forEach((item, sortOrder) => {
+    statements.push(
+      db.insert(recipeIngredients).values({
+        recipeId,
+        ingredientId: ingredientIds.get(normalizeText(item.name))!,
+        quantity: item.quantity,
+        unit: item.unit,
+        note: item.note,
+        groupName: item.groupName,
+        isOptional: item.isOptional,
+        sortOrder,
+      }),
+    )
+  })
+  input.steps.forEach((step, index) => {
+    statements.push(
+      db.insert(recipeSteps).values({
+        recipeId,
+        position: index + 1,
+        text: step.text,
+        timerSeconds: step.timerSeconds,
+      }),
+    )
+  })
+  if (tagIds.length) {
+    statements.push(db.insert(recipeTags).values(tagIds.map((tagId) => ({ recipeId, tagId }))))
+  }
+
+  const [first, ...rest] = statements
+  await db.batch([first!, ...rest])
+  return recipeId
+}
+
+export async function deleteRecipe(db: Db, householdId: string, id: string): Promise<void> {
+  const deleted = await db
+    .update(recipes)
+    .set({ deletedAt: new Date().toISOString() })
+    .where(liveRecipe(householdId, id))
+    .returning({ id: recipes.id })
+  if (deleted.length === 0) throw notFound()
+}
+
+export async function setFavorite(db: Db, user: UserRow, id: string, favorite: boolean): Promise<void> {
+  await findLive(db, user.householdId, id)
+  if (favorite) {
+    await db.insert(recipeFavorites).values({ recipeId: id, userId: user.id }).onConflictDoNothing()
+  } else {
+    await db
+      .delete(recipeFavorites)
+      .where(and(eq(recipeFavorites.recipeId, id), eq(recipeFavorites.userId, user.id)))
+  }
+}
+
+const isFavoriteSql = (userId: string) =>
+  sql<number>`exists (select 1 from recipe_favorites f where f.recipe_id = "recipes"."id" and f.user_id = ${userId})`.mapWith(
+    (v) => Boolean(Number(v)),
+  )
+
+function toSummary(
+  row: RecipeRow,
+  r2Key: string | null,
+  isFavorite: boolean,
+  tagList: TagDto[],
+): RecipeSummaryDto {
+  return {
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    category: row.category,
+    servings: row.servings,
+    prepMinutes: row.prepMinutes,
+    cookMinutes: row.cookMinutes,
+    difficulty: row.difficulty,
+    coverImageUrl: r2Key ? imageUrl(r2Key) : null,
+    tags: tagList,
+    isFavorite,
+    updatedAt: row.updatedAt,
+  }
+}
+
+export async function getRecipeDetail(
+  db: Db,
+  householdId: string,
+  userId: string,
+  id: string,
+): Promise<RecipeDetailDto> {
+  const [head, ingredientRows, stepRows, tagRows] = await db.batch([
+    db
+      .select({ recipe: recipes, r2Key: images.r2Key, isFavorite: isFavoriteSql(userId) })
+      .from(recipes)
+      .leftJoin(images, eq(images.id, recipes.coverImageId))
+      .where(liveRecipe(householdId, id)),
+    db
+      .select({ row: recipeIngredients, name: ingredients.name })
+      .from(recipeIngredients)
+      .innerJoin(ingredients, eq(ingredients.id, recipeIngredients.ingredientId))
+      .where(eq(recipeIngredients.recipeId, id))
+      .orderBy(asc(recipeIngredients.sortOrder)),
+    db.select().from(recipeSteps).where(eq(recipeSteps.recipeId, id)).orderBy(asc(recipeSteps.position)),
+    db
+      .select({ id: tags.id, name: tags.name, color: tags.color })
+      .from(recipeTags)
+      .innerJoin(tags, eq(tags.id, recipeTags.tagId))
+      .where(eq(recipeTags.recipeId, id))
+      .orderBy(asc(tags.name)),
+  ])
+  const found = head[0]
+  if (!found) throw notFound()
+  const r = found.recipe
+  return {
+    ...toSummary(r, found.r2Key, found.isFavorite, tagRows),
+    description: r.description,
+    sourceUrl: r.sourceUrl,
+    sourceText: r.sourceText,
+    coverImageId: r.coverImageId,
+    createdAt: r.createdAt,
+    ingredients: ingredientRows.map(({ row, name }) => ({
+      id: row.id,
+      ingredientId: row.ingredientId,
+      name,
+      quantity: row.quantity,
+      unit: row.unit,
+      note: row.note,
+      groupName: row.groupName,
+      isOptional: row.isOptional,
+    })),
+    steps: stepRows.map((s) => ({
+      id: s.id,
+      position: s.position,
+      text: s.text,
+      timerSeconds: s.timerSeconds,
+    })),
+  }
+}
+
+export async function listRecipes(
+  db: Db,
+  householdId: string,
+  userId: string,
+  filters: RecipeFilters,
+): Promise<RecipeSummaryDto[]> {
+  const conditions: (SQL | undefined)[] = [eq(recipes.householdId, householdId), isNull(recipes.deletedAt)]
+  const needle = filters.q ? normalizeText(filters.q).replace(/[%_\\]/g, '') : ''
+  if (filters.q !== undefined && filters.q.trim() !== '' && !needle) return []
+  if (needle) {
+    const like = `%${needle}%`
+    conditions.push(
+      or(
+        sql`${recipes.titleNormalized} like ${like}`,
+        exists(
+          db
+            .select({ one: sql`1` })
+            .from(recipeIngredients)
+            .innerJoin(ingredients, eq(ingredients.id, recipeIngredients.ingredientId))
+            .where(
+              and(
+                eq(recipeIngredients.recipeId, recipes.id),
+                sql`${ingredients.nameNormalized} like ${like}`,
+              ),
+            ),
+        ),
+      ),
+    )
+  }
+  if (filters.category) conditions.push(eq(recipes.category, filters.category))
+  if (filters.tag) {
+    conditions.push(
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(recipeTags)
+          .where(and(eq(recipeTags.recipeId, recipes.id), eq(recipeTags.tagId, filters.tag))),
+      ),
+    )
+  }
+  if (filters.favorite) conditions.push(isFavoriteSql(userId))
+
+  const rows = await db
+    .select({ recipe: recipes, r2Key: images.r2Key, isFavorite: isFavoriteSql(userId) })
+    .from(recipes)
+    .leftJoin(images, eq(images.id, recipes.coverImageId))
+    .where(and(...conditions))
+    .orderBy(asc(recipes.titleNormalized))
+  if (rows.length === 0) return []
+
+  const ids = rows.map((r) => r.recipe.id)
+  const tagsByRecipe = new Map<string, TagDto[]>()
+  const tagRows = await db
+    .select({ recipeId: recipeTags.recipeId, id: tags.id, name: tags.name, color: tags.color })
+    .from(recipeTags)
+    .innerJoin(tags, eq(tags.id, recipeTags.tagId))
+    .where(
+      ids.length <= 90
+        ? inArray(recipeTags.recipeId, ids)
+        : inArray(
+            recipeTags.recipeId,
+            db
+              .select({ id: recipes.id })
+              .from(recipes)
+              .where(and(eq(recipes.householdId, householdId), isNull(recipes.deletedAt))),
+          ),
+    )
+    .orderBy(asc(tags.name))
+  for (const t of tagRows) {
+    const list = tagsByRecipe.get(t.recipeId) ?? []
+    list.push({ id: t.id, name: t.name, color: t.color })
+    tagsByRecipe.set(t.recipeId, list)
+  }
+
+  return rows.map((r) => toSummary(r.recipe, r.r2Key, r.isFavorite, tagsByRecipe.get(r.recipe.id) ?? []))
+}
+
+export async function listTags(db: Db, householdId: string): Promise<TagDto[]> {
+  return db
+    .select({ id: tags.id, name: tags.name, color: tags.color })
+    .from(tags)
+    .where(eq(tags.householdId, householdId))
+    .orderBy(asc(tags.name))
+}

@@ -22,7 +22,11 @@ describe('recipeInputSchema', () => {
   })
 
   it('oreže medzery a zahodí duplicitné tagy bez ohľadu na veľkosť písmen', () => {
-    const parsed = recipeInputSchema.parse({ ...valid, title: '  Guláš ', tags: ['Rýchle', ' rýchle', 'Detské'] })
+    const parsed = recipeInputSchema.parse({
+      ...valid,
+      title: '  Guláš ',
+      tags: ['Rýchle', ' rýchle', 'Detské'],
+    })
     expect(parsed.title).toBe('Guláš')
     expect(parsed.tags).toEqual(['Rýchle', 'Detské'])
   })
@@ -31,10 +35,14 @@ describe('recipeInputSchema', () => {
     expect(recipeInputSchema.safeParse({ ...valid, title: '  ' }).success).toBe(false)
     expect(recipeInputSchema.safeParse({ ...valid, servings: 0 }).success).toBe(false)
     expect(
-      recipeInputSchema.safeParse({ ...valid, ingredients: [{ name: 'x', unit: 'libra', isOptional: false }] }).success,
+      recipeInputSchema.safeParse({
+        ...valid,
+        ingredients: [{ name: 'x', unit: 'libra', isOptional: false }],
+      }).success,
     ).toBe(false)
     expect(
-      recipeInputSchema.safeParse({ ...valid, ingredients: [{ name: 'x', quantity: -1, isOptional: false }] }).success,
+      recipeInputSchema.safeParse({ ...valid, ingredients: [{ name: 'x', quantity: -1, isOptional: false }] })
+        .success,
     ).toBe(false)
   })
 
