@@ -5,9 +5,12 @@ import { useUpdateSettings, useUpdateSlot } from '@/api/family'
 import { ApiError, downloadFile } from '@/api/http'
 import { useMe } from '@/api/me'
 import PageHeader from '@/components/PageHeader.vue'
+import { useThemePreference } from '@/composables/useThemePreference'
 import { plural } from '@/lib/format'
 
 const { data: me, isPending, error } = useMe()
+
+const { preference: themePreference, set: setTheme } = useThemePreference()
 
 const snackbar = ref({ show: false, text: '', color: 'error' })
 const updateSlot = useUpdateSlot()
@@ -80,6 +83,25 @@ async function exportData() {
             {{ plural(me.members.length, 'člen', 'členovia', 'členov') }}
           </div>
         </template>
+      </v-card-text>
+    </v-card>
+
+    <v-card title="Vzhľad">
+      <v-card-text>
+        <v-btn-toggle
+          :model-value="themePreference"
+          mandatory
+          color="primary"
+          selected-class="bg-primary"
+          variant="outlined"
+          divided
+          aria-label="Svetlý alebo tmavý vzhľad"
+          @update:model-value="setTheme($event)"
+        >
+          <v-btn value="system">Podľa zariadenia</v-btn>
+          <v-btn value="light">Svetlý</v-btn>
+          <v-btn value="dark">Tmavý</v-btn>
+        </v-btn-toggle>
       </v-card-text>
     </v-card>
 

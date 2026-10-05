@@ -9,6 +9,7 @@ import {
   mdiDotsVertical,
   mdiLinkVariant,
   mdiPencilOutline,
+  mdiPlayCircleOutline,
   mdiPotSteamOutline,
   mdiSilverwareForkKnife,
   mdiTimerOutline,
@@ -18,7 +19,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { RecipeIngredientDto } from '@shared/api'
 import { addDays } from '@shared/dates'
 import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS } from '@shared/recipes'
-import { formatQuantity } from '@shared/units'
+import { formatScaled } from '@shared/scaling'
 import { ApiError } from '@/api/http'
 import { useMe } from '@/api/me'
 import { useDeleteRecipe, useRecipe } from '@/api/recipes'
@@ -85,6 +86,25 @@ const defaultSlotId = computed(
     me.value?.slots.find((s) => s.isEnabled)?.id ??
     '',
 )
+
+/** Počet porcií v prepočte; žije v URL (?porcie=), aby ho prevzal aj režim varenia. */
+const servings = computed({
+  get: () => {
+    const fromUrl = Number(route.query.porcie)
+    return Number.isFinite(fromUrl) && fromUrl >= 1 && fromUrl <= 50 ? fromUrl : (recipe.value?.servings ?? 4)
+  },
+  set: (value: number | null | undefined) => {
+    const query = { ...route.query }
+    if (value && value !== recipe.value?.servings) query.porcie = String(value)
+    else delete query.porcie
+    void router.replace({ query })
+  },
+})
+const factor = computed(() => (recipe.value ? servings.value / recipe.value.servings : 1))
+const cookingLink = computed(() => ({
+  path: `/recepty/${id.value}/varenie`,
+  query: route.query.porcie ? { porcie: String(route.query.porcie) } : {},
+}))
 
 const confirmDelete = ref(false)
 const deleteError = ref('')
@@ -167,6 +187,15 @@ function goBack() {
         {{ chip.text }}
       </v-chip>
     </div>
+    <v-btn
+      color="primary"
+      variant="tonal"
+      :prepend-icon="mdiPlayCircleOutline"
+      :to="cookingLink"
+      class="mb-3"
+    >
+      Režim varenia
+    </v-btn>
     <p v-if="recipe.description" class="text-body-1 mb-3" style="white-space: pre-line">
       {{ recipe.description }}
     </p>
@@ -186,6 +215,21 @@ function goBack() {
     <v-row>
       <v-col cols="12" md="5" lg="4">
         <v-card title="Ingrediencie">
+          <v-card-text class="d-flex align-center ga-3 pb-0">
+            <v-number-input
+              v-model="servings"
+              label="Porcie"
+              :min="1"
+              :max="50"
+              control-variant="split"
+              density="compact"
+              hide-details
+              style="max-width: 11rem"
+            />
+            <v-chip v-if="factor !== 1" size="small" variant="tonal" color="warning">
+              pôvodne {{ recipe.servings }}
+            </v-chip>
+          </v-card-text>
           <v-card-text v-if="!recipe.ingredients.length" class="text-medium-emphasis"
             >Bez ingrediencií.</v-card-text
           >
@@ -197,7 +241,7 @@ function goBack() {
               <v-list-item v-for="item in group.items" :key="item.id">
                 <template #prepend>
                   <span class="font-weight-bold text-no-wrap me-3" style="min-width: 4.5rem">
-                    {{ formatQuantity(item.quantity, item.unit) }}
+                    {{ formatScaled(item.quantity, factor, item.unit) }}
                   </span>
                 </template>
                 <v-list-item-title class="text-wrap">

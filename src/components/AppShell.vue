@@ -1,12 +1,38 @@
 <script setup lang="ts">
-import { mdiChefHat, mdiCloudOffOutline, mdiMenu } from '@mdi/js'
-import { ref, watch } from 'vue'
+import {
+  mdiChefHat,
+  mdiCloudOffOutline,
+  mdiMenu,
+  mdiThemeLightDark,
+  mdiWeatherNight,
+  mdiWhiteBalanceSunny,
+} from '@mdi/js'
+import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useOnline } from '@/composables/useOnline'
+import { useApplyTheme, useThemePreference, type ThemePreference } from '@/composables/useThemePreference'
 import { PRIMARY_NAV, SECONDARY_NAV } from './navigation'
 
 const { mdAndUp } = useDisplay()
 const online = useOnline()
+const route = useRoute()
+
+/** Stránky s meta.bare (napr. režim varenia) bez lišty a menu. */
+const bare = computed(() => route.meta.bare === true)
+
+useApplyTheme()
+const { preference, cycle } = useThemePreference()
+const THEME_ICONS: Record<ThemePreference, string> = {
+  system: mdiThemeLightDark,
+  light: mdiWhiteBalanceSunny,
+  dark: mdiWeatherNight,
+}
+const THEME_LABELS: Record<ThemePreference, string> = {
+  system: 'Vzhľad podľa zariadenia',
+  light: 'Svetlý vzhľad',
+  dark: 'Tmavý vzhľad',
+}
 
 const RAIL_KEY = 'kniha:menu-rail'
 const readRail = () => {
@@ -33,7 +59,7 @@ const mobileMenu = ref(false)
 
 <template>
   <v-app>
-    <v-app-bar density="comfortable" border="b">
+    <v-app-bar v-if="!bare" density="comfortable" border="b">
       <template #prepend>
         <v-app-bar-nav-icon
           v-if="mdAndUp"
@@ -45,9 +71,19 @@ const mobileMenu = ref(false)
         <v-icon v-else :icon="mdiChefHat" color="primary" class="ml-2" />
       </template>
       <v-app-bar-title class="font-weight-bold">Kuchárska kniha</v-app-bar-title>
+      <template #append>
+        <v-btn
+          :icon="THEME_ICONS[preference]"
+          variant="text"
+          :aria-label="THEME_LABELS[preference] + ' – prepnúť'"
+          :title="THEME_LABELS[preference]"
+          data-test="theme-toggle"
+          @click="cycle"
+        />
+      </template>
     </v-app-bar>
 
-    <v-navigation-drawer v-if="mdAndUp" permanent :rail="rail" border="e" data-test="side-nav">
+    <v-navigation-drawer v-if="mdAndUp && !bare" permanent :rail="rail" border="e" data-test="side-nav">
       <v-list nav density="comfortable" class="pt-3">
         <v-list-item
           v-for="item in PRIMARY_NAV"
@@ -71,7 +107,13 @@ const mobileMenu = ref(false)
       </v-list>
     </v-navigation-drawer>
 
-    <v-navigation-drawer v-else v-model="mobileMenu" temporary location="bottom" data-test="mobile-nav">
+    <v-navigation-drawer
+      v-else-if="!mdAndUp && !bare"
+      v-model="mobileMenu"
+      temporary
+      location="bottom"
+      data-test="mobile-nav"
+    >
       <v-list nav density="comfortable" class="py-3">
         <v-list-item
           v-for="item in [...PRIMARY_NAV, ...SECONDARY_NAV]"
@@ -95,7 +137,7 @@ const mobileMenu = ref(false)
       </v-container>
     </v-main>
 
-    <v-bottom-navigation v-if="!mdAndUp" border="t" data-test="bottom-nav">
+    <v-bottom-navigation v-if="!mdAndUp && !bare" border="t" data-test="bottom-nav">
       <v-btn v-for="item in PRIMARY_NAV" :key="item.to" :to="item.to" data-test="nav-item">
         <v-icon :icon="item.icon" />
         <span>{{ item.title }}</span>
