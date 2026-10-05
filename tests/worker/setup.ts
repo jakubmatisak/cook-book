@@ -38,4 +38,6 @@ const TABLES_CHILD_FIRST = [
 // Úložisko D1 sa medzi testami jedného súboru nevynuluje – každý test začína s prázdnou databázou.
 beforeEach(async () => {
   await env.DB.batch(TABLES_CHILD_FIRST.map((t) => env.DB.prepare(`delete from ${t}`)))
+  const objects = await env.BUCKET.list()
+  if (objects.objects.length) await env.BUCKET.delete(objects.objects.map((o) => o.key))
 })
