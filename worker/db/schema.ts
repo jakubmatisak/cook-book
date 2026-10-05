@@ -116,7 +116,7 @@ export const ingredients = sqliteTable(
     updatedAt: updatedAt(),
     deletedAt: deletedAt(),
   },
-  (t) => [index('ingredients_household_name_idx').on(t.householdId, t.nameNormalized)],
+  (t) => [uniqueIndex('ingredients_household_name_uq').on(t.householdId, t.nameNormalized)],
 )
 
 export const images = sqliteTable('images', {
@@ -139,6 +139,7 @@ export const recipes = sqliteTable(
     id: id(),
     householdId: householdRef(),
     title: text('title').notNull(),
+    titleNormalized: text('title_normalized').notNull().default(''),
     slug: text('slug').notNull(),
     description: text('description'),
     category: text('category', { enum: RECIPE_CATEGORIES }).notNull().default('hlavne'),
@@ -158,7 +159,10 @@ export const recipes = sqliteTable(
     updatedAt: updatedAt(),
     deletedAt: deletedAt(),
   },
-  (t) => [index('recipes_household_deleted_idx').on(t.householdId, t.deletedAt)],
+  (t) => [
+    index('recipes_household_deleted_idx').on(t.householdId, t.deletedAt),
+    uniqueIndex('recipes_household_slug_uq').on(t.householdId, t.slug),
+  ],
 )
 
 const recipeRef = () =>
@@ -194,7 +198,7 @@ export const recipeSteps = sqliteTable(
     timerSeconds: integer('timer_seconds'),
     imageId: text('image_id').references(() => images.id, { onDelete: 'set null' }),
   },
-  (t) => [index('recipe_steps_recipe_idx').on(t.recipeId)],
+  (t) => [uniqueIndex('recipe_steps_recipe_position_uq').on(t.recipeId, t.position)],
 )
 
 export const tags = sqliteTable(
@@ -218,7 +222,7 @@ export const recipeTags = sqliteTable(
       .notNull()
       .references(() => tags.id, { onDelete: 'cascade' }),
   },
-  (t) => [primaryKey({ columns: [t.recipeId, t.tagId] })],
+  (t) => [primaryKey({ columns: [t.recipeId, t.tagId] }), index('recipe_tags_tag_idx').on(t.tagId)],
 )
 
 export const recipeFavorites = sqliteTable(

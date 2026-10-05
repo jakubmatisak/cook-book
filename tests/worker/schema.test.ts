@@ -48,3 +48,36 @@ describe('schéma', () => {
     ).rejects.toThrow(/FOREIGN KEY/)
   })
 })
+
+describe('schéma – unikátnosť (migrácia 0001)', () => {
+  const seed = () =>
+    env.DB.batch([
+      env.DB.prepare("insert into households (id, name, created_at, updated_at) values ('h1', 'H', 'x', 'x')"),
+    ])
+
+  it('dva recepty jednej domácnosti nemôžu mať rovnaký slug', async () => {
+    await seed()
+    const insert = (id: string) =>
+      env.DB.prepare(
+        `insert into recipes (id, household_id, title, title_normalized, slug, category, servings, difficulty, created_at, updated_at)
+         values (?, 'h1', 'Guláš', 'gulas', 'gulas', 'hlavne', 4, 1, 'x', 'x')`,
+      )
+        .bind(id)
+        .run()
+    await insert('r1')
+    await expect(insert('r2')).rejects.toThrow(/UNIQUE/)
+  })
+
+  it('dve ingrediencie jednej domácnosti nemôžu mať rovnaký normalizovaný názov', async () => {
+    await seed()
+    const insert = (id: string, name: string) =>
+      env.DB.prepare(
+        `insert into ingredients (id, household_id, name, name_normalized, aliases, created_at, updated_at)
+         values (?, 'h1', ?, 'cibula', '[]', 'x', 'x')`,
+      )
+        .bind(id, name)
+        .run()
+    await insert('i1', 'Cibuľa')
+    await expect(insert('i2', 'cibula')).rejects.toThrow(/UNIQUE/)
+  })
+})
