@@ -42,6 +42,18 @@ Predpoklady (ak nesedia, oprav ich pred implementáciou):
 - **JSON import presunutý do fázy 4** k importu z URL: vyžaduje mapovanie konfliktov mien a fotky nie sú v exporte.
 - **Katalóg ingrediencií** je samostatná stránka v menu Viac.
 
+## 0c. Zmeny po implementácii fázy 2 (5. 10. 2026)
+
+- **Predvolené voľby** (používateľ neodpovedal, menia sa v aplikácii): deti majú menšiu porciu toho istého jedla (koeficient 0,5), všetkých 5 jedál dňa zapnutých, týždeň od pondelka, účty nie sú prepojené s členmi rodiny.
+- **Dátumy** sú reťazce `YYYY-MM-DD` a počíta sa s nimi v UTC (`shared/dates.ts`); zmena času ani časové pásmo neposunú deň.
+- **Porcie záznamu** počíta `shared/portions.ts`: ručné číslo, inak súčet koeficientov aktívnych členov zaokrúhlený na štvrtiny; bez členov porcie receptu. Fáza 3 to použije na prepočet nákupu.
+- **Začiatok týždňa** len pondelok, nedeľa alebo sobota.
+- **Presun a kópia jedla** cez dialóg úpravy (deň v rámci týždňa a jedlo dňa), nie drag & drop.
+- **Kopírovanie týždňa** s voľbou nahradiť; záznamy so zmazaným receptom sa kopírujú a v pláne sa označia.
+- **Vypnuté jedlo dňa** sa v pláne zobrazí, ak v ňom v danom týždni niečo je.
+- **Nastavenia** sa vždy zlučujú s predvolenými, chýbajúci kľúč nepokazí aplikáciu.
+- **Slovenské hlášky validácie** cez `z.config(z.locales.sk())` v `shared/schemas/zod.ts`.
+
 ## 1. Fázy – čo, kedy a prečo
 
 Pravidlo: každá fáza končí niečím, čo reálne používate. Nič sa nebuduje „na neskôr“, len dátový model je od začiatku kompletný, aby sa neskôr nemuselo migrovať s bolesťou.

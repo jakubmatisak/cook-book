@@ -6,6 +6,16 @@ jeden Worker servíruje Vue frontend aj API, dáta sú v D1, fotky v R2 a prihl�
 - Návrh a fázy: [docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md](docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md)
 - Prieskum a zoznam nápadov: [docs/2026-10-05-napady-a-prieskum-hostingu.md](docs/2026-10-05-napady-a-prieskum-hostingu.md)
 
+## Čo aplikácia vie
+
+- **Recepty:** ingrediencie s množstvom a jednotkou, postup, tagy, fotka (zmenšená v prehliadači), obľúbené, vyhľadávanie bez diakritiky aj podľa ingrediencie.
+- **Katalóg ingrediencií:** pribúda sám pri písaní receptov, každej sa dá nastaviť kategória obchodu a jednotka.
+- **Rodina:** dospelí a deti s veľkosťou porcie.
+- **Týždenný jedálniček:** recept alebo vlastný text do jedla dňa, porcie podľa rodiny, presun, kópia a kopírovanie celého týždňa.
+- **Záloha:** export všetkých dát do JSON.
+
+Nákupný zoznam generovaný z jedálnička príde vo fáze 3.
+
 ## Technológie
 
 Vue 3 · Vuetify 4 · Tailwind 4 (prefix `tw:`) · TanStack Query · vite-plugin-pwa · Hono · Drizzle ORM · Cloudflare
