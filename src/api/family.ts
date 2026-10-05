@@ -1,6 +1,11 @@
 import { useMutation, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
 import type { FamilyMemberDto, HouseholdSettings, MealSlotDto } from '@shared/api'
-import type { MemberInputRaw, SettingsUpdate, SlotUpdate } from '@shared/schemas/family'
+import type {
+  MemberInputRaw,
+  MemberPreferencesInput,
+  SettingsUpdate,
+  SlotUpdate,
+} from '@shared/schemas/family'
 import { apiFetch } from './http'
 import { meQueryKey } from './me'
 
@@ -18,6 +23,28 @@ export function useSaveMember(): UseMutationReturnType<FamilyMemberDto, Error, S
     mutationFn: ({ id, input }: SaveMemberVars) =>
       apiFetch<FamilyMemberDto>(id ? `/members/${id}` : '/members', json(id ? 'PUT' : 'POST', input)),
     onSuccess: () => client.invalidateQueries({ queryKey: meQueryKey }),
+  })
+}
+
+export interface SavePreferencesVars extends MemberPreferencesInput {
+  id: string
+}
+
+/** Alergie, averzie a diéty člena; mení aj upozornenia v jedálničku, preto obnoví aj plán. */
+export function useSaveMemberPreferences(): UseMutationReturnType<
+  FamilyMemberDto,
+  Error,
+  SavePreferencesVars,
+  unknown
+> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: SavePreferencesVars) =>
+      apiFetch<FamilyMemberDto>(`/members/${id}/preferences`, json('PUT', body)),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['plan'] })
+      return client.invalidateQueries({ queryKey: meQueryKey })
+    },
   })
 }
 

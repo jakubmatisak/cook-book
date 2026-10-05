@@ -51,3 +51,13 @@ export const settingsUpdateSchema = z
   })
   .strict()
 export type SettingsUpdate = z.output<typeof settingsUpdateSchema>
+
+const idList = z.array(z.string().min(1).max(40)).max(50).default([])
+
+/** Preferencie člena: ingrediencie (alergie, averzie) a tagy (diéty) podľa id; ukladajú sa naraz. */
+export const memberPreferencesSchema = z.object({
+  allergies: idList,
+  dislikes: idList,
+  diets: idList,
+})
+export type MemberPreferencesInput = z.output<typeof memberPreferencesSchema>

@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import type { FamilyMemberDto } from '@shared/api'
 import { MEMBER_COLORS, MEMBER_KIND_LABELS } from '@shared/family'
 import { entryPortions } from '@shared/portions'
+import { PREFERENCE_CHIP_LABELS } from '@shared/preferences'
 import { useMe } from '@/api/me'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -70,6 +71,20 @@ const memberSubtitle = (m: FamilyMemberDto) =>
         link
         @click="openEdit(member)"
       >
+        <template v-if="member.preferences.length" #subtitle>
+          <span class="d-block">{{ memberSubtitle(member) }}</span>
+          <span class="d-flex flex-wrap ga-1 mt-1">
+            <v-chip
+              v-for="p in member.preferences"
+              :key="p.kind + (p.ingredientId ?? p.tagId)"
+              size="x-small"
+              variant="tonal"
+              :color="p.kind === 'allergy' ? 'error' : p.kind === 'dislike' ? 'warning' : 'secondary'"
+            >
+              {{ PREFERENCE_CHIP_LABELS[p.kind] }}: {{ p.label }}
+            </v-chip>
+          </span>
+        </template>
         <template #prepend>
           <v-avatar :color="member.color ?? 'primary'" class="font-weight-bold">
             {{ member.name.slice(0, 1).toUpperCase() }}

@@ -1,11 +1,17 @@
 import { Hono } from 'hono'
-import { memberInputSchema, settingsUpdateSchema, slotUpdateSchema } from '../../shared/schemas/family'
+import {
+  memberInputSchema,
+  memberPreferencesSchema,
+  settingsUpdateSchema,
+  slotUpdateSchema,
+} from '../../shared/schemas/family'
 import type { AppEnv } from '../env'
 import { parseBody } from '../http'
 import {
   createMember,
   deleteMember,
   listMembers,
+  saveMemberPreferences,
   updateMember,
   updateSettings,
   updateSlot,
@@ -20,6 +26,12 @@ export const memberRoutes = new Hono<AppEnv>()
   .put('/:id', async (c) => {
     const input = await parseBody(c, memberInputSchema)
     return c.json(await updateMember(c.get('db'), c.get('user').householdId, c.req.param('id'), input))
+  })
+  .put('/:id/preferences', async (c) => {
+    const input = await parseBody(c, memberPreferencesSchema)
+    return c.json(
+      await saveMemberPreferences(c.get('db'), c.get('user').householdId, c.req.param('id'), input),
+    )
   })
   .delete('/:id', async (c) => {
     await deleteMember(c.get('db'), c.get('user').householdId, c.req.param('id'))

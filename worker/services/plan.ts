@@ -1,13 +1,15 @@
 import { and, asc, between, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { PlanEntryDto } from '../../shared/api'
+import { preferenceConflicts } from '../../shared/preferences'
 import { addDays, daysBetween } from '../../shared/dates'
 import { newId } from '../../shared/ids'
 import type { PlanCopyInput, PlanEntryInput } from '../../shared/schemas/plan'
 import type { Db } from '../db/client'
-import { images, mealPlanEntries, mealSlots, recipes } from '../db/schema'
+import { images, mealPlanEntries, mealSlots, recipeIngredients, recipes, recipeTags } from '../db/schema'
 import { HttpError } from '../errors'
 import { chunk } from '../http'
+import { listMembers } from './family'
 import { imageUrl } from './recipes'
 
 type EntryRow = typeof mealPlanEntries.$inferSelect
@@ -31,7 +33,9 @@ function selectEntries(db: Db) {
 
 type JoinedRow = Awaited<ReturnType<ReturnType<typeof selectEntries>['all']>>[number]
 
-function toEntryDto(row: JoinedRow): PlanEntryDto {
+type EntryBase = Omit<PlanEntryDto, 'warnings'>
+
+function toEntryDto(row: JoinedRow): EntryBase {
   const e = row.entry
   return {
     id: e.id,
@@ -56,6 +60,46 @@ function toEntryDto(row: JoinedRow): PlanEntryDto {
   }
 }
 
+/**
+ * Upozornenia pre rodinu (alergie, averzie, diéty) ku každému jedlu s receptom.
+ * Bez jedinej preferencie v rodine sa nič ďalšie nenačítava.
+ */
+async function attachWarnings(db: Db, householdId: string, entries: EntryBase[]): Promise<PlanEntryDto[]> {
+  const members = await listMembers(db, householdId)
+  if (!members.some((m) => m.preferences.length > 0)) return entries.map((e) => ({ ...e, warnings: [] }))
+
+  const recipeIds = [...new Set(entries.filter((e) => e.recipe && !e.recipe.deleted).map((e) => e.recipeId!))]
+  const ingredientsOf = new Map<string, string[]>()
+  const tagsOf = new Map<string, string[]>()
+  for (const ids of chunk(recipeIds, 90)) {
+    const [ingredientRows, tagRows] = await db.batch([
+      db
+        .select({ recipeId: recipeIngredients.recipeId, ingredientId: recipeIngredients.ingredientId })
+        .from(recipeIngredients)
+        .where(inArray(recipeIngredients.recipeId, ids)),
+      db
+        .select({ recipeId: recipeTags.recipeId, tagId: recipeTags.tagId })
+        .from(recipeTags)
+        .where(inArray(recipeTags.recipeId, ids)),
+    ])
+    for (const r of ingredientRows)
+      ingredientsOf.set(r.recipeId, [...(ingredientsOf.get(r.recipeId) ?? []), r.ingredientId])
+    for (const r of tagRows) tagsOf.set(r.recipeId, [...(tagsOf.get(r.recipeId) ?? []), r.tagId])
+  }
+
+  return entries.map((e) => ({
+    ...e,
+    warnings:
+      e.recipe && !e.recipe.deleted
+        ? preferenceConflicts(
+            { ingredientIds: ingredientsOf.get(e.recipeId!) ?? [], tagIds: tagsOf.get(e.recipeId!) ?? [] },
+            members,
+            e.audience,
+          )
+        : [],
+  }))
+}
+
 export async function listPlan(
   db: Db,
   householdId: string,
@@ -70,7 +114,7 @@ export async function listPlan(
       asc(mealPlanEntries.sortOrder),
       asc(mealPlanEntries.createdAt),
     )
-  return rows.map(toEntryDto)
+  return attachWarnings(db, householdId, rows.map(toEntryDto))
 }
 
 async function getEntryDto(db: Db, householdId: string, id: string): Promise<PlanEntryDto> {
@@ -78,7 +122,8 @@ async function getEntryDto(db: Db, householdId: string, id: string): Promise<Pla
     .where(and(eq(mealPlanEntries.id, id), eq(mealPlanEntries.householdId, householdId)))
     .get()
   if (!row) throw new HttpError(404, 'not_found', 'Jedlo v pláne neexistuje.')
-  return toEntryDto(row)
+  const [entry] = await attachWarnings(db, householdId, [toEntryDto(row)])
+  return entry!
 }
 
 async function findEntry(db: Db, householdId: string, id: string): Promise<EntryRow> {

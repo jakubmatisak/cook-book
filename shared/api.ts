@@ -1,4 +1,5 @@
 import type { MemberKind, PlanAudience } from './family'
+import type { MemberPreference, PreferenceWarning } from './preferences'
 import type { RecipeFacets } from './recipeFacets'
 import type { RecipeCategory } from './recipes'
 import type { RecipeInputRaw } from './schemas/recipe'
@@ -36,7 +37,11 @@ export interface FamilyMemberDto {
   color: string | null
   isActive: boolean
   sortOrder: number
+  /** Alergie, averzie a diéty člena (pre upozornenia pri plánovaní). */
+  preferences: MemberPreference[]
 }
+
+export type { MemberPreference, PreferenceWarning }
 
 export interface MealSlotDto {
   id: string
@@ -219,6 +224,8 @@ export interface PlanEntryDto {
   note: string | null
   sortOrder: number
   audience: PlanAudience
+  /** Čo v tomto jedle nesedí rodine (alergia, averzia, diéta); recept sa neskrýva. */
+  warnings: PreferenceWarning[]
 }
 
 export interface WeekTemplateDto {

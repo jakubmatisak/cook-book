@@ -4,14 +4,20 @@ import type { MeResponse } from '../../shared/api'
 import { familyMembers, households, mealSlots, settings } from '../db/schema'
 import type { AppEnv } from '../env'
 import { HttpError } from '../errors'
-import { mergeSettings, toMemberDto, toSlotDto } from '../services/family'
+import {
+  groupPreferences,
+  mergeSettings,
+  preferenceRowsQuery,
+  toMemberDto,
+  toSlotDto,
+} from '../services/family'
 
 export const meRoutes = new Hono<AppEnv>().get('/', async (c) => {
   const db = c.get('db')
   const user = c.get('user')
   const hid = user.householdId
 
-  const [householdRows, memberRows, slotRows, settingRows] = await db.batch([
+  const [householdRows, memberRows, slotRows, settingRows, prefRows] = await db.batch([
     db.select().from(households).where(eq(households.id, hid)),
     db
       .select()
@@ -23,15 +29,17 @@ export const meRoutes = new Hono<AppEnv>().get('/', async (c) => {
       .select({ key: settings.key, value: settings.value })
       .from(settings)
       .where(eq(settings.householdId, hid)),
+    preferenceRowsQuery(db, hid),
   ])
 
   const household = householdRows[0]
   if (!household) throw new HttpError(500, 'household_missing', 'Domácnosť používateľa neexistuje.')
 
+  const prefs = groupPreferences(prefRows)
   const body: MeResponse = {
     user: { id: user.id, email: user.email, name: user.name, memberId: user.memberId },
     household: { id: household.id, name: household.name },
-    members: memberRows.map(toMemberDto),
+    members: memberRows.map((m) => toMemberDto(m, prefs.get(m.id))),
     slots: slotRows.map(toSlotDto),
     settings: mergeSettings(settingRows),
   }

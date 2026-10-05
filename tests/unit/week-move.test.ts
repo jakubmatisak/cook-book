@@ -13,6 +13,7 @@ const entry: PlanEntryDto = {
   note: 'bez soli',
   sortOrder: 2,
   audience: 'all',
+  warnings: [],
 }
 
 describe('entryToInput', () => {

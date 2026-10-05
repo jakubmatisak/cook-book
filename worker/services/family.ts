@@ -1,15 +1,67 @@
-import { and, asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import type { BatchItem } from 'drizzle-orm/batch'
 import type { FamilyMemberDto, HouseholdSettings, MealSlotDto } from '../../shared/api'
-import type { MemberInput, SettingsUpdate, SlotUpdate } from '../../shared/schemas/family'
+import { newId } from '../../shared/ids'
+import { PREFERENCE_KINDS, type MemberPreference, type PreferenceKind } from '../../shared/preferences'
+import type {
+  MemberInput,
+  MemberPreferencesInput,
+  SettingsUpdate,
+  SlotUpdate,
+} from '../../shared/schemas/family'
+import { normalizeText } from '../../shared/text'
 import type { Db } from '../db/client'
-import { familyMembers, mealSlots, settings } from '../db/schema'
+import { familyMembers, ingredients, mealSlots, memberPreferences, settings, tags } from '../db/schema'
 import { HttpError, isUniqueViolation } from '../errors'
+import { chunk } from '../http'
 import { DEFAULT_SETTINGS } from './household'
 
 type MemberRow = typeof familyMembers.$inferSelect
 type SlotRow = typeof mealSlots.$inferSelect
 
-export const toMemberDto = (m: MemberRow): FamilyMemberDto => ({
+/** Preferencie domácnosti s názvami ingrediencií a tagov (jeden dotaz; hodí sa aj do `db.batch`). */
+export const preferenceRowsQuery = (db: Db, householdId: string) =>
+  db
+    .select({
+      memberId: memberPreferences.memberId,
+      kind: memberPreferences.kind,
+      ingredientId: memberPreferences.ingredientId,
+      tagId: memberPreferences.tagId,
+      // Aliasy: v `db.batch` D1 vracia riadky podľa názvu stĺpca a dva stĺpce `name` by sa prepísali.
+      ingredientName: sql<string | null>`${ingredients.name}`.as('ingredient_name'),
+      tagName: sql<string | null>`${tags.name}`.as('tag_name'),
+    })
+    .from(memberPreferences)
+    .innerJoin(familyMembers, eq(familyMembers.id, memberPreferences.memberId))
+    .leftJoin(ingredients, eq(ingredients.id, memberPreferences.ingredientId))
+    .leftJoin(tags, eq(tags.id, memberPreferences.tagId))
+    .where(eq(familyMembers.householdId, householdId))
+
+const KIND_ORDER = new Map<PreferenceKind, number>(PREFERENCE_KINDS.map((k, i) => [k, i]))
+
+/** Preferencie po členoch: alergie, averzie, diéty, v rámci druhu podľa názvu. Zmazaná ingrediencia/tag sa vynechá. */
+export function groupPreferences(
+  rows: Awaited<ReturnType<typeof preferenceRowsQuery>>,
+): Map<string, MemberPreference[]> {
+  const byMember = new Map<string, MemberPreference[]>()
+  for (const r of rows) {
+    const label = r.ingredientName ?? r.tagName
+    if (!label) continue
+    const list = byMember.get(r.memberId) ?? []
+    list.push({ kind: r.kind, ingredientId: r.ingredientId, tagId: r.tagId, label })
+    byMember.set(r.memberId, list)
+  }
+  for (const list of byMember.values()) {
+    list.sort(
+      (a, b) =>
+        (KIND_ORDER.get(a.kind) ?? 9) - (KIND_ORDER.get(b.kind) ?? 9) ||
+        normalizeText(a.label).localeCompare(normalizeText(b.label)),
+    )
+  }
+  return byMember
+}
+
+export const toMemberDto = (m: MemberRow, preferences: MemberPreference[] = []): FamilyMemberDto => ({
   id: m.id,
   name: m.name,
   kind: m.kind,
@@ -18,6 +70,7 @@ export const toMemberDto = (m: MemberRow): FamilyMemberDto => ({
   color: m.color,
   isActive: m.isActive,
   sortOrder: m.sortOrder,
+  preferences,
 })
 
 export const toSlotDto = (s: SlotRow): MealSlotDto => ({
@@ -59,12 +112,16 @@ export async function updateSettings(db: Db, householdId: string, patch: Setting
 }
 
 export async function listMembers(db: Db, householdId: string): Promise<FamilyMemberDto[]> {
-  const rows = await db
-    .select()
-    .from(familyMembers)
-    .where(eq(familyMembers.householdId, householdId))
-    .orderBy(asc(familyMembers.sortOrder), asc(familyMembers.name))
-  return rows.map(toMemberDto)
+  const [rows, prefRows] = await db.batch([
+    db
+      .select()
+      .from(familyMembers)
+      .where(eq(familyMembers.householdId, householdId))
+      .orderBy(asc(familyMembers.sortOrder), asc(familyMembers.name)),
+    preferenceRowsQuery(db, householdId),
+  ])
+  const prefs = groupPreferences(prefRows)
+  return rows.map((m) => toMemberDto(m, prefs.get(m.id)))
 }
 
 async function findMember(db: Db, householdId: string, id: string): Promise<MemberRow> {
@@ -132,7 +189,8 @@ export async function updateMember(
     })
     .where(eq(familyMembers.id, id))
     .returning()
-  return toMemberDto(row!)
+  const prefs = groupPreferences(await preferenceRowsQuery(db, householdId))
+  return toMemberDto(row!, prefs.get(id))
 }
 
 export async function deleteMember(db: Db, householdId: string, id: string): Promise<void> {
@@ -157,4 +215,72 @@ export async function updateSlot(
     if (isUniqueViolation(error)) throw new HttpError(409, 'duplicate', 'Jedlo s týmto názvom už existuje.')
     throw error
   }
+}
+
+const invalidPreference = () => new HttpError(400, 'invalid_preference', 'Ingrediencia alebo tag neexistuje.')
+
+/** Všetky zadané id musia existovať v domácnosti, inak sa neuloží nič. */
+async function assertAll(
+  db: Db,
+  householdId: string,
+  table: 'ingredients' | 'tags',
+  ids: readonly string[],
+): Promise<void> {
+  if (ids.length === 0) return
+  let found = 0
+  for (const part of chunk(ids, 90)) {
+    const rows =
+      table === 'ingredients'
+        ? await db
+            .select({ id: ingredients.id })
+            .from(ingredients)
+            .where(
+              and(
+                eq(ingredients.householdId, householdId),
+                isNull(ingredients.deletedAt),
+                inArray(ingredients.id, part),
+              ),
+            )
+        : await db
+            .select({ id: tags.id })
+            .from(tags)
+            .where(and(eq(tags.householdId, householdId), inArray(tags.id, part)))
+    found += rows.length
+  }
+  if (found !== ids.length) throw invalidPreference()
+}
+
+/**
+ * Nahradí všetky preferencie člena. Duplicity sa spoja a alergia má prednosť pred averziou
+ * na tú istú ingredienciu.
+ */
+export async function saveMemberPreferences(
+  db: Db,
+  householdId: string,
+  memberId: string,
+  input: MemberPreferencesInput,
+): Promise<FamilyMemberDto> {
+  const member = await findMember(db, householdId, memberId)
+  const allergies = [...new Set(input.allergies)]
+  const dislikes = [...new Set(input.dislikes)].filter((id) => !allergies.includes(id))
+  const diets = [...new Set(input.diets)]
+  await assertAll(db, householdId, 'ingredients', [...allergies, ...dislikes])
+  await assertAll(db, householdId, 'tags', diets)
+
+  const rows = [
+    ...allergies.map((id) => ({ kind: 'allergy' as const, ingredientId: id, tagId: null })),
+    ...dislikes.map((id) => ({ kind: 'dislike' as const, ingredientId: id, tagId: null })),
+    ...diets.map((id) => ({ kind: 'diet' as const, ingredientId: null, tagId: id })),
+  ]
+  const statements: BatchItem<'sqlite'>[] = [
+    db.delete(memberPreferences).where(eq(memberPreferences.memberId, memberId)),
+  ]
+  // 5 stĺpcov na riadok a limit D1 100 parametrov na príkaz.
+  for (const part of chunk(rows, 15)) {
+    statements.push(db.insert(memberPreferences).values(part.map((r) => ({ id: newId(), memberId, ...r }))))
+  }
+  const [first, ...rest] = statements
+  await db.batch([first!, ...rest])
+  const prefs = groupPreferences(await preferenceRowsQuery(db, householdId))
+  return toMemberDto(member, prefs.get(memberId))
 }

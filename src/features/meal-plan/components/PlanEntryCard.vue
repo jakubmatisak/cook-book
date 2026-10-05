@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { mdiNoteTextOutline } from '@mdi/js'
+import { mdiAlertOutline, mdiNoteTextOutline } from '@mdi/js'
 import { computed } from 'vue'
 import type { FamilyMemberDto, PlanEntryDto } from '@shared/api'
 import { entryPortions } from '@shared/portions'
+import { describeWarning } from '@shared/preferences'
 
 const props = defineProps<{
   entry: PlanEntryDto
@@ -13,6 +14,8 @@ const props = defineProps<{
 }>()
 defineEmits<{ edit: [entry: PlanEntryDto]; dragstart: [event: DragEvent, entry: PlanEntryDto] }>()
 
+const warningText = computed(() => props.entry.warnings.map(describeWarning).join('; '))
+const hasAllergy = computed(() => props.entry.warnings.some((w) => w.kind === 'allergy'))
 const title = computed(() => props.entry.recipe?.title ?? props.entry.freeText ?? '')
 const portions = computed(
   () => entryPortions(props.entry, props.members) ?? props.entry.recipe?.servings ?? null,
@@ -42,6 +45,16 @@ const subtitle = computed(() => {
         <v-avatar :size="dense ? 28 : 40" rounded="sm">
           <v-img :src="entry.recipe.coverImageUrl" cover />
         </v-avatar>
+      </template>
+      <template v-if="entry.warnings.length" #append>
+        <v-icon
+          :icon="mdiAlertOutline"
+          :color="hasAllergy ? 'error' : 'warning'"
+          size="small"
+          :title="warningText"
+          :aria-label="warningText"
+          data-test="entry-warning"
+        />
       </template>
       <v-card-title class="text-body-2 font-weight-bold text-wrap" :class="{ 'font-italic': !entry.recipe }">
         {{ title }}

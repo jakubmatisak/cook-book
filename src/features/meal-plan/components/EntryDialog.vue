@@ -5,7 +5,8 @@ import { formatDayLabel } from '@shared/dates'
 import { entryPortions } from '@shared/portions'
 import { planEntryInputSchema } from '@shared/schemas/plan'
 import { useDeleteEntry, useSaveEntry } from '@/api/plan'
-import { useRecipes } from '@/api/recipes'
+import { useRecipe, useRecipes } from '@/api/recipes'
+import { describeWarning, preferenceConflicts } from '@shared/preferences'
 import { describeIssues } from '@/features/recipes/form'
 import { matchesSearch } from '@/lib/search'
 
@@ -33,6 +34,19 @@ const error = ref('')
 const confirmDelete = ref(false)
 
 const { data: recipeList } = useRecipes(() => ({}))
+
+// Upozornenie na alergie, averzie a diéty rodiny pri vybranom recepte (recept sa nezakazuje).
+const selectedRecipeId = computed(() => (mode.value === 'recipe' ? recipeId.value : null))
+const { data: selectedRecipe } = useRecipe(() => selectedRecipeId.value ?? undefined)
+const warnings = computed(() => {
+  const recipe = selectedRecipe.value
+  if (!recipe || recipe.id !== selectedRecipeId.value) return []
+  return preferenceConflicts(
+    { ingredientIds: recipe.ingredients.map((i) => i.ingredientId), tagIds: recipe.tags.map((t) => t.id) },
+    props.members,
+    props.entry?.audience ?? 'all',
+  )
+})
 const recipes = computed(() => recipeList.value?.items)
 const save = useSaveEntry()
 const remove = useDeleteEntry()
@@ -156,6 +170,18 @@ async function onDelete() {
           autofocus
           hide-details
         />
+
+        <v-alert
+          v-if="warnings.length"
+          :type="warnings.some((w) => w.kind === 'allergy') ? 'error' : 'warning'"
+          density="compact"
+          title="Pozor pri tomto jedle"
+          data-test="entry-warnings"
+        >
+          <ul class="ps-4">
+            <li v-for="w in warnings" :key="w.memberId + w.kind + w.label">{{ describeWarning(w) }}</li>
+          </ul>
+        </v-alert>
 
         <v-row dense>
           <v-col cols="12" sm="6">

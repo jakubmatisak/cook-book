@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { mdiCheck } from '@mdi/js'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { FamilyMemberDto } from '@shared/api'
 import { MEMBER_COLORS, MEMBER_KIND_LABELS, type MemberKind } from '@shared/family'
-import { useDeleteMember, useSaveMember } from '@/api/family'
+import { useIngredients, useTags } from '@/api/catalog'
+import { useDeleteMember, useSaveMember, useSaveMemberPreferences } from '@/api/family'
 
 const open = defineModel<boolean>({ required: true })
 const props = defineProps<{ member: FamilyMemberDto | null; childFactor: number; nextColor: string }>()
@@ -16,8 +17,25 @@ const isActive = ref(true)
 const error = ref('')
 const confirmDelete = ref(false)
 
+const allergies = ref<string[]>([])
+const dislikes = ref<string[]>([])
+const diets = ref<string[]>([])
+
 const save = useSaveMember()
+const savePreferences = useSaveMemberPreferences()
 const remove = useDeleteMember()
+const saving = computed(() => save.isPending.value || savePreferences.isPending.value)
+
+const { data: ingredients } = useIngredients()
+const { data: tags } = useTags()
+const ingredientItems = computed(() => ingredients.value?.map((i) => ({ title: i.name, value: i.id })) ?? [])
+const tagItems = computed(() => tags.value?.map((t) => ({ title: t.name, value: t.id })) ?? [])
+
+const idsOf = (member: FamilyMemberDto | null, kind: 'allergy' | 'dislike' | 'diet') =>
+  (member?.preferences ?? [])
+    .filter((p) => p.kind === kind)
+    .map((p) => (kind === 'diet' ? p.tagId : p.ingredientId))
+    .filter((id): id is string => id !== null)
 
 watch(open, (isOpen) => {
   if (!isOpen) return
@@ -27,6 +45,9 @@ watch(open, (isOpen) => {
   factor.value = m?.portionFactor ?? 1
   color.value = m?.color ?? props.nextColor
   isActive.value = m?.isActive ?? true
+  allergies.value = idsOf(m, 'allergy')
+  dislikes.value = idsOf(m, 'dislike')
+  diets.value = idsOf(m, 'diet')
   error.value = ''
   confirmDelete.value = false
 })
@@ -44,7 +65,7 @@ async function onSave() {
     return
   }
   try {
-    await save.mutateAsync({
+    const saved = await save.mutateAsync({
       id: props.member?.id,
       input: {
         name: name.value,
@@ -53,6 +74,12 @@ async function onSave() {
         color: color.value,
         isActive: isActive.value,
       },
+    })
+    await savePreferences.mutateAsync({
+      id: saved.id,
+      allergies: allergies.value,
+      dislikes: dislikes.value,
+      diets: diets.value,
     })
     open.value = false
   } catch (e) {
@@ -124,6 +151,45 @@ async function onDelete() {
           </v-chip-group>
         </div>
 
+        <div>
+          <div class="text-caption text-medium-emphasis mb-1">Jedlo a zdravie</div>
+          <div class="d-flex flex-column ga-3">
+            <v-autocomplete
+              v-model="allergies"
+              :items="ingredientItems"
+              label="Alergie"
+              hint="Pri plánovaní jedla s touto ingredienciou ťa upozorníme."
+              persistent-hint
+              multiple
+              chips
+              closable-chips
+              no-data-text="Žiadna ingrediencia"
+            />
+            <v-autocomplete
+              v-model="dislikes"
+              :items="ingredientItems"
+              label="Averzie"
+              hint="Ingrediencie, ktoré nechutia. Len upozornenie, recept ostane v pláne."
+              persistent-hint
+              multiple
+              chips
+              closable-chips
+              no-data-text="Žiadna ingrediencia"
+            />
+            <v-autocomplete
+              v-model="diets"
+              :items="tagItems"
+              label="Diéta (tagy, ktoré recept má mať)"
+              hint="Napr. Vegetariánske. Upozorníme na recepty bez tohto tagu."
+              persistent-hint
+              multiple
+              chips
+              closable-chips
+              no-data-text="Žiadny tag"
+            />
+          </div>
+        </div>
+
         <v-switch
           v-model="isActive"
           color="primary"
@@ -145,7 +211,7 @@ async function onDelete() {
         </template>
         <v-spacer />
         <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
-        <v-btn color="primary" :loading="save.isPending.value" @click="onSave">Uložiť</v-btn>
+        <v-btn color="primary" :loading="saving" @click="onSave">Uložiť</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
