@@ -9,6 +9,18 @@ export const routes: RouteRecordRaw[] = [
     meta: { title: 'Recepty' },
   },
   {
+    path: '/recepty/novy',
+    name: 'recipe-new',
+    component: () => import('@/features/recipes/pages/RecipeEditPage.vue'),
+    meta: { title: 'Nový recept' },
+  },
+  {
+    path: '/recepty/:id/upravit',
+    name: 'recipe-edit',
+    component: () => import('@/features/recipes/pages/RecipeEditPage.vue'),
+    meta: { title: 'Upraviť recept' },
+  },
+  {
     path: '/recepty/:id',
     name: 'recipe',
     component: () => import('@/features/recipes/pages/RecipeDetailPage.vue'),

@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { RecipeDetailDto } from '@shared/api'
 import { recipeInputSchema } from '@shared/schemas/recipe'
-import { emptyRecipeForm, formToInput, parseQuantity, recipeToForm } from '@/features/recipes/form'
+import {
+  describeIssues,
+  emptyRecipeForm,
+  formToInput,
+  parseQuantity,
+  recipeToForm,
+} from '@/features/recipes/form'
 
 describe('parseQuantity', () => {
   it('prijme desatinnú čiarku, bodku a zlomok', () => {
@@ -120,5 +126,21 @@ describe('formulár receptu', () => {
       steps: [{ text: 'Var.', timerSeconds: 90 }],
       tags: ['Klasika'],
     })
+  })
+})
+
+describe('describeIssues', () => {
+  it('preloží cestu chyby na ľudský popis', () => {
+    const form = emptyRecipeForm()
+    form.title = ''
+    form.ingredients = [
+      { key: 'a', name: 'Múka', quantity: '1', unit: 'kg', note: '', groupName: '', isOptional: false },
+      { key: 'b', name: 'Cukor', quantity: 'veľa', unit: 'g', note: '', groupName: '', isOptional: false },
+    ]
+    const result = recipeInputSchema.safeParse(formToInput(form))
+    expect(result.success).toBe(false)
+    const messages = describeIssues(result.error!.issues)
+    expect(messages).toContain('Názov: Zadaj názov receptu.')
+    expect(messages.some((m) => m.startsWith('Ingrediencia 2 – množstvo:'))).toBe(true)
   })
 })

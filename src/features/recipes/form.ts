@@ -168,3 +168,37 @@ export function formToInput(form: RecipeForm): RecipeInputRaw {
     tags: form.tags.map((t) => t.trim()).filter(Boolean),
   }
 }
+
+const FIELD_LABELS: Record<string, string> = {
+  title: 'Názov',
+  description: 'Popis',
+  category: 'Kategória',
+  servings: 'Porcie',
+  prepMinutes: 'Príprava',
+  cookMinutes: 'Varenie',
+  difficulty: 'Náročnosť',
+  sourceUrl: 'Zdroj (adresa)',
+  sourceText: 'Zdroj',
+  tags: 'Tagy',
+  name: 'názov',
+  quantity: 'množstvo',
+  unit: 'jednotka',
+  note: 'poznámka',
+  groupName: 'skupina',
+  text: 'text',
+  timerSeconds: 'časovač',
+}
+
+/** Chyby zod schémy ako vety pre používateľa, napr. „Ingrediencia 2 – množstvo: …“. */
+export function describeIssues(issues: readonly { path: PropertyKey[]; message: string }[]): string[] {
+  return issues.map((issue) => {
+    const [field, index, sub] = issue.path
+    if ((field === 'ingredients' || field === 'steps') && typeof index === 'number') {
+      const what = field === 'ingredients' ? 'Ingrediencia' : 'Krok'
+      const subLabel = typeof sub === 'string' ? (FIELD_LABELS[sub] ?? sub) : undefined
+      return `${what} ${index + 1}${subLabel ? ` – ${subLabel}` : ''}: ${issue.message}`
+    }
+    const label = typeof field === 'string' ? (FIELD_LABELS[field] ?? field) : 'Recept'
+    return `${label}: ${issue.message}`
+  })
+}
