@@ -111,6 +111,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit, opts: ApiFet
     headers.set('content-type', 'application/json')
   }
   const res = await send(path, { ...init, headers }, opts)
+  if (res.status === 204) return undefined as T
   const body = await readJson(res)
   if (body === undefined) {
     throw new ApiError(res.status, 'invalid_response', 'Server vrátil neočakávanú odpoveď.')

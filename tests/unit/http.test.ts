@@ -133,3 +133,10 @@ describe('createSessionExpiredHandler', () => {
     expect(navigate).toHaveBeenCalledOnce()
   })
 })
+
+describe('apiFetch – odpoveď bez obsahu', () => {
+  it('204 No Content vráti undefined namiesto chyby', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    await expect(apiFetch<void>('/recipes/x', { method: 'DELETE' }, { fetchFn })).resolves.toBeUndefined()
+  })
+})
