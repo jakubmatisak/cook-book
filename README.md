@@ -73,11 +73,11 @@ niektorý krok pýtal, zastav sa a over, že máš vybraný Free plán.
    npm run deploy
    ```
 
-   Worker beží na `https://kucharska-kniha.<tvoj-subdomain>.workers.dev`. Kým nezapneš Access, API vracia 401,
+   Worker beží na `https://cook-book.jakub-matisak.workers.dev`. Kým nezapneš Access, API vracia 401,
    takže dáta nie sú prístupné.
 
 4. **Cloudflare Access (prihlásenie)**
-   - Dashboard → Workers & Pages → `kucharska-kniha` → Settings → Domains & Routes → pri `workers.dev` zapni
+   - Dashboard → Workers & Pages → `cook-book` → Settings → Domains & Routes → pri `workers.dev` zapni
      **Cloudflare Access**. Zapni ho aj pre Preview URLs.
    - Okno ukáže `POLICY_AUD` a `TEAM_DOMAIN`; obe si skopíruj.
    - Zero Trust → Access → Applications → otvor vytvorenú aplikáciu → Policies: ponechaj len pravidlo **Allow**
@@ -103,7 +103,7 @@ niektorý krok pýtal, zastav sa a over, že máš vybraný Free plán.
 
 ### Automatický deploy z GitHubu (voliteľné)
 
-Dashboard → Workers & Pages → `kucharska-kniha` → Settings → Builds → pripoj GitHub repozitár. Build command
+Dashboard → Workers & Pages → `cook-book` → Settings → Builds → pripoj GitHub repozitár. Build command
 `npm run build`, deploy command `npx wrangler deploy`. Migrácie pri zmene schémy spúšťaj ručne
 `npm run db:migrate:remote` pred pushom.
 
