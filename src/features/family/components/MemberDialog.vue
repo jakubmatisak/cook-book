@@ -74,11 +74,11 @@ async function onDelete() {
 <template>
   <v-dialog v-model="open" max-width="460">
     <v-card :title="member ? 'Upraviť člena rodiny' : 'Nový člen rodiny'">
-      <v-card-text class="tw:flex tw:flex-col tw:gap-4">
+      <v-card-text class="d-flex flex-column ga-4">
         <v-text-field v-model="name" label="Meno" autofocus hide-details="auto" @keydown.enter="onSave" />
 
         <div>
-          <div class="text-caption text-medium-emphasis tw:mb-1">Kto to je</div>
+          <div class="text-caption text-medium-emphasis mb-1">Kto to je</div>
           <v-btn-toggle
             :model-value="kind"
             mandatory
@@ -94,9 +94,9 @@ async function onDelete() {
         </div>
 
         <div>
-          <div class="tw:flex tw:items-baseline tw:justify-between">
+          <div class="d-flex align-baseline justify-space-between">
             <span class="text-caption text-medium-emphasis">Veľkosť porcie</span>
-            <span class="text-body-2 tw:font-bold">{{ formatFactor(factor) }} × dospelý</span>
+            <span class="text-body-2 font-weight-bold">{{ formatFactor(factor) }} × dospelý</span>
           </div>
           <v-slider v-model="factor" :min="0.25" :max="1.5" :step="0.05" color="primary" hide-details />
           <p class="text-caption text-medium-emphasis">
@@ -105,22 +105,21 @@ async function onDelete() {
         </div>
 
         <div>
-          <div class="text-caption text-medium-emphasis tw:mb-1">Farba</div>
-          <div class="tw:flex tw:flex-wrap tw:gap-2" role="radiogroup" aria-label="Farba člena">
-            <button
+          <div class="text-caption text-medium-emphasis mb-1">Farba</div>
+          <v-chip-group v-model="color" mandatory column>
+            <v-chip
               v-for="c in MEMBER_COLORS"
               :key="c"
-              type="button"
-              role="radio"
-              :aria-checked="color === c"
+              :value="c"
+              :color="c"
+              variant="flat"
+              size="large"
               :aria-label="`Farba ${c}`"
-              class="tw:flex tw:size-9 tw:items-center tw:justify-center tw:rounded-full"
-              :style="{ background: c }"
-              @click="color = c"
+              class="px-3"
             >
-              <v-icon v-if="color === c" :icon="mdiCheck" color="white" size="20" />
-            </button>
-          </div>
+              <v-icon :icon="mdiCheck" :style="{ visibility: color === c ? 'visible' : 'hidden' }" />
+            </v-chip>
+          </v-chip-group>
         </div>
 
         <v-switch
@@ -131,20 +130,20 @@ async function onDelete() {
           persistent-hint
         />
 
-        <v-alert v-if="error" type="error" variant="tonal" density="compact" :text="error" />
+        <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
       <v-card-actions>
         <template v-if="member">
           <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true"
             >Zmazať</v-btn
           >
-          <v-btn v-else color="error" variant="flat" :loading="remove.isPending.value" @click="onDelete">
-            Naozaj zmazať
-          </v-btn>
+          <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete"
+            >Naozaj zmazať</v-btn
+          >
         </template>
         <v-spacer />
         <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
-        <v-btn color="primary" variant="flat" :loading="save.isPending.value" @click="onSave">Uložiť</v-btn>
+        <v-btn color="primary" :loading="save.isPending.value" @click="onSave">Uložiť</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

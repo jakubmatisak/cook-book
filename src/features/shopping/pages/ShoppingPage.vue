@@ -26,6 +26,7 @@ import {
   useToggleItem,
 } from '@/api/shopping'
 import EmptyState from '@/components/EmptyState.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import { useOnline } from '@/composables/useOnline'
 import { useToday } from '@/composables/useToday'
 import { plural } from '@/lib/format'
@@ -59,7 +60,6 @@ async function flushQueue() {
 const online = useOnline(flushQueue)
 onMounted(flushQueue)
 
-// Skupiny podľa kategórie obchodu (poradie dodá server)
 const categoryName = (id: string | null) => categories.value?.find((c) => c.id === id)?.name ?? 'Ostatné'
 const toBuy = computed(() => items.value?.filter((i) => !i.isChecked) ?? [])
 const inCart = computed(() => items.value?.filter((i) => i.isChecked) ?? [])
@@ -75,11 +75,16 @@ const groups = computed(() => {
 })
 const showCart = ref(false)
 
+const subtitle = computed(() => {
+  if (!items.value?.length) return undefined
+  return `${plural(toBuy.value.length, 'položka', 'položky', 'položiek')} na kúpenie · ${inCart.value.length} v košíku`
+})
+
 // Pridanie jedným riadkom: „2 kg zemiaky“
 const newItem = ref('')
 const add = useAddItem()
 async function onAdd() {
-  const parsed = parseItemText(newItem.value)
+  const parsed = parseItemText(newItem.value ?? '')
   if (!parsed.name || !listId.value) return
   try {
     await add.mutateAsync({ listId: listId.value, input: { ...parsed, shopCategoryId: null } })
@@ -116,15 +121,14 @@ function onEdit(item: ShoppingItemDto) {
 const generateOpen = ref(false)
 function onGenerated(result: GenerateResult) {
   const parts = [`pridané ${plural(result.added, 'položka', 'položky', 'položiek')}`]
-  if (result.kept) parts.push(`${plural(result.kept, 'kúpená ostala', 'kúpené ostali', 'kúpených ostalo')}`)
+  if (result.kept) parts.push(plural(result.kept, 'kúpená ostala', 'kúpené ostali', 'kúpených ostalo'))
   notify(`Hotovo: ${parts.join(', ')}.`)
 }
 </script>
 
 <template>
-  <div class="tw:mx-auto tw:flex tw:w-full tw:max-w-2xl tw:flex-col tw:gap-4">
-    <div class="tw:flex tw:items-center tw:gap-2">
-      <h1 class="text-h5 tw:mr-auto">Nákupný zoznam</h1>
+  <div class="mx-auto" style="max-width: 44rem">
+    <PageHeader title="Nákupný zoznam" :subtitle="subtitle">
       <v-btn
         color="primary"
         variant="tonal"
@@ -147,14 +151,14 @@ function onGenerated(result: GenerateResult) {
           />
         </v-list>
       </v-menu>
-    </div>
+    </PageHeader>
 
     <v-alert
       v-if="!online || queued"
       type="warning"
-      variant="tonal"
       density="compact"
       :icon="mdiCloudOffOutline"
+      class="mb-4"
       :text="
         online
           ? `Čaká na odoslanie: ${plural(queued, 'zmena', 'zmeny', 'zmien')} z času bez signálu.`
@@ -162,7 +166,7 @@ function onGenerated(result: GenerateResult) {
       "
     />
 
-    <form class="tw:flex tw:gap-2" @submit.prevent="onAdd">
+    <v-form class="d-flex ga-2 mb-4" @submit.prevent="onAdd">
       <v-text-field
         v-model="newItem"
         label="Pridať položku, napr. 2 kg zemiaky"
@@ -177,12 +181,12 @@ function onGenerated(result: GenerateResult) {
         :icon="mdiPlus"
         size="large"
         :loading="add.isPending.value"
-        :disabled="!newItem.trim()"
+        :disabled="!newItem?.trim()"
         aria-label="Pridať položku"
       />
-    </form>
+    </v-form>
 
-    <v-alert v-if="error" type="error" variant="tonal" :text="error.message" />
+    <v-alert v-if="error" type="error" :text="error.message" />
     <v-skeleton-loader v-else-if="isPending" type="list-item@6" />
 
     <EmptyState
@@ -191,54 +195,72 @@ function onGenerated(result: GenerateResult) {
       title="Zoznam je prázdny"
       text="Vygeneruj ho z jedálnička alebo pridaj položky ručne."
     >
-      <v-btn color="primary" :prepend-icon="mdiPlaylistPlus" @click="generateOpen = true">
-        Vygenerovať z jedálnička
-      </v-btn>
+      <v-btn color="primary" :prepend-icon="mdiPlaylistPlus" @click="generateOpen = true"
+        >Vygenerovať z jedálnička</v-btn
+      >
     </EmptyState>
 
     <template v-else>
-      <div v-if="!toBuy.length" class="tw:flex tw:items-center tw:gap-2 tw:py-4 tw:text-center">
-        <v-icon :icon="mdiCheckAll" color="success" />
-        <span class="text-body-1">Všetko je v košíku.</span>
-      </div>
+      <v-alert
+        v-if="!toBuy.length"
+        type="success"
+        :icon="mdiCheckAll"
+        text="Všetko je v košíku."
+        class="mb-4"
+      />
 
-      <v-card v-for="group in groups" :key="group.id">
-        <div class="text-overline text-primary tw:px-4 tw:pt-2">{{ group.name }}</div>
-        <div class="tw:pb-1">
-          <template v-for="(item, index) in group.items" :key="item.id">
-            <v-divider v-if="index > 0" class="tw:mx-4" />
-            <ShoppingItemRow :item="item" @toggle="onToggle" @edit="onEdit" />
+      <v-card v-if="groups.length" class="mb-4">
+        <v-list lines="two" class="py-0">
+          <template v-for="(group, gi) in groups" :key="group.id">
+            <v-divider v-if="gi > 0" />
+            <v-list-subheader class="text-primary font-weight-bold text-uppercase">{{
+              group.name
+            }}</v-list-subheader>
+            <ShoppingItemRow
+              v-for="item in group.items"
+              :key="item.id"
+              :item="item"
+              @toggle="onToggle"
+              @edit="onEdit"
+            />
           </template>
-        </div>
+        </v-list>
       </v-card>
 
-      <div v-if="inCart.length">
+      <template v-if="inCart.length">
         <v-btn
           variant="text"
           :append-icon="showCart ? mdiChevronUp : mdiChevronDown"
-          class="tw:mb-1"
+          class="mb-2"
           @click="showCart = !showCart"
         >
           V košíku ({{ inCart.length }})
         </v-btn>
-        <v-card v-if="showCart">
-          <template v-for="(item, index) in inCart" :key="item.id">
-            <v-divider v-if="index > 0" class="tw:mx-4" />
-            <ShoppingItemRow :item="item" @toggle="onToggle" @edit="onEdit" />
-          </template>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn
-              :prepend-icon="mdiDeleteSweepOutline"
-              variant="text"
-              :loading="clear.isPending.value"
-              @click="onClearChecked"
-            >
-              Vymazať kúpené
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </div>
+        <v-expand-transition>
+          <v-card v-if="showCart">
+            <v-list lines="two" class="py-0">
+              <ShoppingItemRow
+                v-for="item in inCart"
+                :key="item.id"
+                :item="item"
+                @toggle="onToggle"
+                @edit="onEdit"
+              />
+            </v-list>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn
+                :prepend-icon="mdiDeleteSweepOutline"
+                variant="text"
+                :loading="clear.isPending.value"
+                @click="onClearChecked"
+              >
+                Vymazať kúpené
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-expand-transition>
+      </template>
     </template>
 
     <GenerateDialog

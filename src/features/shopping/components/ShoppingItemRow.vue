@@ -15,41 +15,32 @@ const origin = computed(() =>
 </script>
 
 <template>
-  <div class="row tw:flex tw:items-center tw:gap-1 tw:pr-1" :class="{ 'row--checked': item.isChecked }">
-    <button
-      type="button"
-      class="tw:flex tw:min-h-12 tw:min-w-0 tw:flex-1 tw:items-center tw:gap-3 tw:py-1 tw:pl-2 tw:text-left"
-      role="checkbox"
-      :aria-checked="item.isChecked"
-      @click="$emit('toggle', item)"
-    >
-      <v-checkbox-btn
-        :model-value="item.isChecked"
-        color="primary"
-        density="compact"
-        tabindex="-1"
-        aria-hidden="true"
-        class="tw:pointer-events-none tw:flex-none"
+  <v-list-item
+    :title="item.name"
+    :subtitle="origin || undefined"
+    :class="{ 'opacity-60': item.isChecked }"
+    link
+    role="checkbox"
+    :aria-checked="item.isChecked"
+    @click="$emit('toggle', item)"
+  >
+    <template #prepend>
+      <v-checkbox-btn :model-value="item.isChecked" color="primary" tabindex="-1" aria-hidden="true" />
+    </template>
+    <template #title="{ title }">
+      <span class="font-weight-bold" :class="{ 'text-decoration-line-through': item.isChecked }">{{
+        title
+      }}</span>
+    </template>
+    <template #append>
+      <span v-if="quantity" class="text-body-2 font-weight-bold me-2">{{ quantity }}</span>
+      <v-btn
+        :icon="mdiPencilOutline"
+        size="small"
+        variant="text"
+        :aria-label="`Upraviť ${item.name}`"
+        @click.stop="$emit('edit', item)"
       />
-      <span class="tw:min-w-0 tw:flex-1">
-        <span class="name tw:block tw:truncate tw:text-base tw:font-semibold">{{ item.name }}</span>
-        <span v-if="origin" class="tw:block tw:truncate tw:text-xs tw:opacity-60">{{ origin }}</span>
-      </span>
-      <span v-if="quantity" class="tw:shrink-0 tw:text-sm tw:font-bold tw:tabular-nums">{{ quantity }}</span>
-    </button>
-    <v-btn
-      :icon="mdiPencilOutline"
-      size="small"
-      variant="text"
-      :aria-label="`Upraviť ${item.name}`"
-      @click="$emit('edit', item)"
-    />
-  </div>
+    </template>
+  </v-list-item>
 </template>
-
-<style scoped>
-.row--checked .name {
-  text-decoration: line-through;
-  opacity: 0.55;
-}
-</style>

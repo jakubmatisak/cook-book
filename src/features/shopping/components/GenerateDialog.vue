@@ -83,7 +83,7 @@ async function onGenerate() {
 <template>
   <v-dialog v-model="open" max-width="460">
     <v-card title="Vygenerovať z jedálnička">
-      <v-card-text class="tw:flex tw:flex-col tw:gap-3">
+      <v-card-text class="d-flex flex-column ga-3">
         <p class="text-body-2 text-medium-emphasis">
           Spočíta ingrediencie naplánovaných receptov podľa porcií vašej rodiny. Nekúpené položky z minulého
           generovania sa nahradia, kúpené a ručne pridané ostanú.
@@ -91,25 +91,23 @@ async function onGenerate() {
         <v-radio-group v-model="preset" hide-details>
           <v-radio v-for="p in presets" :key="p.value" :value="p.value" color="primary">
             <template #label>
-              <span class="tw:flex tw:flex-col">
-                <span class="tw:font-semibold">{{ p.title }}</span>
+              <span class="d-flex flex-column">
+                <span class="font-weight-bold">{{ p.title }}</span>
                 <span v-if="p.subtitle" class="text-caption text-medium-emphasis">{{ p.subtitle }}</span>
               </span>
             </template>
           </v-radio>
         </v-radio-group>
-        <div v-if="preset === 'custom'" class="tw:grid tw:grid-cols-2 tw:gap-3">
-          <v-text-field v-model="customFrom" type="date" label="Od" hide-details />
-          <v-text-field v-model="customTo" type="date" label="Do" hide-details />
-        </div>
-        <v-alert v-if="error" type="error" variant="tonal" density="compact" :text="error" />
+        <v-row v-if="preset === 'custom'" dense>
+          <v-col cols="6"><v-text-field v-model="customFrom" type="date" label="Od" hide-details /></v-col>
+          <v-col cols="6"><v-text-field v-model="customTo" type="date" label="Do" hide-details /></v-col>
+        </v-row>
+        <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
       <v-card-actions>
         <v-spacer />
         <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
-        <v-btn color="primary" variant="flat" :loading="generate.isPending.value" @click="onGenerate">
-          Vygenerovať
-        </v-btn>
+        <v-btn color="primary" :loading="generate.isPending.value" @click="onGenerate">Vygenerovať</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

@@ -61,12 +61,16 @@ async function onDelete() {
 <template>
   <v-dialog v-model="open" max-width="440">
     <v-card title="Upraviť položku">
-      <v-card-text class="tw:flex tw:flex-col tw:gap-3">
+      <v-card-text class="d-flex flex-column ga-3">
         <v-text-field v-model="name" label="Názov" hide-details autofocus @keydown.enter="onSave" />
-        <div class="tw:grid tw:grid-cols-2 tw:gap-3">
-          <v-text-field v-model="quantity" label="Množstvo" inputmode="decimal" hide-details />
-          <v-select v-model="unit" :items="unitItems" item-props label="Jednotka" clearable hide-details />
-        </div>
+        <v-row dense>
+          <v-col cols="6">
+            <v-text-field v-model="quantity" label="Množstvo" inputmode="decimal" hide-details />
+          </v-col>
+          <v-col cols="6">
+            <v-select v-model="unit" :items="unitItems" item-props label="Jednotka" clearable hide-details />
+          </v-col>
+        </v-row>
         <v-select
           v-model="categoryId"
           :items="categoryItems"
@@ -74,13 +78,13 @@ async function onDelete() {
           clearable
           hide-details
         />
-        <v-alert v-if="error" type="error" variant="tonal" density="compact" :text="error" />
+        <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
       <v-card-actions>
         <v-btn color="error" variant="text" :loading="remove.isPending.value" @click="onDelete">Zmazať</v-btn>
         <v-spacer />
         <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
-        <v-btn color="primary" variant="flat" :loading="update.isPending.value" @click="onSave">Uložiť</v-btn>
+        <v-btn color="primary" :loading="update.isPending.value" @click="onSave">Uložiť</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

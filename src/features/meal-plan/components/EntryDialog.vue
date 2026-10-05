@@ -28,6 +28,7 @@ const note = ref('')
 const date = ref('')
 const slotId = ref('')
 const error = ref('')
+const confirmDelete = ref(false)
 
 const { data: recipes } = useRecipes(() => ({}))
 const save = useSaveEntry()
@@ -44,6 +45,7 @@ watch(open, (isOpen) => {
   date.value = e?.date ?? props.initialDate
   slotId.value = e?.slotId ?? props.initialSlotId
   error.value = ''
+  confirmDelete.value = false
 })
 
 const recipeItems = computed(() => {
@@ -114,15 +116,12 @@ async function onDelete() {
 </script>
 
 <template>
-  <v-dialog v-model="open" max-width="520" scrollable>
-    <v-card>
-      <v-card-title class="tw:pt-4">
-        {{ entry ? 'Upraviť jedlo' : 'Pridať jedlo' }}
-      </v-card-title>
-      <v-card-subtitle v-if="dayLabel"
-        >{{ slotName }} · {{ dayLabel.long }} {{ dayLabel.date }}</v-card-subtitle
-      >
-      <v-card-text class="tw:flex tw:flex-col tw:gap-4">
+  <v-dialog v-model="open" max-width="520">
+    <v-card
+      :title="entry ? 'Upraviť jedlo' : 'Pridať jedlo'"
+      :subtitle="dayLabel ? `${slotName} · ${dayLabel.long} ${dayLabel.date}` : ''"
+    >
+      <v-card-text class="d-flex flex-column ga-4">
         <v-btn-toggle
           v-model="mode"
           mandatory
@@ -139,8 +138,8 @@ async function onDelete() {
           v-if="mode === 'recipe'"
           v-model="recipeId"
           :items="recipeItems"
-          label="Recept"
           :custom-filter="(value: string, query: string) => matchesSearch(value, query)"
+          label="Recept"
           no-data-text="Žiadny recept sa nenašiel"
           autofocus
           hide-details
@@ -154,41 +153,53 @@ async function onDelete() {
           hide-details
         />
 
-        <div class="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2">
-          <v-number-input
-            v-model="servings"
-            label="Porcie"
-            :placeholder="defaultPortions"
-            persistent-placeholder
-            :min="0.5"
-            :max="100"
-            :step="0.5"
-            :precision="null"
-            control-variant="split"
-            clearable
-            hide-details
-          />
-          <v-text-field v-model="note" label="Poznámka" hide-details />
-        </div>
+        <v-row dense>
+          <v-col cols="12" sm="6">
+            <v-number-input
+              v-model="servings"
+              label="Porcie"
+              :placeholder="defaultPortions"
+              persistent-placeholder
+              :min="0.5"
+              :max="100"
+              :step="0.5"
+              :precision="null"
+              control-variant="split"
+              clearable
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="note" label="Poznámka" hide-details />
+          </v-col>
+          <template v-if="entry">
+            <v-col cols="12" sm="6">
+              <v-select v-model="date" :items="dateItems" label="Deň" hide-details />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select v-model="slotId" :items="slotItems" label="Jedlo" hide-details />
+            </v-col>
+          </template>
+        </v-row>
 
-        <div v-if="entry" class="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2">
-          <v-select v-model="date" :items="dateItems" label="Deň" hide-details />
-          <v-select v-model="slotId" :items="slotItems" label="Jedlo" hide-details />
-        </div>
-
-        <v-alert v-if="error" type="error" variant="tonal" density="compact" :text="error" />
+        <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
-      <v-card-actions class="tw:flex-wrap">
-        <v-btn v-if="entry" color="error" variant="text" :loading="remove.isPending.value" @click="onDelete">
-          Zmazať
-        </v-btn>
+      <v-card-actions class="flex-wrap">
+        <template v-if="entry">
+          <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true"
+            >Zmazať</v-btn
+          >
+          <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete"
+            >Naozaj zmazať</v-btn
+          >
+        </template>
         <v-spacer />
-        <v-btn v-if="entry" variant="tonal" :loading="save.isPending.value" @click="submit(true)">
-          Uložiť ako kópiu
-        </v-btn>
-        <v-btn color="primary" variant="flat" :loading="save.isPending.value" @click="submit()">
-          {{ entry ? 'Uložiť' : 'Pridať' }}
-        </v-btn>
+        <v-btn v-if="entry" variant="tonal" :loading="save.isPending.value" @click="submit(true)"
+          >Uložiť ako kópiu</v-btn
+        >
+        <v-btn color="primary" :loading="save.isPending.value" @click="submit()">{{
+          entry ? 'Uložiť' : 'Pridať'
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

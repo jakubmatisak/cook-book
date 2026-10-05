@@ -4,6 +4,7 @@ import { ref, watch } from 'vue'
 import { useUpdateSettings, useUpdateSlot } from '@/api/family'
 import { ApiError, downloadFile } from '@/api/http'
 import { useMe } from '@/api/me'
+import PageHeader from '@/components/PageHeader.vue'
 import { plural } from '@/lib/format'
 
 const { data: me, isPending, error } = useMe()
@@ -64,17 +65,17 @@ async function exportData() {
 </script>
 
 <template>
-  <h1 class="text-h5 tw:mb-4">Nastavenia</h1>
+  <PageHeader title="Nastavenia" />
 
-  <div class="tw:flex tw:flex-col tw:gap-4">
+  <div class="d-flex flex-column ga-4">
     <v-card title="Účet">
       <v-card-text>
         <v-skeleton-loader v-if="isPending" type="list-item-two-line" />
-        <v-alert v-else-if="error" type="error" variant="tonal" :text="error.message" />
+        <v-alert v-else-if="error" type="error" :text="error.message" />
         <template v-else-if="me">
-          <div class="text-body-1 tw:font-semibold">{{ me.user.name }}</div>
+          <div class="text-body-1 font-weight-bold">{{ me.user.name }}</div>
           <div class="text-body-2 text-medium-emphasis">{{ me.user.email }}</div>
-          <div class="text-body-2 tw:mt-3">
+          <div class="text-body-2 mt-3">
             Domácnosť: <strong>{{ me.household.name }}</strong> ·
             {{ plural(me.members.length, 'člen', 'členovia', 'členov') }}
           </div>
@@ -83,10 +84,10 @@ async function exportData() {
     </v-card>
 
     <v-card v-if="me" title="Jedálniček">
-      <v-card-text class="tw:flex tw:flex-col tw:gap-4">
+      <v-card-text class="d-flex flex-column ga-4">
         <div>
-          <div class="text-subtitle-2 tw:mb-1">Jedlá dňa</div>
-          <p class="text-caption text-medium-emphasis">
+          <div class="text-subtitle-2 mb-1">Jedlá dňa</div>
+          <p class="text-caption text-medium-emphasis mb-1">
             Vypnuté jedlá sa v pláne nezobrazujú, kým v nich nič nie je.
           </p>
           <v-switch
@@ -108,9 +109,9 @@ async function exportData() {
           @update:model-value="setWeekStart($event)"
         />
         <div>
-          <div class="tw:flex tw:items-baseline tw:justify-between">
+          <div class="d-flex align-baseline justify-space-between">
             <span class="text-subtitle-2">Predvolená porcia dieťaťa</span>
-            <span class="text-body-2 tw:font-bold">{{ formatFactor(childFactor) }} × dospelý</span>
+            <span class="text-body-2 font-weight-bold">{{ formatFactor(childFactor) }} × dospelý</span>
           </div>
           <v-slider
             v-model="childFactor"
@@ -131,13 +132,7 @@ async function exportData() {
         Stiahne všetky recepty, jedálničky a zoznamy ako JSON súbor. Odporúčame raz za mesiac.
       </v-card-text>
       <v-card-actions>
-        <v-btn
-          color="primary"
-          variant="flat"
-          :prepend-icon="mdiDownload"
-          :loading="exporting"
-          @click="exportData"
-        >
+        <v-btn color="primary" :prepend-icon="mdiDownload" :loading="exporting" @click="exportData">
           Exportovať dáta
         </v-btn>
       </v-card-actions>
