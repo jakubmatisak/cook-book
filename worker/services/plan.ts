@@ -6,7 +6,15 @@ import { addDays, daysBetween } from '../../shared/dates'
 import { newId } from '../../shared/ids'
 import type { PlanCopyInput, PlanEntryInput } from '../../shared/schemas/plan'
 import type { Db } from '../db/client'
-import { images, mealPlanEntries, mealSlots, recipeIngredients, recipes, recipeTags } from '../db/schema'
+import {
+  cookLog,
+  images,
+  mealPlanEntries,
+  mealSlots,
+  recipeIngredients,
+  recipes,
+  recipeTags,
+} from '../db/schema'
 import { HttpError } from '../errors'
 import { chunk } from '../http'
 import { listMembers } from './family'
@@ -199,6 +207,10 @@ export async function updateEntry(
   // Ponechaný (aj medzičasom zmazaný) recept je v poriadku, nový musí existovať.
   if (input.recipeId !== current.recipeId) await assertRecipe(db, householdId, input.recipeId)
   const moved = input.date !== current.date || input.slotId !== current.slotId
+  // Iný deň alebo iný recept znamená, že pôvodné varenie sa nekonalo: záznam sa doplní znova z nového stavu.
+  if (input.date !== current.date || input.recipeId !== current.recipeId) {
+    await db.delete(cookLog).where(eq(cookLog.planEntryId, id))
+  }
   await db
     .update(mealPlanEntries)
     .set({
@@ -216,6 +228,7 @@ export async function updateEntry(
 
 export async function deleteEntry(db: Db, householdId: string, id: string): Promise<void> {
   await findEntry(db, householdId, id)
+  await db.delete(cookLog).where(eq(cookLog.planEntryId, id))
   await db.delete(mealPlanEntries).where(eq(mealPlanEntries.id, id))
 }
 

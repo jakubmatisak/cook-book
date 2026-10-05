@@ -283,9 +283,9 @@ export interface GenerateResult {
   removed: number
   /** Koľko stálych položiek sa pridalo (patria medzi `added`). */
   staples: number
-  /** Položky, ktoré špajza pokryla celé, a tie, ktorým znížila množstvo. */
-  coveredByPantry: number
-  reducedByPantry: number
+  /** Názvy položiek, ktoré špajza pokryla celé (do nákupu nešli), a tých, ktorým znížila množstvo. */
+  covered: string[]
+  reduced: string[]
 }
 
 // ─── Špajza ──────────────────────────────────────────────────────────────────

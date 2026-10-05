@@ -186,7 +186,7 @@ describe('nákup s odpočtom špajze a stálymi položkami', () => {
     await send(app, 'PUT', api(`/pantry/${await ingredientId('Mlieko')}`), { quantity: 1, unit: 'l' })
 
     const result = await generate(listId)
-    expect(result).toMatchObject({ added: 2, coveredByPantry: 1, reducedByPantry: 1, staples: 0 })
+    expect(result).toMatchObject({ added: 2, covered: ['Mlieko'], reduced: ['Múka'], staples: 0 })
     expect(summary(await items(listId))).toEqual([
       ['Múka', 150, 'g', 'generated'],
       ['Vajcia', 3, 'ks', 'generated'],
@@ -269,5 +269,23 @@ describe('nákup s odpočtom špajze a stálymi položkami', () => {
     const result = await generate(listId)
     expect(result.staples).toBe(0)
     expect((await items(listId)).some((i) => i.name === 'Chlieb')).toBe(false)
+  })
+})
+
+describe('opakovanie stálych položiek v ďalších týždňoch', () => {
+  it('kúpená stála položka z minulého týždňa nebráni jej pridaniu v ďalšom', async () => {
+    const { listId } = await seed()
+    await send(app, 'POST', api('/staples'), { name: 'Chlieb', quantity: 1, unit: 'ks', everyNWeeks: 1 })
+    await generate(listId)
+    const bread = (await items(listId)).find((i) => i.name === 'Chlieb')!
+    await send(app, 'PATCH', api(`/shopping/items/${bread.id}`), { isChecked: true })
+
+    const next = await send(app, 'POST', api(`/shopping/lists/${listId}/generate`), {
+      from: '2026-10-12',
+      to: '2026-10-18',
+    })
+    expect((await next.json<GenerateResult>()).staples).toBe(1)
+    const breads = (await items(listId)).filter((i) => i.name === 'Chlieb')
+    expect(breads.map((b) => b.isChecked).sort()).toEqual([false, true])
   })
 })

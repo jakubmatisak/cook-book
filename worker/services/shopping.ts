@@ -1,4 +1,4 @@
-import { and, asc, between, eq, inArray, isNull } from 'drizzle-orm'
+import { and, asc, between, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { GenerateResult, ShoppingItemDto, ShoppingListDto } from '../../shared/api'
 import { newId } from '../../shared/ids'
@@ -98,7 +98,11 @@ export async function listItems(db: Db, householdId: string, listId: string): Pr
   await assertList(db, householdId, listId)
   const [rows, sourceRows] = await db.batch([
     db
-      .select({ item: shoppingItems, categoryOrder: shopCategories.sortOrder })
+      // Alias: v `db.batch` by sa dva stĺpce `sort_order` prepísali a poradie kategórií by sa stratilo.
+      .select({
+        item: shoppingItems,
+        categoryOrder: sql<number | null>`${shopCategories.sortOrder}`.as('category_order'),
+      })
       .from(shoppingItems)
       .leftJoin(shopCategories, eq(shopCategories.id, shoppingItems.shopCategoryId))
       .where(eq(shoppingItems.listId, listId)),
@@ -240,12 +244,19 @@ export async function generateItems(
         id: shoppingItems.id,
         ingredientId: shoppingItems.ingredientId,
         isChecked: shoppingItems.isChecked,
+        rangeFrom: shoppingItems.generatedRangeFrom,
+        rangeTo: shoppingItems.generatedRangeTo,
       })
       .from(shoppingItems)
       .where(and(eq(shoppingItems.listId, listId), inArray(shoppingItems.source, ['generated', 'staple']))),
   ])
 
-  const bought = new Set(existing.filter((e) => e.isChecked && e.ingredientId).map((e) => e.ingredientId))
+  // Kúpené potláča opätovné pridanie len v tom istom období; v ďalšom týždni sa stála položka vráti.
+  const bought = new Set(
+    existing
+      .filter((e) => e.isChecked && e.ingredientId && e.rangeFrom === input.from && e.rangeTo === input.to)
+      .map((e) => e.ingredientId),
+  )
   const toRemove = existing.filter((e) => !e.isChecked).map((e) => e.id)
   const plan = planShopping({ entries, members, ...stock, from: input.from })
   const generated = plan.items.filter((item) => !bought.has(item.ingredientId))
@@ -290,8 +301,8 @@ export async function generateItems(
     kept: bought.size,
     removed: toRemove.length,
     staples: generated.filter((item) => item.kind === 'staple').length,
-    coveredByPantry: plan.covered.length,
-    reducedByPantry: plan.reduced.length,
+    covered: [...new Set(plan.covered)],
+    reduced: [...new Set(plan.reduced)],
   }
 }
 

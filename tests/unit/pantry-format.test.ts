@@ -41,7 +41,7 @@ describe('describeCadence', () => {
 })
 
 describe('summarizeGenerate', () => {
-  const base = { added: 5, kept: 0, removed: 0, staples: 0, coveredByPantry: 0, reducedByPantry: 0 }
+  const base = { added: 5, kept: 0, removed: 0, staples: 0, covered: [] as string[], reduced: [] as string[] }
 
   it('základná správa o počte položiek', () => {
     expect(summarizeGenerate(base)).toBe('Pridaných 5 položiek.')
@@ -50,15 +50,18 @@ describe('summarizeGenerate', () => {
   })
 
   it('dopĺňa, čo urobila špajza a stále položky', () => {
-    expect(summarizeGenerate({ ...base, coveredByPantry: 2, reducedByPantry: 1 })).toBe(
-      'Pridaných 5 položiek. Špajza pokryla 2 položky a znížila množstvo pri 1.',
+    expect(summarizeGenerate({ ...base, covered: ['Múka', 'Vajcia'], reduced: ['Soľ'] })).toBe(
+      'Pridaných 5 položiek. Špajza pokryla 2 položky (Múka, Vajcia) a znížila množstvo: Soľ.',
     )
     expect(summarizeGenerate({ ...base, staples: 2 })).toBe('Pridaných 5 položiek, z toho 2 stále.')
-    expect(summarizeGenerate({ ...base, added: 0, coveredByPantry: 3 })).toBe(
-      'Nič nové na nákup. Špajza pokryla 3 položky.',
+    expect(summarizeGenerate({ ...base, added: 0, covered: ['A', 'B', 'C'] })).toBe(
+      'Nič nové na nákup. Špajza pokryla 3 položky (A, B, C).',
     )
-    expect(summarizeGenerate({ ...base, reducedByPantry: 2 })).toBe(
-      'Pridaných 5 položiek. Špajza znížila množstvo pri 2.',
+    expect(summarizeGenerate({ ...base, reduced: ['Múka', 'Cukor'] })).toBe(
+      'Pridaných 5 položiek. Špajza znížila množstvo: Múka, Cukor.',
+    )
+    expect(summarizeGenerate({ ...base, covered: ['A', 'B', 'C', 'D', 'E', 'F'] })).toBe(
+      'Pridaných 5 položiek. Špajza pokryla 6 položiek (A, B, C, D…).',
     )
   })
 })
@@ -71,8 +74,8 @@ describe('summarizeGenerate – kúpené položky', () => {
         kept: 3,
         removed: 1,
         staples: 0,
-        coveredByPantry: 0,
-        reducedByPantry: 0,
+        covered: [],
+        reduced: [],
       }),
     ).toBe('Pridané 2 položky. Ponechané kúpené: 3.')
   })

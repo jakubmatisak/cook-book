@@ -171,7 +171,9 @@ function flipSortDir() {
 }
 
 const tableSort = computed<TableSort[]>({
-  get: () => stateToTableSort(state.value.sort, state.value.dir),
+  // „Čo viem uvariť“ bez vlastného zoradenia radí server podľa chýbajúceho, takže šípka nesmie ukazovať názov.
+  get: () =>
+    state.value.pantry && !state.value.sort ? [] : stateToTableSort(state.value.sort, state.value.dir),
   set: (value) => {
     const next = tableSortToState(value)
     if (next) setQuery({ zoradit: next.sort, smer: next.dir })

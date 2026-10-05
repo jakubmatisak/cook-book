@@ -18,6 +18,7 @@ import { useMe } from '@/api/me'
 import { useCopyPlan, useDeleteEntry, usePlan, useSaveEntry } from '@/api/plan'
 import PageHeader from '@/components/PageHeader.vue'
 import { useToday } from '@/composables/useToday'
+import { printPage } from '@/composables/usePrintMode'
 import { plural } from '@/lib/format'
 import ApplyTemplateDialog from '../components/ApplyTemplateDialog.vue'
 import EntryDialog from '../components/EntryDialog.vue'
@@ -101,7 +102,7 @@ function onPlanSuggestion(recipeId: string) {
   dialogOpen.value = true
 }
 
-const printWeek = () => window.print()
+const printWeek = () => printPage()
 
 // Šablóny týždňov
 const saveTemplateOpen = ref(false)

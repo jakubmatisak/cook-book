@@ -13,7 +13,13 @@ jeden Worker servíruje Vue frontend aj API, dáta sú v D1, fotky v R2 a prihl�
 - **Rodina:** dospelí a deti s veľkosťou porcie.
 - **Týždenný jedálniček:** recept alebo vlastný text do jedla dňa, porcie podľa rodiny, presun, kópia a kopírovanie celého týždňa.
 - **Tagy:** vlastné tagy s farbou, správa na samostatnej stránke.
-- **Špajza:** označ, čo máš doma, a filter „Čo viem uvariť“ zoradí recepty podľa toho, čo ti chýba.
+- **Zoznam receptov:** mriežka alebo tabuľka, pravý panel filtrov s počtami (kategória, čas, náročnosť, tagy), zoradenie podľa názvu, dátumu pridania, času, náročnosti a toho, kedy sa varilo naposledy.
+- **Import z webu:** vlož odkaz na recept, načíta sa názov, ingrediencie, postup a fotka, ty ich skontroluješ a uložíš.
+- **Varenie:** prepočet porcií, režim varenia s odškrtávaním krokov, časovačmi a zapnutou obrazovkou, tmavý režim.
+- **Špajza:** čo máš doma, s množstvom a trvanlivosťou; filter „Čo viem uvariť“; stále položky nákupu (mlieko, chlieb) v rytme každých N týždňov.
+- **Rodina a upozornenia:** alergie, averzie a diéty členov; pri plánovaní jedla s takou ingredienciou sa ukáže upozornenie.
+- **Plánovanie:** šablóny týždňov, presun jedál ťahaním, návrhy „Čo uvariť dnes“ podľa špajze a toho, kedy sa varilo naposledy.
+- **Tlač a export:** tlač receptu, týždňa a nákupu (v okne tlače „Uložiť ako PDF“), recept ako Markdown (kopírovať, zdieľať, stiahnuť), všetky recepty v jednom súbore.
 - **Záloha:** export všetkých dát do JSON.
 
 - **Nákupný zoznam:** vygenerovaný z jedálnička podľa porcií rodiny (sčítané ingrediencie, prevody jednotiek, zaokrúhlenie pre obchod), ručné položky jedným riadkom („2 kg zemiaky“), skupiny podľa kategórie obchodu, odškrtávanie zdieľané medzi vami aj bez signálu.
@@ -111,7 +117,9 @@ Dashboard → Workers & Pages → `cook-book` → Settings → Builds → pripoj
 
 ## Záloha
 
-Nastavenia → **Exportovať dáta** stiahne celú domácnosť ako JSON. D1 navyše drží 7 dní histórie (Time Travel).
+Nastavenia → **Exportovať dáta** stiahne celú domácnosť ako JSON, **Recepty ako Markdown** všetky recepty v čitateľnom textovom súbore. D1 navyše drží 7 dní histórie (Time Travel).
+
+PDF: pri recepte, jedálničku a nákupe zvoľ v menu **Tlačiť** a v okne tlače **Uložiť ako PDF** (na iPhone cez Zdieľať → Uložiť do Súborov).
 
 ## Štruktúra
 

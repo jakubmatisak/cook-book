@@ -42,16 +42,17 @@ export function summarizeGenerate(result: GenerateResult): string {
   else if (result.staples > 0) parts.push(`${added(result.added)}, z toho ${staplesLabel(result.staples)}.`)
   else parts.push(`${added(result.added)}.`)
 
-  const covered = result.coveredByPantry
-  const reduced = result.reducedByPantry
-  if (covered > 0 && reduced > 0) {
-    parts.push(
-      `Špajza pokryla ${plural(covered, 'položku', 'položky', 'položiek')} a znížila množstvo pri ${reduced}.`,
-    )
-  } else if (covered > 0) {
-    parts.push(`Špajza pokryla ${plural(covered, 'položku', 'položky', 'položiek')}.`)
-  } else if (reduced > 0) {
-    parts.push(`Špajza znížila množstvo pri ${reduced}.`)
+  // Názvy sa vymenujú, aby si nakupujúci mohol overiť, čo zo zoznamu zmizlo kvôli špajzi.
+  const names = (list: readonly string[]) => `${list.slice(0, 4).join(', ')}${list.length > 4 ? '…' : ''}`
+  const covered = result.covered
+  const reduced = result.reduced
+  const coveredText = `Špajza pokryla ${plural(covered.length, 'položku', 'položky', 'položiek')} (${names(covered)})`
+  if (covered.length > 0 && reduced.length > 0) {
+    parts.push(`${coveredText} a znížila množstvo: ${names(reduced)}.`)
+  } else if (covered.length > 0) {
+    parts.push(`${coveredText}.`)
+  } else if (reduced.length > 0) {
+    parts.push(`Špajza znížila množstvo: ${names(reduced)}.`)
   }
   if (result.kept > 0) parts.push(`Ponechané kúpené: ${result.kept}.`)
   return parts.join(' ')

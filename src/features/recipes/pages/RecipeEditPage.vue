@@ -165,7 +165,7 @@ function cancel() {
       </v-alert>
 
       <v-alert v-if="pendingDraft" type="info" title="Našiel sa rozpísaný recept">
-        Minule si začal písať tento recept a neuložil si ho. Chceš pokračovať?
+        Tento recept je rozpísaný a neuložený. Chceš pokračovať?
         <template #append>
           <v-btn variant="text" @click="discardDraft">Zahodiť</v-btn>
           <v-btn color="primary" @click="restoreDraft">Obnoviť</v-btn>

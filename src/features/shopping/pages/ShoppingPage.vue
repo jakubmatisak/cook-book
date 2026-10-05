@@ -30,6 +30,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { useOnline } from '@/composables/useOnline'
 import { useToday } from '@/composables/useToday'
+import { printPage } from '@/composables/usePrintMode'
 import { plural } from '@/lib/format'
 import GenerateDialog from '../components/GenerateDialog.vue'
 import ItemEditDialog from '../components/ItemEditDialog.vue'
@@ -120,7 +121,7 @@ function onEdit(item: ShoppingItemDto) {
   editOpen.value = true
 }
 
-const printList = () => window.print()
+const printList = () => printPage()
 
 const generateOpen = ref(false)
 function onGenerated(result: GenerateResult) {

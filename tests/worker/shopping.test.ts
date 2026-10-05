@@ -297,3 +297,23 @@ describe('nákupný zoznam – fotky zdrojov', () => {
     expect(rice.sources).toEqual([{ date: '2026-10-05', recipeTitle: 'Fotený', coverImageUrl: image.url }])
   })
 })
+
+describe('nákupný zoznam – poradie podľa kategórie obchodu', () => {
+  it('položky idú v poradí kategórií obchodu, nie podľa abecedy', async () => {
+    const { obed, gulas, listId } = await setup()
+    const categories = await (await send(app, 'GET', api('/shop-categories'))).json<ShopCategoryDto[]>()
+    const ingredients = await (await send(app, 'GET', api('/ingredients'))).json<IngredientDto[]>()
+    // „Vajcia“ pôjdu do prvej kategórie, „Hovädzie mäso“ do poslednej: abeceda by ich radila opačne.
+    const first = categories[0]!
+    const last = categories[categories.length - 1]!
+    await send(app, 'PUT', api(`/ingredients/${ingredients.find((i) => i.name === 'Vajcia')!.id}`), {
+      shopCategoryId: first.id,
+    })
+    await send(app, 'PUT', api(`/ingredients/${ingredients.find((i) => i.name === 'Hovädzie mäso')!.id}`), {
+      shopCategoryId: last.id,
+    })
+    await plan(obed, gulas.id)
+    await generate(listId)
+    expect((await items(listId)).map((i) => i.name)).toEqual(['Vajcia', 'Hovädzie mäso'])
+  })
+})

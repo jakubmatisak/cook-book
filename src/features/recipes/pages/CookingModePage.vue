@@ -119,9 +119,8 @@ function onTimerDone(position: number) {
           <div class="flex-grow-1" @click="toggleStep(step.id)">
             <div class="text-overline">Krok {{ step.position }}</div>
             <div
-              class="text-h6 font-weight-regular"
+              class="text-h6 font-weight-regular text-pre-line"
               :class="{ 'text-decoration-line-through': checked.has(step.id) }"
-              style="white-space: pre-line"
             >
               {{ step.text }}
             </div>

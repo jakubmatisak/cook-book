@@ -1,4 +1,4 @@
-import { onScopeDispose, ref, type Ref } from 'vue'
+import { computed, nextTick, onScopeDispose, ref, type Ref } from 'vue'
 
 interface MediaQueryLike {
   matches: boolean
@@ -48,5 +48,44 @@ export function createPrintState(
   return { printing, stop }
 }
 
+/**
+ * Tlač z tlačidla: `window.print()` volané priamo z kliknutia by prehliadač spustil skôr, než Vue stihne
+ * prepnúť svetlú tému a odstrániť lišty (zmena DOM čaká na koniec obsluhy). Preto sa najprv zapne
+ * tlačový režim, počká sa na vykreslenie a až potom sa tlačí.
+ */
+export function createPrinter(win: PrintWindow & { print(): void }, settle: () => Promise<void>) {
+  const forced = ref(false)
+  let safety: ReturnType<typeof setTimeout> | undefined
+  const release = () => {
+    clearTimeout(safety)
+    forced.value = false
+  }
+  win.addEventListener('afterprint', release)
+  return {
+    forced,
+    async print() {
+      forced.value = true
+      // Poistka: keby prehliadač koniec tlače neoznámil, stránka sa sama vráti do bežného vzhľadu.
+      safety = setTimeout(release, 60_000)
+      await settle()
+      win.print()
+    },
+  }
+}
+
+const afterRender = async () => {
+  await nextTick()
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+}
+
+let shared: ReturnType<typeof createPrinter> | undefined
+const printer = () => (shared ??= createPrinter(window, afterRender))
+
+/** Vytlačí aktuálnu stránku v tlačovom režime (svetlá téma, bez líšt). */
+export const printPage = (): Promise<void> => printer().print()
+
 /** Pre komponenty: sleduje tlač a po zániku komponentu po sebe upratá. */
-export const usePrintMode = (): Ref<boolean> => createPrintState(undefined, true).printing
+export const usePrintMode = (): Ref<boolean> => {
+  const { printing } = createPrintState(undefined, true)
+  return computed(() => printing.value || printer().forced.value)
+}

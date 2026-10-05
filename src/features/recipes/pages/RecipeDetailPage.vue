@@ -32,6 +32,7 @@ import { canShare, copyText, shareText } from '@/composables/useShare'
 import { useToday } from '@/composables/useToday'
 import EntryDialog from '@/features/meal-plan/components/EntryDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import { printPage } from '@/composables/usePrintMode'
 import { formatMinutes, plural } from '@/lib/format'
 import FavoriteButton from '../components/FavoriteButton.vue'
 
@@ -120,7 +121,7 @@ const markdown = computed(() =>
 )
 const supportsShare = canShare()
 
-const printRecipe = () => window.print()
+const printRecipe = () => printPage()
 
 async function copyRecipe() {
   const copied = await copyText(markdown.value)
@@ -262,7 +263,7 @@ function goBack() {
     >
       Režim varenia
     </v-btn>
-    <p v-if="recipe.description" class="text-body-1 mb-3" style="white-space: pre-line">
+    <p v-if="recipe.description" class="text-body-1 mb-3 text-pre-line">
       {{ recipe.description }}
     </p>
     <div v-if="recipe.tags.length" class="d-flex flex-wrap ga-1 mb-4">
@@ -342,7 +343,7 @@ function goBack() {
                   step.position
                 }}</v-avatar>
               </template>
-              <v-list-item-title class="text-wrap text-body-1" style="white-space: pre-line">
+              <v-list-item-title class="text-wrap text-body-1 text-pre-line">
                 {{ step.text }}
               </v-list-item-title>
               <v-list-item-subtitle v-if="step.timerSeconds" class="mt-1">

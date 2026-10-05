@@ -1,7 +1,7 @@
 import { effectScope } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import { canShare, copyText, shareText } from '@/composables/useShare'
-import { createPrintState } from '@/composables/usePrintMode'
+import { createPrinter, createPrintState } from '@/composables/usePrintMode'
 
 describe('copyText', () => {
   it('zapíše text do schránky', async () => {
@@ -102,5 +102,27 @@ describe('createPrintState', () => {
     expect(createPrintState(undefined).printing.value).toBe(false)
     const { printing } = createPrintState({ addEventListener: () => {}, removeEventListener: () => {} })
     expect(printing.value).toBe(false)
+  })
+})
+
+describe('createPrinter', () => {
+  it('zapne tlačový režim, počká na vykreslenie a až potom zavolá tlač; po tlači ho vypne', async () => {
+    const w = fakeWindow()
+    const seen: boolean[] = []
+    const holder: { printer?: ReturnType<typeof createPrinter> } = {}
+    const print = vi.fn(() => seen.push(holder.printer!.forced.value))
+    let settled = false
+    const printer = createPrinter({ ...w.win, print }, async () => {
+      settled = true
+    })
+    holder.printer = printer
+    expect(printer.forced.value).toBe(false)
+    await printer.print()
+    expect(settled).toBe(true)
+    expect(print).toHaveBeenCalledTimes(1)
+    // v okamihu tlače je režim už zapnutý (téma a lišty sa stihli prepnúť)
+    expect(seen).toEqual([true])
+    w.fire('afterprint')
+    expect(printer.forced.value).toBe(false)
   })
 })

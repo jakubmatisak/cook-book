@@ -37,7 +37,8 @@ async function onSave() {
       <v-card-text class="d-flex flex-column ga-3">
         <p class="text-body-2 text-medium-emphasis">
           Uloží sa {{ plural(entryCount, 'jedlo', 'jedlá', 'jedál') }} z týždňa
-          {{ formatWeekRange(fromDate) }}. Šablónu potom môžeš použiť na ktorýkoľvek týždeň.
+          {{ formatWeekRange(fromDate) }}. Šablónu potom môžeš použiť na ktorýkoľvek týždeň. Uložia sa jedlá a
+          recepty, nie počet porcií ani poznámky.
         </p>
         <v-text-field
           v-model="name"
