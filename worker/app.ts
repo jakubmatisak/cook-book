@@ -12,6 +12,7 @@ import { pantryRoutes } from './routes/pantry'
 import { planRoutes } from './routes/plan'
 import { recipeRoutes } from './routes/recipes'
 import { shoppingRoutes } from './routes/shopping'
+import { stapleRoutes } from './routes/staples'
 
 export interface AppDeps extends AuthDeps {
   /** Sieťové volania importu receptov; v testoch falošné, inak globálny `fetch`. */
@@ -46,6 +47,7 @@ export function createApp(deps: AppDeps = {}) {
   app.route('/api/v1/plan', planRoutes)
   app.route('/api/v1/shopping', shoppingRoutes)
   app.route('/api/v1/pantry', pantryRoutes)
+  app.route('/api/v1/staples', stapleRoutes)
   app.route('/img', imageServeRoutes)
 
   app.onError(onError)

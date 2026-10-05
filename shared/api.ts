@@ -258,10 +258,38 @@ export interface GenerateResult {
   added: number
   kept: number
   removed: number
+  /** Koľko stálych položiek sa pridalo (patria medzi `added`). */
+  staples: number
+  /** Položky, ktoré špajza pokryla celé, a tie, ktorým znížila množstvo. */
+  coveredByPantry: number
+  reducedByPantry: number
 }
 
 // ─── Špajza ──────────────────────────────────────────────────────────────────
 
+export interface PantryItemDto {
+  id: string
+  ingredientId: string
+  name: string
+  /** Bez množstva: ingrediencia je doma, ale nemeraná. */
+  quantity: number | null
+  unit: UnitCode | null
+  /** `YYYY-MM-DD` alebo null. */
+  expiresOn: string | null
+  location: string | null
+}
+
 export interface PantryDto {
   ingredientIds: string[]
+  items: PantryItemDto[]
+}
+
+export interface StapleDto {
+  id: string
+  ingredientId: string
+  name: string
+  quantity: number | null
+  unit: UnitCode | null
+  /** Rytmus: každý N-tý týždeň (1 = každý týždeň). */
+  everyNWeeks: number
 }

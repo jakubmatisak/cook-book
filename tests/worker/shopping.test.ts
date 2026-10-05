@@ -83,7 +83,7 @@ describe('nákupný zoznam – generovanie', () => {
     })
     await plan(obed, gulas.id)
 
-    expect(await generate(listId)).toEqual({ added: 2, kept: 0, removed: 0 })
+    expect(await generate(listId)).toMatchObject({ added: 2, kept: 0, removed: 0 })
     const list = await items(listId)
     expect(list.map((i) => [i.name, i.quantity, i.unit, i.source, i.isChecked])).toEqual([
       ['Hovädzie mäso', 600, 'g', 'generated', false],
@@ -116,7 +116,7 @@ describe('nákupný zoznam – generovanie', () => {
     await send(app, 'POST', api(`/shopping/lists/${listId}/items`), { name: 'Toaletný papier' })
 
     await plan(vecera, palacinky.id, '2026-10-06')
-    expect(await generate(listId)).toEqual({ added: 2, kept: 1, removed: 1 })
+    expect(await generate(listId)).toMatchObject({ added: 2, kept: 1, removed: 1 })
 
     const list = await items(listId)
     expect(list.filter((i) => i.name === 'Hovädzie mäso')).toHaveLength(1)

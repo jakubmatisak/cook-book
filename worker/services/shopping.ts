@@ -8,23 +8,21 @@ import type {
   ItemCreateInput,
   ItemPatchInput,
 } from '../../shared/schemas/shopping'
-import {
-  buildShoppingItems,
-  type ShoppingInputEntry,
-  type ShoppingInputIngredient,
-} from '../../shared/shopping'
+import { planShopping, type ShoppingInputEntry, type ShoppingInputIngredient } from '../../shared/shopping'
 import { normalizeText } from '../../shared/text'
 import type { Db } from '../db/client'
 import {
   images,
   ingredients,
   mealPlanEntries,
+  pantryItems,
   recipeIngredients,
   recipes,
   shopCategories,
   shoppingItems,
   shoppingItemSources,
   shoppingLists,
+  stapleItems,
 } from '../db/schema'
 import type { UserRow } from '../env'
 import { HttpError } from '../errors'
@@ -194,9 +192,37 @@ async function loadPlanForShopping(
   }))
 }
 
+/** Zásoby a stále položky domácnosti pre generovanie nákupu. */
+async function loadPantryAndStaples(db: Db, householdId: string) {
+  const [pantry, staples] = await Promise.all([
+    db
+      .select({
+        ingredientId: pantryItems.ingredientId,
+        quantity: pantryItems.quantity,
+        unit: pantryItems.unit,
+        expiresOn: pantryItems.expiresOn,
+      })
+      .from(pantryItems)
+      .where(eq(pantryItems.householdId, householdId)),
+    db
+      .select({
+        ingredientId: stapleItems.ingredientId,
+        name: ingredients.name,
+        shopCategoryId: ingredients.shopCategoryId,
+        quantity: stapleItems.quantity,
+        unit: stapleItems.unit,
+        everyNWeeks: stapleItems.everyNWeeks,
+      })
+      .from(stapleItems)
+      .innerJoin(ingredients, eq(ingredients.id, stapleItems.ingredientId))
+      .where(eq(stapleItems.householdId, householdId)),
+  ])
+  return { pantry, staples }
+}
+
 /**
- * Vygeneruje položky z jedálnička. Nekúpené vygenerované sa nahradia, kúpené ostanú
- * (ich ingrediencia sa znova nepridá), ručné ostanú vždy.
+ * Vygeneruje položky z jedálnička a stálych položiek a odpočíta špajzu. Nekúpené vygenerované
+ * (aj stále) sa nahradia, kúpené ostanú (ich ingrediencia sa znova nepridá), ručné ostanú vždy.
  */
 export async function generateItems(
   db: Db,
@@ -205,9 +231,10 @@ export async function generateItems(
   input: GenerateInput,
 ): Promise<GenerateResult> {
   await assertList(db, householdId, listId)
-  const [entries, members, existing] = await Promise.all([
+  const [entries, members, stock, existing] = await Promise.all([
     loadPlanForShopping(db, householdId, input),
     listMembers(db, householdId),
+    loadPantryAndStaples(db, householdId),
     db
       .select({
         id: shoppingItems.id,
@@ -215,12 +242,13 @@ export async function generateItems(
         isChecked: shoppingItems.isChecked,
       })
       .from(shoppingItems)
-      .where(and(eq(shoppingItems.listId, listId), eq(shoppingItems.source, 'generated'))),
+      .where(and(eq(shoppingItems.listId, listId), inArray(shoppingItems.source, ['generated', 'staple']))),
   ])
 
   const bought = new Set(existing.filter((e) => e.isChecked && e.ingredientId).map((e) => e.ingredientId))
   const toRemove = existing.filter((e) => !e.isChecked).map((e) => e.id)
-  const generated = buildShoppingItems({ entries, members }).filter((item) => !bought.has(item.ingredientId))
+  const plan = planShopping({ entries, members, ...stock, from: input.from })
+  const generated = plan.items.filter((item) => !bought.has(item.ingredientId))
 
   const statements: BatchItem<'sqlite'>[] = []
   for (const ids of chunk(toRemove, 90)) {
@@ -237,7 +265,7 @@ export async function generateItems(
         quantity: item.quantity,
         unit: item.unit,
         shopCategoryId: item.shopCategoryId,
-        source: 'generated',
+        source: item.kind === 'staple' ? 'staple' : 'generated',
         generatedRangeFrom: input.from,
         generatedRangeTo: input.to,
       }),
@@ -257,7 +285,14 @@ export async function generateItems(
     }
   }
   await batch(db, statements)
-  return { added: generated.length, kept: bought.size, removed: toRemove.length }
+  return {
+    added: generated.length,
+    kept: bought.size,
+    removed: toRemove.length,
+    staples: generated.filter((item) => item.kind === 'staple').length,
+    coveredByPantry: plan.covered.length,
+    reducedByPantry: plan.reduced.length,
+  }
 }
 
 export async function createItem(

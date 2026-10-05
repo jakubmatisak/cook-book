@@ -1,4 +1,5 @@
 import type { PlanAudience } from './family'
+import { daysBetween } from './dates'
 import { entryPortions, type PortionMember } from './portions'
 import { normalizeText } from './text'
 import { toBase, unitFromText, type UnitCode } from './units'
@@ -37,6 +38,8 @@ export interface GeneratedItem {
   unit: UnitCode | null
   shopCategoryId: string | null
   sources: GeneratedItemSource[]
+  /** `staple` = stála položka (bez zdroja v jedálničku). */
+  kind: 'recipe' | 'staple'
 }
 
 const ROUND_UP: ReadonlySet<UnitCode> = new Set(['ks', 'balenie'])
@@ -60,14 +63,78 @@ export function roundForShopping(quantity: number | null, unit: UnitCode | null)
   return Math.round(quantity * 100) / 100
 }
 
+/** Zásoba doma: jedna položka špajze. Bez množstva znamená „mám, nemerané“. */
+export interface PantryStock {
+  ingredientId: string
+  quantity: number | null
+  unit: UnitCode | null
+  /** `YYYY-MM-DD`; po tomto dni sa položka nepočíta. */
+  expiresOn: string | null
+}
+
+/** Stála položka, ktorá sa pridáva do nákupu pravidelne (mlieko, chlieb). */
+export interface StapleInput {
+  ingredientId: string
+  name: string
+  shopCategoryId: string | null
+  quantity: number | null
+  unit: UnitCode | null
+  everyNWeeks: number
+}
+
+export interface ShoppingPlan {
+  items: GeneratedItem[]
+  /** Názvy položiek, ktoré špajza pokryla celé (do nákupu nejdú). */
+  covered: string[]
+  /** Názvy položiek, ktorým špajza znížila množstvo. */
+  reduced: string[]
+  staplesAdded: number
+}
+
+/** 1970-01-05 je pondelok: týždne sa rátajú od neho, takže rytmus nezávisí od dňa v týždni. */
+const WEEK_EPOCH = '1970-01-05'
+
+/** Je stála položka s rytmom „každých N týždňov“ na rade v týždni, do ktorého patrí `from`? */
+export function isStapleDue(everyNWeeks: number, from: string): boolean {
+  const every = Number.isInteger(everyNWeeks) && everyNWeeks > 1 ? everyNWeeks : 1
+  return Math.floor(daysBetween(WEEK_EPOCH, from) / 7) % every === 0
+}
+
+interface Stock {
+  /** Je aspoň jedna položka bez množstva: ingrediencia je doma v neobmedzenom množstve. */
+  unbounded: boolean
+  byUnit: Map<string, number>
+}
+
+function buildStock(pantry: readonly PantryStock[], from: string | undefined): Map<string, Stock> {
+  const stock = new Map<string, Stock>()
+  for (const row of pantry) {
+    if (from !== undefined && row.expiresOn !== null && row.expiresOn < from) continue
+    const entry = stock.get(row.ingredientId) ?? { unbounded: false, byUnit: new Map<string, number>() }
+    if (row.quantity === null || !(row.quantity > 0)) {
+      entry.unbounded = true
+    } else {
+      const base = row.unit ? toBase(row.quantity, row.unit) : { quantity: row.quantity, unit: null }
+      const key = base.unit ?? '-'
+      entry.byUnit.set(key, (entry.byUnit.get(key) ?? 0) + base.quantity)
+    }
+    stock.set(row.ingredientId, entry)
+  }
+  return stock
+}
+
 /**
- * Položky nákupu z naplánovaných jedál: prepočet porcií, prevod na základné jednotky,
- * súčet rovnakých ingrediencií. Voliteľné ingrediencie a jedlá bez receptu sa vynechajú.
+ * Nákup z naplánovaných jedál: prepočet porcií, prevod na základné jednotky, súčet rovnakých
+ * ingrediencií, pridanie stálych položiek na rade a odpočet špajze (pred zaokrúhlením na nákup).
+ * Voliteľné ingrediencie a jedlá bez receptu sa vynechajú. `from` je prvý deň obdobia.
  */
-export function buildShoppingItems(input: {
+export function planShopping(input: {
   entries: readonly ShoppingInputEntry[]
   members: readonly PortionMember[]
-}): GeneratedItem[] {
+  pantry?: readonly PantryStock[]
+  staples?: readonly StapleInput[]
+  from?: string
+}): ShoppingPlan {
   const items = new Map<string, GeneratedItem>()
 
   for (const entry of input.entries) {
@@ -98,6 +165,7 @@ export function buildShoppingItems(input: {
         unit: quantity === null ? null : unit,
         shopCategoryId: ing.shopCategoryId,
         sources: [],
+        kind: 'recipe' as const,
       }
       if (quantity !== null) item.quantity = (item.quantity ?? 0) + quantity
       item.sources.push({ planEntryId: entry.id, recipeIngredientId: ing.recipeIngredientId, quantity })
@@ -117,9 +185,76 @@ export function buildShoppingItems(input: {
     }
   }
 
-  return [...items.values()]
+  // Stále položky na rade v tomto týždni (bez dňa nevieme, ktorý týždeň to je).
+  const from = input.from
+  const dueStaples =
+    from === undefined ? [] : (input.staples ?? []).filter((s) => isStapleDue(s.everyNWeeks, from))
+  for (const staple of dueStaples) {
+    const hasQuantity = staple.quantity !== null && staple.quantity > 0
+    const base = hasQuantity
+      ? staple.unit
+        ? toBase(staple.quantity!, staple.unit)
+        : { quantity: staple.quantity!, unit: null }
+      : null
+    const key = `staple|${staple.ingredientId}|${base ? (base.unit ?? '-') : '?'}`
+    const item = items.get(key) ?? {
+      key,
+      ingredientId: staple.ingredientId,
+      name: staple.name,
+      quantity: null,
+      unit: base?.unit ?? null,
+      shopCategoryId: staple.shopCategoryId,
+      sources: [],
+      kind: 'staple' as const,
+    }
+    if (base) item.quantity = (item.quantity ?? 0) + base.quantity
+    items.set(key, item)
+  }
+
+  // Špajza: zásoba sa spotrebúva v poradí položiek (najprv recepty, potom stále položky).
+  const stock = buildStock(input.pantry ?? [], from)
+  const covered: string[] = []
+  const reduced: string[] = []
+  for (const [key, item] of [...items]) {
+    const have = stock.get(item.ingredientId)
+    if (!have) continue
+    if (have.unbounded || item.quantity === null) {
+      items.delete(key)
+      covered.push(item.name)
+      continue
+    }
+    const unitKey = item.unit ?? '-'
+    const available = have.byUnit.get(unitKey) ?? 0
+    if (available <= 0) continue
+    const used = Math.min(available, item.quantity)
+    have.byUnit.set(unitKey, available - used)
+    const remaining = item.quantity - used
+    if (remaining <= 1e-9) {
+      items.delete(key)
+      covered.push(item.name)
+    } else {
+      item.quantity = remaining
+      reduced.push(item.name)
+    }
+  }
+
+  const result = [...items.values()]
     .map((item) => ({ ...item, quantity: roundForShopping(item.quantity, item.unit) }))
     .sort((a, b) => normalizeText(a.name).localeCompare(normalizeText(b.name)))
+  return {
+    items: result,
+    covered,
+    reduced,
+    staplesAdded: result.filter((i) => i.kind === 'staple').length,
+  }
+}
+
+/** Položky nákupu z jedálnička bez špajze a stálych položiek (skratka pre `planShopping(...).items`). */
+export function buildShoppingItems(input: {
+  entries: readonly ShoppingInputEntry[]
+  members: readonly PortionMember[]
+}): GeneratedItem[] {
+  return planShopping(input).items
 }
 
 /**

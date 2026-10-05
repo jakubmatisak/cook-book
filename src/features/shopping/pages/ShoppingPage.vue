@@ -32,6 +32,7 @@ import { useToday } from '@/composables/useToday'
 import { plural } from '@/lib/format'
 import GenerateDialog from '../components/GenerateDialog.vue'
 import ItemEditDialog from '../components/ItemEditDialog.vue'
+import { summarizeGenerate } from '@/features/pantry/format'
 import ShoppingItemRow from '../components/ShoppingItemRow.vue'
 
 const client = useQueryClient()
@@ -120,9 +121,7 @@ function onEdit(item: ShoppingItemDto) {
 
 const generateOpen = ref(false)
 function onGenerated(result: GenerateResult) {
-  const parts = [`pridané ${plural(result.added, 'položka', 'položky', 'položiek')}`]
-  if (result.kept) parts.push(plural(result.kept, 'kúpená ostala', 'kúpené ostali', 'kúpených ostalo'))
-  notify(`Hotovo: ${parts.join(', ')}.`)
+  notify(summarizeGenerate(result))
 }
 </script>
 

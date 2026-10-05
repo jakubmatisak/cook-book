@@ -11,7 +11,9 @@ defineEmits<{ toggle: [item: ShoppingItemDto]; edit: [item: ShoppingItemDto] }>(
 const quantity = computed(() => formatQuantity(props.item.quantity, props.item.unit))
 const photo = computed(() => props.item.sources.find((s) => s.coverImageUrl)?.coverImageUrl ?? null)
 const origin = computed(() =>
-  props.item.sources.map((s) => `${s.recipeTitle} · ${formatDayLabel(s.date).short}`).join(', '),
+  props.item.source === 'staple'
+    ? 'Stála položka'
+    : props.item.sources.map((s) => `${s.recipeTitle} · ${formatDayLabel(s.date).short}`).join(', '),
 )
 </script>
 

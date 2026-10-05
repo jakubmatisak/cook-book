@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
-import type { IngredientDto, PantryDto, ShopCategoryDto, TagDto } from '@shared/api'
+import type { IngredientDto, PantryDto, PantryItemDto, ShopCategoryDto, StapleDto, TagDto } from '@shared/api'
 import type { TagInput } from '@shared/schemas/recipe'
 import type { UnitCode } from '@shared/units'
 import { apiFetch } from './http'
@@ -101,7 +101,11 @@ export function useTogglePantry(): UseMutationReturnType<void, Error, PantryTogg
       const ids = new Set(old?.ingredientIds ?? [])
       if (inPantry) ids.add(ingredientId)
       else ids.delete(ingredientId)
-      return { ingredientIds: [...ids] }
+      const items = old?.items ?? []
+      return {
+        ingredientIds: [...ids],
+        items: inPantry ? items : items.filter((i) => i.ingredientId !== ingredientId),
+      }
     })
   return useMutation({
     mutationFn: ({ ingredientId, inPantry }: PantryToggleVars) =>
@@ -114,5 +118,81 @@ export function useTogglePantry(): UseMutationReturnType<void, Error, PantryTogg
       void client.invalidateQueries({ queryKey: ['pantry'] })
       void client.invalidateQueries({ queryKey: ['recipes'] })
     },
+  })
+}
+
+export interface PantryItemInput {
+  quantity: number | null
+  unit: UnitCode | null
+  expiresOn: string | null
+  location: string | null
+}
+
+export interface SavePantryItemVars {
+  ingredientId: string
+  input: PantryItemInput
+}
+
+/** Uloží množstvo, trvanlivosť a miesto zásoby (a ingredienciu tým označí ako doma). */
+export function useSavePantryItem(): UseMutationReturnType<
+  PantryItemDto,
+  Error,
+  SavePantryItemVars,
+  unknown
+> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ ingredientId, input }: SavePantryItemVars) =>
+      apiFetch<PantryItemDto>(`/pantry/${ingredientId}`, { method: 'PUT', body: JSON.stringify(input) }),
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: ['pantry'] })
+      void client.invalidateQueries({ queryKey: ['recipes'] })
+    },
+  })
+}
+
+// ─── Stále položky nákupu ────────────────────────────────────────────────────
+
+export const useStaples = () =>
+  useQuery({ queryKey: ['staples'], queryFn: () => apiFetch<StapleDto[]>('/staples') })
+
+export interface StapleInput {
+  name: string
+  quantity: number | null
+  unit: UnitCode | null
+  everyNWeeks: number
+}
+
+export function useCreateStaple(): UseMutationReturnType<StapleDto, Error, StapleInput, unknown> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (input: StapleInput) =>
+      apiFetch<StapleDto>('/staples', { method: 'POST', body: JSON.stringify(input) }),
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: ['staples'] })
+      void client.invalidateQueries({ queryKey: ['ingredients'] })
+    },
+  })
+}
+
+export interface UpdateStapleVars {
+  id: string
+  patch: Partial<Omit<StapleInput, 'name'>>
+}
+
+export function useUpdateStaple(): UseMutationReturnType<StapleDto, Error, UpdateStapleVars, unknown> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, patch }: UpdateStapleVars) =>
+      apiFetch<StapleDto>(`/staples/${id}`, { method: 'PUT', body: JSON.stringify(patch) }),
+    onSettled: () => void client.invalidateQueries({ queryKey: ['staples'] }),
+  })
+}
+
+export function useDeleteStaple(): UseMutationReturnType<void, Error, string, unknown> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/staples/${id}`, { method: 'DELETE' }),
+    onSettled: () => void client.invalidateQueries({ queryKey: ['staples'] }),
   })
 }
