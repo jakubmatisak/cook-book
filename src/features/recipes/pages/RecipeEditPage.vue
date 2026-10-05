@@ -195,7 +195,7 @@ function cancel() {
   z-index: 4;
   padding: 8px;
   border-radius: 16px;
-  background: rgb(var(--v-theme-background) / 0.92);
+  background: rgba(var(--v-theme-background), 0.92);
   backdrop-filter: blur(6px);
 }
 </style>

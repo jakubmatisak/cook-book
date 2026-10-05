@@ -1,0 +1,193 @@
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import type { FamilyMemberDto, MealSlotDto, PlanEntryDto } from '@shared/api'
+import { formatDayLabel } from '@shared/dates'
+import { entryPortions } from '@shared/portions'
+import { planEntryInputSchema } from '@shared/schemas/plan'
+import { useDeleteEntry, useSaveEntry } from '@/api/plan'
+import { useRecipes } from '@/api/recipes'
+import { describeIssues } from '@/features/recipes/form'
+
+const open = defineModel<boolean>({ required: true })
+const props = defineProps<{
+  /** Upravovaný záznam; null = nový. */
+  entry: PlanEntryDto | null
+  initialDate: string
+  initialSlotId: string
+  slots: MealSlotDto[]
+  dates: string[]
+  members: FamilyMemberDto[]
+}>()
+
+const mode = ref<'recipe' | 'text'>('recipe')
+const recipeId = ref<string | null>(null)
+const freeText = ref('')
+const servings = ref<number | null>(null)
+const note = ref('')
+const date = ref('')
+const slotId = ref('')
+const error = ref('')
+
+const { data: recipes } = useRecipes(() => ({}))
+const save = useSaveEntry()
+const remove = useDeleteEntry()
+
+watch(open, (isOpen) => {
+  if (!isOpen) return
+  const e = props.entry
+  mode.value = e && !e.recipeId ? 'text' : 'recipe'
+  recipeId.value = e?.recipeId ?? null
+  freeText.value = e?.freeText ?? ''
+  servings.value = e?.servingsOverride ?? null
+  note.value = e?.note ?? ''
+  date.value = e?.date ?? props.initialDate
+  slotId.value = e?.slotId ?? props.initialSlotId
+  error.value = ''
+})
+
+const recipeItems = computed(() => {
+  const items = (recipes.value ?? []).map((r) => ({ title: r.title, value: r.id }))
+  const current = props.entry?.recipe
+  if (current && !items.some((i) => i.value === current.id)) {
+    items.unshift({ title: `${current.title} (zmazaný)`, value: current.id })
+  }
+  return items
+})
+
+const slotItems = computed(() => props.slots.map((s) => ({ title: s.name, value: s.id })))
+const dateItems = computed(() =>
+  props.dates.map((d) => {
+    const label = formatDayLabel(d)
+    return { title: `${label.long} ${label.date}`, value: d }
+  }),
+)
+
+const defaultPortions = computed(() => {
+  const fromMembers = entryPortions({ servingsOverride: null, audience: 'all' }, props.members)
+  if (fromMembers !== null) return `${String(fromMembers).replace('.', ',')} podľa rodiny`
+  const recipe = recipes.value?.find((r) => r.id === recipeId.value)
+  return recipe ? `${recipe.servings} podľa receptu` : 'podľa receptu'
+})
+
+const slotName = computed(() => props.slots.find((s) => s.id === slotId.value)?.name ?? '')
+const dayLabel = computed(() => (date.value ? formatDayLabel(date.value) : null))
+
+function buildInput() {
+  return {
+    date: date.value,
+    slotId: slotId.value,
+    recipeId: mode.value === 'recipe' ? recipeId.value : null,
+    freeText: mode.value === 'text' ? freeText.value : null,
+    servingsOverride: servings.value || null,
+    note: note.value,
+  }
+}
+
+async function submit(asCopy = false) {
+  error.value = ''
+  const input = buildInput()
+  const parsed = planEntryInputSchema.safeParse(input)
+  if (!parsed.success) {
+    error.value = describeIssues(parsed.error.issues)
+      .map((m) => m.replace(/^recipeId: /, ''))
+      .join(' ')
+    return
+  }
+  try {
+    await save.mutateAsync({ id: asCopy ? undefined : props.entry?.id, input })
+    open.value = false
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Uloženie zlyhalo.'
+  }
+}
+
+async function onDelete() {
+  if (!props.entry) return
+  try {
+    await remove.mutateAsync(props.entry.id)
+    open.value = false
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Zmazanie zlyhalo.'
+  }
+}
+</script>
+
+<template>
+  <v-dialog v-model="open" max-width="520" scrollable>
+    <v-card>
+      <v-card-title class="tw:pt-4">
+        {{ entry ? 'Upraviť jedlo' : 'Pridať jedlo' }}
+      </v-card-title>
+      <v-card-subtitle v-if="dayLabel"
+        >{{ slotName }} · {{ dayLabel.long }} {{ dayLabel.date }}</v-card-subtitle
+      >
+      <v-card-text class="tw:flex tw:flex-col tw:gap-4">
+        <v-btn-toggle
+          v-model="mode"
+          mandatory
+          color="primary"
+          variant="outlined"
+          divided
+          density="comfortable"
+        >
+          <v-btn value="recipe">Recept</v-btn>
+          <v-btn value="text">Vlastný text</v-btn>
+        </v-btn-toggle>
+
+        <v-autocomplete
+          v-if="mode === 'recipe'"
+          v-model="recipeId"
+          :items="recipeItems"
+          label="Recept"
+          no-data-text="Žiadny recept sa nenašiel"
+          autofocus
+          hide-details
+        />
+        <v-text-field
+          v-else
+          v-model="freeText"
+          label="Čo sa bude jesť"
+          placeholder="napr. zvyšky, ideme von, chlieb s maslom"
+          autofocus
+          hide-details
+        />
+
+        <div class="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2">
+          <v-number-input
+            v-model="servings"
+            label="Porcie"
+            :placeholder="defaultPortions"
+            persistent-placeholder
+            :min="0.5"
+            :max="100"
+            :step="0.5"
+            :precision="null"
+            control-variant="split"
+            clearable
+            hide-details
+          />
+          <v-text-field v-model="note" label="Poznámka" hide-details />
+        </div>
+
+        <div v-if="entry" class="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2">
+          <v-select v-model="date" :items="dateItems" label="Deň" hide-details />
+          <v-select v-model="slotId" :items="slotItems" label="Jedlo" hide-details />
+        </div>
+
+        <v-alert v-if="error" type="error" variant="tonal" density="compact" :text="error" />
+      </v-card-text>
+      <v-card-actions class="tw:flex-wrap">
+        <v-btn v-if="entry" color="error" variant="text" :loading="remove.isPending.value" @click="onDelete">
+          Zmazať
+        </v-btn>
+        <v-spacer />
+        <v-btn v-if="entry" variant="tonal" :loading="save.isPending.value" @click="submit(true)">
+          Uložiť ako kópiu
+        </v-btn>
+        <v-btn color="primary" variant="flat" :loading="save.isPending.value" @click="submit()">
+          {{ entry ? 'Uložiť' : 'Pridať' }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+</template>
