@@ -1,0 +1,97 @@
+import { z } from 'zod'
+import { RECIPE_CATEGORIES } from '../recipes'
+import { normalizeText } from '../text'
+import { UNIT_CODES } from '../units'
+
+const emptyToNull = (value: unknown) => (typeof value === 'string' && value.trim() === '' ? null : value)
+
+/** Voliteľný text: prázdny alebo chýbajúci → null. */
+const optionalText = (max: number) =>
+  z.preprocess(emptyToNull, z.string().trim().max(max).nullish()).transform((v) => v ?? null)
+
+const optionalInt = (min: number, max: number) =>
+  z
+    .number()
+    .int()
+    .min(min)
+    .max(max)
+    .nullish()
+    .transform((v) => v ?? null)
+
+export const recipeIngredientInputSchema = z.object({
+  name: z.string().trim().min(1, 'Zadaj názov ingrediencie.').max(120),
+  quantity: z
+    .number()
+    .positive('Množstvo musí byť kladné.')
+    .max(100_000)
+    .nullish()
+    .transform((v) => v ?? null),
+  unit: z
+    .enum(UNIT_CODES)
+    .nullish()
+    .transform((v) => v ?? null),
+  note: optionalText(200),
+  groupName: optionalText(80),
+  isOptional: z.boolean().default(false),
+})
+
+export const recipeStepInputSchema = z.object({
+  text: z.string().trim().min(1, 'Krok nesmie byť prázdny.').max(5000),
+  timerSeconds: optionalInt(1, 86_400),
+})
+
+export const recipeInputSchema = z.object({
+  title: z.string().trim().min(1, 'Zadaj názov receptu.').max(200),
+  description: optionalText(5000),
+  category: z.enum(RECIPE_CATEGORIES).default('hlavne'),
+  servings: z.number().int().min(1).max(50).default(4),
+  prepMinutes: optionalInt(0, 1440),
+  cookMinutes: optionalInt(0, 1440),
+  difficulty: z.number().int().min(1).max(3).default(1),
+  sourceUrl: z
+    .preprocess(emptyToNull, z.url({ protocol: /^https?$/, error: 'Zadaj platnú webovú adresu.' }).nullish())
+    .transform((v) => v ?? null),
+  sourceText: optionalText(500),
+  coverImageId: optionalText(40),
+  ingredients: z.array(recipeIngredientInputSchema).max(100).default([]),
+  steps: z.array(recipeStepInputSchema).max(100).default([]),
+  tags: z
+    .array(z.string().trim().min(1).max(40))
+    .max(30)
+    .default([])
+    .transform((tags) => {
+      const seen = new Set<string>()
+      return tags.filter((tag) => {
+        const key = normalizeText(tag)
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+    }),
+})
+
+export type RecipeInput = z.output<typeof recipeInputSchema>
+export type RecipeInputRaw = z.input<typeof recipeInputSchema>
+export type RecipeIngredientInput = z.output<typeof recipeIngredientInputSchema>
+
+export const recipeListQuerySchema = z.object({
+  q: z.string().trim().max(100).optional(),
+  category: z.enum(RECIPE_CATEGORIES).optional(),
+  tag: z.string().max(40).optional(),
+  favorite: z
+    .enum(['1', 'true'])
+    .optional()
+    .transform((v) => v !== undefined),
+})
+
+export const ingredientUpdateSchema = z.object({
+  name: z.string().trim().min(1).max(120).optional(),
+  defaultUnit: z.enum(UNIT_CODES).nullable().optional(),
+  shopCategoryId: z.string().max(40).nullable().optional(),
+})
+
+export const ingredientCreateSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  defaultUnit: z.enum(UNIT_CODES).nullable().optional(),
+  shopCategoryId: z.string().max(40).nullable().optional(),
+})

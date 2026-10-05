@@ -14,6 +14,7 @@ import {
 } from 'drizzle-orm/sqlite-core'
 import { newId } from '../../shared/ids'
 import { UNIT_CODES } from '../../shared/units'
+import { RECIPE_CATEGORIES } from '../../shared/recipes'
 
 const nowIso = () => new Date().toISOString()
 
@@ -26,17 +27,6 @@ const unit = (name: string) => text(name, { enum: UNIT_CODES })
 
 export const MEMBER_KINDS = ['adult', 'child'] as const
 export const PREFERENCE_KINDS = ['dislike', 'allergy', 'diet'] as const
-export const RECIPE_CATEGORIES = [
-  'polievka',
-  'hlavne',
-  'priloha',
-  'salat',
-  'dezert',
-  'ranajky',
-  'desiata',
-  'napoj',
-  'ine',
-] as const
 export const PLAN_AUDIENCES = ['all', 'adults', 'children', 'custom'] as const
 export const SHOPPING_ITEM_SOURCES = ['manual', 'generated', 'staple'] as const
 

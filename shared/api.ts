@@ -1,3 +1,6 @@
+import type { RecipeCategory } from './recipes'
+import type { UnitCode } from './units'
+
 /**
  * DTO typy API zdieľané medzi frontendom (src/) a Workerom (worker/).
  * Frontend nikdy neimportuje z worker/ – len odtiaľto.
@@ -95,4 +98,76 @@ export interface ExportFile {
   exportedAt: string
   householdId: string
   tables: Record<ExportTableName, unknown[]>
+}
+
+// ─── Recepty (fáza 1) ────────────────────────────────────────────────────────
+
+export type { RecipeCategory }
+
+export interface TagDto {
+  id: string
+  name: string
+  color: string | null
+}
+
+export interface ImageDto {
+  id: string
+  url: string
+}
+
+export interface RecipeSummaryDto {
+  id: string
+  title: string
+  slug: string
+  category: RecipeCategory
+  servings: number
+  prepMinutes: number | null
+  cookMinutes: number | null
+  difficulty: number
+  coverImageUrl: string | null
+  tags: TagDto[]
+  isFavorite: boolean
+  updatedAt: string
+}
+
+export interface RecipeIngredientDto {
+  id: string
+  ingredientId: string
+  name: string
+  quantity: number | null
+  unit: UnitCode | null
+  note: string | null
+  groupName: string | null
+  isOptional: boolean
+}
+
+export interface RecipeStepDto {
+  id: string
+  position: number
+  text: string
+  timerSeconds: number | null
+}
+
+export interface RecipeDetailDto extends RecipeSummaryDto {
+  description: string | null
+  sourceUrl: string | null
+  sourceText: string | null
+  coverImageId: string | null
+  ingredients: RecipeIngredientDto[]
+  steps: RecipeStepDto[]
+  createdAt: string
+}
+
+export interface IngredientDto {
+  id: string
+  name: string
+  defaultUnit: UnitCode | null
+  shopCategoryId: string | null
+  usageCount: number
+}
+
+export interface ShopCategoryDto {
+  id: string
+  name: string
+  sortOrder: number
 }
