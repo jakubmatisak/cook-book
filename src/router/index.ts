@@ -9,6 +9,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { title: 'Recepty' },
   },
   {
+    path: '/recepty/:id',
+    name: 'recipe',
+    component: () => import('@/features/recipes/pages/RecipeDetailPage.vue'),
+    meta: { title: 'Recept' },
+  },
+  {
     path: '/plan',
     name: 'meal-plan',
     component: () => import('@/features/meal-plan/pages/MealPlanPage.vue'),
