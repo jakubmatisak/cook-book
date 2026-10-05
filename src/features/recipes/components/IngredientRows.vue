@@ -3,7 +3,7 @@ import { mdiArrowDown, mdiArrowUp, mdiClose, mdiPlus } from '@mdi/js'
 import { computed } from 'vue'
 import { UNITS, type UnitCode } from '@shared/units'
 import { useIngredients } from '@/api/catalog'
-import { parseQuantity, emptyIngredientRow, type IngredientRow } from '../form'
+import { emptyIngredientRow, parseQuantity, type IngredientRow } from '../form'
 
 const rows = defineModel<IngredientRow[]>({ required: true })
 const { data: catalog } = useIngredients()
@@ -42,52 +42,53 @@ function move(index: number, delta: number) {
 </script>
 
 <template>
-  <div class="tw:flex tw:flex-col tw:gap-3">
-    <div
-      v-for="(row, index) in rows"
-      :key="row.key"
-      class="tw:rounded-xl tw:border tw:border-on-surface/10 tw:p-3"
-      data-test="ingredient-row"
-    >
-      <!-- Mobil: názov na celý riadok navrchu, množstvo a jednotka pod ním; od sm v jednom riadku. -->
-      <div class="tw:grid tw:grid-cols-2 tw:gap-2 tw:sm:grid-cols-[5.5rem_6.5rem_1fr]">
-        <v-text-field
-          v-model="row.quantity"
-          label="Množstvo"
-          inputmode="decimal"
-          :rules="[quantityRule]"
-          hide-details="auto"
-          density="compact"
-        />
-        <v-select
-          v-model="row.unit"
-          :items="unitItems"
-          item-props
-          label="Jednotka"
-          clearable
-          hide-details
-          density="compact"
-        />
-        <v-combobox
-          :model-value="row.name"
-          :items="names"
-          label="Ingrediencia"
-          class="tw:order-first tw:col-span-2 tw:sm:order-none tw:sm:col-span-1"
-          hide-details
-          density="compact"
-          @update:model-value="onNameChange(row, $event)"
-        />
-      </div>
-      <div class="tw:mt-2 tw:grid tw:grid-cols-1 tw:gap-2 tw:sm:grid-cols-2">
-        <v-text-field v-model="row.note" label="Poznámka (napr. nadrobno)" hide-details density="compact" />
-        <v-text-field
-          v-model="row.groupName"
-          label="Skupina (napr. Na cesto)"
-          hide-details
-          density="compact"
-        />
-      </div>
-      <div class="tw:mt-1 tw:flex tw:items-center">
+  <div class="d-flex flex-column ga-3">
+    <v-sheet v-for="(row, index) in rows" :key="row.key" border class="pa-3" data-test="ingredient-row">
+      <v-row dense>
+        <v-col cols="12" sm="6" order="first" order-sm="last">
+          <v-combobox
+            :model-value="row.name"
+            :items="names"
+            label="Ingrediencia"
+            hide-details
+            density="compact"
+            @update:model-value="onNameChange(row, $event)"
+          />
+        </v-col>
+        <v-col cols="6" sm="3">
+          <v-text-field
+            v-model="row.quantity"
+            label="Množstvo"
+            inputmode="decimal"
+            :rules="[quantityRule]"
+            hide-details="auto"
+            density="compact"
+          />
+        </v-col>
+        <v-col cols="6" sm="3">
+          <v-select
+            v-model="row.unit"
+            :items="unitItems"
+            item-props
+            label="Jednotka"
+            clearable
+            hide-details
+            density="compact"
+          />
+        </v-col>
+        <v-col cols="12" sm="6">
+          <v-text-field v-model="row.note" label="Poznámka (napr. nadrobno)" hide-details density="compact" />
+        </v-col>
+        <v-col cols="12" sm="6">
+          <v-text-field
+            v-model="row.groupName"
+            label="Skupina (napr. Na cesto)"
+            hide-details
+            density="compact"
+          />
+        </v-col>
+      </v-row>
+      <div class="d-flex align-center mt-1">
         <v-checkbox v-model="row.isOptional" label="Voliteľná" hide-details density="compact" />
         <v-spacer />
         <v-btn
@@ -112,8 +113,8 @@ function move(index: number, delta: number) {
           @click="remove(index)"
         />
       </div>
-    </div>
-    <v-btn variant="tonal" color="primary" :prepend-icon="mdiPlus" class="tw:self-start" @click="add">
+    </v-sheet>
+    <v-btn variant="tonal" color="primary" :prepend-icon="mdiPlus" class="align-self-start" @click="add">
       Pridať ingredienciu
     </v-btn>
   </div>

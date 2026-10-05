@@ -1,14 +1,11 @@
-/**
- * Jediný zdroj pravdy pre farby a tvary. Vuetify téma sa skladá odtiaľto
- * a Tailwind farby odkazujú na Vuetify CSS premenné (src/styles/main.css).
- */
+/** Farby tém. Vzhľad komponentov je v src/plugins/vuetify.ts, tvary v src/design/settings.scss. */
 export const colors = {
   light: {
     primary: '#B4532A', // terakota
     secondary: '#5F7A3A', // olivová
-    background: '#FBF7F1', // krémová
+    background: '#FAF6F0', // krémová
     surface: '#FFFFFF',
-    'surface-variant': '#F2EBE1',
+    'surface-variant': '#F1E9DE',
     'on-surface-variant': '#4A3F37',
     'on-background': '#2B2420',
     'on-surface': '#2B2420',
@@ -31,9 +28,4 @@ export const colors = {
     warning: '#E8B866',
     info: '#8EC1DA',
   },
-} as const
-
-export const radius = {
-  control: 'lg',
-  card: 'xl',
 } as const

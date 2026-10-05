@@ -8,11 +8,11 @@ import { recipeInputSchema } from '@shared/schemas/recipe'
 import { useTags } from '@/api/catalog'
 import { ApiError } from '@/api/http'
 import { useRecipe, useSaveRecipe } from '@/api/recipes'
-import { describeIssues, emptyRecipeForm, formToInput, recipeToForm, type RecipeForm } from '../form'
-import IngredientRows from '../components/IngredientRows.vue'
-import ImagePicker from '../components/ImagePicker.vue'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
+import ImagePicker from '../components/ImagePicker.vue'
+import IngredientRows from '../components/IngredientRows.vue'
 import StepRows from '../components/StepRows.vue'
+import { describeIssues, emptyRecipeForm, formToInput, recipeToForm, type RecipeForm } from '../form'
 
 const route = useRoute()
 const router = useRouter()
@@ -39,14 +39,14 @@ watch(
 )
 
 const dirty = computed(() => JSON.stringify(formToInput(form.value)) !== snapshot.value)
+const saved = ref(false)
+useUnsavedChangesGuard(() => dirty.value && !saved.value)
 
 const categoryItems = RECIPE_CATEGORIES.map((value) => ({ value, title: RECIPE_CATEGORY_LABELS[value] }))
 const tagNames = computed(() => tags.value?.map((t) => t.name) ?? [])
 
 const formRef = ref<VForm>()
 const errors = ref<string[]>([])
-const saved = ref(false)
-useUnsavedChangesGuard(() => dirty.value && !saved.value)
 
 const required = (v: string) => Boolean(v?.trim()) || 'Povinné pole'
 const minutesRule = (v: string) => !v?.trim() || /^\d+$/.test(v.trim()) || 'Celé číslo minút'
@@ -85,18 +85,20 @@ function cancel() {
 </script>
 
 <template>
-  <div class="tw:mx-auto tw:flex tw:w-full tw:max-w-3xl tw:flex-col tw:gap-4 tw:pb-24">
-    <div class="tw:flex tw:items-center tw:gap-2">
+  <div class="mx-auto" style="max-width: 48rem">
+    <v-toolbar color="transparent" density="compact" class="mb-2 px-0">
       <v-btn :icon="mdiArrowLeft" variant="text" aria-label="Späť" @click="cancel" />
-      <h1 class="text-h5">{{ isNew ? 'Nový recept' : 'Upraviť recept' }}</h1>
-    </div>
+      <v-toolbar-title class="text-h5 font-weight-bold">{{
+        isNew ? 'Nový recept' : 'Upraviť recept'
+      }}</v-toolbar-title>
+    </v-toolbar>
 
     <v-skeleton-loader v-if="!isNew && loading" type="image, article, article" />
-    <v-alert v-else-if="loadError" type="error" variant="tonal" :text="loadError.message" />
+    <v-alert v-else-if="loadError" type="error" :text="loadError.message" />
 
-    <v-form v-else ref="formRef" class="tw:flex tw:flex-col tw:gap-4" @submit.prevent="onSubmit">
-      <v-alert v-if="errors.length" type="error" variant="tonal" title="Recept sa nedá uložiť">
-        <ul class="tw:mt-1 tw:list-disc tw:pl-5">
+    <v-form v-else ref="formRef" class="d-flex flex-column ga-4" @submit.prevent="onSubmit">
+      <v-alert v-if="errors.length" type="error" title="Recept sa nedá uložiť">
+        <ul class="mt-1 ps-5">
           <li v-for="message in errors" :key="message">{{ message }}</li>
         </ul>
       </v-alert>
@@ -104,59 +106,81 @@ function cancel() {
       <ImagePicker v-model:image-id="form.coverImageId" v-model:image-url="form.coverImageUrl" />
 
       <v-card title="Základ">
-        <v-card-text class="tw:flex tw:flex-col tw:gap-3">
-          <v-text-field v-model="form.title" label="Názov receptu" :rules="[required]" autofocus />
-          <div class="tw:grid tw:grid-cols-2 tw:gap-3">
-            <v-select v-model="form.category" :items="categoryItems" label="Kategória" hide-details />
-            <v-number-input
-              v-model="form.servings"
-              label="Porcie"
-              :min="1"
-              :max="50"
-              control-variant="split"
-              hide-details
-            />
-            <v-text-field
-              v-model="form.prepMinutes"
-              label="Príprava (min)"
-              inputmode="numeric"
-              :rules="[minutesRule]"
-              hide-details="auto"
-            />
-            <v-text-field
-              v-model="form.cookMinutes"
-              label="Varenie (min)"
-              inputmode="numeric"
-              :rules="[minutesRule]"
-              hide-details="auto"
-            />
-          </div>
-          <div>
-            <div class="text-caption text-medium-emphasis tw:mb-1">Náročnosť</div>
-            <v-btn-toggle v-model="form.difficulty" mandatory color="primary" variant="outlined" divided>
-              <v-btn v-for="level in [1, 2, 3]" :key="level" :value="level">
-                {{ DIFFICULTY_LABELS[level as 1 | 2 | 3] }}
-              </v-btn>
-            </v-btn-toggle>
-          </div>
-          <v-textarea v-model="form.description" label="Krátky popis" rows="2" auto-grow hide-details />
+        <v-card-text>
+          <v-text-field
+            v-model="form.title"
+            label="Názov receptu"
+            :rules="[required]"
+            autofocus
+            class="mb-3"
+          />
+          <v-row dense>
+            <v-col cols="12" sm="6">
+              <v-select v-model="form.category" :items="categoryItems" label="Kategória" hide-details />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-number-input
+                v-model="form.servings"
+                label="Porcie"
+                :min="1"
+                :max="50"
+                control-variant="split"
+                hide-details
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model="form.prepMinutes"
+                label="Príprava (min)"
+                inputmode="numeric"
+                :rules="[minutesRule]"
+                hide-details="auto"
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model="form.cookMinutes"
+                label="Varenie (min)"
+                inputmode="numeric"
+                :rules="[minutesRule]"
+                hide-details="auto"
+              />
+            </v-col>
+          </v-row>
+          <div class="text-caption text-medium-emphasis mt-3 mb-1">Náročnosť</div>
+          <v-btn-toggle
+            v-model="form.difficulty"
+            mandatory
+            color="primary"
+            variant="outlined"
+            divided
+            aria-label="Náročnosť"
+          >
+            <v-btn v-for="level in [1, 2, 3]" :key="level" :value="level">
+              {{ DIFFICULTY_LABELS[level as 1 | 2 | 3] }}
+            </v-btn>
+          </v-btn-toggle>
+          <v-textarea
+            v-model="form.description"
+            label="Krátky popis"
+            rows="2"
+            auto-grow
+            hide-details
+            class="mt-4"
+          />
         </v-card-text>
       </v-card>
 
       <v-card title="Ingrediencie">
-        <v-card-text>
-          <IngredientRows v-model="form.ingredients" />
-        </v-card-text>
+        <v-card-text><IngredientRows v-model="form.ingredients" /></v-card-text>
       </v-card>
 
       <v-card title="Postup">
-        <v-card-text>
-          <StepRows v-model="form.steps" />
-        </v-card-text>
+        <v-card-text><StepRows v-model="form.steps" /></v-card-text>
       </v-card>
 
       <v-card title="Tagy a zdroj">
-        <v-card-text class="tw:flex tw:flex-col tw:gap-3">
+        <v-card-text class="d-flex flex-column ga-3">
           <v-combobox
             v-model="form.tags"
             :items="tagNames"
@@ -171,8 +195,7 @@ function cancel() {
         </v-card-text>
       </v-card>
 
-      <div class="edit-actions tw:flex tw:gap-2">
-        <v-spacer />
+      <v-sheet color="background" class="position-sticky bottom-0 py-2 d-flex ga-2 justify-end">
         <v-btn variant="text" @click="cancel">Zrušiť</v-btn>
         <v-btn
           type="submit"
@@ -183,19 +206,7 @@ function cancel() {
         >
           Uložiť recept
         </v-btn>
-      </div>
+      </v-sheet>
     </v-form>
   </div>
 </template>
-
-<style scoped>
-.edit-actions {
-  position: sticky;
-  bottom: calc(var(--v-layout-bottom, 0px) + 8px);
-  z-index: 4;
-  padding: 8px;
-  border-radius: 16px;
-  background: rgba(var(--v-theme-background), 0.92);
-  backdrop-filter: blur(6px);
-}
-</style>

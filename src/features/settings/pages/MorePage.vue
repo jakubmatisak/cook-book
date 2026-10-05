@@ -14,7 +14,7 @@ const links = [
 </script>
 
 <template>
-  <h1 class="text-h5 tw:mb-4">Viac</h1>
+  <h1 class="text-h5 font-weight-bold mb-4">Viac</h1>
   <v-card>
     <v-list lines="two">
       <v-list-item

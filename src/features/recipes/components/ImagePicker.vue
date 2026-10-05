@@ -36,38 +36,33 @@ function clear() {
 </script>
 
 <template>
-  <div class="tw:flex tw:flex-col tw:gap-2">
-    <input
-      ref="input"
-      type="file"
-      accept="image/*"
-      class="tw:hidden"
-      data-test="image-input"
-      @change="onFile"
-    />
-    <div
-      class="tw:relative tw:flex tw:aspect-[16/9] tw:items-center tw:justify-center tw:overflow-hidden tw:rounded-2xl tw:bg-surface-variant"
-    >
-      <v-img v-if="imageUrl" :src="imageUrl" cover class="tw:absolute tw:inset-0" />
-      <v-btn
-        v-else
-        variant="text"
-        color="primary"
-        size="large"
-        :prepend-icon="mdiCameraOutline"
-        :loading="uploading"
-        @click="input?.click()"
-      >
-        Pridať fotku
-      </v-btn>
-      <v-progress-circular v-if="uploading && imageUrl" indeterminate color="primary" class="tw:absolute" />
-    </div>
-    <div v-if="imageUrl" class="tw:flex tw:gap-2">
+  <v-card>
+    <input ref="input" type="file" accept="image/*" class="d-none" data-test="image-input" @change="onFile" />
+    <v-img v-if="imageUrl" :src="imageUrl" :aspect-ratio="16 / 9" cover>
+      <div v-if="uploading" class="d-flex align-center justify-center h-100">
+        <v-progress-circular indeterminate color="primary" />
+      </div>
+    </v-img>
+    <v-responsive v-else :aspect-ratio="16 / 9" class="bg-surface-variant">
+      <div class="d-flex align-center justify-center h-100">
+        <v-btn
+          variant="text"
+          color="primary"
+          size="large"
+          :prepend-icon="mdiCameraOutline"
+          :loading="uploading"
+          @click="input?.click()"
+        >
+          Pridať fotku
+        </v-btn>
+      </div>
+    </v-responsive>
+    <v-card-actions v-if="imageUrl">
       <v-btn variant="tonal" :prepend-icon="mdiImageEditOutline" :loading="uploading" @click="input?.click()">
         Zmeniť fotku
       </v-btn>
       <v-btn variant="text" :prepend-icon="mdiDeleteOutline" @click="clear">Odstrániť</v-btn>
-    </div>
-    <v-alert v-if="error" type="error" variant="tonal" density="compact" :text="error" />
-  </div>
+    </v-card-actions>
+    <v-alert v-if="error" type="error" density="compact" :text="error" class="ma-3" />
+  </v-card>
 </template>

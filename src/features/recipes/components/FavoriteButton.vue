@@ -15,7 +15,7 @@ function onClick() {
     :icon="isFavorite ? mdiHeart : mdiHeartOutline"
     :color="isFavorite ? 'primary' : undefined"
     :size="size ?? 'small'"
-    variant="text"
+    variant="tonal"
     :aria-label="isFavorite ? 'Odobrať z obľúbených' : 'Pridať medzi obľúbené'"
     :aria-pressed="isFavorite"
     @click.prevent.stop="onClick"

@@ -27,14 +27,14 @@ function move(index: number, delta: number) {
 </script>
 
 <template>
-  <div class="tw:flex tw:flex-col tw:gap-3">
-    <div v-for="(row, index) in rows" :key="row.key" class="tw:flex tw:gap-3" data-test="step-row">
-      <v-avatar size="28" color="primary" class="tw:mt-3 tw:shrink-0 tw:text-sm tw:font-bold">
-        {{ index + 1 }}
-      </v-avatar>
-      <div class="tw:flex-1">
+  <div class="d-flex flex-column ga-3">
+    <div v-for="(row, index) in rows" :key="row.key" class="d-flex ga-3" data-test="step-row">
+      <v-avatar size="28" color="primary" class="mt-3 flex-shrink-0 font-weight-bold">{{
+        index + 1
+      }}</v-avatar>
+      <div class="flex-grow-1">
         <v-textarea v-model="row.text" :label="`Krok ${index + 1}`" rows="2" auto-grow hide-details />
-        <div class="tw:mt-2 tw:flex tw:items-center tw:gap-2">
+        <div class="d-flex align-center ga-2 mt-2">
           <v-text-field
             v-model="row.timerMinutes"
             label="Časovač (min)"
@@ -42,7 +42,7 @@ function move(index: number, delta: number) {
             :rules="[timerRule]"
             hide-details="auto"
             density="compact"
-            class="tw:max-w-36"
+            style="max-width: 9rem"
           />
           <v-spacer />
           <v-btn
@@ -69,7 +69,7 @@ function move(index: number, delta: number) {
         </div>
       </div>
     </div>
-    <v-btn variant="tonal" color="primary" :prepend-icon="mdiPlus" class="tw:self-start" @click="add">
+    <v-btn variant="tonal" color="primary" :prepend-icon="mdiPlus" class="align-self-start" @click="add">
       Pridať krok
     </v-btn>
   </div>

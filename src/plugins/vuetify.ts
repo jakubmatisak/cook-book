@@ -2,9 +2,12 @@ import { createVuetify } from 'vuetify'
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 import { sk } from 'vuetify/locale'
 import 'vuetify/styles'
-import { colors, radius } from '@/design/tokens'
+import { colors } from '@/design/tokens'
 
-/** Nová inštancia Vuetify (testy si vytvárajú vlastnú, aby sa nezdieľal stav displeja). */
+/**
+ * Jediné miesto, kde sa určuje vzhľad: téma (farby) a predvolené props komponentov.
+ * Komponenty v aplikácii používajú len Vuetify komponenty a utility triedy.
+ */
 export const createAppVuetify = () =>
   createVuetify({
     theme: {
@@ -15,34 +18,24 @@ export const createAppVuetify = () =>
       },
     },
     defaults: {
-      VBtn: { rounded: radius.control, variant: 'flat' },
-      VCard: { rounded: radius.card, variant: 'flat', border: true },
-      VTextField: {
-        variant: 'outlined',
-        density: 'comfortable',
-        color: 'primary',
-      },
-      VTextarea: {
-        variant: 'outlined',
-        density: 'comfortable',
-        color: 'primary',
-      },
-      VSelect: {
-        variant: 'outlined',
-        density: 'comfortable',
-        color: 'primary',
-      },
-      VAutocomplete: {
-        variant: 'outlined',
-        density: 'comfortable',
-        color: 'primary',
-      },
-      VChip: { rounded: radius.control },
+      VBtn: { rounded: 'lg', variant: 'flat' },
+      VCard: { rounded: 'lg', variant: 'flat', border: true },
+      VSheet: { rounded: 'lg' },
+      VTextField: { variant: 'outlined', density: 'comfortable', color: 'primary' },
+      VTextarea: { variant: 'outlined', density: 'comfortable', color: 'primary' },
+      VSelect: { variant: 'outlined', density: 'comfortable', color: 'primary' },
+      VAutocomplete: { variant: 'outlined', density: 'comfortable', color: 'primary' },
+      VCombobox: { variant: 'outlined', density: 'comfortable', color: 'primary' },
+      VNumberInput: { variant: 'outlined', density: 'comfortable', color: 'primary' },
+      VChip: { rounded: 'lg' },
+      VAlert: { rounded: 'lg', variant: 'tonal' },
+      VDialog: { scrollable: true },
       VAppBar: { flat: true, color: 'background' },
-      VBottomNavigation: { grow: true, color: 'primary' },
+      VBottomNavigation: { grow: true, color: 'primary', bgColor: 'surface' },
       VNavigationDrawer: { color: 'surface' },
       VList: { color: 'primary' },
-      VSnackbar: { rounded: radius.control },
+      VSnackbar: { rounded: 'lg' },
+      VEmptyState: { color: 'primary', size: 64 },
     },
     locale: { locale: 'sk', fallback: 'sk', messages: { sk } },
     icons: { defaultSet: 'mdi', aliases, sets: { mdi } },
