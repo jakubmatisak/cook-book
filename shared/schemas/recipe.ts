@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from './zod'
 import { RECIPE_CATEGORIES } from '../recipes'
 import { normalizeText } from '../text'
 import { UNIT_CODES } from '../units'

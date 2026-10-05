@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from './zod'
 import { daysBetween, isIsoDate } from '../dates'
 
 export const MAX_PLAN_RANGE_DAYS = 62

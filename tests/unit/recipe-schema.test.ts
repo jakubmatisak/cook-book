@@ -51,3 +51,12 @@ describe('recipeInputSchema', () => {
     expect(recipeInputSchema.parse({ ...valid, sourceUrl: '' }).sourceUrl).toBeNull()
   })
 })
+
+describe('chybové hlášky po slovensky', () => {
+  it('ani predvolené hlášky zod nie sú po anglicky', () => {
+    const result = recipeInputSchema.safeParse({ ...valid, title: 'x'.repeat(201), category: 'pizza' })
+    expect(result.success).toBe(false)
+    const messages = result.error!.issues.map((i) => i.message).join(' | ')
+    expect(messages).not.toMatch(/Too big|Invalid|expected/i)
+  })
+})

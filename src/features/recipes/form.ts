@@ -24,7 +24,8 @@ export interface RecipeForm {
   title: string
   description: string
   category: RecipeCategory
-  servings: number
+  /** null, keď používateľ pole vymaže – pri uložení sa použije predvolená hodnota. */
+  servings: number | null
   prepMinutes: string
   cookMinutes: string
   difficulty: number
@@ -139,7 +140,7 @@ export function formToInput(form: RecipeForm): RecipeInputRaw {
     title: form.title.trim(),
     description: textOrNull(form.description),
     category: form.category,
-    servings: form.servings,
+    servings: form.servings ?? undefined,
     prepMinutes: intOrNull(form.prepMinutes),
     cookMinutes: intOrNull(form.cookMinutes),
     difficulty: form.difficulty,

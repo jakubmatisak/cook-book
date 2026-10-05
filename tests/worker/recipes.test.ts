@@ -209,3 +209,14 @@ describe('recepty – izolácia domácností', () => {
     expect((await send(app, 'PUT', api('/recipes/cudzi/favorite'))).status).toBe(404)
   })
 })
+
+describe('recepty – súbežné ukladanie', () => {
+  it('súčasne uložené recepty s rovnakým názvom dostanú rôzne slugy namiesto chyby', async () => {
+    const results = await Promise.all(
+      [1, 2, 3].map(() => send(app, 'POST', api('/recipes'), { title: 'Palacinky' })),
+    )
+    expect(results.map((r) => r.status)).toEqual([201, 201, 201])
+    const slugs = await Promise.all(results.map(async (r) => (await r.json<RecipeDetailDto>()).slug))
+    expect(new Set(slugs).size).toBe(3)
+  })
+})

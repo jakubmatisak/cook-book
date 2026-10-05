@@ -68,6 +68,9 @@ async function assertImage(db: Db, householdId: string, imageId: string | null) 
   if (!found) throw new HttpError(400, 'invalid_image', 'Fotka neexistuje.')
 }
 
+const isSlugConflict = (error: unknown) =>
+  /UNIQUE/i.test(String(error)) && /slug/i.test(String((error as { cause?: unknown })?.cause ?? error))
+
 /** Vytvorí alebo prepíše recept vrátane ingrediencií, krokov a tagov; vráti jeho id. */
 export async function saveRecipe(db: Db, user: UserRow, input: RecipeInput, id?: string): Promise<string> {
   const householdId = user.householdId
@@ -80,68 +83,79 @@ export async function saveRecipe(db: Db, user: UserRow, input: RecipeInput, id?:
     input.ingredients.map((i) => ({ name: i.name, unit: i.unit })),
   )
   const tagIds = [...new Set(await resolveTags(db, householdId, input.tags))]
-  const slug =
-    existing && existing.title === input.title
+  const recipeId = existing?.id ?? newId()
+  const keepSlug = existing && existing.title === input.title
+
+  // Slug sa počíta pred zápisom; pri súbežnom uložení rovnakého názvu zlyhá UNIQUE – vtedy ho prepočítame.
+  for (let attempt = 1; ; attempt++) {
+    const slug = keepSlug
       ? existing.slug
       : await uniqueSlug(db, householdId, slugify(input.title), existing?.id)
-
-  const recipeId = existing?.id ?? newId()
-  const values = {
-    title: input.title,
-    titleNormalized: normalizeText(input.title),
-    slug,
-    description: input.description,
-    category: input.category,
-    servings: input.servings,
-    prepMinutes: input.prepMinutes,
-    cookMinutes: input.cookMinutes,
-    difficulty: input.difficulty,
-    sourceUrl: input.sourceUrl,
-    sourceText: input.sourceText,
-    coverImageId: input.coverImageId,
+    try {
+      await db.batch(buildStatements(slug))
+      return recipeId
+    } catch (error) {
+      if (keepSlug || attempt >= 5 || !isSlugConflict(error)) throw error
+    }
   }
 
-  const statements: BatchItem<'sqlite'>[] = existing
-    ? [
-        db.update(recipes).set(values).where(eq(recipes.id, recipeId)),
-        db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId)),
-        db.delete(recipeSteps).where(eq(recipeSteps.recipeId, recipeId)),
-        db.delete(recipeTags).where(eq(recipeTags.recipeId, recipeId)),
-      ]
-    : [db.insert(recipes).values({ id: recipeId, householdId, createdBy: user.id, ...values })]
+  function buildStatements(slug: string): [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]] {
+    const values = {
+      title: input.title,
+      titleNormalized: normalizeText(input.title),
+      slug,
+      description: input.description,
+      category: input.category,
+      servings: input.servings,
+      prepMinutes: input.prepMinutes,
+      cookMinutes: input.cookMinutes,
+      difficulty: input.difficulty,
+      sourceUrl: input.sourceUrl,
+      sourceText: input.sourceText,
+      coverImageId: input.coverImageId,
+    }
 
-  // Po jednom riadku na príkaz – D1 dovolí max 100 viazaných parametrov.
-  input.ingredients.forEach((item, sortOrder) => {
-    statements.push(
-      db.insert(recipeIngredients).values({
-        recipeId,
-        ingredientId: ingredientIds.get(normalizeText(item.name))!,
-        quantity: item.quantity,
-        unit: item.unit,
-        note: item.note,
-        groupName: item.groupName,
-        isOptional: item.isOptional,
-        sortOrder,
-      }),
-    )
-  })
-  input.steps.forEach((step, index) => {
-    statements.push(
-      db.insert(recipeSteps).values({
-        recipeId,
-        position: index + 1,
-        text: step.text,
-        timerSeconds: step.timerSeconds,
-      }),
-    )
-  })
-  if (tagIds.length) {
-    statements.push(db.insert(recipeTags).values(tagIds.map((tagId) => ({ recipeId, tagId }))))
+    const statements: BatchItem<'sqlite'>[] = existing
+      ? [
+          db.update(recipes).set(values).where(eq(recipes.id, recipeId)),
+          db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId)),
+          db.delete(recipeSteps).where(eq(recipeSteps.recipeId, recipeId)),
+          db.delete(recipeTags).where(eq(recipeTags.recipeId, recipeId)),
+        ]
+      : [db.insert(recipes).values({ id: recipeId, householdId, createdBy: user.id, ...values })]
+
+    // Po jednom riadku na príkaz – D1 dovolí max 100 viazaných parametrov.
+    input.ingredients.forEach((item, sortOrder) => {
+      statements.push(
+        db.insert(recipeIngredients).values({
+          recipeId,
+          ingredientId: ingredientIds.get(normalizeText(item.name))!,
+          quantity: item.quantity,
+          unit: item.unit,
+          note: item.note,
+          groupName: item.groupName,
+          isOptional: item.isOptional,
+          sortOrder,
+        }),
+      )
+    })
+    input.steps.forEach((step, index) => {
+      statements.push(
+        db.insert(recipeSteps).values({
+          recipeId,
+          position: index + 1,
+          text: step.text,
+          timerSeconds: step.timerSeconds,
+        }),
+      )
+    })
+    if (tagIds.length) {
+      statements.push(db.insert(recipeTags).values(tagIds.map((tagId) => ({ recipeId, tagId }))))
+    }
+
+    const [first, ...rest] = statements
+    return [first!, ...rest]
   }
-
-  const [first, ...rest] = statements
-  await db.batch([first!, ...rest])
-  return recipeId
 }
 
 export async function deleteRecipe(db: Db, householdId: string, id: string): Promise<void> {

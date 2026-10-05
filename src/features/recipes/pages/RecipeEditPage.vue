@@ -11,6 +11,7 @@ import { useRecipe, useSaveRecipe } from '@/api/recipes'
 import { describeIssues, emptyRecipeForm, formToInput, recipeToForm, type RecipeForm } from '../form'
 import IngredientRows from '../components/IngredientRows.vue'
 import ImagePicker from '../components/ImagePicker.vue'
+import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import StepRows from '../components/StepRows.vue'
 
 const route = useRoute()
@@ -44,7 +45,8 @@ const tagNames = computed(() => tags.value?.map((t) => t.name) ?? [])
 
 const formRef = ref<VForm>()
 const errors = ref<string[]>([])
-let saved = false
+const saved = ref(false)
+useUnsavedChangesGuard(() => dirty.value && !saved.value)
 
 const required = (v: string) => Boolean(v?.trim()) || 'Povinné pole'
 const minutesRule = (v: string) => !v?.trim() || /^\d+$/.test(v.trim()) || 'Celé číslo minút'
@@ -60,7 +62,7 @@ async function onSubmit() {
   }
   try {
     const detail = await save.mutateAsync({ id: id.value, input: formToInput(form.value) })
-    saved = true
+    saved.value = true
     await router.replace(`/recepty/${detail.id}`)
   } catch (e) {
     if (e instanceof ApiError && Array.isArray(e.details)) {
@@ -73,7 +75,7 @@ async function onSubmit() {
 }
 
 onBeforeRouteLeave(() => {
-  if (saved || !dirty.value) return true
+  if (saved.value || !dirty.value) return true
   return window.confirm('Máš neuložené zmeny. Naozaj odísť?')
 })
 

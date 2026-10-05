@@ -144,3 +144,14 @@ describe('describeIssues', () => {
     expect(messages.some((m) => m.startsWith('Ingrediencia 2 – množstvo:'))).toBe(true)
   })
 })
+
+describe('vymazané porcie', () => {
+  it('prázdne pole porcií neblokuje uloženie a použije predvolené 4', () => {
+    const form = emptyRecipeForm()
+    form.title = 'Polievka'
+    form.servings = null
+    const parsed = recipeInputSchema.safeParse(formToInput(form))
+    expect(parsed.success).toBe(true)
+    expect(parsed.data?.servings).toBe(4)
+  })
+})

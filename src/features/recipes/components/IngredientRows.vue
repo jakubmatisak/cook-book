@@ -49,7 +49,8 @@ function move(index: number, delta: number) {
       class="tw:rounded-xl tw:border tw:border-on-surface/10 tw:p-3"
       data-test="ingredient-row"
     >
-      <div class="tw:grid tw:grid-cols-[5.5rem_6.5rem_1fr] tw:gap-2">
+      <!-- Mobil: názov na celý riadok navrchu, množstvo a jednotka pod ním; od sm v jednom riadku. -->
+      <div class="tw:grid tw:grid-cols-2 tw:gap-2 tw:sm:grid-cols-[5.5rem_6.5rem_1fr]">
         <v-text-field
           v-model="row.quantity"
           label="Množstvo"
@@ -71,6 +72,7 @@ function move(index: number, delta: number) {
           :model-value="row.name"
           :items="names"
           label="Ingrediencia"
+          class="tw:order-first tw:col-span-2 tw:sm:order-none tw:sm:col-span-1"
           hide-details
           density="compact"
           @update:model-value="onNameChange(row, $event)"
