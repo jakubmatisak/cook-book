@@ -15,6 +15,7 @@ import {
 import { newId } from '../../shared/ids'
 import { UNIT_CODES } from '../../shared/units'
 import { RECIPE_CATEGORIES } from '../../shared/recipes'
+import { MEMBER_KINDS, PLAN_AUDIENCES } from '../../shared/family'
 
 const nowIso = () => new Date().toISOString()
 
@@ -25,9 +26,7 @@ const deletedAt = () => text('deleted_at')
 const bool = (name: string) => integer(name, { mode: 'boolean' })
 const unit = (name: string) => text(name, { enum: UNIT_CODES })
 
-export const MEMBER_KINDS = ['adult', 'child'] as const
 export const PREFERENCE_KINDS = ['dislike', 'allergy', 'diet'] as const
-export const PLAN_AUDIENCES = ['all', 'adults', 'children', 'custom'] as const
 export const SHOPPING_ITEM_SOURCES = ['manual', 'generated', 'staple'] as const
 
 // ─── Ľudia ───────────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import type { MemberKind, PlanAudience } from './family'
 import type { RecipeCategory } from './recipes'
 import type { UnitCode } from './units'
 
@@ -22,7 +23,7 @@ export interface HouseholdDto {
   name: string
 }
 
-export type MemberKind = 'adult' | 'child'
+export type { MemberKind }
 
 export interface FamilyMemberDto {
   id: string
@@ -170,4 +171,32 @@ export interface ShopCategoryDto {
   id: string
   name: string
   sortOrder: number
+}
+
+// ─── Jedálniček (fáza 2) ─────────────────────────────────────────────────────
+
+export interface PlanEntryRecipeDto {
+  id: string
+  title: string
+  coverImageUrl: string | null
+  servings: number
+  /** Recept bol po naplánovaní zmazaný. */
+  deleted: boolean
+}
+
+export interface PlanEntryDto {
+  id: string
+  date: string
+  slotId: string
+  recipeId: string | null
+  recipe: PlanEntryRecipeDto | null
+  freeText: string | null
+  servingsOverride: number | null
+  note: string | null
+  sortOrder: number
+  audience: PlanAudience
+}
+
+export interface PlanCopyResult {
+  copied: number
 }
