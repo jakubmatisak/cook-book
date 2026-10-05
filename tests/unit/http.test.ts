@@ -32,18 +32,26 @@ describe('apiFetch', () => {
   it('odpoveď bez JSON (napr. prihlasovacia stránka Access) je ApiError, nie pád parsera', async () => {
     const fetchFn = vi
       .fn()
-      .mockResolvedValue(new Response('<html>login</html>', { status: 200, headers: { 'content-type': 'text/html' } }))
+      .mockResolvedValue(
+        new Response('<html>login</html>', { status: 200, headers: { 'content-type': 'text/html' } }),
+      )
     await expect(apiFetch('/me', undefined, { fetchFn })).rejects.toMatchObject({ code: 'invalid_response' })
   })
 
   it('chybová odpoveď bez JSON tela má generický kód podľa stavu', async () => {
     const fetchFn = vi.fn().mockResolvedValue(new Response('Bad gateway', { status: 502 }))
-    await expect(apiFetch('/me', undefined, { fetchFn })).rejects.toMatchObject({ status: 502, code: 'http_502' })
+    await expect(apiFetch('/me', undefined, { fetchFn })).rejects.toMatchObject({
+      status: 502,
+      code: 'http_502',
+    })
   })
 
   it('výpadok siete je ApiError network_error', async () => {
     const fetchFn = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
-    await expect(apiFetch('/me', undefined, { fetchFn })).rejects.toMatchObject({ status: 0, code: 'network_error' })
+    await expect(apiFetch('/me', undefined, { fetchFn })).rejects.toMatchObject({
+      status: 0,
+      code: 'network_error',
+    })
   })
 })
 

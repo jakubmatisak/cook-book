@@ -2,11 +2,33 @@ import { env } from 'cloudflare:workers'
 import { describe, expect, it } from 'vitest'
 
 const EXPECTED = [
-  'households', 'users', 'family_members', 'member_preferences', 'shop_categories', 'ingredients', 'images',
-  'recipes', 'recipe_ingredients', 'recipe_steps', 'tags', 'recipe_tags', 'recipe_favorites', 'recipe_ratings',
-  'recipe_notes', 'cook_log', 'meal_slots', 'meal_plan_entries', 'meal_plan_entry_members', 'week_templates',
-  'week_template_entries', 'shopping_lists', 'shopping_items', 'shopping_item_sources', 'staple_items',
-  'pantry_items', 'settings',
+  'households',
+  'users',
+  'family_members',
+  'member_preferences',
+  'shop_categories',
+  'ingredients',
+  'images',
+  'recipes',
+  'recipe_ingredients',
+  'recipe_steps',
+  'tags',
+  'recipe_tags',
+  'recipe_favorites',
+  'recipe_ratings',
+  'recipe_notes',
+  'cook_log',
+  'meal_slots',
+  'meal_plan_entries',
+  'meal_plan_entry_members',
+  'week_templates',
+  'week_template_entries',
+  'shopping_lists',
+  'shopping_items',
+  'shopping_item_sources',
+  'staple_items',
+  'pantry_items',
+  'settings',
 ]
 
 describe('schéma', () => {

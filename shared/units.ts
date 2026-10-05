@@ -7,7 +7,18 @@ export interface UnitDef {
   base?: { unit: UnitCode; factor: number }
 }
 
-export const UNIT_CODES = ['g', 'kg', 'ml', 'l', 'ks', 'PL', 'ČL', 'šálka', 'balenie', 'štipka'] as const satisfies readonly UnitCode[]
+export const UNIT_CODES = [
+  'g',
+  'kg',
+  'ml',
+  'l',
+  'ks',
+  'PL',
+  'ČL',
+  'šálka',
+  'balenie',
+  'štipka',
+] as const satisfies readonly UnitCode[]
 
 export const UNITS: readonly UnitDef[] = [
   { code: 'g', label: 'gram' },

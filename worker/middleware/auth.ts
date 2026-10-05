@@ -16,7 +16,11 @@ const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
 const jwksCache = new Map<string, JWTVerifyGetKey>()
 
 /** `https://tim.cloudflareaccess.com/` aj `tim.cloudflareaccess.com` → `tim.cloudflareaccess.com` */
-const normalizeTeamDomain = (value: string) => value.trim().replace(/^https?:\/\//, '').replace(/\/+$/, '')
+const normalizeTeamDomain = (value: string) =>
+  value
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/+$/, '')
 
 function remoteJwks(teamDomain: string): JWTVerifyGetKey {
   let jwks = jwksCache.get(teamDomain)
@@ -49,7 +53,11 @@ export async function resolveEmail(c: Context<AppEnv>, accessKey?: JWTVerifyGetK
     const team = normalizeTeamDomain(c.env.ACCESS_TEAM_DOMAIN ?? '')
     const aud = c.env.ACCESS_AUD?.trim()
     if (!team || !aud) {
-      throw new HttpError(500, 'auth_misconfigured', 'Prihlásenie nie je nastavené (ACCESS_TEAM_DOMAIN, ACCESS_AUD).')
+      throw new HttpError(
+        500,
+        'auth_misconfigured',
+        'Prihlásenie nie je nastavené (ACCESS_TEAM_DOMAIN, ACCESS_AUD).',
+      )
     }
     try {
       const { payload } = await jwtVerify(token, accessKey ?? remoteJwks(team), {

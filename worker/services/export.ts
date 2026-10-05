@@ -10,7 +10,10 @@ export async function exportHousehold(db: Db, householdId: string): Promise<Expo
   const own = (col: SQLiteColumn): SQL => eq(col, householdId)
 
   const recipeIds = db.select({ id: t.recipes.id }).from(t.recipes).where(own(t.recipes.householdId))
-  const memberIds = db.select({ id: t.familyMembers.id }).from(t.familyMembers).where(own(t.familyMembers.householdId))
+  const memberIds = db
+    .select({ id: t.familyMembers.id })
+    .from(t.familyMembers)
+    .where(own(t.familyMembers.householdId))
   const entryIds = db
     .select({ id: t.mealPlanEntries.id })
     .from(t.mealPlanEntries)
@@ -19,8 +22,14 @@ export async function exportHousehold(db: Db, householdId: string): Promise<Expo
     .select({ id: t.weekTemplates.id })
     .from(t.weekTemplates)
     .where(own(t.weekTemplates.householdId))
-  const listIds = db.select({ id: t.shoppingLists.id }).from(t.shoppingLists).where(own(t.shoppingLists.householdId))
-  const itemIds = db.select({ id: t.shoppingItems.id }).from(t.shoppingItems).where(inArray(t.shoppingItems.listId, listIds))
+  const listIds = db
+    .select({ id: t.shoppingLists.id })
+    .from(t.shoppingLists)
+    .where(own(t.shoppingLists.householdId))
+  const itemIds = db
+    .select({ id: t.shoppingItems.id })
+    .from(t.shoppingItems)
+    .where(inArray(t.shoppingItems.listId, listIds))
 
   const queries = {
     households: db.select().from(t.households).where(eq(t.households.id, householdId)),
@@ -29,13 +38,22 @@ export async function exportHousehold(db: Db, householdId: string): Promise<Expo
     shopCategories: db.select().from(t.shopCategories).where(own(t.shopCategories.householdId)),
     ingredients: db.select().from(t.ingredients).where(own(t.ingredients.householdId)),
     tags: db.select().from(t.tags).where(own(t.tags.householdId)),
-    memberPreferences: db.select().from(t.memberPreferences).where(inArray(t.memberPreferences.memberId, memberIds)),
+    memberPreferences: db
+      .select()
+      .from(t.memberPreferences)
+      .where(inArray(t.memberPreferences.memberId, memberIds)),
     images: db.select().from(t.images).where(own(t.images.householdId)),
     recipes: db.select().from(t.recipes).where(own(t.recipes.householdId)),
-    recipeIngredients: db.select().from(t.recipeIngredients).where(inArray(t.recipeIngredients.recipeId, recipeIds)),
+    recipeIngredients: db
+      .select()
+      .from(t.recipeIngredients)
+      .where(inArray(t.recipeIngredients.recipeId, recipeIds)),
     recipeSteps: db.select().from(t.recipeSteps).where(inArray(t.recipeSteps.recipeId, recipeIds)),
     recipeTags: db.select().from(t.recipeTags).where(inArray(t.recipeTags.recipeId, recipeIds)),
-    recipeFavorites: db.select().from(t.recipeFavorites).where(inArray(t.recipeFavorites.recipeId, recipeIds)),
+    recipeFavorites: db
+      .select()
+      .from(t.recipeFavorites)
+      .where(inArray(t.recipeFavorites.recipeId, recipeIds)),
     recipeRatings: db.select().from(t.recipeRatings).where(inArray(t.recipeRatings.recipeId, recipeIds)),
     recipeNotes: db.select().from(t.recipeNotes).where(inArray(t.recipeNotes.recipeId, recipeIds)),
     mealSlots: db.select().from(t.mealSlots).where(own(t.mealSlots.householdId)),

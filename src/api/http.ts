@@ -82,7 +82,11 @@ export function filenameFromDisposition(header: string | null, fallback: string)
 }
 
 /** Stiahne súbor z API (napr. export) cez dočasný odkaz. */
-export async function downloadFile(path: string, fallbackName: string, opts: ApiFetchOptions = {}): Promise<void> {
+export async function downloadFile(
+  path: string,
+  fallbackName: string,
+  opts: ApiFetchOptions = {},
+): Promise<void> {
   const res = await send(path, undefined, opts)
   const url = URL.createObjectURL(await res.blob())
   const a = document.createElement('a')

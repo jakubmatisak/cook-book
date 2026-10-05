@@ -38,7 +38,12 @@ describe('AppShell', () => {
     const nav = wrapper.find('[data-test="bottom-nav"]')
     expect(nav.exists()).toBe(true)
     expect(wrapper.find('[data-test="side-rail"]').exists()).toBe(false)
-    expect(nav.findAll('[data-test="nav-item"]').map((i) => i.text())).toEqual(['Recepty', 'Plán', 'Nákup', 'Viac'])
+    expect(nav.findAll('[data-test="nav-item"]').map((i) => i.text())).toEqual([
+      'Recepty',
+      'Plán',
+      'Nákup',
+      'Viac',
+    ])
   })
 
   it('na desktope ukáže bočnú lištu namiesto spodnej navigácie', async () => {
@@ -46,7 +51,12 @@ describe('AppShell', () => {
     const rail = wrapper.find('[data-test="side-rail"]')
     expect(rail.exists()).toBe(true)
     expect(wrapper.find('[data-test="bottom-nav"]').exists()).toBe(false)
-    expect(rail.findAll('[data-test="nav-item"]').map((i) => i.text())).toEqual(['Recepty', 'Plán', 'Nákup', 'Viac'])
+    expect(rail.findAll('[data-test="nav-item"]').map((i) => i.text())).toEqual([
+      'Recepty',
+      'Plán',
+      'Nákup',
+      'Viac',
+    ])
   })
 
   it('vyrenderuje obsah stránky', async () => {

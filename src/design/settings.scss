@@ -1,6 +1,17 @@
 // Vuetify SASS premenné. Škála zaoblenia: tlačidlá a polia 'lg' = 12px, karty 'xl' = 20px.
 @use 'vuetify/settings' with (
-  $body-font-family: ('Nunito Variable', system-ui, -apple-system, 'Segoe UI', sans-serif),
+  $body-font-family: (
+    'Nunito Variable',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif,
+  ),
   $border-radius-root: 8px,
-  $rounded: ('sm': 4px, 'md': 8px, 'lg': 12px, 'xl': 20px)
+  $rounded: (
+    'sm': 4px,
+    'md': 8px,
+    'lg': 12px,
+    'xl': 20px,
+  )
 );

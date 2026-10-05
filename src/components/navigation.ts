@@ -1,4 +1,9 @@
-import { mdiBookOpenPageVariantOutline, mdiCalendarMonthOutline, mdiCartOutline, mdiDotsHorizontal } from '@mdi/js'
+import {
+  mdiBookOpenPageVariantOutline,
+  mdiCalendarMonthOutline,
+  mdiCartOutline,
+  mdiDotsHorizontal,
+} from '@mdi/js'
 
 export interface NavItem {
   to: string

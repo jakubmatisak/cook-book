@@ -43,13 +43,23 @@ export async function ensureHousehold(db: Db): Promise<string> {
     db.insert(households).values({ id, name: 'Naša domácnosť' }).onConflictDoNothing(),
     db
       .insert(mealSlots)
-      .values(DEFAULT_SLOTS.map((s, i) => ({ householdId: id, name: s.name, defaultTime: s.defaultTime, sortOrder: i })))
+      .values(
+        DEFAULT_SLOTS.map((s, i) => ({
+          householdId: id,
+          name: s.name,
+          defaultTime: s.defaultTime,
+          sortOrder: i,
+        })),
+      )
       .onConflictDoNothing(),
     db
       .insert(shopCategories)
       .values(DEFAULT_SHOP_CATEGORIES.map((name, i) => ({ householdId: id, name, sortOrder: i })))
       .onConflictDoNothing(),
-    db.insert(shoppingLists).values({ householdId: id, name: 'Nákup', isDefault: true }).onConflictDoNothing(),
+    db
+      .insert(shoppingLists)
+      .values({ householdId: id, name: 'Nákup', isDefault: true })
+      .onConflictDoNothing(),
     db
       .insert(settings)
       .values(Object.entries(DEFAULT_SETTINGS).map(([key, value]) => ({ householdId: id, key, value })))

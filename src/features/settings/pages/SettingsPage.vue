@@ -47,7 +47,13 @@ async function exportData() {
         Stiahne všetky recepty, jedálničky a zoznamy ako JSON súbor. Odporúčame raz za mesiac.
       </v-card-text>
       <v-card-actions>
-        <v-btn color="primary" variant="flat" :prepend-icon="mdiDownload" :loading="exporting" @click="exportData">
+        <v-btn
+          color="primary"
+          variant="flat"
+          :prepend-icon="mdiDownload"
+          :loading="exporting"
+          @click="exportData"
+        >
           Exportovať dáta
         </v-btn>
       </v-card-actions>

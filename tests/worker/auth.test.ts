@@ -39,7 +39,9 @@ describe('isAllowedEmail', () => {
 
 describe('Access JWT', () => {
   it('platný token s povoleným e-mailom prejde a e-mail sa uloží malými písmenami', async () => {
-    const res = await call(app, `${PROD}/api/v1/me`, { 'Cf-Access-Jwt-Assertion': await sign('Ja@Example.com') })
+    const res = await call(app, `${PROD}/api/v1/me`, {
+      'Cf-Access-Jwt-Assertion': await sign('Ja@Example.com'),
+    })
     expect(res.status).toBe(200)
     expect((await res.json<MeResponse>()).user.email).toBe('ja@example.com')
   })

@@ -5,5 +5,11 @@
     "lib": ["ES2023"],
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "drizzle.config.ts", "pwa-assets.config.ts", "eslint.config.js"]
+  "include": [
+    "vite.config.ts",
+    "vitest.config.ts",
+    "drizzle.config.ts",
+    "pwa-assets.config.ts",
+    "eslint.config.js"
+  ]
 }
