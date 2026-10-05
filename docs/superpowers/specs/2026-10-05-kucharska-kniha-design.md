@@ -54,6 +54,15 @@ Predpoklady (ak nesedia, oprav ich pred implementáciou):
 - **Nastavenia** sa vždy zlučujú s predvolenými, chýbajúci kľúč nepokazí aplikáciu.
 - **Slovenské hlášky validácie** cez `z.config(z.locales.sk())` v `shared/schemas/zod.ts`.
 
+## 0d. Zmeny po implementácii fázy 3 a redizajne (5. 10. 2026)
+
+- **Tailwind odstránený.** Na želanie používateľa je UI čisté Vuetify: komponenty, defaults v `src/plugins/vuetify.ts`, utility triedy. Žiadne `<style>` bloky ani vlastné widgety. Časť 2.7 o Tailwinde už neplatí.
+- **Nákupný zoznam:** generátor je čistá funkcia `shared/shopping.ts`; voliteľné ingrediencie sa nepridávajú; kusy a balenia sa zaokrúhľujú nahor, gramy a mililitre nahor na krok 1/5/10; pri opätovnom generovaní sa kúpené položky nechajú a ich ingrediencia sa znova nepridá.
+- **Offline odškrtávanie:** fronta v IndexedDB, hromadné odoslanie po pripojení; server použije len zmenu novšiu ako posledná úprava položky (posledná vyhráva).
+- **Synchronizácia medzi vami:** obnova zoznamu každých 5 s, kým je stránka viditeľná (bez Durable Objects).
+- **Ručná položka** z jedného riadku („2 kg zemiaky“) prevezme kategóriu obchodu známej ingrediencie.
+- **Nasadenie:** Worker sa volá `cook-book` (prepojený s GitHub repom jakubmatisak/cook-book), beží na cook-book.jakub-matisak.workers.dev za Cloudflare Access.
+
 ## 1. Fázy – čo, kedy a prečo
 
 Pravidlo: každá fáza končí niečím, čo reálne používate. Nič sa nebuduje „na neskôr“, len dátový model je od začiatku kompletný, aby sa neskôr nemuselo migrovať s bolesťou.

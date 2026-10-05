@@ -20,7 +20,8 @@ D1 cez Drizzle, R2 na fotky, prihlásenie Cloudflare Access. Všetko na free pl�
 - Texty sú po slovensky priamo v komponentoch.
 - Vzhľad sa mení v `src/design/tokens.ts` (farby), `src/plugins/vuetify.ts` (defaults) a `src/design/settings.scss`
   (SASS premenné). Nepíš farby natvrdo do komponentov.
-- Tailwind len na rozloženie a drobnosti, vždy s prefixom `tw:` (`tw:flex`, `tw:md:p-6`). Preflight je vypnutý.
+- Len Vuetify: komponenty, ich props (variant, density, color, rounded) a utility triedy (`d-flex`, `ga-2`, `pa-4`, `text-h5`…). Žiadny Tailwind, žiadne `<style>` bloky ani vlastné `<button>`/`<div>` widgety; inline `style` len tam, kde Vuetify nemá prop (šírka stĺpca a pod.).
+- Spoločné časti: `PageHeader` (nadpis + akcie), `EmptyState` (v-empty-state).
 - Mobil je prvý; desktopová bočná lišta od Vuetify `mdAndUp` (840 px).
 
 ## Príkazy

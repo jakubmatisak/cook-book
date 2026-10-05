@@ -14,11 +14,11 @@ jeden Worker servíruje Vue frontend aj API, dáta sú v D1, fotky v R2 a prihl�
 - **Týždenný jedálniček:** recept alebo vlastný text do jedla dňa, porcie podľa rodiny, presun, kópia a kopírovanie celého týždňa.
 - **Záloha:** export všetkých dát do JSON.
 
-Nákupný zoznam generovaný z jedálnička príde vo fáze 3.
+- **Nákupný zoznam:** vygenerovaný z jedálnička podľa porcií rodiny (sčítané ingrediencie, prevody jednotiek, zaokrúhlenie pre obchod), ručné položky jedným riadkom („2 kg zemiaky“), skupiny podľa kategórie obchodu, odškrtávanie zdieľané medzi vami aj bez signálu.
 
 ## Technológie
 
-Vue 3 · Vuetify 4 · Tailwind 4 (prefix `tw:`) · TanStack Query · vite-plugin-pwa · Hono · Drizzle ORM · Cloudflare
+Vue 3 · Vuetify 4 · TanStack Query · vite-plugin-pwa · Hono · Drizzle ORM · Cloudflare
 Workers + D1 + R2 · Vitest (+ Workers runtime cez `@cloudflare/vitest-plugin`).
 
 ## Lokálny vývoj
