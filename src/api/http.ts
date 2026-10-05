@@ -19,11 +19,48 @@ export class ApiError extends Error {
 
 export interface ApiFetchOptions {
   fetchFn?: typeof fetch
-  /** Volá sa pri 401; predvolene obnoví stránku a Cloudflare Access potom presmeruje na prihlásenie. */
+  /** Volá sa pri 401 alebo presmerovaní na Access; predvolene `handleSessionExpired`. */
   onUnauthorized?: () => void
 }
 
-const reloadToLogin = () => window.location.reload()
+/**
+ * Stránka mimo service workera: Cloudflare Access na nej vyžiada prihlásenie
+ * a Worker potom presmeruje späť na úvod (worker/index.ts).
+ */
+export const RELOGIN_PATH = '/auth/relogin'
+const RELOGIN_GUARD_KEY = 'kniha:relogin-at'
+const RELOGIN_GUARD_MS = 30_000
+
+export interface SessionExpiredDeps {
+  navigate: (path: string) => void
+  now: () => number
+  storage: Pick<Storage, 'getItem' | 'setItem'>
+}
+
+/** Presmeruje na prihlásenie najviac raz za 30 s, aby trvalé 401 nespôsobilo nekonečnú slučku. */
+export function createSessionExpiredHandler(deps: SessionExpiredDeps): () => void {
+  return () => {
+    const now = deps.now()
+    try {
+      const last = Number(deps.storage.getItem(RELOGIN_GUARD_KEY) ?? 0)
+      if (now - last < RELOGIN_GUARD_MS) return
+      deps.storage.setItem(RELOGIN_GUARD_KEY, String(now))
+    } catch {
+      // úložisko nie je dostupné – presmerujeme bez poistky
+    }
+    deps.navigate(RELOGIN_PATH)
+  }
+}
+
+let defaultHandler: (() => void) | undefined
+const handleSessionExpired = () => {
+  defaultHandler ??= createSessionExpiredHandler({
+    navigate: (path) => window.location.assign(path),
+    now: () => Date.now(),
+    storage: window.sessionStorage,
+  })
+  defaultHandler()
+}
 
 const NETWORK_ERROR_MESSAGE = 'Nepodarilo sa spojiť so serverom. Skontroluj pripojenie.'
 
@@ -46,12 +83,17 @@ async function send(path: string, init: RequestInit | undefined, opts: ApiFetchO
   const fetchFn = opts.fetchFn ?? fetch
   let res: Response
   try {
-    res = await fetchFn(`${API_BASE}${path}`, { credentials: 'same-origin', ...init })
+    // redirect: 'manual' – presmerovanie Access na prihlásenie (iná doména) by inak fetch zhodil ako výpadok siete.
+    res = await fetchFn(`${API_BASE}${path}`, { credentials: 'same-origin', redirect: 'manual', ...init })
   } catch {
     throw new ApiError(0, 'network_error', NETWORK_ERROR_MESSAGE)
   }
+  if (res.type === 'opaqueredirect') {
+    ;(opts.onUnauthorized ?? handleSessionExpired)()
+    throw new ApiError(401, 'session_expired', 'Prihlásenie vypršalo, presmerúvam na prihlásenie.')
+  }
   if (!res.ok) {
-    if (res.status === 401) (opts.onUnauthorized ?? reloadToLogin)()
+    if (res.status === 401) (opts.onUnauthorized ?? handleSessionExpired)()
     const body = await readJson(res)
     if (isErrorBody(body)) {
       throw new ApiError(res.status, body.error.code, body.error.message, body.error.details)

@@ -9,7 +9,9 @@
     "vite.config.ts",
     "vitest.config.ts",
     "drizzle.config.ts",
+    "pwa.config.ts",
     "pwa-assets.config.ts",
-    "eslint.config.js"
+    "eslint.config.js",
+    "tests/config/**/*.ts"
   ]
 }
