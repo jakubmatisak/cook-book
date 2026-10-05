@@ -101,7 +101,7 @@ function onDrop(event: DragEvent, date: string, slotId: string) {
                 size="x-small"
                 variant="text"
                 :icon="mdiPlus"
-                class="align-self-center"
+                class="align-self-center d-print-none"
                 :aria-label="`Pridať ${slot.name} ${formatDayLabel(d).long}`"
                 @click="$emit('add', d, slot.id)"
               />

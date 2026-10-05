@@ -113,6 +113,11 @@ export const recipeImportSchema = z.object({
   url: z.url({ protocol: /^https?$/, error: 'Zadaj platnú webovú adresu (http alebo https).' }),
 })
 
+export const markdownQuerySchema = z.object({
+  /** Prepočítať množstvá na tento počet porcií. */
+  porcie: z.coerce.number().int().min(1).max(50).optional(),
+})
+
 export const suggestionsQuerySchema = z.object({
   date: z.string().refine(isIsoDate, 'Neplatný dátum.'),
 })

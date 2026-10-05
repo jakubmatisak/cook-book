@@ -7,6 +7,7 @@ import {
   mdiCloudOffOutline,
   mdiDeleteSweepOutline,
   mdiDotsVertical,
+  mdiPrinterOutline,
   mdiPlaylistPlus,
   mdiPlus,
 } from '@mdi/js'
@@ -119,6 +120,8 @@ function onEdit(item: ShoppingItemDto) {
   editOpen.value = true
 }
 
+const printList = () => window.print()
+
 const generateOpen = ref(false)
 function onGenerated(result: GenerateResult) {
   notify(summarizeGenerate(result))
@@ -142,6 +145,7 @@ function onGenerated(result: GenerateResult) {
           <v-btn v-bind="props" :icon="mdiDotsVertical" variant="text" aria-label="Ďalšie akcie" />
         </template>
         <v-list>
+          <v-list-item :prepend-icon="mdiPrinterOutline" title="Tlačiť nákup" @click="printList" />
           <v-list-item
             :prepend-icon="mdiDeleteSweepOutline"
             title="Vymazať kúpené"
@@ -157,7 +161,7 @@ function onGenerated(result: GenerateResult) {
       type="warning"
       density="compact"
       :icon="mdiCloudOffOutline"
-      class="mb-4"
+      class="mb-4 d-print-none"
       :text="
         online
           ? `Čaká na odoslanie: ${plural(queued, 'zmena', 'zmeny', 'zmien')} z času bez signálu.`
@@ -165,7 +169,7 @@ function onGenerated(result: GenerateResult) {
       "
     />
 
-    <v-form class="d-flex ga-2 mb-4" @submit.prevent="onAdd">
+    <v-form class="d-flex ga-2 mb-4 d-print-none" @submit.prevent="onAdd">
       <v-text-field
         v-model="newItem"
         label="Pridať položku, napr. 2 kg zemiaky"
@@ -226,7 +230,7 @@ function onGenerated(result: GenerateResult) {
         </v-list>
       </v-card>
 
-      <template v-if="inCart.length">
+      <div v-if="inCart.length" class="d-print-none">
         <v-btn
           variant="text"
           :append-icon="showCart ? mdiChevronUp : mdiChevronDown"
@@ -259,7 +263,7 @@ function onGenerated(result: GenerateResult) {
             </v-card-actions>
           </v-card>
         </v-expand-transition>
-      </template>
+      </div>
     </template>
 
     <GenerateDialog

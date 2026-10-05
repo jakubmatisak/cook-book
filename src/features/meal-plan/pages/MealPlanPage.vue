@@ -7,6 +7,7 @@ import {
   mdiContentSaveOutline,
   mdiDotsVertical,
   mdiCalendarImport,
+  mdiPrinterOutline,
 } from '@mdi/js'
 import { computed, nextTick, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -99,6 +100,8 @@ function onPlanSuggestion(recipeId: string) {
   dialogSlot.value = slot?.id ?? ''
   dialogOpen.value = true
 }
+
+const printWeek = () => window.print()
 
 // Šablóny týždňov
 const saveTemplateOpen = ref(false)
@@ -231,6 +234,7 @@ async function copyToNextWeek() {
           :disabled="!entries?.length"
           @click="saveTemplateOpen = true"
         />
+        <v-list-item :prepend-icon="mdiPrinterOutline" title="Tlačiť týždeň" @click="printWeek" />
         <v-list-item
           :prepend-icon="mdiCalendarImport"
           title="Použiť šablónu na tento týždeň"
@@ -243,12 +247,12 @@ async function copyToNextWeek() {
   <v-alert v-if="error" type="error" :text="error.message" />
   <v-skeleton-loader v-else-if="isPending" type="table" />
   <template v-else>
-    <v-alert v-if="!members.length" type="info" density="compact" class="mb-4">
+    <v-alert v-if="!members.length" type="info" density="compact" class="mb-4 d-print-none">
       Pridaj členov rodiny v sekcii
       <router-link to="/rodina" class="text-primary font-weight-bold">Rodina</router-link>
       a porcie sa budú počítať automaticky.
     </v-alert>
-    <SuggestionsCard v-if="isCurrentWeek" :date="today" @plan="onPlanSuggestion" />
+    <SuggestionsCard v-if="isCurrentWeek" class="d-print-none" :date="today" @plan="onPlanSuggestion" />
     <WeekGrid
       v-if="mdAndUp"
       :dates="dates"

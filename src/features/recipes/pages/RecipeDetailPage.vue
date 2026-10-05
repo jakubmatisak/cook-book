@@ -6,11 +6,15 @@ import {
   mdiClockOutline,
   mdiCalendarPlus,
   mdiDeleteOutline,
+  mdiContentCopy,
   mdiDotsVertical,
+  mdiFileDownloadOutline,
   mdiLinkVariant,
   mdiPencilOutline,
   mdiPlayCircleOutline,
   mdiPotSteamOutline,
+  mdiPrinterOutline,
+  mdiShareVariantOutline,
   mdiSilverwareForkKnife,
   mdiTimerOutline,
 } from '@mdi/js'
@@ -20,9 +24,11 @@ import type { RecipeIngredientDto } from '@shared/api'
 import { addDays } from '@shared/dates'
 import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS } from '@shared/recipes'
 import { formatScaled } from '@shared/scaling'
-import { ApiError } from '@/api/http'
+import { markdownFilename, recipeToMarkdown } from '@shared/markdown'
+import { ApiError, downloadFile } from '@/api/http'
 import { useMe } from '@/api/me'
 import { useDeleteRecipe, useRecipe } from '@/api/recipes'
+import { canShare, copyText, shareText } from '@/composables/useShare'
 import { useToday } from '@/composables/useToday'
 import EntryDialog from '@/features/meal-plan/components/EntryDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -106,6 +112,40 @@ const cookingLink = computed(() => ({
   query: route.query.porcie ? { porcie: String(route.query.porcie) } : {},
 }))
 
+// Tlač, kopírovanie, zdieľanie a export: s aktuálne zvoleným počtom porcií
+const snackbar = ref({ show: false, text: '', color: 'success' })
+const notify = (text: string, color = 'success') => (snackbar.value = { show: true, text, color })
+const markdown = computed(() =>
+  recipe.value ? recipeToMarkdown(recipe.value, { servings: servings.value }) : '',
+)
+const supportsShare = canShare()
+
+const printRecipe = () => window.print()
+
+async function copyRecipe() {
+  const copied = await copyText(markdown.value)
+  notify(copied ? 'Recept je skopírovaný.' : 'Kopírovanie sa nepodarilo.', copied ? 'success' : 'error')
+}
+
+async function shareRecipe() {
+  if (!recipe.value) return
+  try {
+    await shareText({ title: recipe.value.title, text: markdown.value })
+  } catch (e) {
+    notify(e instanceof Error ? e.message : 'Zdieľanie sa nepodarilo.', 'error')
+  }
+}
+
+async function downloadMarkdown() {
+  if (!recipe.value) return
+  const query = servings.value !== recipe.value.servings ? `?porcie=${servings.value}` : ''
+  try {
+    await downloadFile(`/recipes/${id.value}/export.md${query}`, markdownFilename(recipe.value.title))
+  } catch (e) {
+    notify(e instanceof ApiError ? e.message : 'Stiahnutie sa nepodarilo.', 'error')
+  }
+}
+
 const confirmDelete = ref(false)
 const deleteError = ref('')
 
@@ -127,7 +167,7 @@ function goBack() {
 </script>
 
 <template>
-  <v-toolbar color="transparent" density="compact" class="mb-2 px-0">
+  <v-toolbar color="transparent" density="compact" class="mb-2 px-0 d-print-none">
     <v-btn :icon="mdiArrowLeft" variant="text" aria-label="Späť" @click="goBack" />
     <v-spacer />
     <template v-if="recipe">
@@ -144,6 +184,32 @@ function goBack() {
           <v-btn v-bind="props" :icon="mdiDotsVertical" variant="text" aria-label="Ďalšie akcie" />
         </template>
         <v-list>
+          <v-list-item
+            :prepend-icon="mdiPrinterOutline"
+            title="Tlačiť"
+            data-test="print"
+            @click="printRecipe"
+          />
+          <v-list-item
+            :prepend-icon="mdiContentCopy"
+            title="Kopírovať ako text"
+            data-test="copy"
+            @click="copyRecipe"
+          />
+          <v-list-item
+            v-if="supportsShare"
+            :prepend-icon="mdiShareVariantOutline"
+            title="Zdieľať"
+            data-test="share"
+            @click="shareRecipe"
+          />
+          <v-list-item
+            :prepend-icon="mdiFileDownloadOutline"
+            title="Stiahnuť ako Markdown"
+            data-test="download-md"
+            @click="downloadMarkdown"
+          />
+          <v-divider />
           <v-list-item :prepend-icon="mdiDeleteOutline" title="Zmazať recept" @click="confirmDelete = true" />
         </v-list>
       </v-menu>
@@ -192,7 +258,7 @@ function goBack() {
       variant="tonal"
       :prepend-icon="mdiPlayCircleOutline"
       :to="cookingLink"
-      class="mb-3"
+      class="mb-3 d-print-none"
     >
       Režim varenia
     </v-btn>
@@ -215,7 +281,10 @@ function goBack() {
     <v-row>
       <v-col cols="12" md="5" lg="4">
         <v-card title="Ingrediencie">
-          <v-card-text class="d-flex align-center ga-3 pb-0">
+          <v-card-text class="d-none d-print-block pb-0">
+            Pre {{ plural(servings, 'porciu', 'porcie', 'porcií') }}
+          </v-card-text>
+          <v-card-text class="d-flex align-center ga-3 pb-0 d-print-none">
             <v-number-input
               v-model="servings"
               label="Porcie"
@@ -313,6 +382,8 @@ function goBack() {
     :dates="planDates"
     :members="me.members"
   />
+
+  <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">{{ snackbar.text }}</v-snackbar>
 
   <v-dialog v-model="confirmDelete" max-width="420">
     <v-card title="Zmazať recept?">

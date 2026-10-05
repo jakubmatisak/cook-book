@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
+import { markdownFilename, recipeToMarkdown } from '../../shared/markdown'
 import {
+  markdownQuerySchema,
   recipeImportSchema,
   recipeInputSchema,
   recipeListQuerySchema,
@@ -42,6 +44,16 @@ export const recipeRoutes = new Hono<AppEnv>()
     const user = c.get('user')
     const id = await saveRecipe(c.get('db'), user, input)
     return c.json(await getRecipeDetail(c.get('db'), user.householdId, user.id, id), 201)
+  })
+  .get('/:id/export.md', async (c) => {
+    const { porcie } = markdownQuerySchema.parse(c.req.query())
+    const user = c.get('user')
+    const recipe = await getRecipeDetail(c.get('db'), user.householdId, user.id, c.req.param('id'))
+    return c.body(recipeToMarkdown(recipe, { servings: porcie }), 200, {
+      'Content-Type': 'text/markdown; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${markdownFilename(recipe.title)}"`,
+      'Cache-Control': 'no-store',
+    })
   })
   .get('/:id', async (c) => {
     const user = c.get('user')

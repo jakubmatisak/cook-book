@@ -49,7 +49,7 @@ defineEmits<{ add: [date: string, slotId: string]; edit: [entry: PlanEntryDto] }
               @edit="$emit('edit', $event)"
             />
           </v-col>
-          <v-col cols="auto">
+          <v-col cols="auto" class="d-print-none">
             <v-btn
               :icon="mdiPlus"
               size="small"

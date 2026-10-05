@@ -12,7 +12,11 @@ const { smAndDown } = useDisplay()
       <h1 class="text-h5 font-weight-bold">{{ title }}</h1>
       <div v-if="subtitle" class="text-body-2 text-medium-emphasis">{{ subtitle }}</div>
     </div>
-    <div v-if="$slots.default" class="d-flex flex-wrap align-center ga-2" :class="{ 'w-100': smAndDown }">
+    <div
+      v-if="$slots.default"
+      class="d-flex flex-wrap align-center ga-2 d-print-none"
+      :class="{ 'w-100': smAndDown }"
+    >
       <slot />
     </div>
   </div>

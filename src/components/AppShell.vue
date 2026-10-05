@@ -11,6 +11,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useOnline } from '@/composables/useOnline'
+import { usePrintMode } from '@/composables/usePrintMode'
 import { useApplyTheme, useThemePreference, type ThemePreference } from '@/composables/useThemePreference'
 import { PRIMARY_NAV, SECONDARY_NAV } from './navigation'
 
@@ -21,7 +22,11 @@ const route = useRoute()
 /** Stránky s meta.bare (napr. režim varenia) bez lišty a menu. */
 const bare = computed(() => route.meta.bare === true)
 
-useApplyTheme()
+// Pri tlači sa lišty a menu odstránia (nielen skryjú), aby po nich nezostali prázdne okraje.
+const printing = usePrintMode()
+const showChrome = computed(() => !bare.value && !printing.value)
+
+useApplyTheme(printing)
 const { preference, cycle } = useThemePreference()
 const THEME_ICONS: Record<ThemePreference, string> = {
   system: mdiThemeLightDark,
@@ -59,7 +64,7 @@ const mobileMenu = ref(false)
 
 <template>
   <v-app>
-    <v-app-bar v-if="!bare" density="comfortable" border="b">
+    <v-app-bar v-if="showChrome" density="comfortable" border="b" class="d-print-none">
       <template #prepend>
         <v-app-bar-nav-icon
           v-if="mdAndUp"
@@ -83,7 +88,7 @@ const mobileMenu = ref(false)
       </template>
     </v-app-bar>
 
-    <v-navigation-drawer v-if="mdAndUp && !bare" permanent :rail="rail" border="e" data-test="side-nav">
+    <v-navigation-drawer v-if="mdAndUp && showChrome" permanent :rail="rail" border="e" data-test="side-nav">
       <v-list nav density="comfortable" class="pt-3">
         <v-list-item
           v-for="item in PRIMARY_NAV"
@@ -108,7 +113,7 @@ const mobileMenu = ref(false)
     </v-navigation-drawer>
 
     <v-navigation-drawer
-      v-else-if="!mdAndUp && !bare"
+      v-else-if="!mdAndUp && showChrome"
       v-model="mobileMenu"
       temporary
       location="bottom"
@@ -130,14 +135,20 @@ const mobileMenu = ref(false)
 
     <v-main>
       <v-container class="pa-4 pa-md-6" style="max-width: 1200px">
-        <v-alert v-if="!online" type="warning" density="compact" class="mb-4" :icon="mdiCloudOffOutline">
+        <v-alert
+          v-if="!online"
+          type="warning"
+          density="compact"
+          class="mb-4 d-print-none"
+          :icon="mdiCloudOffOutline"
+        >
           Bez signálu. Zmeny sa odošlú po pripojení, odškrtávanie nákupu funguje aj teraz.
         </v-alert>
         <slot />
       </v-container>
     </v-main>
 
-    <v-bottom-navigation v-if="!mdAndUp && !bare" border="t" data-test="bottom-nav">
+    <v-bottom-navigation v-if="!mdAndUp && showChrome" border="t" data-test="bottom-nav">
       <v-btn v-for="item in PRIMARY_NAV" :key="item.to" :to="item.to" data-test="nav-item">
         <v-icon :icon="item.icon" />
         <span>{{ item.title }}</span>

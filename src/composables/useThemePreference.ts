@@ -1,4 +1,4 @@
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref, watchEffect, type Ref } from 'vue'
 import { useTheme } from 'vuetify'
 
 export type ThemePreference = 'light' | 'dark' | 'system'
@@ -55,8 +55,9 @@ export function useThemePreference() {
 }
 
 /** Raz v koreni aplikácie: premietne zvolenú tému do Vuetify. */
-export function useApplyTheme() {
+/** `forceLight`: počas tlače sa použije svetlá téma bez ohľadu na voľbu (inak by svetlý text zmizol na papieri). */
+export function useApplyTheme(forceLight?: Ref<boolean>) {
   const theme = useTheme()
   const { resolved } = useThemePreference()
-  watchEffect(() => theme.change(resolved.value))
+  watchEffect(() => theme.change(forceLight?.value ? 'light' : resolved.value))
 }

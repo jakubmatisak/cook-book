@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiDownload } from '@mdi/js'
+import { mdiDownload, mdiFileDocumentOutline } from '@mdi/js'
 import { ref, watch } from 'vue'
 import { useUpdateSettings, useUpdateSlot } from '@/api/family'
 import { ApiError, downloadFile } from '@/api/http'
@@ -52,6 +52,7 @@ const saveChildFactor = (value: number) =>
 const formatFactor = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',')
 
 const exporting = ref(false)
+const exportingRecipes = ref(false)
 
 async function exportData() {
   exporting.value = true
@@ -63,6 +64,18 @@ async function exportData() {
     snackbar.value = { show: true, text, color: 'error' }
   } finally {
     exporting.value = false
+  }
+}
+async function exportRecipes() {
+  exportingRecipes.value = true
+  try {
+    await downloadFile('/export/recipes.md', 'kucharska-kniha-recepty.md')
+    snackbar.value = { show: true, text: 'Recepty stiahnuté.', color: 'success' }
+  } catch (e) {
+    const text = e instanceof ApiError ? e.message : 'Export receptov sa nepodaril.'
+    snackbar.value = { show: true, text, color: 'error' }
+  } finally {
+    exportingRecipes.value = false
   }
 }
 </script>
@@ -149,13 +162,24 @@ async function exportData() {
       </v-card-text>
     </v-card>
 
-    <v-card title="Záloha dát">
+    <v-card title="Záloha a export">
       <v-card-text class="text-body-2">
-        Stiahne všetky recepty, jedálničky a zoznamy ako JSON súbor. Odporúčame raz za mesiac.
+        Záloha stiahne všetky recepty, jedálničky a zoznamy ako JSON súbor, odporúčame ju raz za mesiac.
+        Recepty vieš stiahnuť aj ako čitateľný textový súbor (Markdown). Tlač do PDF nájdeš pri recepte,
+        jedálničku a nákupe v menu Tlačiť, v okne tlače zvoľ Uložiť ako PDF.
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="flex-wrap ga-2">
         <v-btn color="primary" :prepend-icon="mdiDownload" :loading="exporting" @click="exportData">
           Exportovať dáta
+        </v-btn>
+        <v-btn
+          variant="tonal"
+          :prepend-icon="mdiFileDocumentOutline"
+          :loading="exportingRecipes"
+          data-test="export-recipes"
+          @click="exportRecipes"
+        >
+          Recepty ako Markdown
         </v-btn>
       </v-card-actions>
     </v-card>
