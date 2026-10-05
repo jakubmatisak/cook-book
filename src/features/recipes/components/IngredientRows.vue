@@ -61,6 +61,7 @@ function move(index: number, delta: number) {
         <v-select
           v-model="row.unit"
           :items="unitItems"
+          item-props
           label="Jednotka"
           clearable
           hide-details

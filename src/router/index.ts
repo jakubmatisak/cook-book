@@ -51,6 +51,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { title: 'Rodina' },
   },
   {
+    path: '/ingrediencie',
+    name: 'ingredients',
+    component: () => import('@/features/ingredients/pages/IngredientsPage.vue'),
+    meta: { title: 'Ingrediencie' },
+  },
+  {
     path: '/nastavenia',
     name: 'settings',
     component: () => import('@/features/settings/pages/SettingsPage.vue'),

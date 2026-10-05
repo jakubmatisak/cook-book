@@ -1,8 +1,14 @@
 <script setup lang="ts">
-import { mdiAccountGroupOutline, mdiChevronRight, mdiCogOutline } from '@mdi/js'
+import { mdiAccountGroupOutline, mdiChevronRight, mdiCogOutline, mdiFormatListChecks } from '@mdi/js'
 
 const links = [
   { to: '/rodina', title: 'Rodina', subtitle: 'Členovia a veľkosť porcií', icon: mdiAccountGroupOutline },
+  {
+    to: '/ingrediencie',
+    title: 'Ingrediencie',
+    subtitle: 'Kategórie obchodu a jednotky',
+    icon: mdiFormatListChecks,
+  },
   { to: '/nastavenia', title: 'Nastavenia', subtitle: 'Účet, domácnosť, export dát', icon: mdiCogOutline },
 ]
 </script>
