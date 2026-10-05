@@ -1,4 +1,5 @@
 import { z } from './zod'
+import { isIsoDate } from '../dates'
 import { SORT_KEYS, TIME_BUCKETS } from '../recipeFacets'
 import { RECIPE_CATEGORIES } from '../recipes'
 import { normalizeText } from '../text'
@@ -110,6 +111,10 @@ export const recipeListQuerySchema = z.object({
 
 export const recipeImportSchema = z.object({
   url: z.url({ protocol: /^https?$/, error: 'Zadaj platnú webovú adresu (http alebo https).' }),
+})
+
+export const suggestionsQuerySchema = z.object({
+  date: z.string().refine(isIsoDate, 'Neplatný dátum.'),
 })
 
 export const tagInputSchema = z.object({

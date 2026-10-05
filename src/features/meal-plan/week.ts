@@ -44,3 +44,20 @@ export function moveTarget(
 ): { date: string; slotId: string } | null {
   return entry.date === date && entry.slotId === slotId ? null : { date, slotId }
 }
+
+const toMinutes = (time: string) => {
+  const [h, m] = time.split(':').map(Number) as [number, number]
+  return h * 60 + m
+}
+
+/**
+ * Jedlo dňa, do ktorého sa hodí zaradiť recept „teraz“: najbližšie zapnuté jedlo, ktoré ešte nezačalo;
+ * po poslednom jedle dňa posledné zapnuté. Jedlá bez času berú prvé zapnuté.
+ */
+export function pickSlotForNow(slots: readonly MealSlotDto[], nowMinutes: number): MealSlotDto | undefined {
+  const enabled = slots.filter((s) => s.isEnabled).sort((a, b) => a.sortOrder - b.sortOrder)
+  if (enabled.length === 0) return undefined
+  const timed = enabled.filter((s) => s.defaultTime)
+  if (timed.length === 0) return enabled[0]
+  return timed.find((s) => toMinutes(s.defaultTime!) >= nowMinutes) ?? enabled[enabled.length - 1]
+}

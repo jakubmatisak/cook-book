@@ -1,4 +1,10 @@
-import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+  type UseMutationReturnType,
+} from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type { PlanCopyResult, PlanEntryDto, TemplateApplyResult, WeekTemplateDto } from '@shared/api'
 import type { PlanEntryInputRaw } from '@shared/schemas/plan'
@@ -17,6 +23,13 @@ export function usePlan(from: MaybeRefOrGetter<string>, to: MaybeRefOrGetter<str
   })
 }
 
+/** Zmena jedálnička obnoví plán aj návrhy „čo uvariť dnes“. */
+const invalidatePlan = (client: QueryClient) =>
+  Promise.all([
+    client.invalidateQueries({ queryKey: planKeys.all }),
+    client.invalidateQueries({ queryKey: ['recipes', 'suggestions'] }),
+  ])
+
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) })
 
 export interface SaveEntryVars {
@@ -29,7 +42,7 @@ export function useSaveEntry(): UseMutationReturnType<PlanEntryDto, Error, SaveE
   return useMutation({
     mutationFn: ({ id, input }: SaveEntryVars) =>
       apiFetch<PlanEntryDto>(id ? `/plan/entries/${id}` : '/plan/entries', json(id ? 'PUT' : 'POST', input)),
-    onSuccess: () => client.invalidateQueries({ queryKey: planKeys.all }),
+    onSuccess: () => invalidatePlan(client),
   })
 }
 
@@ -37,7 +50,7 @@ export function useDeleteEntry(): UseMutationReturnType<void, Error, string, unk
   const client = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiFetch<void>(`/plan/entries/${id}`, { method: 'DELETE' }),
-    onSuccess: () => client.invalidateQueries({ queryKey: planKeys.all }),
+    onSuccess: () => invalidatePlan(client),
   })
 }
 
@@ -52,7 +65,7 @@ export function useCopyPlan(): UseMutationReturnType<PlanCopyResult, Error, Copy
   const client = useQueryClient()
   return useMutation({
     mutationFn: (vars: CopyPlanVars) => apiFetch<PlanCopyResult>('/plan/copy', json('POST', vars)),
-    onSuccess: () => client.invalidateQueries({ queryKey: planKeys.all }),
+    onSuccess: () => invalidatePlan(client),
   })
 }
 
@@ -90,7 +103,7 @@ export function useApplyTemplate(): UseMutationReturnType<
   return useMutation({
     mutationFn: ({ id, ...body }: ApplyTemplateVars) =>
       apiFetch<TemplateApplyResult>(`/plan/templates/${id}/apply`, json('POST', body)),
-    onSuccess: () => client.invalidateQueries({ queryKey: planKeys.all }),
+    onSuccess: () => invalidatePlan(client),
   })
 }
 

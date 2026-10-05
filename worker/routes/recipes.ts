@@ -1,10 +1,16 @@
 import { Hono } from 'hono'
-import { recipeImportSchema, recipeInputSchema, recipeListQuerySchema } from '../../shared/schemas/recipe'
+import {
+  recipeImportSchema,
+  recipeInputSchema,
+  recipeListQuerySchema,
+  suggestionsQuerySchema,
+} from '../../shared/schemas/recipe'
 import type { AppEnv } from '../env'
 import { parseBody } from '../http'
 import { todayInZone } from '../../shared/dates'
 import { backfillCookLog } from '../services/cookLog'
 import { importRecipe } from '../services/importRecipe'
+import { suggestRecipes } from '../services/suggestions'
 import { deleteRecipe, getRecipeDetail, listRecipes, saveRecipe, setFavorite } from '../services/recipes'
 
 const HOUSEHOLD_TIME_ZONE = 'Europe/Bratislava'
@@ -15,6 +21,13 @@ export const recipeRoutes = new Hono<AppEnv>()
     const user = c.get('user')
     await backfillCookLog(c.get('db'), user.householdId, todayInZone(new Date(), HOUSEHOLD_TIME_ZONE))
     return c.json(await listRecipes(c.get('db'), user.householdId, user.id, filters))
+  })
+  // Pred `/:id`, aby „suggestions“ nepadlo ako id receptu.
+  .get('/suggestions', async (c) => {
+    const { date } = suggestionsQuerySchema.parse(c.req.query())
+    const user = c.get('user')
+    await backfillCookLog(c.get('db'), user.householdId, todayInZone(new Date(), HOUSEHOLD_TIME_ZONE))
+    return c.json(await suggestRecipes(c.get('db'), user.householdId, user.id, date))
   })
   .post('/import', async (c) => {
     const { url } = await parseBody(c, recipeImportSchema)

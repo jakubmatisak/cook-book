@@ -1,5 +1,6 @@
 import type { MemberKind, PlanAudience } from './family'
 import type { MemberPreference, PreferenceWarning } from './preferences'
+import type { Suggestion } from './suggest'
 import type { RecipeFacets } from './recipeFacets'
 import type { RecipeCategory } from './recipes'
 import type { RecipeInputRaw } from './schemas/recipe'
@@ -42,6 +43,9 @@ export interface FamilyMemberDto {
 }
 
 export type { MemberPreference, PreferenceWarning }
+
+/** Návrh „čo uvariť dnes“ s dôvodmi. */
+export type SuggestionDto = Suggestion
 
 export interface MealSlotDto {
   id: string

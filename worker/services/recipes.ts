@@ -188,11 +188,11 @@ export async function setFavorite(db: Db, user: UserRow, id: string, favorite: b
   }
 }
 
-const lastCookedSql = sql<
+export const lastCookedSql = sql<
   string | null
 >`(select max(c.cooked_on) from cook_log c where c.recipe_id = "recipes"."id")`
 
-const isFavoriteSql = (userId: string) =>
+export const isFavoriteSql = (userId: string) =>
   sql<number>`exists (select 1 from recipe_favorites f where f.recipe_id = "recipes"."id" and f.user_id = ${userId})`.mapWith(
     (v) => Boolean(Number(v)),
   )

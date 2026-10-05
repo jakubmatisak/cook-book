@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import type { ImageDto, ImportRecipeResultDto, RecipeDetailDto, RecipeListDto } from '@shared/api'
+import type {
+  ImageDto,
+  ImportRecipeResultDto,
+  RecipeDetailDto,
+  RecipeListDto,
+  SuggestionDto,
+} from '@shared/api'
 import type { SortDir, SortKey, TimeBucket } from '@shared/recipeFacets'
 import type { RecipeCategory } from '@shared/recipes'
 import type { RecipeInputRaw } from '@shared/schemas/recipe'
@@ -126,5 +132,14 @@ export function useImportRecipe(): UseMutationReturnType<ImportRecipeResultDto, 
   return useMutation({
     mutationFn: (url: string) =>
       apiFetch<ImportRecipeResultDto>('/recipes/import', { method: 'POST', body: JSON.stringify({ url }) }),
+  })
+}
+
+/** Návrhy „čo uvariť dnes“ pre daný deň (zmena plánu aj špajze ich obnoví). */
+export function useSuggestions(date: MaybeRefOrGetter<string>) {
+  return useQuery({
+    queryKey: computed(() => ['recipes', 'suggestions', toValue(date)] as const),
+    queryFn: () => apiFetch<SuggestionDto[]>(`/recipes/suggestions?date=${toValue(date)}`),
+    staleTime: 60_000,
   })
 }

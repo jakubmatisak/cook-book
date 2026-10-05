@@ -21,9 +21,17 @@ import { plural } from '@/lib/format'
 import ApplyTemplateDialog from '../components/ApplyTemplateDialog.vue'
 import EntryDialog from '../components/EntryDialog.vue'
 import SaveTemplateDialog from '../components/SaveTemplateDialog.vue'
+import SuggestionsCard from '../components/SuggestionsCard.vue'
 import WeekGrid from '../components/WeekGrid.vue'
 import WeekList from '../components/WeekList.vue'
-import { entryToInput, groupEntries, moveTarget, resolveWeekStart, visibleSlots } from '../week'
+import {
+  entryToInput,
+  groupEntries,
+  moveTarget,
+  pickSlotForNow,
+  resolveWeekStart,
+  visibleSlots,
+} from '../week'
 
 const route = useRoute()
 const router = useRouter()
@@ -63,8 +71,10 @@ const dialogOpen = ref(false)
 const editing = ref<PlanEntryDto | null>(null)
 const dialogDate = ref(today.value)
 const dialogSlot = ref('')
+const dialogRecipe = ref<string | undefined>(undefined)
 
 function onAdd(date: string, slotId: string) {
+  dialogRecipe.value = undefined
   editing.value = null
   dialogDate.value = date
   dialogSlot.value = slotId
@@ -72,9 +82,21 @@ function onAdd(date: string, slotId: string) {
 }
 
 function onEdit(entry: PlanEntryDto) {
+  dialogRecipe.value = undefined
   editing.value = entry
   dialogDate.value = entry.date
   dialogSlot.value = entry.slotId
+  dialogOpen.value = true
+}
+
+// Návrh „čo uvariť dnes“: otvorí dialóg s receptom na dnes a najbližšie jedlo dňa
+function onPlanSuggestion(recipeId: string) {
+  const now = new Date()
+  const slot = pickSlotForNow(me.value?.slots ?? [], now.getHours() * 60 + now.getMinutes())
+  editing.value = null
+  dialogRecipe.value = recipeId
+  dialogDate.value = today.value
+  dialogSlot.value = slot?.id ?? ''
   dialogOpen.value = true
 }
 
@@ -226,6 +248,7 @@ async function copyToNextWeek() {
       <router-link to="/rodina" class="text-primary font-weight-bold">Rodina</router-link>
       a porcie sa budú počítať automaticky.
     </v-alert>
+    <SuggestionsCard v-if="isCurrentWeek" :date="today" @plan="onPlanSuggestion" />
     <WeekGrid
       v-if="mdAndUp"
       :dates="dates"
@@ -254,6 +277,7 @@ async function copyToNextWeek() {
     :entry="editing"
     :initial-date="dialogDate"
     :initial-slot-id="dialogSlot"
+    :initial-recipe-id="dialogRecipe"
     :slots="me?.slots ?? []"
     :dates="dates"
     :members="members"
