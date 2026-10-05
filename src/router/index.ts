@@ -38,12 +38,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/features/shopping/pages/ShoppingPage.vue'),
     meta: { title: 'Nákup' },
   },
-  {
-    path: '/viac',
-    name: 'more',
-    component: () => import('@/features/settings/pages/MorePage.vue'),
-    meta: { title: 'Viac' },
-  },
+  { path: '/viac', redirect: '/nastavenia' },
   {
     path: '/rodina',
     name: 'family',

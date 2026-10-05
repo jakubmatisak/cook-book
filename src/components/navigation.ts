@@ -1,8 +1,10 @@
 import {
+  mdiAccountGroupOutline,
   mdiBookOpenPageVariantOutline,
   mdiCalendarMonthOutline,
   mdiCartOutline,
-  mdiDotsHorizontal,
+  mdiCogOutline,
+  mdiFormatListChecks,
 } from '@mdi/js'
 
 export interface NavItem {
@@ -11,10 +13,18 @@ export interface NavItem {
   icon: string
 }
 
-/** Hlavná navigácia: spodná lišta na mobile, bočná lišta na desktope. */
-export const NAV_ITEMS: readonly NavItem[] = [
+/** Hlavné stránky: v bočnom menu aj v spodnej navigácii na mobile. */
+export const PRIMARY_NAV: readonly NavItem[] = [
   { to: '/recepty', title: 'Recepty', icon: mdiBookOpenPageVariantOutline },
   { to: '/plan', title: 'Plán', icon: mdiCalendarMonthOutline },
   { to: '/nakup', title: 'Nákup', icon: mdiCartOutline },
-  { to: '/viac', title: 'Viac', icon: mdiDotsHorizontal },
 ]
+
+/** Ďalšie stránky: v bočnom menu pod oddeľovačom, na mobile v menu otvorenom tlačidlom. */
+export const SECONDARY_NAV: readonly NavItem[] = [
+  { to: '/rodina', title: 'Rodina', icon: mdiAccountGroupOutline },
+  { to: '/ingrediencie', title: 'Ingrediencie', icon: mdiFormatListChecks },
+  { to: '/nastavenia', title: 'Nastavenia', icon: mdiCogOutline },
+]
+
+export const NAV_ITEMS: readonly NavItem[] = [...PRIMARY_NAV, ...SECONDARY_NAV]

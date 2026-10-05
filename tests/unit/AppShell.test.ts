@@ -6,6 +6,8 @@ import AppShell from '@/components/AppShell.vue'
 import { NAV_ITEMS } from '@/components/navigation'
 import { createAppVuetify } from '@/plugins/vuetify'
 
+const ALL_TITLES = ['Recepty', 'Plán', 'Nákup', 'Rodina', 'Ingrediencie', 'Nastavenia']
+
 function setViewport(width: number) {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
@@ -30,33 +32,37 @@ async function mountShell(width: number) {
 
 afterEach(() => {
   document.body.innerHTML = ''
+  localStorage.clear()
 })
 
+const navTitles = (wrapper: ReturnType<typeof mount>, container: string) =>
+  wrapper
+    .find(`[data-test="${container}"]`)
+    .findAll('[data-test="nav-item"]')
+    .map((i) => i.text())
+
 describe('AppShell', () => {
-  it('na mobile ukáže spodnú navigáciu so štyrmi položkami', async () => {
-    const wrapper = await mountShell(375)
-    const nav = wrapper.find('[data-test="bottom-nav"]')
-    expect(nav.exists()).toBe(true)
-    expect(wrapper.find('[data-test="side-rail"]').exists()).toBe(false)
-    expect(nav.findAll('[data-test="nav-item"]').map((i) => i.text())).toEqual([
-      'Recepty',
-      'Plán',
-      'Nákup',
-      'Viac',
-    ])
+  it('na desktope má bočné menu so všetkými stránkami a dá sa zbaliť na rail', async () => {
+    const wrapper = await mountShell(1440)
+    expect(wrapper.find('[data-test="bottom-nav"]').exists()).toBe(false)
+    expect(navTitles(wrapper, 'side-nav')).toEqual(ALL_TITLES)
+
+    const drawer = wrapper.find('[data-test="side-nav"]')
+    expect(drawer.classes()).not.toContain('v-navigation-drawer--rail')
+    await wrapper.find('[data-test="menu-toggle"]').trigger('click')
+    await flushPromises()
+    expect(drawer.classes()).toContain('v-navigation-drawer--rail')
+    expect(localStorage.getItem('kniha:menu-rail')).toBe('1')
   })
 
-  it('na desktope ukáže bočnú lištu namiesto spodnej navigácie', async () => {
-    const wrapper = await mountShell(1440)
-    const rail = wrapper.find('[data-test="side-rail"]')
-    expect(rail.exists()).toBe(true)
-    expect(wrapper.find('[data-test="bottom-nav"]').exists()).toBe(false)
-    expect(rail.findAll('[data-test="nav-item"]').map((i) => i.text())).toEqual([
-      'Recepty',
-      'Plán',
-      'Nákup',
-      'Viac',
-    ])
+  it('na mobile má spodnú navigáciu s hlavnými stránkami a tlačidlo menu otvorí všetky', async () => {
+    const wrapper = await mountShell(375)
+    expect(wrapper.find('[data-test="side-nav"]').exists()).toBe(false)
+    expect(navTitles(wrapper, 'bottom-nav')).toEqual(['Recepty', 'Plán', 'Nákup', 'Menu'])
+
+    await wrapper.find('[data-test="bottom-nav"] [data-menu="open"]').trigger('click')
+    await flushPromises()
+    expect(navTitles(wrapper, 'mobile-nav')).toEqual(ALL_TITLES)
   })
 
   it('vyrenderuje obsah stránky', async () => {
