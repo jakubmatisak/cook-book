@@ -1,0 +1,170 @@
+import type { RecipeDetailDto } from '@shared/api'
+import type { RecipeCategory } from '@shared/recipes'
+import type { RecipeInputRaw } from '@shared/schemas/recipe'
+import type { UnitCode } from '@shared/units'
+
+/** Stav formulára: čísla sú stringy (tak, ako ich píše používateľ), riadky majú kľúč pre v-for. */
+export interface IngredientRow {
+  key: string
+  name: string
+  quantity: string
+  unit: UnitCode | null
+  note: string
+  groupName: string
+  isOptional: boolean
+}
+
+export interface StepRow {
+  key: string
+  text: string
+  timerMinutes: string
+}
+
+export interface RecipeForm {
+  title: string
+  description: string
+  category: RecipeCategory
+  servings: number
+  prepMinutes: string
+  cookMinutes: string
+  difficulty: number
+  sourceUrl: string
+  sourceText: string
+  coverImageId: string | null
+  coverImageUrl: string | null
+  ingredients: IngredientRow[]
+  steps: StepRow[]
+  tags: string[]
+}
+
+let keySeq = 0
+export const rowKey = () => `row-${++keySeq}`
+
+export const emptyIngredientRow = (): IngredientRow => ({
+  key: rowKey(),
+  name: '',
+  quantity: '',
+  unit: null,
+  note: '',
+  groupName: '',
+  isOptional: false,
+})
+
+export const emptyStepRow = (): StepRow => ({ key: rowKey(), text: '', timerMinutes: '' })
+
+export function emptyRecipeForm(): RecipeForm {
+  return {
+    title: '',
+    description: '',
+    category: 'hlavne',
+    servings: 4,
+    prepMinutes: '',
+    cookMinutes: '',
+    difficulty: 1,
+    sourceUrl: '',
+    sourceText: '',
+    coverImageId: null,
+    coverImageUrl: null,
+    ingredients: [emptyIngredientRow()],
+    steps: [emptyStepRow()],
+    tags: [],
+  }
+}
+
+/** „1,5“, „2.25“, „1/2“ aj „1 1/2“ → číslo; prázdne → null; nezmysel → NaN. */
+export function parseQuantity(value: string): number | null {
+  const text = value.trim().replace(',', '.')
+  if (!text) return null
+  const mixed = text.match(/^(\d+)\s+(\d+)\/(\d+)$/)
+  if (mixed) {
+    const [, whole, num, den] = mixed.map(Number) as [number, number, number, number]
+    return den === 0 ? NaN : whole + num / den
+  }
+  const fraction = text.match(/^(\d+)\/(\d+)$/)
+  if (fraction) {
+    const [, num, den] = fraction.map(Number) as [number, number, number]
+    return den === 0 ? NaN : num / den
+  }
+  return /^\d+(\.\d+)?$/.test(text) ? Number(text) : NaN
+}
+
+const intOrNull = (value: string) => {
+  const text = value.trim()
+  if (!text) return null
+  const n = Number(text.replace(',', '.'))
+  return Number.isFinite(n) ? Math.round(n) : NaN
+}
+
+const textOrNull = (value: string) => (value.trim() ? value.trim() : null)
+
+const formatNumber = (n: number | null) => (n === null ? '' : String(n).replace('.', ','))
+
+export function recipeToForm(detail: RecipeDetailDto): RecipeForm {
+  return {
+    title: detail.title,
+    description: detail.description ?? '',
+    category: detail.category,
+    servings: detail.servings,
+    prepMinutes: detail.prepMinutes === null ? '' : String(detail.prepMinutes),
+    cookMinutes: detail.cookMinutes === null ? '' : String(detail.cookMinutes),
+    difficulty: detail.difficulty,
+    sourceUrl: detail.sourceUrl ?? '',
+    sourceText: detail.sourceText ?? '',
+    coverImageId: detail.coverImageId,
+    coverImageUrl: detail.coverImageUrl,
+    ingredients: detail.ingredients.length
+      ? detail.ingredients.map((i) => ({
+          key: rowKey(),
+          name: i.name,
+          quantity: formatNumber(i.quantity),
+          unit: i.unit,
+          note: i.note ?? '',
+          groupName: i.groupName ?? '',
+          isOptional: i.isOptional,
+        }))
+      : [emptyIngredientRow()],
+    steps: detail.steps.length
+      ? detail.steps.map((s) => ({
+          key: rowKey(),
+          text: s.text,
+          timerMinutes: s.timerSeconds === null ? '' : formatNumber(s.timerSeconds / 60),
+        }))
+      : [emptyStepRow()],
+    tags: detail.tags.map((t) => t.name),
+  }
+}
+
+export function formToInput(form: RecipeForm): RecipeInputRaw {
+  return {
+    title: form.title.trim(),
+    description: textOrNull(form.description),
+    category: form.category,
+    servings: form.servings,
+    prepMinutes: intOrNull(form.prepMinutes),
+    cookMinutes: intOrNull(form.cookMinutes),
+    difficulty: form.difficulty,
+    sourceUrl: textOrNull(form.sourceUrl),
+    sourceText: textOrNull(form.sourceText),
+    coverImageId: form.coverImageId,
+    ingredients: form.ingredients
+      .filter((row) => row.name.trim())
+      .map((row) => ({
+        name: row.name.trim(),
+        quantity: parseQuantity(row.quantity),
+        unit: row.unit,
+        note: textOrNull(row.note),
+        groupName: textOrNull(row.groupName),
+        isOptional: row.isOptional,
+      })),
+    steps: form.steps
+      .filter((row) => row.text.trim())
+      .map((row) => {
+        const minutes = parseQuantity(row.timerMinutes)
+        return {
+          text: row.text.trim(),
+          timerSeconds: minutes === null ? null : Math.round(minutes * 60),
+        }
+      }),
+    tags: form.tags.map((t) => t.trim()).filter(Boolean),
+  }
+}
