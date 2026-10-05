@@ -1,9 +1,10 @@
 import { asc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import type { HouseholdSettings, MeResponse } from '../../shared/api'
+import type { MeResponse } from '../../shared/api'
 import { familyMembers, households, mealSlots, settings } from '../db/schema'
 import type { AppEnv } from '../env'
 import { HttpError } from '../errors'
+import { mergeSettings, toMemberDto, toSlotDto } from '../services/family'
 
 export const meRoutes = new Hono<AppEnv>().get('/', async (c) => {
   const db = c.get('db')
@@ -18,7 +19,10 @@ export const meRoutes = new Hono<AppEnv>().get('/', async (c) => {
       .where(eq(familyMembers.householdId, hid))
       .orderBy(asc(familyMembers.sortOrder), asc(familyMembers.name)),
     db.select().from(mealSlots).where(eq(mealSlots.householdId, hid)).orderBy(asc(mealSlots.sortOrder)),
-    db.select().from(settings).where(eq(settings.householdId, hid)),
+    db
+      .select({ key: settings.key, value: settings.value })
+      .from(settings)
+      .where(eq(settings.householdId, hid)),
   ])
 
   const household = householdRows[0]
@@ -27,24 +31,9 @@ export const meRoutes = new Hono<AppEnv>().get('/', async (c) => {
   const body: MeResponse = {
     user: { id: user.id, email: user.email, name: user.name, memberId: user.memberId },
     household: { id: household.id, name: household.name },
-    members: memberRows.map((m) => ({
-      id: m.id,
-      name: m.name,
-      kind: m.kind,
-      birthDate: m.birthDate,
-      portionFactor: m.portionFactor,
-      color: m.color,
-      isActive: m.isActive,
-      sortOrder: m.sortOrder,
-    })),
-    slots: slotRows.map((s) => ({
-      id: s.id,
-      name: s.name,
-      sortOrder: s.sortOrder,
-      isEnabled: s.isEnabled,
-      defaultTime: s.defaultTime,
-    })),
-    settings: Object.fromEntries(settingRows.map((s) => [s.key, s.value])) as HouseholdSettings,
+    members: memberRows.map(toMemberDto),
+    slots: slotRows.map(toSlotDto),
+    settings: mergeSettings(settingRows),
   }
   return c.json(body)
 })
