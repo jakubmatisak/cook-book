@@ -1,0 +1,24 @@
+/*
+ * Poradie vrstiev: Tailwind utility (tw:*) prebijú Vuetify komponenty aj Vuetify utility,
+ * vuetify-final (prechody, !important triedy) ostáva navrchu. Tailwind preflight sa nenačítava.
+ */
+@layer theme, vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, utilities, vuetify-final;
+
+@import 'tailwindcss/theme.css' layer(theme) prefix(tw);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import './fonts.css';
+
+@theme inline {
+  --color-primary: rgb(var(--v-theme-primary));
+  --color-secondary: rgb(var(--v-theme-secondary));
+  --color-surface: rgb(var(--v-theme-surface));
+  --color-surface-variant: rgb(var(--v-theme-surface-variant));
+  --color-background: rgb(var(--v-theme-background));
+  --color-on-surface: rgb(var(--v-theme-on-surface));
+  --color-on-background: rgb(var(--v-theme-on-background));
+  --color-error: rgb(var(--v-theme-error));
+  --color-success: rgb(var(--v-theme-success));
+  --color-warning: rgb(var(--v-theme-warning));
+  --color-info: rgb(var(--v-theme-info));
+  --font-sans: 'Nunito Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}

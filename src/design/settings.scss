@@ -1,1 +1,4 @@
-@use 'vuetify/settings';
+@use 'vuetify/settings' with (
+  $body-font-family: ('Nunito Variable', system-ui, -apple-system, 'Segoe UI', sans-serif),
+  $border-radius-root: 12px
+);
