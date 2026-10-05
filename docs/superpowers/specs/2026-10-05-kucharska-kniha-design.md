@@ -33,6 +33,15 @@ Predpoklady (ak nesedia, oprav ich pred implementáciou):
 - **Access:** okrem JWT z hlavičky sa akceptuje aj cookie `CF_Authorization`; `ACCESS_TEAM_DOMAIN` sa normalizuje (s alebo bez `https://`). Access sa zapína one-click v nastaveniach Workera.
 - **Dev server na porte 5180** (5173 obsadený), náhľad 5181.
 
+## 0b. Zmeny po implementácii fázy 1 (5. 10. 2026)
+
+- **Migrácia 0001:** `recipes.title_normalized` na vyhľadávanie bez diakritiky, unikátne `(household_id, slug)`, `(household_id, name_normalized)` pre ingrediencie a `(recipe_id, position)` pre kroky.
+- **Ingrediencie a tagy v recepte sa posielajú menom.** Server ich nájde bez ohľadu na diakritiku a veľkosť písmen, chýbajúce založí; prvá použitá jednotka sa stane predvolenou.
+- **Fotky:** typ sa určuje z obsahu súboru (WebP, JPEG, PNG), nie z deklarovaného MIME. Kľúč v R2 je `<household>/<id>.<ext>`, výdaj cez `/img/...` len pre vlastnú domácnosť.
+- **Validácia formulára:** Vuetify `rules` + zod `safeParse` zo `shared/schemas/recipe.ts` (O3 uzavreté, bez vee-validate).
+- **JSON import presunutý do fázy 4** k importu z URL: vyžaduje mapovanie konfliktov mien a fotky nie sú v exporte.
+- **Katalóg ingrediencií** je samostatná stránka v menu Viac.
+
 ## 1. Fázy – čo, kedy a prečo
 
 Pravidlo: každá fáza končí niečím, čo reálne používate. Nič sa nebuduje „na neskôr“, len dátový model je od začiatku kompletný, aby sa neskôr nemuselo migrovať s bolesťou.
