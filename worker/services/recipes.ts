@@ -17,7 +17,7 @@ import {
   tags,
 } from '../db/schema'
 import type { UserRow } from '../env'
-import { HttpError } from '../errors'
+import { HttpError, isUniqueViolation } from '../errors'
 import { resolveIngredients, resolveTags } from './catalog'
 
 type RecipeRow = typeof recipes.$inferSelect
@@ -68,8 +68,7 @@ async function assertImage(db: Db, householdId: string, imageId: string | null) 
   if (!found) throw new HttpError(400, 'invalid_image', 'Fotka neexistuje.')
 }
 
-const isSlugConflict = (error: unknown) =>
-  /UNIQUE/i.test(String(error)) && /slug/i.test(String((error as { cause?: unknown })?.cause ?? error))
+const isSlugConflict = (error: unknown) => isUniqueViolation(error, 'slug')
 
 /** Vytvorí alebo prepíše recept vrátane ingrediencií, krokov a tagov; vráti jeho id. */
 export async function saveRecipe(db: Db, user: UserRow, input: RecipeInput, id?: string): Promise<string> {

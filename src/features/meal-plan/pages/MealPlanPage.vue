@@ -4,7 +4,8 @@ import { computed, nextTick, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import type { PlanEntryDto } from '@shared/api'
-import { addDays, formatWeekRange, todayIso, weekDates } from '@shared/dates'
+import { addDays, formatWeekRange, weekDates } from '@shared/dates'
+import { useToday } from '@/composables/useToday'
 import { useMe } from '@/api/me'
 import { useCopyPlan, usePlan } from '@/api/plan'
 import { plural } from '@/lib/format'
@@ -18,17 +19,17 @@ const router = useRouter()
 const { mdAndUp } = useDisplay()
 const { data: me } = useMe()
 
-const today = todayIso()
+const today = useToday()
 const weekStartsOn = computed(() => me.value?.settings.weekStartsOn ?? 1)
 const start = computed(() =>
   resolveWeekStart(
     typeof route.query.tyzden === 'string' ? route.query.tyzden : undefined,
     weekStartsOn.value,
-    today,
+    today.value,
   ),
 )
 const dates = computed(() => weekDates(start.value))
-const isCurrentWeek = computed(() => dates.value.includes(today))
+const isCurrentWeek = computed(() => dates.value.includes(today.value))
 
 const { data: entries, isPending, error } = usePlan(start, () => addDays(start.value, 6))
 const groups = computed(() => groupEntries(entries.value ?? []))
@@ -43,13 +44,13 @@ async function goToday() {
   goToWeek(undefined)
   await nextTick()
   if (!mdAndUp.value)
-    document.getElementById(`den-${today}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document.getElementById(`den-${today.value}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 // Dialóg jedla
 const dialogOpen = ref(false)
 const editing = ref<PlanEntryDto | null>(null)
-const dialogDate = ref(today)
+const dialogDate = ref(today.value)
 const dialogSlot = ref('')
 
 function onAdd(date: string, slotId: string) {

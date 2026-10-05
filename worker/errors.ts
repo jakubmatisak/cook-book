@@ -34,3 +34,9 @@ export const onError: ErrorHandler = (err, c) => {
 }
 
 export const notFound: NotFoundHandler = (c) => c.json(body('not_found', 'Nenájdené.'), 404)
+
+/** Porušenie UNIQUE obmedzenia; Drizzle chybu D1 niekedy zabalí, preto sa pozerá aj do `cause`. */
+export function isUniqueViolation(error: unknown, column?: string): boolean {
+  const texts = [String(error), String((error as { cause?: unknown } | null)?.cause ?? '')]
+  return texts.some((t) => /UNIQUE/i.test(t) && (!column || t.includes(column)))
+}

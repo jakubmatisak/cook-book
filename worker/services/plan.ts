@@ -1,4 +1,4 @@
-import { and, asc, between, eq, isNull, sql } from 'drizzle-orm'
+import { and, asc, between, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { PlanEntryDto } from '../../shared/api'
 import { addDays, daysBetween } from '../../shared/dates'
@@ -7,6 +7,7 @@ import type { PlanCopyInput, PlanEntryInput } from '../../shared/schemas/plan'
 import type { Db } from '../db/client'
 import { images, mealPlanEntries, mealSlots, recipes } from '../db/schema'
 import { HttpError } from '../errors'
+import { chunk } from '../http'
 import { imageUrl } from './recipes'
 
 type EntryRow = typeof mealPlanEntries.$inferSelect
@@ -208,18 +209,11 @@ export async function copyPlan(db: Db, householdId: string, input: PlanCopyInput
 
   const statements: BatchItem<'sqlite'>[] = []
   if (input.replace) {
-    statements.push(
-      db.delete(mealPlanEntries).where(
-        and(
-          own,
-          between(mealPlanEntries.date, input.toDate, targetTo),
-          sql`${mealPlanEntries.id} not in (${sql.join(
-            [...sourceIds].map((sid) => sql`${sid}`),
-            sql`, `,
-          )})`,
-        ),
-      ),
-    )
+    // Mazanie podľa konkrétnych id po kúskoch – D1 dovolí max 100 viazaných parametrov na príkaz.
+    const toDelete = target.filter((t) => !sourceIds.has(t.id)).map((t) => t.id)
+    for (const ids of chunk(toDelete, 90)) {
+      statements.push(db.delete(mealPlanEntries).where(and(own, inArray(mealPlanEntries.id, ids))))
+    }
   }
   for (const e of source) {
     const date = addDays(e.date, offset)

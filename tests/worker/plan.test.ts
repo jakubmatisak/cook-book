@@ -173,3 +173,22 @@ describe('jedálniček – kopírovanie', () => {
     expect((await send(app, 'DELETE', api('/plan/entries/e-iny'))).status).toBe(404)
   })
 })
+
+describe('jedálniček – veľké týždne', () => {
+  it('kopírovanie s nahradením zvládne 120 jedál (limit parametrov D1)', async () => {
+    const { obed } = await setup()
+    const rows = Array.from({ length: 120 }, (_, i) =>
+      env.DB.prepare(
+        "insert into meal_plan_entries (id, household_id, date, slot_id, free_text, sort_order, audience, created_at, updated_at) values (?, 'default', ?, ?, ?, ?, 'all', 'x', 'x')",
+      ).bind(`e${i}`, `2026-10-0${5 + (i % 5)}`, obed, `Jedlo ${i}`, i),
+    )
+    await env.DB.batch(rows)
+    const res = await send(app, 'POST', api('/plan/copy'), {
+      fromDate: '2026-10-05',
+      toDate: '2026-10-12',
+      replace: true,
+    })
+    expect(res.status).toBe(200)
+    expect(await res.json<PlanCopyResult>()).toEqual({ copied: 120 })
+  })
+})

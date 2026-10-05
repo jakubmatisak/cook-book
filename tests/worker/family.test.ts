@@ -119,3 +119,11 @@ describe('nastavenia', () => {
     expect((await send(app, 'PUT', api('/settings'), { tema: 'tmava' })).status).toBe(400)
   })
 })
+
+describe('jedlá dňa – duplicitný názov', () => {
+  it('premenovanie na existujúci názov je 409, nie 500', async () => {
+    const slots = (await me()).slots
+    const res = await send(app, 'PUT', api(`/slots/${slots[0]!.id}`), { name: slots[1]!.name })
+    expect(res.status).toBe(409)
+  })
+})

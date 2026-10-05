@@ -3,7 +3,7 @@ import type { FamilyMemberDto, HouseholdSettings, MealSlotDto } from '../../shar
 import type { MemberInput, SettingsUpdate, SlotUpdate } from '../../shared/schemas/family'
 import type { Db } from '../db/client'
 import { familyMembers, mealSlots, settings } from '../db/schema'
-import { HttpError } from '../errors'
+import { HttpError, isUniqueViolation } from '../errors'
 import { DEFAULT_SETTINGS } from './household'
 
 type MemberRow = typeof familyMembers.$inferSelect
@@ -154,8 +154,7 @@ export async function updateSlot(
     const [row] = await db.update(mealSlots).set(patch).where(where).returning()
     return toSlotDto(row!)
   } catch (error) {
-    if (String(error).includes('UNIQUE'))
-      throw new HttpError(409, 'duplicate', 'Jedlo s týmto názvom už existuje.')
+    if (isUniqueViolation(error)) throw new HttpError(409, 'duplicate', 'Jedlo s týmto názvom už existuje.')
     throw error
   }
 }

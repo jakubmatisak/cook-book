@@ -7,6 +7,7 @@ import { planEntryInputSchema } from '@shared/schemas/plan'
 import { useDeleteEntry, useSaveEntry } from '@/api/plan'
 import { useRecipes } from '@/api/recipes'
 import { describeIssues } from '@/features/recipes/form'
+import { matchesSearch } from '@/lib/search'
 
 const open = defineModel<boolean>({ required: true })
 const props = defineProps<{
@@ -139,6 +140,7 @@ async function onDelete() {
           v-model="recipeId"
           :items="recipeItems"
           label="Recept"
+          :custom-filter="(value: string, query: string) => matchesSearch(value, query)"
           no-data-text="Žiadny recept sa nenašiel"
           autofocus
           hide-details
