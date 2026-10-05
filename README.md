@@ -25,16 +25,16 @@ npm run dev
 Aplikácia beží na <http://localhost:5180>. Lokálne sa prihlasuješ automaticky ako `DEV_USER_EMAIL` z `.dev.vars`.
 Tento režim funguje len na `localhost`, v produkcii sa nikdy neuplatní.
 
-| Príkaz                     | Čo robí                                                      |
-| -------------------------- | ------------------------------------------------------------ |
-| `npm run dev`              | Vite + lokálny Worker (Miniflare) s lokálnou D1 a R2         |
-| `npm test`                 | unit testy (jsdom) a testy API v reálnom Workers runtime     |
-| `npm run check`            | typecheck, lint, formát a testy – spusti pred commitom       |
-| `npm run build`            | produkčný build do `dist/`                                   |
-| `npm run preview`          | build + lokálny náhľad produkcie na <http://localhost:5181>  |
-| `npm run db:generate`      | po zmene `worker/db/schema.ts` vygeneruje novú SQL migráciu  |
-| `npm run db:migrate:local` | aplikuje migrácie na lokálnu D1                              |
-| `npm run cf-typegen`       | po zmene `wrangler.jsonc` pregeneruje typy bindingov         |
+| Príkaz                     | Čo robí                                                     |
+| -------------------------- | ----------------------------------------------------------- |
+| `npm run dev`              | Vite + lokálny Worker (Miniflare) s lokálnou D1 a R2        |
+| `npm test`                 | unit testy (jsdom) a testy API v reálnom Workers runtime    |
+| `npm run check`            | typecheck, lint, formát a testy – spusti pred commitom      |
+| `npm run build`            | produkčný build do `dist/`                                  |
+| `npm run preview`          | build + lokálny náhľad produkcie na <http://localhost:5181> |
+| `npm run db:generate`      | po zmene `worker/db/schema.ts` vygeneruje novú SQL migráciu |
+| `npm run db:migrate:local` | aplikuje migrácie na lokálnu D1                             |
+| `npm run cf-typegen`       | po zmene `wrangler.jsonc` pregeneruje typy bindingov        |
 
 ## Nasadenie na Cloudflare (raz, zadarmo)
 
