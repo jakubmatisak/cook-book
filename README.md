@@ -12,6 +12,8 @@ jeden Worker servíruje Vue frontend aj API, dáta sú v D1, fotky v R2 a prihl�
 - **Katalóg ingrediencií:** pribúda sám pri písaní receptov, každej sa dá nastaviť kategória obchodu a jednotka.
 - **Rodina:** dospelí a deti s veľkosťou porcie.
 - **Týždenný jedálniček:** recept alebo vlastný text do jedla dňa, porcie podľa rodiny, presun, kópia a kopírovanie celého týždňa.
+- **Tagy:** vlastné tagy s farbou, správa na samostatnej stránke.
+- **Špajza:** označ, čo máš doma, a filter „Čo viem uvariť“ zoradí recepty podľa toho, čo ti chýba.
 - **Záloha:** export všetkých dát do JSON.
 
 - **Nákupný zoznam:** vygenerovaný z jedálnička podľa porcií rodiny (sčítané ingrediencie, prevody jednotiek, zaokrúhlenie pre obchod), ručné položky jedným riadkom („2 kg zemiaky“), skupiny podľa kategórie obchodu, odškrtávanie zdieľané medzi vami aj bez signálu.

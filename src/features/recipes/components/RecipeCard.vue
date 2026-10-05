@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiClockOutline, mdiPotSteamOutline } from '@mdi/js'
+import { mdiCheckCircleOutline, mdiClockOutline, mdiPotSteamOutline } from '@mdi/js'
 import { computed } from 'vue'
 import type { RecipeSummaryDto } from '@shared/api'
 import { RECIPE_CATEGORY_LABELS } from '@shared/recipes'
@@ -35,12 +35,26 @@ const subtitle = computed(() => {
         <v-icon v-if="time !== null" :icon="mdiClockOutline" size="14" class="me-1" />{{ subtitle }}
       </v-card-subtitle>
     </v-card-item>
+    <v-card-text v-if="recipe.missing" class="pt-0">
+      <v-chip
+        v-if="recipe.missing.length === 0"
+        size="small"
+        color="success"
+        variant="tonal"
+        :prepend-icon="mdiCheckCircleOutline"
+      >
+        Máš všetko
+      </v-chip>
+      <v-chip v-else size="small" color="warning" variant="tonal">
+        Chýba: {{ recipe.missing.slice(0, 3).join(', ') }}{{ recipe.missing.length > 3 ? '…' : '' }}
+      </v-chip>
+    </v-card-text>
     <v-card-text v-if="recipe.tags.length" class="pt-0 d-flex flex-wrap ga-1">
       <v-chip
         v-for="tag in recipe.tags.slice(0, 3)"
         :key="tag.id"
         size="x-small"
-        color="secondary"
+        :color="tag.color ?? 'secondary'"
         variant="tonal"
       >
         {{ tag.name }}

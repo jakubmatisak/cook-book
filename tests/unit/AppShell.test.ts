@@ -6,7 +6,7 @@ import AppShell from '@/components/AppShell.vue'
 import { NAV_ITEMS } from '@/components/navigation'
 import { createAppVuetify } from '@/plugins/vuetify'
 
-const ALL_TITLES = ['Recepty', 'Plán', 'Nákup', 'Rodina', 'Ingrediencie', 'Nastavenia']
+const ALL_TITLES = ['Recepty', 'Plán', 'Nákup', 'Rodina', 'Ingrediencie', 'Tagy', 'Špajza', 'Nastavenia']
 
 function setViewport(width: number) {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })

@@ -63,6 +63,13 @@ Predpoklady (ak nesedia, oprav ich pred implementáciou):
 - **Ručná položka** z jedného riadku („2 kg zemiaky“) prevezme kategóriu obchodu známej ingrediencie.
 - **Nasadenie:** Worker sa volá `cook-book` (prepojený s GitHub repom jakubmatisak/cook-book), beží na cook-book.jakub-matisak.workers.dev za Cloudflare Access.
 
+## 0e. Doplnky na želanie používateľa (5. 10. 2026)
+
+- **Menu:** všetky stránky v bočnom menu (zbaliteľné na rail, stav sa pamätá), na mobile hlavné tri v spodnej lište a ostatné cez tlačidlo Menu. Stránka „Viac“ zrušená.
+- **Hranatejší vzhľad:** zaoblenie 2–6 px (SASS mapa `$rounded`).
+- **Správa tagov** (stránka Tagy): názov, voliteľná farba, počet receptov, premenovanie, zmazanie (recepty ostanú). Duplicita sa kontroluje bez diakritiky. Farba tagu sa ukazuje na čipoch v receptoch.
+- **Špajza** (pôvodne fáza 5, tabuľka `pantry_items` bez množstiev): označenie ingrediencií „mám doma“. V receptoch filter **Čo viem uvariť**: recepty zoradené od najmenej chýbajúcich povinných ingrediencií, pri každom „Máš všetko“ alebo „Chýba: …“; v detaile receptu je pri ingrediencii doma zelená fajka.
+
 ## 1. Fázy – čo, kedy a prečo
 
 Pravidlo: každá fáza končí niečím, čo reálne používate. Nič sa nebuduje „na neskôr“, len dátový model je od začiatku kompletný, aby sa neskôr nemuselo migrovať s bolesťou.

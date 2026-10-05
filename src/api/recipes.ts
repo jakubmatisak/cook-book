@@ -10,6 +10,8 @@ export interface RecipeFilters {
   category?: RecipeCategory
   tag?: string
   favorite?: boolean
+  /** „Čo viem uvariť“: zoradiť podľa toho, čo je doma, s chýbajúcimi ingredienciami. */
+  pantry?: boolean
 }
 
 export const recipeKeys = {
@@ -24,6 +26,7 @@ function toQuery(filters: RecipeFilters): string {
   if (filters.category) params.set('category', filters.category)
   if (filters.tag) params.set('tag', filters.tag)
   if (filters.favorite) params.set('favorite', '1')
+  if (filters.pantry) params.set('pantry', '1')
   const query = params.toString()
   return query ? `?${query}` : ''
 }

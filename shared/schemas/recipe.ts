@@ -82,7 +82,22 @@ export const recipeListQuerySchema = z.object({
     .enum(['1', 'true'])
     .optional()
     .transform((v) => v !== undefined),
+  /** Zoradiť podľa toho, čo je doma, a vrátiť chýbajúce ingrediencie. */
+  pantry: z
+    .enum(['1', 'true'])
+    .optional()
+    .transform((v) => v !== undefined),
 })
+
+export const tagInputSchema = z.object({
+  name: z.string().trim().min(1, 'Zadaj názov tagu.').max(40),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Farba v tvare #RRGGBB.')
+    .nullish()
+    .transform((v) => v ?? null),
+})
+export type TagInput = z.output<typeof tagInputSchema>
 
 export const ingredientUpdateSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),

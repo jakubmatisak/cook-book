@@ -104,6 +104,7 @@ describe('formulár receptu', () => {
           note: null,
           groupName: 'Základ',
           isOptional: false,
+          inPantry: false,
         },
       ],
       steps: [{ id: 's1', position: 1, text: 'Var.', timerSeconds: 90 }],

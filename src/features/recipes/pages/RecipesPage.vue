@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiBookOpenPageVariantOutline, mdiHeart, mdiMagnify, mdiPlus } from '@mdi/js'
+import { mdiBookOpenPageVariantOutline, mdiFridgeOutline, mdiHeart, mdiMagnify, mdiPlus } from '@mdi/js'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type RecipeCategory } from '@shared/recipes'
@@ -23,6 +23,7 @@ const filters = computed<RecipeFilters>(() => ({
     : undefined,
   tag: str(route.query.tag),
   favorite: route.query.oblubene === '1',
+  pantry: route.query.doma === '1',
 }))
 
 function setQuery(patch: Record<string, string | undefined>) {
@@ -61,8 +62,19 @@ const favorite = computed({
   set: (value: boolean) => setQuery({ oblubene: value ? '1' : undefined }),
 })
 
+const pantryMode = computed({
+  get: () => filters.value.pantry,
+  set: (value: boolean) => setQuery({ doma: value ? '1' : undefined }),
+})
+
 const hasFilters = computed(() =>
-  Boolean(filters.value.q || filters.value.category || filters.value.tag || filters.value.favorite),
+  Boolean(
+    filters.value.q ||
+    filters.value.category ||
+    filters.value.tag ||
+    filters.value.favorite ||
+    filters.value.pantry,
+  ),
 )
 
 function clearFilters() {
@@ -78,6 +90,12 @@ function clearFilters() {
   >
     <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">Nový recept</v-btn>
   </PageHeader>
+
+  <v-alert v-if="pantryMode" type="info" density="compact" class="mb-3" :icon="mdiFridgeOutline">
+    Recepty zoradené podľa toho, čo máš v
+    <router-link to="/spajza" class="text-primary font-weight-bold">špajzi</router-link>. Pri každom vidíš, čo
+    ti ešte chýba.
+  </v-alert>
 
   <v-text-field
     v-model="search"
@@ -98,6 +116,15 @@ function clearFilters() {
       @click="favorite = !favorite"
     >
       Obľúbené
+    </v-chip>
+    <v-chip
+      :prepend-icon="mdiFridgeOutline"
+      :color="pantryMode ? 'primary' : undefined"
+      :variant="pantryMode ? 'flat' : 'outlined'"
+      class="me-1"
+      @click="pantryMode = !pantryMode"
+    >
+      Čo viem uvariť
     </v-chip>
     <v-chip-group v-model="category" column selected-class="text-primary">
       <v-chip v-for="c in RECIPE_CATEGORIES" :key="c" :value="c" filter variant="outlined">

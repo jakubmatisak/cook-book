@@ -7,6 +7,7 @@ import { exportRoutes } from './routes/export'
 import { memberRoutes, settingsRoutes, slotRoutes } from './routes/family'
 import { imageServeRoutes, imageUploadRoutes } from './routes/images'
 import { meRoutes } from './routes/me'
+import { pantryRoutes } from './routes/pantry'
 import { planRoutes } from './routes/plan'
 import { recipeRoutes } from './routes/recipes'
 import { shoppingRoutes } from './routes/shopping'
@@ -33,6 +34,7 @@ export function createApp(deps: AppDeps = {}) {
   app.route('/api/v1/settings', settingsRoutes)
   app.route('/api/v1/plan', planRoutes)
   app.route('/api/v1/shopping', shoppingRoutes)
+  app.route('/api/v1/pantry', pantryRoutes)
   app.route('/img', imageServeRoutes)
 
   app.onError(onError)

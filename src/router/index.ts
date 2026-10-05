@@ -52,6 +52,18 @@ export const routes: RouteRecordRaw[] = [
     meta: { title: 'Ingrediencie' },
   },
   {
+    path: '/tagy',
+    name: 'tags',
+    component: () => import('@/features/tags/pages/TagsPage.vue'),
+    meta: { title: 'Tagy' },
+  },
+  {
+    path: '/spajza',
+    name: 'pantry',
+    component: () => import('@/features/pantry/pages/PantryPage.vue'),
+    meta: { title: 'Špajza' },
+  },
+  {
     path: '/nastavenia',
     name: 'settings',
     component: () => import('@/features/settings/pages/SettingsPage.vue'),

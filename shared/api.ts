@@ -109,6 +109,8 @@ export interface TagDto {
   id: string
   name: string
   color: string | null
+  /** Počet receptov s týmto tagom (len v zozname tagov). */
+  recipeCount?: number
 }
 
 export interface ImageDto {
@@ -129,6 +131,8 @@ export interface RecipeSummaryDto {
   tags: TagDto[]
   isFavorite: boolean
   updatedAt: string
+  /** Pri filtri „čo mám doma“: povinné ingrediencie, ktoré chýbajú. */
+  missing?: string[]
 }
 
 export interface RecipeIngredientDto {
@@ -140,6 +144,8 @@ export interface RecipeIngredientDto {
   note: string | null
   groupName: string | null
   isOptional: boolean
+  /** Ingrediencia je označená ako doma (špajza). */
+  inPantry: boolean
 }
 
 export interface RecipeStepDto {
@@ -233,4 +239,10 @@ export interface GenerateResult {
   added: number
   kept: number
   removed: number
+}
+
+// ─── Špajza ──────────────────────────────────────────────────────────────────
+
+export interface PantryDto {
+  ingredientIds: string[]
 }

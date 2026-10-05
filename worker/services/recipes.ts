@@ -18,7 +18,9 @@ import {
 } from '../db/schema'
 import type { UserRow } from '../env'
 import { HttpError, isUniqueViolation } from '../errors'
+import { chunk } from '../http'
 import { resolveIngredients, resolveTags } from './catalog'
+import { pantryIngredientIds } from './pantry'
 
 type RecipeRow = typeof recipes.$inferSelect
 
@@ -27,6 +29,7 @@ export interface RecipeFilters {
   category?: RecipeCategory
   tag?: string
   favorite?: boolean
+  pantry?: boolean
 }
 
 export const imageUrl = (r2Key: string) => `/img/${r2Key}`
@@ -232,6 +235,7 @@ export async function getRecipeDetail(
   ])
   const found = head[0]
   if (!found) throw notFound()
+  const pantry = await pantryIngredientIds(db, householdId)
   const r = found.recipe
   return {
     ...toSummary(r, found.r2Key, found.isFavorite, tagRows),
@@ -249,6 +253,7 @@ export async function getRecipeDetail(
       note: row.note,
       groupName: row.groupName,
       isOptional: row.isOptional,
+      inPantry: pantry.has(row.ingredientId),
     })),
     steps: stepRows.map((s) => ({
       id: s.id,
@@ -333,13 +338,36 @@ export async function listRecipes(
     tagsByRecipe.set(t.recipeId, list)
   }
 
-  return rows.map((r) => toSummary(r.recipe, r.r2Key, r.isFavorite, tagsByRecipe.get(r.recipe.id) ?? []))
-}
+  const summaries = rows.map((r) =>
+    toSummary(r.recipe, r.r2Key, r.isFavorite, tagsByRecipe.get(r.recipe.id) ?? []),
+  )
+  if (!filters.pantry) return summaries
 
-export async function listTags(db: Db, householdId: string): Promise<TagDto[]> {
-  return db
-    .select({ id: tags.id, name: tags.name, color: tags.color })
-    .from(tags)
-    .where(eq(tags.householdId, householdId))
-    .orderBy(asc(tags.name))
+  // „Čo viem uvariť“: povinné ingrediencie, ktoré nie sú v špajzi; zoradené od najmenej chýbajúcich.
+  const pantry = await pantryIngredientIds(db, householdId)
+  const missingByRecipe = new Map<string, string[]>()
+  for (const part of chunk(ids, 90)) {
+    const ingRows = await db
+      .select({
+        recipeId: recipeIngredients.recipeId,
+        ingredientId: recipeIngredients.ingredientId,
+        name: ingredients.name,
+      })
+      .from(recipeIngredients)
+      .innerJoin(ingredients, eq(ingredients.id, recipeIngredients.ingredientId))
+      .where(and(inArray(recipeIngredients.recipeId, part), eq(recipeIngredients.isOptional, false)))
+      .orderBy(asc(recipeIngredients.sortOrder))
+    for (const row of ingRows) {
+      if (pantry.has(row.ingredientId)) continue
+      const list = missingByRecipe.get(row.recipeId) ?? []
+      if (!list.includes(row.name)) list.push(row.name)
+      missingByRecipe.set(row.recipeId, list)
+    }
+  }
+  return summaries
+    .map((s) => ({ ...s, missing: missingByRecipe.get(s.id) ?? [] }))
+    .sort(
+      (a, b) =>
+        a.missing.length - b.missing.length || normalizeText(a.title).localeCompare(normalizeText(b.title)),
+    )
 }

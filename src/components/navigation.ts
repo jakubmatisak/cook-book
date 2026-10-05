@@ -5,6 +5,8 @@ import {
   mdiCartOutline,
   mdiCogOutline,
   mdiFormatListChecks,
+  mdiFridgeOutline,
+  mdiTagMultipleOutline,
 } from '@mdi/js'
 
 export interface NavItem {
@@ -24,6 +26,8 @@ export const PRIMARY_NAV: readonly NavItem[] = [
 export const SECONDARY_NAV: readonly NavItem[] = [
   { to: '/rodina', title: 'Rodina', icon: mdiAccountGroupOutline },
   { to: '/ingrediencie', title: 'Ingrediencie', icon: mdiFormatListChecks },
+  { to: '/tagy', title: 'Tagy', icon: mdiTagMultipleOutline },
+  { to: '/spajza', title: 'Špajza', icon: mdiFridgeOutline },
   { to: '/nastavenia', title: 'Nastavenia', icon: mdiCogOutline },
 ]
 

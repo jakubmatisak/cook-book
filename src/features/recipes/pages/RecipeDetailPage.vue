@@ -2,6 +2,7 @@
 import {
   mdiArrowLeft,
   mdiChefHat,
+  mdiCheckCircle,
   mdiClockOutline,
   mdiDeleteOutline,
   mdiDotsVertical,
@@ -158,7 +159,7 @@ function goBack() {
         :key="tag.id"
         size="small"
         variant="tonal"
-        color="secondary"
+        :color="tag.color ?? 'secondary'"
         :to="{ path: '/recepty', query: { tag: tag.id } }"
       >
         #{{ tag.name }}
@@ -184,6 +185,14 @@ function goBack() {
                 </template>
                 <v-list-item-title class="text-wrap">
                   {{ item.name }}<span class="text-medium-emphasis">{{ ingredientSuffix(item) }}</span>
+                  <v-icon
+                    v-if="item.inPantry"
+                    :icon="mdiCheckCircle"
+                    size="14"
+                    color="success"
+                    class="ms-1"
+                    title="Máš doma"
+                  />
                 </v-list-item-title>
               </v-list-item>
             </template>
