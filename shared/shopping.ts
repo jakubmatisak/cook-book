@@ -1,7 +1,7 @@
 import type { PlanAudience } from './family'
 import { entryPortions, type PortionMember } from './portions'
 import { normalizeText } from './text'
-import { toBase, UNITS, type UnitCode } from './units'
+import { toBase, UNIT_ALIASES, UNITS, type UnitCode } from './units'
 
 export interface ShoppingInputIngredient {
   recipeIngredientId: string
@@ -122,25 +122,35 @@ export function buildShoppingItems(input: {
     .sort((a, b) => normalizeText(a.name).localeCompare(normalizeText(b.name)))
 }
 
-const UNIT_BY_TEXT = new Map(UNITS.map((u) => [normalizeText(u.code), u.code]))
+const UNIT_BY_TEXT = new Map<string, UnitCode>([
+  ...UNITS.map((u): [string, UnitCode] => [normalizeText(u.code), u.code]),
+  ...Object.entries(UNIT_ALIASES),
+])
 
-/** „2 kg zemiaky“ → { quantity: 2, unit: 'kg', name: 'zemiaky' }; bez čísla je celý text názov. */
+/**
+ * „2 kg zemiaky“ → { quantity: 2, unit: 'kg', name: 'zemiaky' }; rozpozná aj skloňované tvary
+ * („2 šálky múky“). Bez čísla, s nulovým množstvom alebo bez názvu („100 g“) je celý text názov.
+ */
 export function parseItemText(text: string): {
   name: string
   quantity: number | null
   unit: UnitCode | null
 } {
   const trimmed = text.trim()
+  const whole = { name: trimmed, quantity: null, unit: null }
   const tokens = trimmed.split(/\s+/)
   const first = tokens[0]?.match(/^(\d+(?:[.,]\d+)?)([^\d\s]*)$/)
-  if (!first || tokens.length < 2) return { name: trimmed, quantity: null, unit: null }
+  if (!first || tokens.length < 2) return whole
 
   const quantity = Number(first[1]!.replace(',', '.'))
+  if (!(quantity > 0)) return whole
   const attached = first[2] ? UNIT_BY_TEXT.get(normalizeText(first[2])) : undefined
-  if (first[2] && !attached) return { name: trimmed, quantity: null, unit: null }
+  if (first[2] && !attached) return whole
   if (attached) return { name: tokens.slice(1).join(' '), quantity, unit: attached }
 
   const second = UNIT_BY_TEXT.get(normalizeText(tokens[1]!))
-  if (second && tokens.length > 2) return { name: tokens.slice(2).join(' '), quantity, unit: second }
+  if (second) {
+    return tokens.length > 2 ? { name: tokens.slice(2).join(' '), quantity, unit: second } : whole
+  }
   return { name: tokens.slice(1).join(' '), quantity, unit: null }
 }

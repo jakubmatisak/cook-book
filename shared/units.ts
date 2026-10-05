@@ -33,6 +33,44 @@ export const UNITS: readonly UnitDef[] = [
   { code: 'štipka', label: 'štipka' },
 ]
 
+/**
+ * Slovenské tvary jednotiek písané bežne (skloňované, plné slová) → kód jednotky.
+ * Kľúče sú bez diakritiky a malými písmenami (porovnáva sa cez `normalizeText`).
+ */
+export const UNIT_ALIASES: Readonly<Record<string, UnitCode>> = {
+  gram: 'g',
+  gramy: 'g',
+  gramov: 'g',
+  kilo: 'kg',
+  kila: 'kg',
+  kilogram: 'kg',
+  kilogramy: 'kg',
+  kilogramov: 'kg',
+  mililiter: 'ml',
+  mililitre: 'ml',
+  mililitrov: 'ml',
+  liter: 'l',
+  litre: 'l',
+  litra: 'l',
+  litrov: 'l',
+  kus: 'ks',
+  kusy: 'ks',
+  kusov: 'ks',
+  lyzica: 'PL',
+  lyzice: 'PL',
+  lyzic: 'PL',
+  lyzicka: 'ČL',
+  lyzicky: 'ČL',
+  lyzicok: 'ČL',
+  salka: 'šálka',
+  salky: 'šálka',
+  salok: 'šálka',
+  balenia: 'balenie',
+  baleni: 'balenie',
+  stipky: 'štipka',
+  stipok: 'štipka',
+}
+
 const byCode = new Map<string, UnitDef>(UNITS.map((u) => [u.code, u]))
 
 export const isUnitCode = (value: string): value is UnitCode => byCode.has(value)

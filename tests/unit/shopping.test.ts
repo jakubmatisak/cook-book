@@ -183,3 +183,19 @@ describe('generateSchema', () => {
     expect(generateSchema.safeParse({ from: '2026-10-05', to: '2026-11-30' }).success).toBe(false)
   })
 })
+
+describe('parseItemText – slovenské tvary jednotiek a okraje', () => {
+  it('rozpozná skloňované jednotky', () => {
+    expect(parseItemText('2 šálky múky')).toEqual({ name: 'múky', quantity: 2, unit: 'šálka' })
+    expect(parseItemText('3 lyžice oleja')).toEqual({ name: 'oleja', quantity: 3, unit: 'PL' })
+    expect(parseItemText('1 lyžička soli')).toEqual({ name: 'soli', quantity: 1, unit: 'ČL' })
+    expect(parseItemText('1,5 litra mlieka')).toEqual({ name: 'mlieka', quantity: 1.5, unit: 'l' })
+    expect(parseItemText('6 kusov rožkov')).toEqual({ name: 'rožkov', quantity: 6, unit: 'ks' })
+    expect(parseItemText('2 ČL soli')).toEqual({ name: 'soli', quantity: 2, unit: 'ČL' })
+  })
+
+  it('množstvo bez názvu alebo nulové množstvo je celý text', () => {
+    expect(parseItemText('100 g')).toEqual({ name: '100 g', quantity: null, unit: null })
+    expect(parseItemText('0 kg zemiaky')).toEqual({ name: '0 kg zemiaky', quantity: null, unit: null })
+  })
+})
