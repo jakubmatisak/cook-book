@@ -103,7 +103,7 @@ Jeden Worker, jedno nasadenie, jeden repozitár. Žiadne servery, žiadny Docker
 | R2 pre fotky | 10 GB zadarmo, nulový egress, natívny binding | Cloudinary free: ďalší účet, závislosť |
 | Cloudflare Access | nula vlastnej auth logiky, 50 používateľov zadarmo, prihlásenie kódom z e-mailu alebo Google | vlastné heslo + cookie: musel by som riešiť hashovanie, session, reset |
 | Vue 3.5 + Vuetify 4 | tvoja voľba; MD3 komponenty, data tables, bottom nav, dialógy hotové | – |
-| Tailwind v4 len utility, bez preflight, prefix `tw-` | Vuetify má vlastný reset; preflight by ho rozbil. Utility sú na rýchle rozloženie | len Vuetify utility classes: slabšie, menej flexibilné |
+| Tailwind v4 len utility, bez preflight, prefix `tw` | Vuetify má vlastný reset; preflight by ho rozbil. Utility sú na rýchle rozloženie | len Vuetify utility classes: slabšie, menej flexibilné |
 | TanStack Query (vue-query) | server cache, refetch pri fokuse, polling, offline retry, optimistic update | Pinia store ručne: musel by som to všetko napísať sám |
 | vite-plugin-pwa (Workbox) | manifest + service worker + runtime caching bez ručného kódu | ručný SW: zbytočná práca |
 | Vitest + vitest-pool-workers | testy bežia v skutočnom Workers runtime s lokálnym D1 | mockovať D1: nepresné |
@@ -249,7 +249,7 @@ Záložný plán, ak by Access robil problémy s PWA na iOS (cookie po inštalá
   - `locale`: sk (Vuetify má slovenský locale).
   - `icons`: `@mdi/js` (tree-shake, nie celý font).
 - **SASS premenné** v `src/design/settings.scss`: `$border-radius-root`, `$body-font-family` (napr. Inter alebo Nunito z Google Fonts, s `font-display: swap`).
-- **Tailwind v4** v `src/styles/tailwind.css`: importujú sa len `theme` a `utilities` vrstvy (bez `preflight`), prefix `tw-`, v `@theme` sa farby mapujú na Vuetify CSS premenné (`--color-primary: rgb(var(--v-theme-primary))`), takže `tw-bg-primary` a Vuetify `color="primary"` sú vždy tá istá farba.
+- **Tailwind v4** v `src/styles/tailwind.css`: importujú sa len `theme` a `utilities` vrstvy (bez `preflight`), prefix `tw` (triedy sa píšu `tw:flex`, `tw:bg-primary`), v `@theme` sa farby mapujú na Vuetify CSS premenné (`--color-primary: rgb(var(--v-theme-primary))`), takže `tw:bg-primary` a Vuetify `color="primary"` sú vždy tá istá farba.
 - **Layout**: `AppShell` – mobil: `v-app-bar` + `v-bottom-navigation` (Recepty, Plán, Nákup, Viac); desktop ≥ md: `v-navigation-drawer rail` vľavo. Max šírka obsahu 1200 px.
 - **Dáta**: TanStack Vue Query. Query kľúče podľa domény, mutácie s optimistic update pre odškrtávanie a obľúbené. Nákupný zoznam: `refetchInterval` 5 s keď je stránka viditeľná.
 - **Formuláre**: zod schémy zo `shared/` + `vee-validate` (alebo ručné `rules` vo Vuetify poliach; rozhodne sa v F1 podľa toho, čo je menej kódu).
