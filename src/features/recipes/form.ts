@@ -1,4 +1,4 @@
-import type { RecipeDetailDto } from '@shared/api'
+import type { ImportRecipeResultDto, RecipeDetailDto } from '@shared/api'
 import type { RecipeCategory } from '@shared/recipes'
 import type { RecipeInputRaw } from '@shared/schemas/recipe'
 import type { UnitCode } from '@shared/units'
@@ -202,4 +202,43 @@ export function describeIssues(issues: readonly { path: PropertyKey[]; message: 
     const label = typeof field === 'string' ? (FIELD_LABELS[field] ?? field) : 'Recept'
     return `${label}: ${issue.message}`
   })
+}
+
+/** Text z hodnoty, ktorej typ schéma neurčuje (vstup môže byť čokoľvek); iné ako text je prázdny reťazec. */
+const textOf = (value: unknown): string => (typeof value === 'string' ? value : '')
+
+/** Importovaný recept (zo stránky na webe) ako formulár na kontrolu a uloženie. */
+export function importToForm(result: ImportRecipeResultDto): RecipeForm {
+  const r = result.recipe
+  const ingredients = (r.ingredients ?? []).map((i) => ({
+    key: rowKey(),
+    name: i.name,
+    quantity: formatNumber(i.quantity ?? null),
+    unit: i.unit ?? null,
+    note: textOf(i.note),
+    groupName: textOf(i.groupName),
+    isOptional: i.isOptional ?? false,
+  }))
+  const steps = (r.steps ?? []).map((s) => ({
+    key: rowKey(),
+    text: s.text,
+    timerMinutes:
+      typeof s.timerSeconds === 'number' && s.timerSeconds > 0 ? formatNumber(s.timerSeconds / 60) : '',
+  }))
+  return {
+    title: r.title,
+    description: textOf(r.description),
+    category: r.category ?? 'hlavne',
+    servings: r.servings ?? 4,
+    prepMinutes: typeof r.prepMinutes === 'number' ? String(r.prepMinutes) : '',
+    cookMinutes: typeof r.cookMinutes === 'number' ? String(r.cookMinutes) : '',
+    difficulty: r.difficulty ?? 1,
+    sourceUrl: textOf(r.sourceUrl),
+    sourceText: textOf(r.sourceText),
+    coverImageId: textOf(r.coverImageId) || null,
+    coverImageUrl: result.coverImageUrl,
+    ingredients: ingredients.length ? ingredients : [emptyIngredientRow()],
+    steps: steps.length ? steps : [emptyStepRow()],
+    tags: r.tags ?? [],
+  }
 }

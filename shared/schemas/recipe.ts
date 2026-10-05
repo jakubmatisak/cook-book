@@ -108,6 +108,10 @@ export const recipeListQuerySchema = z.object({
     .transform((v) => v !== undefined),
 })
 
+export const recipeImportSchema = z.object({
+  url: z.url({ protocol: /^https?$/, error: 'Zadaj platnú webovú adresu (http alebo https).' }),
+})
+
 export const tagInputSchema = z.object({
   name: z.string().trim().min(1, 'Zadaj názov tagu.').max(40),
   color: z

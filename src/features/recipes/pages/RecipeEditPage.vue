@@ -13,7 +13,15 @@ import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import ImagePicker from '../components/ImagePicker.vue'
 import IngredientRows from '../components/IngredientRows.vue'
 import StepRows from '../components/StepRows.vue'
-import { describeIssues, emptyRecipeForm, formToInput, recipeToForm, type RecipeForm } from '../form'
+import {
+  describeIssues,
+  emptyRecipeForm,
+  formToInput,
+  importToForm,
+  recipeToForm,
+  type RecipeForm,
+} from '../form'
+import { importHandoff } from '../importHandoff'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,6 +35,18 @@ const save = useSaveRecipe()
 const form = ref<RecipeForm>(emptyRecipeForm())
 const snapshot = ref(JSON.stringify(formToInput(form.value)))
 const loaded = ref(isNew.value)
+
+// Import z webu: predvyplní formulár; snapshot ostáva prázdny, takže ide o neuložené zmeny.
+const importWarnings = ref<string[]>([])
+const imported = ref(false)
+if (isNew.value && route.query.import === '1') {
+  const result = importHandoff.take()
+  if (result) {
+    form.value = importToForm(result)
+    importWarnings.value = result.warnings
+    imported.value = true
+  }
+}
 
 watch(
   existing,
@@ -49,7 +69,7 @@ const pendingDraft = ref<RecipeForm | null>(null)
 watch(
   loaded,
   (isLoaded) => {
-    if (!isLoaded) return
+    if (!isLoaded || imported.value) return
     const stored = draft.load()
     if (stored && JSON.stringify(formToInput(stored)) !== snapshot.value) pendingDraft.value = stored
   },
@@ -134,6 +154,13 @@ function cancel() {
       <v-alert v-if="errors.length" type="error" title="Recept sa nedá uložiť">
         <ul class="mt-1 ps-5">
           <li v-for="message in errors" :key="message">{{ message }}</li>
+        </ul>
+      </v-alert>
+
+      <v-alert v-if="imported" type="info" title="Recept je načítaný z webu">
+        Skontroluj názov, množstvá a postup. Recept sa uloží, až keď klikneš na Uložiť.
+        <ul v-if="importWarnings.length" class="mt-1 ps-5">
+          <li v-for="warning in importWarnings" :key="warning">{{ warning }}</li>
         </ul>
       </v-alert>
 

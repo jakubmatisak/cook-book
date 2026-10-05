@@ -1,26 +1,10 @@
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import type { ImageDto } from '../../shared/api'
-import { newId } from '../../shared/ids'
 import { MAX_IMAGE_BYTES } from '../../shared/recipes'
 import { images } from '../db/schema'
 import type { AppEnv } from '../env'
 import { HttpError } from '../errors'
-import { imageUrl } from '../services/recipes'
-
-type ImageKind = { mime: 'image/webp' | 'image/jpeg' | 'image/png'; ext: string }
-
-/** Typ obrázka podľa obsahu (magic bytes), deklarovanému typu klienta neveríme. */
-export function detectImage(bytes: Uint8Array): ImageKind | null {
-  const at = (i: number) => bytes[i]
-  if (at(0) === 0xff && at(1) === 0xd8 && at(2) === 0xff) return { mime: 'image/jpeg', ext: 'jpg' }
-  if (at(0) === 0x89 && at(1) === 0x50 && at(2) === 0x4e && at(3) === 0x47)
-    return { mime: 'image/png', ext: 'png' }
-  const ascii = (from: number, to: number) => String.fromCharCode(...bytes.subarray(from, to))
-  if (bytes.length >= 12 && ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP')
-    return { mime: 'image/webp', ext: 'webp' }
-  return null
-}
+import { storeImage } from '../services/images'
 
 const dimension = (value: unknown) => {
   const n = typeof value === 'string' ? Number.parseInt(value, 10) : NaN
@@ -44,32 +28,10 @@ export const imageUploadRoutes = new Hono<AppEnv>().post('/', async (c) => {
   if (file.size > MAX_IMAGE_BYTES) throw new HttpError(413, 'too_large', 'Fotka je príliš veľká (max 5 MB).')
 
   const bytes = new Uint8Array(await file.arrayBuffer())
-  const kind = detectImage(bytes)
-  if (!kind) throw new HttpError(400, 'invalid_image', 'Súbor nie je fotka vo formáte WebP, JPEG ani PNG.')
-
-  const user = c.get('user')
-  const id = newId()
-  const r2Key = `${user.householdId}/${id}.${kind.ext}`
-  await c.env.BUCKET.put(r2Key, bytes, { httpMetadata: { contentType: kind.mime } })
-  try {
-    await c
-      .get('db')
-      .insert(images)
-      .values({
-        id,
-        householdId: user.householdId,
-        r2Key,
-        mime: kind.mime,
-        bytes: bytes.byteLength,
-        width: dimension(form.get('width')),
-        height: dimension(form.get('height')),
-        createdBy: user.id,
-      })
-  } catch (error) {
-    await c.env.BUCKET.delete(r2Key)
-    throw error
-  }
-  const body: ImageDto = { id, url: imageUrl(r2Key) }
+  const body = await storeImage(c.get('db'), c.env.BUCKET, c.get('user'), bytes, {
+    width: dimension(form.get('width')),
+    height: dimension(form.get('height')),
+  })
   return c.json(body, 201)
 })
 

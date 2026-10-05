@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { AppEnv } from './env'
 import { notFound, onError } from './errors'
+import { createMiddleware } from 'hono/factory'
 import { authMiddleware, type AuthDeps } from './middleware/auth'
 import { ingredientRoutes, shopCategoryRoutes, tagRoutes } from './routes/catalog'
 import { exportRoutes } from './routes/export'
@@ -12,7 +13,10 @@ import { planRoutes } from './routes/plan'
 import { recipeRoutes } from './routes/recipes'
 import { shoppingRoutes } from './routes/shopping'
 
-export type AppDeps = AuthDeps
+export interface AppDeps extends AuthDeps {
+  /** Sieťové volania importu receptov; v testoch falošné, inak globálny `fetch`. */
+  fetchFn?: typeof fetch
+}
 
 export function createApp(deps: AppDeps = {}) {
   const app = new Hono<AppEnv>()
@@ -20,6 +24,13 @@ export function createApp(deps: AppDeps = {}) {
 
   app.get('/api/v1/health', (c) => c.json({ ok: true }))
 
+  app.use(
+    '/api/v1/*',
+    createMiddleware<AppEnv>(async (c, next) => {
+      c.set('fetchFn', deps.fetchFn ?? ((...args) => fetch(...args)))
+      await next()
+    }),
+  )
   app.use('/api/v1/*', auth)
   app.use('/img/*', auth)
   app.route('/api/v1/me', meRoutes)

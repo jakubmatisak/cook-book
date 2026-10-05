@@ -1,3 +1,5 @@
+import { normalizeText } from './text'
+
 export type UnitCode = 'g' | 'kg' | 'ml' | 'l' | 'ks' | 'PL' | 'ČL' | 'šálka' | 'balenie' | 'štipka'
 
 export interface UnitDef {
@@ -97,3 +99,11 @@ export function formatQuantity(quantity: number | null, unit: UnitCode | null): 
   const n = numberFormat.format(q)
   return u ? `${n} ${u}` : n
 }
+
+const UNIT_BY_TEXT = new Map<string, UnitCode>([
+  ...UNITS.map((u): [string, UnitCode] => [normalizeText(u.code), u.code]),
+  ...Object.entries(UNIT_ALIASES),
+])
+
+/** Jednotka podľa zápisu v texte („šálky“, „lyzice“, „kg“), bez ohľadu na diakritiku; neznáma je null. */
+export const unitFromText = (text: string): UnitCode | null => UNIT_BY_TEXT.get(normalizeText(text)) ?? null

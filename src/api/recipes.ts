@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import type { ImageDto, RecipeDetailDto, RecipeListDto } from '@shared/api'
+import type { ImageDto, ImportRecipeResultDto, RecipeDetailDto, RecipeListDto } from '@shared/api'
 import type { SortDir, SortKey, TimeBucket } from '@shared/recipeFacets'
 import type { RecipeCategory } from '@shared/recipes'
 import type { RecipeInputRaw } from '@shared/schemas/recipe'
@@ -119,4 +119,12 @@ export async function uploadImage(blob: Blob, width: number, height: number): Pr
   form.append('width', String(width))
   form.append('height', String(height))
   return apiFetch<ImageDto>('/images', { method: 'POST', body: form })
+}
+
+/** Načíta recept zo stránky na webe; nič sa neukladá, výsledok sa len predvyplní do editora. */
+export function useImportRecipe(): UseMutationReturnType<ImportRecipeResultDto, Error, string, unknown> {
+  return useMutation({
+    mutationFn: (url: string) =>
+      apiFetch<ImportRecipeResultDto>('/recipes/import', { method: 'POST', body: JSON.stringify({ url }) }),
+  })
 }

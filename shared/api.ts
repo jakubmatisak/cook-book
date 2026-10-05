@@ -1,6 +1,7 @@
 import type { MemberKind, PlanAudience } from './family'
 import type { RecipeFacets } from './recipeFacets'
 import type { RecipeCategory } from './recipes'
+import type { RecipeInputRaw } from './schemas/recipe'
 import type { UnitCode } from './units'
 
 /**
@@ -166,6 +167,14 @@ export interface RecipeDetailDto extends RecipeSummaryDto {
   coverImageId: string | null
   ingredients: RecipeIngredientDto[]
   steps: RecipeStepDto[]
+}
+
+/** Výsledok importu z webu: predvyplnený recept na kontrolu, fotka je už uložená v domácnosti. */
+export interface ImportRecipeResultDto {
+  recipe: RecipeInputRaw
+  coverImageUrl: string | null
+  /** Čo sa nepodarilo vyčítať (porcie, postup, fotka) – zobrazí sa pred uložením. */
+  warnings: string[]
 }
 
 export interface RecipeListDto {

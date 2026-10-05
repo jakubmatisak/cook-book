@@ -11,6 +11,7 @@ import {
   mdiSortDescending,
   mdiTable,
   mdiViewGridOutline,
+  mdiWeb,
 } from '@mdi/js'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -28,6 +29,7 @@ import { useRecipes } from '@/api/recipes'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { plural } from '@/lib/format'
+import ImportRecipeDialog from '../components/ImportRecipeDialog.vue'
 import RecipeCard from '../components/RecipeCard.vue'
 import RecipeFilterPanel from '../components/RecipeFilterPanel.vue'
 import RecipeTable from '../components/RecipeTable.vue'
@@ -94,6 +96,7 @@ watch(view, (value) => {
 
 // ─── Filtre ───────────────────────────────────────────────────────────────────
 const filtersOpen = ref(false)
+const importOpen = ref(false)
 const filterCount = computed(() => activeFilterCount(state.value))
 
 function toggleFilter(dimension: FilterDimension, value: string | number) {
@@ -190,6 +193,9 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
     title="Recepty"
     :subtitle="recipes ? plural(recipes.length, 'recept', 'recepty', 'receptov') : undefined"
   >
+    <v-btn variant="tonal" :prepend-icon="mdiWeb" data-test="import-button" @click="importOpen = true">
+      Importovať z webu
+    </v-btn>
     <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">Nový recept</v-btn>
   </PageHeader>
 
@@ -328,6 +334,8 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       <RecipeCard :recipe="recipe" />
     </v-col>
   </v-row>
+
+  <ImportRecipeDialog v-model="importOpen" />
 
   <RecipeFilterPanel
     v-if="list"

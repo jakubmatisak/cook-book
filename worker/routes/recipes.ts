@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
-import { recipeInputSchema, recipeListQuerySchema } from '../../shared/schemas/recipe'
+import { recipeImportSchema, recipeInputSchema, recipeListQuerySchema } from '../../shared/schemas/recipe'
 import type { AppEnv } from '../env'
 import { parseBody } from '../http'
 import { todayInZone } from '../../shared/dates'
 import { backfillCookLog } from '../services/cookLog'
+import { importRecipe } from '../services/importRecipe'
 import { deleteRecipe, getRecipeDetail, listRecipes, saveRecipe, setFavorite } from '../services/recipes'
 
 const HOUSEHOLD_TIME_ZONE = 'Europe/Bratislava'
@@ -14,6 +15,14 @@ export const recipeRoutes = new Hono<AppEnv>()
     const user = c.get('user')
     await backfillCookLog(c.get('db'), user.householdId, todayInZone(new Date(), HOUSEHOLD_TIME_ZONE))
     return c.json(await listRecipes(c.get('db'), user.householdId, user.id, filters))
+  })
+  .post('/import', async (c) => {
+    const { url } = await parseBody(c, recipeImportSchema)
+    const result = await importRecipe(
+      { fetchFn: c.get('fetchFn'), db: c.get('db'), bucket: c.env.BUCKET, user: c.get('user') },
+      url,
+    )
+    return c.json(result)
   })
   .post('/', async (c) => {
     const input = await parseBody(c, recipeInputSchema)

@@ -18,5 +18,5 @@ export type UserRow = typeof users.$inferSelect
 
 export interface AppEnv {
   Bindings: Bindings
-  Variables: { user: UserRow; db: Db }
+  Variables: { user: UserRow; db: Db; fetchFn: typeof fetch }
 }
