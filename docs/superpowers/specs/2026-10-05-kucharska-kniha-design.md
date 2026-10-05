@@ -20,6 +20,19 @@ Predpoklady (ak nesedia, oprav ich pred implementáciou):
 - P4: Doména zatiaľ `*.workers.dev`. Vlastná doména je len zmena v konfigurácii.
 - P5: Import receptov z URL nie je v MVP (fáza 4). Existujúce recepty sa prepíšu ručne alebo cez JSON import.
 
+## 0a. Zmeny po implementácii fázy 0 (5. 10. 2026)
+
+- **npm namiesto pnpm.** Príkazy v časti 3 platia s `npm run` / `npx`; aktuálny postup je v README.
+- **TypeScript 6.0.** TS 7 je natívny kompilátor bez JS API a `vue-tsc` na ňom nebeží.
+- **`@cloudflare/vitest-plugin` + Vitest 4** namiesto `vitest-pool-workers` (premenovaný nástupca).
+- **Typované API cez DTO v `shared/api.ts`, nie `hono/client`.** RPC typy by ťahali typy Workers runtime do frontendu; DTO dodržia hranicu src/worker.
+- **Font zo `@fontsource-variable/nunito`**, nie Google Fonts, kvôli offline PWA.
+- **Vuetify 4 CSS vrstvy:** poradie `theme, vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, utilities, vuetify-final`; Tailwind `tw:` triedy prebijú Vuetify utility.
+- **Zaoblenie** cez SASS mapu `$rounded` (lg 12 px, xl 20 px).
+- **Domácnosť má pevné ID `default`**; prvý povolený používateľ ju založí so seedom (5 slotov, 11 kategórií obchodu, zoznam „Nákup“, nastavenia), ďalší sa pridajú do nej.
+- **Access:** okrem JWT z hlavičky sa akceptuje aj cookie `CF_Authorization`; `ACCESS_TEAM_DOMAIN` sa normalizuje (s alebo bez `https://`). Access sa zapína one-click v nastaveniach Workera.
+- **Dev server na porte 5180** (5173 obsadený), náhľad 5181.
+
 ## 1. Fázy – čo, kedy a prečo
 
 Pravidlo: každá fáza končí niečím, čo reálne používate. Nič sa nebuduje „na neskôr“, len dátový model je od začiatku kompletný, aby sa neskôr nemuselo migrovať s bolesťou.
@@ -106,7 +119,7 @@ Jeden Worker, jedno nasadenie, jeden repozitár. Žiadne servery, žiadny Docker
 | Tailwind v4 len utility, bez preflight, prefix `tw` | Vuetify má vlastný reset; preflight by ho rozbil. Utility sú na rýchle rozloženie | len Vuetify utility classes: slabšie, menej flexibilné |
 | TanStack Query (vue-query) | server cache, refetch pri fokuse, polling, offline retry, optimistic update | Pinia store ručne: musel by som to všetko napísať sám |
 | vite-plugin-pwa (Workbox) | manifest + service worker + runtime caching bez ručného kódu | ručný SW: zbytočná práca |
-| Vitest + vitest-pool-workers | testy bežia v skutočnom Workers runtime s lokálnym D1 | mockovať D1: nepresné |
+| Vitest + @cloudflare/vitest-plugin | testy bežia v skutočnom Workers runtime s lokálnym D1 | mockovať D1: nepresné |
 
 ### 2.3 Štruktúra repozitára
 
@@ -128,7 +141,7 @@ kucharska-kniha/
 │   │   └── settings.scss      # Vuetify SASS premenné (border radius, font)
 │   ├── styles/
 │   │   └── tailwind.css       # @import tailwind theme+utilities, @theme z tokens
-│   ├── api/                   # typovaný klient (hono/client RPC) + query hooks
+│   ├── api/                   # apiFetch (typy DTO zo shared/api.ts) + query hooks
 │   ├── components/            # zdieľané UI (AppShell, EmptyState, ImagePicker…)
 │   ├── features/              # podľa domény, každá má pages/, components/, queries.ts
 │   │   ├── recipes/
@@ -156,7 +169,7 @@ kucharska-kniha/
 │   └── types.ts
 ├── tests/
 │   ├── unit/                  # Vitest: shared/, src/lib/, worker/services/
-│   ├── worker/                # vitest-pool-workers: API proti lokálnemu D1
+│   ├── worker/                # @cloudflare/vitest-plugin: API proti lokálnemu D1
 │   └── e2e/                   # Playwright (neskôr)
 ├── wrangler.jsonc             # Worker, D1, R2 bindingy, assets
 ├── drizzle.config.ts
@@ -214,7 +227,7 @@ Indexy: `recipes(household_id, deleted_at)`, `ingredients(household_id, name_nor
 
 ### 2.5 API
 
-REST JSON pod `/api/v1`, jeden Hono router na doménu, zod validácia vstupov zo `shared/schemas`. Frontend používa `hono/client` – typy sa odvodia z backendu, bez ručného písania klienta.
+REST JSON pod `/api/v1`, jeden Hono router na doménu, zod validácia vstupov zo `shared/schemas`. Frontend volá API cez tenký `apiFetch` a typy odpovedí berie zo `shared/api.ts` (DTO zdieľané s backendom).
 
 | Doména | Endpointy (výber) |
 |---|---|
@@ -248,7 +261,7 @@ Záložný plán, ak by Access robil problémy s PWA na iOS (cookie po inštalá
   - `defaults`: globálne tvary – `VBtn { rounded: 'lg', variant: 'flat' }`, `VCard { rounded: 'xl', variant: 'flat', border: true }`, `VTextField/VSelect { variant: 'outlined', density: 'comfortable' }`, `VChip { rounded: 'lg' }`. Toto je „upravený dizajn“: jedno miesto, celá appka vyzerá inak než default Material.
   - `locale`: sk (Vuetify má slovenský locale).
   - `icons`: `@mdi/js` (tree-shake, nie celý font).
-- **SASS premenné** v `src/design/settings.scss`: `$border-radius-root`, `$body-font-family` (napr. Inter alebo Nunito z Google Fonts, s `font-display: swap`).
+- **SASS premenné** v `src/design/settings.scss`: `$border-radius-root`, `$body-font-family` (Nunito Variable z `@fontsource-variable/nunito`, len latin a latin-ext, súčasť buildu kvôli offline PWA).
 - **Tailwind v4** v `src/styles/tailwind.css`: importujú sa len `theme` a `utilities` vrstvy (bez `preflight`), prefix `tw` (triedy sa píšu `tw:flex`, `tw:bg-primary`), v `@theme` sa farby mapujú na Vuetify CSS premenné (`--color-primary: rgb(var(--v-theme-primary))`), takže `tw:bg-primary` a Vuetify `color="primary"` sú vždy tá istá farba.
 - **Layout**: `AppShell` – mobil: `v-app-bar` + `v-bottom-navigation` (Recepty, Plán, Nákup, Viac); desktop ≥ md: `v-navigation-drawer rail` vľavo. Max šírka obsahu 1200 px.
 - **Dáta**: TanStack Vue Query. Query kľúče podľa domény, mutácie s optimistic update pre odškrtávanie a obľúbené. Nákupný zoznam: `refetchInterval` 5 s keď je stránka viditeľná.
@@ -283,7 +296,7 @@ Záložný plán, ak by Access robil problémy s PWA na iOS (cookie po inštalá
 ### 2.10 Testovanie
 
 - **Unit (Vitest)**: `shared/units`, `shared/text`, generátor nákupného zoznamu, prepočet porcií, image resize helper (jsdom). Tu je väčšina logiky, tu je väčšina testov.
-- **Worker (vitest-pool-workers)**: každá route proti lokálnemu D1 s migráciami, happy path + 400/403/404.
+- **Worker (@cloudflare/vitest-plugin)**: každá route proti lokálnemu D1 s migráciami, happy path + 400/403/404.
 - **Komponenty**: minimálne; iba kritické formuláre (editor receptu) cez `@vue/test-utils`.
 - **E2E (Playwright, od F3)**: smoke – prihlás sa (dev bypass), vytvor recept, naplánuj, vygeneruj zoznam, odškrtni.
 - TDD na službách a routoch; UI sa overuje ručne v prehliadači na mobile aj desktope.
