@@ -200,3 +200,37 @@ export interface PlanEntryDto {
 export interface PlanCopyResult {
   copied: number
 }
+
+// ─── Nákup (fáza 3) ──────────────────────────────────────────────────────────
+
+export interface ShoppingListDto {
+  id: string
+  name: string
+  isDefault: boolean
+}
+
+export interface ShoppingItemSourceDto {
+  date: string
+  recipeTitle: string
+}
+
+export interface ShoppingItemDto {
+  id: string
+  listId: string
+  ingredientId: string | null
+  name: string
+  quantity: number | null
+  unit: UnitCode | null
+  shopCategoryId: string | null
+  isChecked: boolean
+  checkedAt: string | null
+  source: 'manual' | 'generated' | 'staple'
+  sources: ShoppingItemSourceDto[]
+  updatedAt: string
+}
+
+export interface GenerateResult {
+  added: number
+  kept: number
+  removed: number
+}
