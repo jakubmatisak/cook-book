@@ -78,9 +78,9 @@ function clearFilters() {
         Obľúbené
       </v-chip>
       <v-chip
-        class="tw:shrink-0"
         v-for="category in RECIPE_CATEGORIES"
         :key="category"
+        class="tw:shrink-0"
         :color="filters.category === category ? 'primary' : undefined"
         :variant="filters.category === category ? 'flat' : 'outlined'"
         @click="setQuery({ kategoria: filters.category === category ? undefined : category })"
@@ -91,9 +91,9 @@ function clearFilters() {
 
     <div v-if="tags?.length" class="tw:-mx-1 tw:flex tw:gap-2 tw:overflow-x-auto tw:px-1 tw:pb-1">
       <v-chip
-        class="tw:shrink-0"
         v-for="tag in tags"
         :key="tag.id"
+        class="tw:shrink-0"
         size="small"
         :color="filters.tag === tag.id ? 'secondary' : undefined"
         :variant="filters.tag === tag.id ? 'flat' : 'tonal'"
