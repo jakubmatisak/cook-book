@@ -55,3 +55,15 @@ export const planCopySchema = z.object({
   replace: z.boolean().default(false),
 })
 export type PlanCopyInput = z.output<typeof planCopySchema>
+
+export const templateCreateSchema = z.object({
+  name: z.string().trim().min(1, 'Zadaj názov šablóny.').max(60, 'Názov môže mať najviac 60 znakov.'),
+  fromDate: isoDate,
+})
+export type TemplateCreateInput = z.output<typeof templateCreateSchema>
+
+export const templateApplySchema = z.object({
+  toDate: isoDate,
+  replace: z.boolean().default(false),
+})
+export type TemplateApplyInput = z.output<typeof templateApplySchema>

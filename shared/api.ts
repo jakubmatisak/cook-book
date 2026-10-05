@@ -221,6 +221,18 @@ export interface PlanEntryDto {
   audience: PlanAudience
 }
 
+export interface WeekTemplateDto {
+  id: string
+  name: string
+  entryCount: number
+}
+
+export interface TemplateApplyResult {
+  applied: number
+  /** Jedlá, ktoré sa neprenesli, lebo ich recept medzitým zmizol. */
+  skipped: number
+}
+
 export interface PlanCopyResult {
   copied: number
 }

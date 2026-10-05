@@ -4,8 +4,14 @@ import { computed } from 'vue'
 import type { FamilyMemberDto, PlanEntryDto } from '@shared/api'
 import { entryPortions } from '@shared/portions'
 
-const props = defineProps<{ entry: PlanEntryDto; members: FamilyMemberDto[]; dense?: boolean }>()
-defineEmits<{ edit: [entry: PlanEntryDto] }>()
+const props = defineProps<{
+  entry: PlanEntryDto
+  members: FamilyMemberDto[]
+  dense?: boolean
+  /** Karta sa dá myšou presunúť na iný deň alebo jedlo dňa. */
+  draggable?: boolean
+}>()
+defineEmits<{ edit: [entry: PlanEntryDto]; dragstart: [event: DragEvent, entry: PlanEntryDto] }>()
 
 const title = computed(() => props.entry.recipe?.title ?? props.entry.freeText ?? '')
 const portions = computed(
@@ -27,7 +33,9 @@ const subtitle = computed(() => {
     density="compact"
     link
     :aria-label="`Upraviť: ${title}`"
+    :draggable="draggable ? 'true' : undefined"
     @click="$emit('edit', entry)"
+    @dragstart="draggable && $emit('dragstart', $event, entry)"
   >
     <v-card-item class="pa-2">
       <template v-if="entry.recipe?.coverImageUrl" #prepend>
