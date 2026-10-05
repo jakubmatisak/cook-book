@@ -2,11 +2,23 @@
  * Poradie vrstiev: Tailwind utility (tw:*) prebijú Vuetify komponenty aj Vuetify utility,
  * vuetify-final (prechody, !important triedy) ostáva navrchu. Tailwind preflight sa nenačítava.
  */
-@layer theme, vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, utilities, vuetify-final;
+@layer theme, app-base, vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, utilities, vuetify-final;
 
 @import 'tailwindcss/theme.css' layer(theme) prefix(tw);
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import './fonts.css';
+
+/* Vlastné <button> (riadky zoznamov, výber farby) bez vzhľadu prehliadača; Vuetify tlačidlá majú vyššiu vrstvu. */
+@layer app-base {
+  button {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+}
 
 @theme inline {
   --color-primary: rgb(var(--v-theme-primary));

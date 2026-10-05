@@ -143,8 +143,19 @@ describe('roundForShopping', () => {
     expect(roundForShopping(2.25, 'ks')).toBe(3)
     expect(roundForShopping(0.5, 'balenie')).toBe(1)
     expect(roundForShopping(2, 'ks')).toBe(2)
-    expect(roundForShopping(333.3333, 'g')).toBe(333.33)
+    expect(roundForShopping(1.5, 'PL')).toBe(1.5)
+    expect(roundForShopping(0.3333, 'šálka')).toBe(0.33)
     expect(roundForShopping(null, 'g')).toBeNull()
+  })
+})
+
+describe('roundForShopping – gramy a mililitre', () => {
+  it('zaokrúhli nahor na krok, ktorý dáva zmysel v obchode', () => {
+    expect(roundForShopping(7.2, 'g')).toBe(8)
+    expect(roundForShopping(37.5, 'g')).toBe(40)
+    expect(roundForShopping(208.33, 'g')).toBe(210)
+    expect(roundForShopping(416.67, 'ml')).toBe(420)
+    expect(roundForShopping(600, 'g')).toBe(600)
   })
 })
 

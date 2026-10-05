@@ -41,10 +41,22 @@ export interface GeneratedItem {
 
 const ROUND_UP: ReadonlySet<UnitCode> = new Set(['ks', 'balenie'])
 
-/** Zaokrúhlenie na nákup: kusy a balenia nahor na celé, ostatné na 2 desatinné miesta. */
+const MASS_OR_VOLUME: ReadonlySet<UnitCode> = new Set(['g', 'ml'])
+
+/** Krok pre gramy a mililitre: do 10 po 1, do 100 po 5, inak po 10. */
+const stepFor = (q: number) => (q < 10 ? 1 : q < 100 ? 5 : 10)
+
+/**
+ * Zaokrúhlenie na nákup: kusy a balenia nahor na celé, gramy a mililitre nahor na rozumný krok
+ * (208,33 g → 210 g), ostatné na 2 desatinné miesta.
+ */
 export function roundForShopping(quantity: number | null, unit: UnitCode | null): number | null {
   if (quantity === null) return null
   if (unit && ROUND_UP.has(unit)) return Math.ceil(quantity - 1e-9)
+  if (unit && MASS_OR_VOLUME.has(unit)) {
+    const step = stepFor(quantity)
+    return Math.ceil(quantity / step - 1e-9) * step
+  }
   return Math.round(quantity * 100) / 100
 }
 

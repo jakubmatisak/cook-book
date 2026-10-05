@@ -2,7 +2,12 @@ import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } fro
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type { GenerateResult, ShoppingItemDto, ShoppingListDto } from '@shared/api'
 import type { ItemCreateInput } from '@shared/schemas/shopping'
-import { createOfflineQueue, idbQueueStorage, type QueuedChange } from '@/features/shopping/offlineQueue'
+import {
+  applyPending,
+  createOfflineQueue,
+  idbQueueStorage,
+  type QueuedChange,
+} from '@/features/shopping/offlineQueue'
 import { ApiError, apiFetch } from './http'
 
 export const shoppingKeys = {
@@ -30,7 +35,11 @@ export const useShoppingLists = () =>
 export function useShoppingItems(listId: MaybeRefOrGetter<string | undefined>) {
   return useQuery({
     queryKey: computed(() => shoppingKeys.items(toValue(listId) ?? '')),
-    queryFn: () => apiFetch<ShoppingItemDto[]>(`/shopping/lists/${toValue(listId)}/items`),
+    queryFn: async () => {
+      const items = await apiFetch<ShoppingItemDto[]>(`/shopping/lists/${toValue(listId)}/items`)
+      // Odškrtnutia bez signálu ešte nie sú na serveri – nesmú sa pri obnove „vrátiť späť“.
+      return applyPending(items, await offlineQueue.pending())
+    },
     enabled: computed(() => Boolean(toValue(listId))),
     refetchInterval: 5_000,
     refetchIntervalInBackground: false,

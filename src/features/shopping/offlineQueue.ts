@@ -41,6 +41,22 @@ export function createOfflineQueue(
   }
 
   const size = async () => (await storage.get()).length
+  const pending = () => storage.get()
 
-  return { enqueue, flush, size }
+  return { enqueue, flush, size, pending }
+}
+
+/** Prekryje stav položiek zo servera čakajúcimi (ešte neodoslanými) odškrtnutiami. */
+export function applyPending<T extends { id: string; isChecked: boolean; checkedAt: string | null }>(
+  items: readonly T[],
+  pending: readonly QueuedChange[],
+): T[] {
+  if (pending.length === 0) return [...items]
+  const byId = new Map(pending.map((c) => [c.id, c]))
+  return items.map((item) => {
+    const change = byId.get(item.id)
+    return change
+      ? { ...item, isChecked: change.isChecked, checkedAt: change.isChecked ? change.at : null }
+      : item
+  })
 }

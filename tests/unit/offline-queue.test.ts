@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createOfflineQueue, type QueuedChange, type QueueStorage } from '@/features/shopping/offlineQueue'
+import {
+  applyPending,
+  createOfflineQueue,
+  type QueuedChange,
+  type QueueStorage,
+} from '@/features/shopping/offlineQueue'
 
 function memoryStorage(initial: QueuedChange[] = []): QueueStorage & { data: QueuedChange[] } {
   const store = {
@@ -60,6 +65,26 @@ describe('offline fronta odškrtnutí', () => {
     expect(storage.data).toEqual([
       change('a', false, '2026-10-05T10:00:05.000Z'),
       change('b', true, '2026-10-05T10:00:06.000Z'),
+    ])
+  })
+})
+
+describe('applyPending', () => {
+  it('čakajúce odškrtnutia prekryjú stav zo servera, kým sa neodošlú', () => {
+    const items = [
+      { id: 'a', isChecked: false, checkedAt: null },
+      { id: 'b', isChecked: true, checkedAt: '2026-10-05T09:00:00.000Z' },
+      { id: 'c', isChecked: false, checkedAt: null },
+    ]
+    const result = applyPending(items, [
+      change('a', true, '2026-10-05T10:00:00.000Z'),
+      change('b', false, '2026-10-05T10:00:01.000Z'),
+      change('zmazana', true, '2026-10-05T10:00:02.000Z'),
+    ])
+    expect(result).toEqual([
+      { id: 'a', isChecked: true, checkedAt: '2026-10-05T10:00:00.000Z' },
+      { id: 'b', isChecked: false, checkedAt: null },
+      { id: 'c', isChecked: false, checkedAt: null },
     ])
   })
 })
