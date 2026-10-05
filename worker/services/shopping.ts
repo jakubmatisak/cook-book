@@ -48,6 +48,15 @@ export async function listLists(db: Db, householdId: string): Promise<ShoppingLi
     .orderBy(asc(shoppingLists.sortOrder), asc(shoppingLists.name))
 }
 
+async function assertShopCategory(db: Db, householdId: string, id: string) {
+  const category = await db
+    .select({ id: shopCategories.id })
+    .from(shopCategories)
+    .where(and(eq(shopCategories.id, id), eq(shopCategories.householdId, householdId)))
+    .get()
+  if (!category) throw new HttpError(400, 'invalid_shop_category', 'Kategória obchodu neexistuje.')
+}
+
 async function assertList(db: Db, householdId: string, listId: string) {
   const list = await db
     .select({ id: shoppingLists.id })
@@ -262,14 +271,7 @@ export async function createItem(
       ),
     )
     .get()
-  if (input.shopCategoryId) {
-    const category = await db
-      .select({ id: shopCategories.id })
-      .from(shopCategories)
-      .where(and(eq(shopCategories.id, input.shopCategoryId), eq(shopCategories.householdId, householdId)))
-      .get()
-    if (!category) throw new HttpError(400, 'invalid_shop_category', 'Kategória obchodu neexistuje.')
-  }
+  if (input.shopCategoryId) await assertShopCategory(db, householdId, input.shopCategoryId)
   const [row] = await db
     .insert(shoppingItems)
     .values({
@@ -291,14 +293,16 @@ export async function patchItem(
   id: string,
   patch: ItemPatchInput,
 ): Promise<ShoppingItemDto> {
-  await findItem(db, user.householdId, id)
+  const current = await findItem(db, user.householdId, id)
   const { isChecked, ...fields } = patch
+  if (fields.shopCategoryId) await assertShopCategory(db, user.householdId, fields.shopCategoryId)
   const set: Partial<ItemRow> = { ...fields }
   if (isChecked !== undefined) {
     set.isChecked = isChecked
     set.checkedAt = isChecked ? new Date().toISOString() : null
     set.checkedBy = isChecked ? user.id : null
   }
+  if (Object.keys(set).length === 0) return toItemDto(current, [])
   const [row] = await db.update(shoppingItems).set(set).where(eq(shoppingItems.id, id)).returning()
   return toItemDto(row!, [])
 }

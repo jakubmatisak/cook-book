@@ -53,7 +53,7 @@ const mobileMenu = ref(false)
           :to="item.to"
           :prepend-icon="item.icon"
           :title="item.title"
-          rounded="lg"
+          rounded="sm"
           data-test="nav-item"
         />
         <v-divider class="my-2" />
@@ -63,7 +63,7 @@ const mobileMenu = ref(false)
           :to="item.to"
           :prepend-icon="item.icon"
           :title="item.title"
-          rounded="lg"
+          rounded="sm"
           data-test="nav-item"
         />
       </v-list>
@@ -77,7 +77,7 @@ const mobileMenu = ref(false)
           :to="item.to"
           :prepend-icon="item.icon"
           :title="item.title"
-          rounded="lg"
+          rounded="sm"
           data-test="nav-item"
           @click="mobileMenu = false"
         />

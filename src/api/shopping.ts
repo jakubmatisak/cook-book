@@ -1,11 +1,17 @@
-import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
+import {
+  useIsMutating,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationReturnType,
+} from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type { GenerateResult, ShoppingItemDto, ShoppingListDto } from '@shared/api'
 import type { ItemCreateInput } from '@shared/schemas/shopping'
 import {
-  applyPending,
   createOfflineQueue,
   idbQueueStorage,
+  syncPending,
   type QueuedChange,
 } from '@/features/shopping/offlineQueue'
 import { ApiError, apiFetch } from './http'
@@ -14,6 +20,8 @@ export const shoppingKeys = {
   lists: ['shopping', 'lists'] as const,
   items: (listId: string) => ['shopping', 'items', listId] as const,
 }
+
+const TOGGLE_KEY = ['shopping', 'toggle'] as const
 
 const json = (method: string, body?: unknown): RequestInit => ({
   method,
@@ -31,17 +39,21 @@ export const useShoppingLists = () =>
     staleTime: 5 * 60_000,
   })
 
-/** Položky zoznamu; kým je stránka viditeľná, obnovujú sa každých 5 s (zmeny od druhého človeka). */
+/**
+ * Položky zoznamu; kým je stránka viditeľná, obnovujú sa každých 5 s (zmeny od druhého človeka).
+ * Počas prebiehajúceho odškrtnutia sa neobnovujú, aby starý stav zo servera neprepísal zmenu.
+ */
 export function useShoppingItems(listId: MaybeRefOrGetter<string | undefined>) {
+  const toggling = useIsMutating({ mutationKey: TOGGLE_KEY })
   return useQuery({
     queryKey: computed(() => shoppingKeys.items(toValue(listId) ?? '')),
-    queryFn: async () => {
-      const items = await apiFetch<ShoppingItemDto[]>(`/shopping/lists/${toValue(listId)}/items`)
-      // Odškrtnutia bez signálu ešte nie sú na serveri – nesmú sa pri obnove „vrátiť späť“.
-      return applyPending(items, await offlineQueue.pending())
-    },
+    queryFn: () =>
+      syncPending(
+        () => apiFetch<ShoppingItemDto[]>(`/shopping/lists/${toValue(listId)}/items`),
+        offlineQueue,
+      ),
     enabled: computed(() => Boolean(toValue(listId))),
-    refetchInterval: 5_000,
+    refetchInterval: computed(() => (toggling.value > 0 ? false : 5_000)),
     refetchIntervalInBackground: false,
     staleTime: 0,
   })
@@ -62,6 +74,7 @@ export function useToggleItem(): UseMutationReturnType<'sent' | 'queued', Error,
       ),
     )
   return useMutation({
+    mutationKey: TOGGLE_KEY,
     networkMode: 'always',
     mutationFn: async ({ item, isChecked }: ToggleVars) => {
       try {

@@ -24,27 +24,40 @@ export function createOfflineQueue(
   storage: QueueStorage,
   send: (changes: QueuedChange[]) => Promise<unknown>,
 ) {
-  async function enqueue(change: QueuedChange) {
-    const current = await storage.get()
-    await storage.set([...current.filter((c) => c.id !== change.id), change])
+  // Všetky operácie nad úložiskom idú za sebou, inak by si dve súbežné zmeny prepísali zápis.
+  let lock: Promise<unknown> = Promise.resolve()
+  const serialized = <T>(op: () => Promise<T>): Promise<T> => {
+    const next = lock.then(op, op)
+    lock = next.catch(() => undefined)
+    return next
   }
+
+  const enqueue = (change: QueuedChange) =>
+    serialized(async () => {
+      const current = await storage.get()
+      await storage.set([...current.filter((c) => c.id !== change.id), change])
+    })
 
   /** Odošle všetko; zmeny pridané počas odosielania ostanú vo fronte. Vráti počet odoslaných. */
   async function flush(): Promise<number> {
-    const pending = await storage.get()
+    const pending = await serialized(() => storage.get())
     if (pending.length === 0) return 0
     await send(pending)
-    const after = await storage.get()
     const sent = new Map(pending.map((c) => [c.id, c.at]))
-    await storage.set(after.filter((c) => sent.get(c.id) !== c.at))
+    await serialized(async () => {
+      const after = await storage.get()
+      await storage.set(after.filter((c) => sent.get(c.id) !== c.at))
+    })
     return pending.length
   }
 
-  const size = async () => (await storage.get()).length
-  const pending = () => storage.get()
+  const pending = () => serialized(() => storage.get())
+  const size = async () => (await pending()).length
 
   return { enqueue, flush, size, pending }
 }
+
+export type OfflineQueue = ReturnType<typeof createOfflineQueue>
 
 /** Prekryje stav položiek zo servera čakajúcimi (ešte neodoslanými) odškrtnutiami. */
 export function applyPending<T extends { id: string; isChecked: boolean; checkedAt: string | null }>(
@@ -59,4 +72,23 @@ export function applyPending<T extends { id: string; isChecked: boolean; checked
       ? { ...item, isChecked: change.isChecked, checkedAt: change.isChecked ? change.at : null }
       : item
   })
+}
+
+/**
+ * Načíta položky a ak sú vo fronte čakajúce zmeny, skúsi ich hneď odoslať (spojenie zjavne funguje)
+ * a načíta znova. Keď odoslanie zlyhá, čakajúce zmeny sa aspoň prekryjú cez načítaný stav.
+ */
+export async function syncPending<T extends { id: string; isChecked: boolean; checkedAt: string | null }>(
+  fetchItems: () => Promise<T[]>,
+  queue: OfflineQueue,
+): Promise<T[]> {
+  let items = await fetchItems()
+  if ((await queue.size()) > 0) {
+    try {
+      if ((await queue.flush()) > 0) items = await fetchItems()
+    } catch {
+      // bez spojenia – fronta ostáva
+    }
+  }
+  return applyPending(items, await queue.pending())
 }

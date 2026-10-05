@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   applyPending,
   createOfflineQueue,
+  syncPending,
   type QueuedChange,
   type QueueStorage,
 } from '@/features/shopping/offlineQueue'
@@ -86,5 +87,49 @@ describe('applyPending', () => {
       { id: 'b', isChecked: false, checkedAt: null },
       { id: 'c', isChecked: false, checkedAt: null },
     ])
+  })
+})
+
+describe('súbežné zápisy do fronty', () => {
+  it('dve zmeny naraz sa obe uložia', async () => {
+    const storage = memoryStorage()
+    const queue = createOfflineQueue(storage, vi.fn())
+    await Promise.all([
+      queue.enqueue(change('a', true, '2026-10-05T10:00:00.000Z')),
+      queue.enqueue(change('b', true, '2026-10-05T10:00:01.000Z')),
+    ])
+    expect(storage.data.map((c) => c.id).sort()).toEqual(['a', 'b'])
+  })
+
+  it('zmena pridaná súbežne s koncom odosielania sa nestratí', async () => {
+    const storage = memoryStorage([change('a', true, '2026-10-05T10:00:00.000Z')])
+    const queue = createOfflineQueue(storage, vi.fn().mockResolvedValue(undefined))
+    await Promise.all([queue.flush(), queue.enqueue(change('b', true, '2026-10-05T10:00:05.000Z'))])
+    expect(storage.data).toEqual([change('b', true, '2026-10-05T10:00:05.000Z')])
+  })
+})
+
+describe('syncPending', () => {
+  it('po úspešnom načítaní odošle čakajúce zmeny a načíta znova', async () => {
+    const storage = memoryStorage([change('a', true, '2026-10-05T10:00:00.000Z')])
+    const send = vi.fn().mockResolvedValue(undefined)
+    const queue = createOfflineQueue(storage, send)
+    const fetchItems = vi
+      .fn()
+      .mockResolvedValueOnce([{ id: 'a', isChecked: false, checkedAt: null }])
+      .mockResolvedValueOnce([{ id: 'a', isChecked: true, checkedAt: 'x' }])
+    const items = await syncPending(fetchItems, queue)
+    expect(send).toHaveBeenCalledOnce()
+    expect(fetchItems).toHaveBeenCalledTimes(2)
+    expect(items).toEqual([{ id: 'a', isChecked: true, checkedAt: 'x' }])
+  })
+
+  it('keď odoslanie zlyhá, prekryje načítané položky čakajúcimi zmenami', async () => {
+    const storage = memoryStorage([change('a', true, '2026-10-05T10:00:00.000Z')])
+    const queue = createOfflineQueue(storage, vi.fn().mockRejectedValue(new Error('offline')))
+    const fetchItems = vi.fn().mockResolvedValue([{ id: 'a', isChecked: false, checkedAt: null }])
+    const items = await syncPending(fetchItems, queue)
+    expect(fetchItems).toHaveBeenCalledOnce()
+    expect(items).toEqual([{ id: 'a', isChecked: true, checkedAt: '2026-10-05T10:00:00.000Z' }])
   })
 })

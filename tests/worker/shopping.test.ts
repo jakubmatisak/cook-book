@@ -250,3 +250,26 @@ describe('nákupný zoznam – ručné položky a odškrtávanie', () => {
     expect((await items(listId)).map((i) => i.name)).toEqual(['Syr'])
   })
 })
+
+describe('nákupný zoznam – úprava položky', () => {
+  it('odmietne kategóriu inej domácnosti a prázdnu zmenu zvládne bez chyby', async () => {
+    const { listId } = await setup()
+    const item = await (
+      await send(app, 'POST', api(`/shopping/lists/${listId}/items`), { name: 'Chlieb' })
+    ).json<ShoppingItemDto>()
+    await env.DB.batch([
+      env.DB.prepare(
+        "insert into households (id, name, created_at, updated_at) values ('iny', 'Iná', 'x', 'x')",
+      ),
+      env.DB.prepare(
+        "insert into shop_categories (id, household_id, name, sort_order, created_at, updated_at) values ('kat-iny', 'iny', 'Cudzia', 0, 'x', 'x')",
+      ),
+    ])
+    expect(
+      (await send(app, 'PATCH', api(`/shopping/items/${item.id}`), { shopCategoryId: 'kat-iny' })).status,
+    ).toBe(400)
+    const empty = await send(app, 'PATCH', api(`/shopping/items/${item.id}`), {})
+    expect(empty.status).toBe(200)
+    expect((await empty.json<ShoppingItemDto>()).name).toBe('Chlieb')
+  })
+})

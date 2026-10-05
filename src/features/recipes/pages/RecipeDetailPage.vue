@@ -132,7 +132,7 @@ function goBack() {
       :aspect-ratio="16 / 9"
       max-height="420"
       cover
-      rounded="lg"
+      rounded="md"
       class="mb-4"
     />
 
