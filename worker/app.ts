@@ -7,6 +7,7 @@ import { exportRoutes } from './routes/export'
 import { memberRoutes, settingsRoutes, slotRoutes } from './routes/family'
 import { imageServeRoutes, imageUploadRoutes } from './routes/images'
 import { meRoutes } from './routes/me'
+import { planRoutes } from './routes/plan'
 import { recipeRoutes } from './routes/recipes'
 
 export type AppDeps = AuthDeps
@@ -29,6 +30,7 @@ export function createApp(deps: AppDeps = {}) {
   app.route('/api/v1/members', memberRoutes)
   app.route('/api/v1/slots', slotRoutes)
   app.route('/api/v1/settings', settingsRoutes)
+  app.route('/api/v1/plan', planRoutes)
   app.route('/img', imageServeRoutes)
 
   app.onError(onError)
