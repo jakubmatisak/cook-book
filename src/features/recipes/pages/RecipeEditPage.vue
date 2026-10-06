@@ -9,6 +9,7 @@ import { useTags } from '@/api/catalog'
 import { ApiError } from '@/api/http'
 import { useRecipe, useSaveRecipe } from '@/api/recipes'
 import { createDraftStore } from '@/composables/useDraft'
+import { useLeavePrompt } from '@/composables/useLeavePrompt'
 import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
 import ImagePicker from '../components/ImagePicker.vue'
 import IngredientRows from '../components/IngredientRows.vue'
@@ -126,9 +127,11 @@ async function onSubmit() {
   }
 }
 
-onBeforeRouteLeave(() => {
+// Vlastné okno namiesto okna prehliadača (to ukazuje názov domény a nedá sa upraviť).
+const leavePrompt = useLeavePrompt()
+onBeforeRouteLeave(async () => {
   if (saved.value || !dirty.value) return true
-  const leave = window.confirm('Máš neuložené zmeny. Naozaj odísť?')
+  const leave = await leavePrompt.ask()
   if (leave) draft.clear()
   return leave
 })
@@ -293,4 +296,17 @@ function cancel() {
       </v-sheet>
     </v-form>
   </div>
+
+  <v-dialog v-model="leavePrompt.open.value" max-width="420" persistent>
+    <v-card title="Neuložené zmeny">
+      <v-card-text>Recept máš rozpísaný a neuložený. Ak odídeš, zmeny sa stratia.</v-card-text>
+      <v-card-actions class="px-4 pb-4 flex-wrap ga-1">
+        <v-spacer />
+        <v-btn color="error" variant="text" data-test="leave-discard" @click="leavePrompt.answer(true)">
+          Zahodiť zmeny
+        </v-btn>
+        <v-btn color="primary" data-test="leave-stay" @click="leavePrompt.answer(false)">Zostať</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
