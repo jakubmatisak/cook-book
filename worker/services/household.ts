@@ -51,7 +51,12 @@ export const DEFAULT_SETTINGS = {
  * Založí domácnosť s predvolenými slotmi, kategóriami, nákupným zoznamom a nastaveniami.
  * Bezpečné pri súbežnom volaní s rovnakým `id`: všetky inserty sú `on conflict do nothing` nad unikátnymi kľúčmi.
  */
-export async function createHousehold(db: Db, name: string, id: string = newId()): Promise<string> {
+export async function createHousehold(
+  db: Db,
+  name: string,
+  id: string = newId(),
+  ownerUserId?: string,
+): Promise<string> {
   await db.batch([
     db.insert(households).values({ id, name }).onConflictDoNothing(),
     db
@@ -77,6 +82,15 @@ export async function createHousehold(db: Db, name: string, id: string = newId()
       .insert(settings)
       .values(Object.entries(DEFAULT_SETTINGS).map(([key, value]) => ({ householdId: id, key, value })))
       .onConflictDoNothing(),
+    // Vlastník sa založí v tom istom kroku: domácnosť nikdy nezostane bez člena.
+    ...(ownerUserId
+      ? [
+          db
+            .insert(householdMembers)
+            .values({ userId: ownerUserId, householdId: id, role: 'owner' })
+            .onConflictDoNothing(),
+        ]
+      : []),
   ])
   return id
 }

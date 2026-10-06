@@ -21,14 +21,18 @@ const write = (storage: () => Storage, key: string, value: string | null) => {
   }
 }
 
+/** Reaktívne zrkadlo aktívnej domácnosti pre UI (prepínač v hlavičke); zároveň záloha, keď je úložisko zablokované. */
+export const activeHousehold = shallowRef<string | null>(read(() => sessionStorage, ACTIVE_KEY))
+
 /** Domácnosť zvolená v tomto okne prehliadača (dve karty môžu mať dve rôzne domácnosti). */
-export const activeHouseholdId = (): string | null => read(() => sessionStorage, ACTIVE_KEY)
+export const activeHouseholdId = (): string | null =>
+  read(() => sessionStorage, ACTIVE_KEY) ?? activeHousehold.value
 
 /** Naposledy použitá domácnosť na tomto zariadení; ponúka sa pri výbere. */
 export const lastHouseholdId = (): string | null => read(() => localStorage, LAST_KEY)
 
-/** Reaktívne zrkadlo aktívnej domácnosti pre UI (prepínač v hlavičke). */
-export const activeHousehold = shallowRef<string | null>(activeHouseholdId())
+/** Načíta aplikáciu odznova (po zmene domácnosti), aby v pamäti nezostali dáta predošlej. */
+export const reloadApp = (): void => window.location.assign('/')
 
 export function setActiveHousehold(id: string): void {
   write(() => sessionStorage, ACTIVE_KEY, id)

@@ -2,7 +2,14 @@
 import { computed, ref, watch } from 'vue'
 import { useHouseholds } from '@/api/households'
 import EmptyState from '@/components/EmptyState.vue'
-import { activeHouseholdId, lastHouseholdId, resolveHousehold, setActiveHousehold } from '@/lib/household'
+import {
+  activeHouseholdId,
+  clearActiveHousehold,
+  lastHouseholdId,
+  reloadApp,
+  resolveHousehold,
+  setActiveHousehold,
+} from '@/lib/household'
 import { mdiAlertCircleOutline, mdiHomeOutline } from '@mdi/js'
 import HouseholdPicker from './HouseholdPicker.vue'
 
@@ -17,12 +24,20 @@ const choice = computed(() =>
 )
 
 const ready = ref(false)
+// Keď sa domácnosť zmení, až kým už bežia stránky (odobrali nás z nej, zanikla), načítame aplikáciu odznova:
+// v pamäti by inak zostali dáta predošlej domácnosti.
+let opened: string | null = null
 watch(
   choice,
   (c) => {
     if (c?.kind === 'ready') {
       setActiveHousehold(c.id)
+      if (opened !== null && opened !== c.id) return reloadApp()
+      opened = c.id
       ready.value = true
+    } else if (ready.value && c) {
+      clearActiveHousehold()
+      reloadApp()
     } else {
       ready.value = false
     }
@@ -31,6 +46,7 @@ watch(
 )
 
 function pick(id: string) {
+  opened = id
   setActiveHousehold(id)
   ready.value = true
 }

@@ -35,6 +35,15 @@ export const useHouseholdMembers = () =>
     queryFn: () => apiFetch<HouseholdMemberDto[]>('/household/members'),
   })
 
+/** Zmena roly alebo odobratie môže zasiahnuť aj vlastný účet, preto sa obnoví aj /me a zoznam domácností. */
+function refreshAfterMembershipChange(client: ReturnType<typeof useQueryClient>) {
+  return Promise.all([
+    client.invalidateQueries({ queryKey: householdMembersKey }),
+    client.invalidateQueries({ queryKey: ['me'] }),
+    client.invalidateQueries({ queryKey: householdsKey }),
+  ])
+}
+
 export interface InviteVars {
   email: string
   role: HouseholdRole
@@ -63,7 +72,7 @@ export function useChangeMemberRole(): UseMutationReturnType<
   return useMutation({
     mutationFn: ({ userId, role }: ChangeRoleVars) =>
       apiFetch<HouseholdMemberDto>(`/household/members/${userId}`, json('PUT', { role })),
-    onSettled: () => client.invalidateQueries({ queryKey: householdMembersKey }),
+    onSettled: () => refreshAfterMembershipChange(client),
   })
 }
 
@@ -71,7 +80,7 @@ export function useRemoveMember(): UseMutationReturnType<void, Error, string, un
   const client = useQueryClient()
   return useMutation({
     mutationFn: (userId: string) => apiFetch<void>(`/household/members/${userId}`, json('DELETE')),
-    onSuccess: () => client.invalidateQueries({ queryKey: householdMembersKey }),
+    onSettled: () => refreshAfterMembershipChange(client),
   })
 }
 

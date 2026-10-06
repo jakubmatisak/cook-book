@@ -6,7 +6,6 @@ import { HttpError } from '../errors'
 import { parseBody } from '../http'
 import { isAllowedEmail } from '../services/accessList'
 import { createHousehold } from '../services/household'
-import { addMembership } from '../services/memberships'
 import { toHouseholdSummary } from './me'
 
 /** Domácnosti prihláseného používateľa; fungujú aj bez výberu domácnosti (slúžia výberu a zakladaniu). */
@@ -20,8 +19,7 @@ export const householdsRoutes = new Hono<AppEnv>()
     }
     const { name } = await parseBody(c, householdNameSchema)
     const db = c.get('db')
-    const id = await createHousehold(db, name)
-    await addMembership(db, user.id, id, 'owner')
+    const id = await createHousehold(db, name, undefined, user.id)
     const body: HouseholdSummaryDto = { id, name, role: 'owner' }
     return c.json(body, 201)
   })

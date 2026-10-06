@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { householdsKey } from '@/api/households'
 import { h } from 'vue'
 import HouseholdGate from '@/features/households/components/HouseholdGate.vue'
 import { activeHouseholdId, clearActiveHousehold } from '@/lib/household'
@@ -89,5 +90,36 @@ describe('HouseholdGate', () => {
     const wrapper = await mountGate()
     expect(wrapper.find('[data-test="content"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('Skúsiť znova')
+  })
+})
+
+describe('HouseholdGate – zmena domácností počas relácie', () => {
+  it('keď aktívna domácnosť zanikne (odobratý člen), aplikácia sa načíta odznova', async () => {
+    vi.resetModules()
+    const reloadApp = vi.fn()
+    vi.doMock('@/lib/household', async (original) => ({
+      ...(await original<typeof import('@/lib/household')>()),
+      reloadApp,
+    }))
+    const { default: Gate } = await import('@/features/households/components/HouseholdGate.vue')
+    const { QueryClient: QC, VueQueryPlugin: VQ } = await import('@tanstack/vue-query')
+    const client = new QC({ defaultOptions: { queries: { retry: false } } })
+
+    stubFetch([home('a', 'Doma'), home('b', 'Rodičia')])
+    sessionStorage.setItem('kniha:household', 'a')
+    const wrapper = mount(Gate, {
+      global: { plugins: [createAppVuetify(), [VQ, { queryClient: client }]] },
+      slots: { default: () => h('p', { 'data-test': 'content' }, 'obsah') },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-test="content"]').exists()).toBe(true)
+    expect(reloadApp).not.toHaveBeenCalled()
+
+    stubFetch([home('b', 'Rodičia')]) // z domácnosti a už nie je členom
+    await client.invalidateQueries({ queryKey: householdsKey })
+    await flushPromises()
+    expect(reloadApp).toHaveBeenCalledTimes(1)
+    vi.doUnmock('@/lib/household')
   })
 })

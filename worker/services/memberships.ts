@@ -81,10 +81,26 @@ export async function inviteMember(
   return user
 }
 
+type MemberRow = {
+  userId: string
+  email: string
+  name: string
+  role: HouseholdRole
+  lastLoginAt: string | null
+  memberships: number
+}
+
+/**
+ * `locked`: správca aplikácie (ALLOWED_EMAILS), ktorému by odobratím z tejto domácnosti nezostala žiadna –
+ * inak by sa z aplikácie vymkol. Správca s ďalšou domácnosťou sa dá odobrať.
+ */
 const toMemberDto = (
-  row: { userId: string; email: string; name: string; role: HouseholdRole; lastLoginAt: string | null },
+  { memberships, ...row }: MemberRow,
   adminEmails: string | undefined,
-): HouseholdMemberDto => ({ ...row, locked: isAllowedEmail(row.email, adminEmails) })
+): HouseholdMemberDto => ({
+  ...row,
+  locked: memberships <= 1 && isAllowedEmail(row.email, adminEmails),
+})
 
 const memberRows = (db: Db) =>
   db
@@ -94,6 +110,7 @@ const memberRows = (db: Db) =>
       name: users.name,
       role: householdMembers.role,
       lastLoginAt: householdMembers.lastLoginAt,
+      memberships: sql<number>`(select count(*) from household_members m2 where m2.user_id = ${householdMembers.userId})`,
     })
     .from(householdMembers)
     .innerJoin(users, eq(users.id, householdMembers.userId))
@@ -118,14 +135,9 @@ async function loadMember(db: Db, householdId: string, userId: string, adminEmai
   return toMemberDto(row, adminEmails)
 }
 
-const ownerCount = async (db: Db, householdId: string): Promise<number> =>
-  (
-    await db
-      .select({ n: sql<number>`count(*)` })
-      .from(householdMembers)
-      .where(and(eq(householdMembers.householdId, householdId), eq(householdMembers.role, 'owner')))
-      .get()
-  )?.n ?? 0
+/** Podmienka „po tejto zmene ostane v domácnosti aspoň jeden vlastník“; platí v rámci jedného SQL príkazu. */
+const otherOwnerExists = (householdId: string) =>
+  sql`exists (select 1 from household_members o where o.household_id = ${householdId} and o.role = 'owner' and o.user_id <> ${householdMembers.userId})`
 
 const lastOwner = () => new HttpError(409, 'last_owner', 'Domácnosť musí mať aspoň jedného vlastníka.')
 
@@ -149,13 +161,21 @@ export async function changeMemberRole(
   adminEmails: string | undefined,
 ): Promise<HouseholdMemberDto> {
   const current = await loadMember(db, householdId, userId, adminEmails)
-  if (current.role === 'owner' && role !== 'owner' && (await ownerCount(db, householdId)) <= 1) {
-    throw lastOwner()
-  }
-  await db
+  // Jeden príkaz: degradovať vlastníka sa dá, len ak v domácnosti ostane iný (súbežné zmeny sa nepredbehnú).
+  const changed = await db
     .update(householdMembers)
     .set({ role })
-    .where(and(eq(householdMembers.householdId, householdId), eq(householdMembers.userId, userId)))
+    .where(
+      and(
+        eq(householdMembers.householdId, householdId),
+        eq(householdMembers.userId, userId),
+        role === 'owner'
+          ? undefined
+          : sql`(${householdMembers.role} <> 'owner' or ${otherOwnerExists(householdId)})`,
+      ),
+    )
+    .returning({ userId: householdMembers.userId })
+  if (changed.length === 0) throw lastOwner()
   return { ...current, role }
 }
 
@@ -170,10 +190,17 @@ export async function removeMember(
   if (current.locked) {
     throw new HttpError(409, 'locked', 'Tento e-mail je nastavený pri nasadení a v aplikácii sa neodoberie.')
   }
-  if (current.role === 'owner' && (await ownerCount(db, householdId)) <= 1) throw lastOwner()
-  await db
+  const removed = await db
     .delete(householdMembers)
-    .where(and(eq(householdMembers.householdId, householdId), eq(householdMembers.userId, userId)))
+    .where(
+      and(
+        eq(householdMembers.householdId, householdId),
+        eq(householdMembers.userId, userId),
+        sql`(${householdMembers.role} <> 'owner' or ${otherOwnerExists(householdId)})`,
+      ),
+    )
+    .returning({ userId: householdMembers.userId })
+  if (removed.length === 0) throw lastOwner()
 }
 
 /** Premenuje domácnosť. */

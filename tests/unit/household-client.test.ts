@@ -7,12 +7,14 @@ import {
   resolveHousehold,
   setActiveHousehold,
 } from '@/lib/household'
-import { queueKey } from '@/features/shopping/offlineQueue'
+import { createIdbQueueStorage, queueKey, type QueuedChange } from '@/features/shopping/offlineQueue'
 
 const json = (body: unknown) =>
   new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } })
 
 afterEach(() => {
+  vi.restoreAllMocks()
+  clearActiveHousehold()
   sessionStorage.clear()
   localStorage.clear()
 })
@@ -84,5 +86,52 @@ describe('fronta odškrtávania nákupu', () => {
     expect(queueKey('a')).not.toBe(queueKey('b'))
     expect(queueKey('a')).toContain('a')
     expect(queueKey(null)).toBe('kniha:shopping-queue')
+  })
+})
+
+describe('úložisko je nedostupné (súkromné okno, blokované dáta)', () => {
+  it('zvolená domácnosť ostane aspoň v pamäti stránky', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blokované')
+    })
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blokované')
+    })
+    setActiveHousehold('b')
+    expect(activeHouseholdId()).toBe('b')
+  })
+})
+
+describe('úložisko fronty nákupu', () => {
+  const change = (id: string): QueuedChange => ({ id, isChecked: true, at: '2026-10-06T10:00:00.000Z' })
+  const fakeKv = (initial: Record<string, QueuedChange[]> = {}) => {
+    const data = new Map(Object.entries(initial))
+    return {
+      data,
+      get: async (key: string) => data.get(key),
+      set: async (key: string, value: QueuedChange[]) => void data.set(key, value),
+      del: async (key: string) => void data.delete(key),
+    }
+  }
+
+  it('každá domácnosť číta a zapisuje svoju frontu', async () => {
+    const kv = fakeKv()
+    let active: string | null = 'a'
+    const storage = createIdbQueueStorage(kv, () => active)
+    await storage.set([change('x')])
+    active = 'b'
+    expect(await storage.get()).toEqual([])
+    active = 'a'
+    expect(await storage.get()).toEqual([change('x')])
+  })
+
+  it('čakajúce zmeny zo starého spoločného kľúča sa prevezmú do prvej otvorenej domácnosti', async () => {
+    const kv = fakeKv({ 'kniha:shopping-queue': [change('stara')] })
+    const storage = createIdbQueueStorage(kv, () => 'a')
+    expect(await storage.get()).toEqual([change('stara')])
+    expect(kv.data.has('kniha:shopping-queue')).toBe(false)
+    expect(kv.data.get(queueKey('a'))).toEqual([change('stara')])
+    // druhá domácnosť už nič nedostane
+    expect(await createIdbQueueStorage(kv, () => 'b').get()).toEqual([])
   })
 })

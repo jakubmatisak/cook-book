@@ -1,4 +1,4 @@
-import { get, set } from 'idb-keyval'
+import { del, get, set } from 'idb-keyval'
 import { activeHouseholdId } from '@/lib/household'
 
 export interface QueuedChange {
@@ -18,11 +18,38 @@ const KEY = 'kniha:shopping-queue'
 /** Každá domácnosť má vlastnú frontu, aby sa odškrtnutie nikdy neodoslalo do inej domácnosti. */
 export const queueKey = (householdId: string | null): string => (householdId ? `${KEY}:${householdId}` : KEY)
 
-/** Fronta v IndexedDB pre aktuálne zvolenú domácnosť (kľúč sa určuje pri každej operácii). */
-export const idbQueueStorage: QueueStorage = {
-  get: async () => (await get<QueuedChange[]>(queueKey(activeHouseholdId()))) ?? [],
-  set: (changes) => set(queueKey(activeHouseholdId()), changes),
+interface QueueKv {
+  get(key: string): Promise<QueuedChange[] | undefined>
+  set(key: string, value: QueuedChange[]): Promise<unknown>
+  del(key: string): Promise<unknown>
 }
+
+/**
+ * Úložisko fronty pre aktuálne zvolenú domácnosť (kľúč sa určuje pri každej operácii). Čakajúce zmeny zo starého
+ * spoločného kľúča (pred viacerými domácnosťami) prevezme prvá domácnosť, ktorá sa otvorí: vtedy bola len jedna.
+ */
+export function createIdbQueueStorage(kv: QueueKv, activeId: () => string | null): QueueStorage {
+  return {
+    async get() {
+      const id = activeId()
+      const own = await kv.get(queueKey(id))
+      if (own !== undefined) return own
+      const legacy = id ? await kv.get(KEY) : undefined
+      if (legacy && legacy.length > 0) {
+        await kv.set(queueKey(id), legacy)
+        await kv.del(KEY)
+        return legacy
+      }
+      return []
+    },
+    set: async (changes) => void (await kv.set(queueKey(activeId()), changes)),
+  }
+}
+
+export const idbQueueStorage: QueueStorage = createIdbQueueStorage(
+  { get: (key) => get<QueuedChange[]>(key), set: (key, value) => set(key, value), del: (key) => del(key) },
+  activeHouseholdId,
+)
 
 /** Fronta odškrtnutí urobených bez signálu; odošle sa hromadne po pripojení. */
 export function createOfflineQueue(
