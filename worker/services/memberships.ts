@@ -1,9 +1,11 @@
-import { and, asc, eq } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
+import type { HouseholdMemberDto } from '../../shared/api'
 import type { HouseholdRole } from '../../shared/family'
 import type { Db } from '../db/client'
 import { households, householdMembers, users } from '../db/schema'
 import type { UserRow } from '../env'
 import { HttpError } from '../errors'
+import { isAllowedEmail } from './accessList'
 
 /** Členstvo používateľa v domácnosti (aj s názvom domácnosti, aby sa dal zostaviť prepínač). */
 export interface Membership {
@@ -77,4 +79,104 @@ export async function inviteMember(
 
   await addMembership(db, user.id, householdId, role)
   return user
+}
+
+const toMemberDto = (
+  row: { userId: string; email: string; name: string; role: HouseholdRole; lastLoginAt: string | null },
+  adminEmails: string | undefined,
+): HouseholdMemberDto => ({ ...row, locked: isAllowedEmail(row.email, adminEmails) })
+
+const memberRows = (db: Db, householdId: string) =>
+  db
+    .select({
+      userId: householdMembers.userId,
+      email: users.email,
+      name: users.name,
+      role: householdMembers.role,
+      lastLoginAt: householdMembers.lastLoginAt,
+    })
+    .from(householdMembers)
+    .innerJoin(users, eq(users.id, householdMembers.userId))
+
+/** Členovia domácnosti; vlastníci prví, potom podľa e-mailu. */
+export async function listHouseholdMembers(
+  db: Db,
+  householdId: string,
+  adminEmails: string | undefined,
+): Promise<HouseholdMemberDto[]> {
+  const rows = await memberRows(db, householdId)
+    .where(eq(householdMembers.householdId, householdId))
+    .orderBy(sql`${householdMembers.role} = 'owner' desc`, asc(users.email))
+  return rows.map((r) => toMemberDto(r, adminEmails))
+}
+
+async function loadMember(db: Db, householdId: string, userId: string, adminEmails: string | undefined) {
+  const row = await memberRows(db, householdId)
+    .where(and(eq(householdMembers.householdId, householdId), eq(householdMembers.userId, userId)))
+    .get()
+  if (!row) throw new HttpError(404, 'not_found', 'Člen domácnosti neexistuje.')
+  return toMemberDto(row, adminEmails)
+}
+
+const ownerCount = async (db: Db, householdId: string): Promise<number> =>
+  (
+    await db
+      .select({ n: sql<number>`count(*)` })
+      .from(householdMembers)
+      .where(and(eq(householdMembers.householdId, householdId), eq(householdMembers.role, 'owner')))
+      .get()
+  )?.n ?? 0
+
+const lastOwner = () => new HttpError(409, 'last_owner', 'Domácnosť musí mať aspoň jedného vlastníka.')
+
+/** Pozve e-mail a vráti jeho členstvo v domácnosti. */
+export async function inviteHouseholdMember(
+  db: Db,
+  householdId: string,
+  email: string,
+  role: HouseholdRole,
+  adminEmails: string | undefined,
+): Promise<HouseholdMemberDto> {
+  const user = await inviteMember(db, householdId, email, role)
+  return loadMember(db, householdId, user.id, adminEmails)
+}
+
+export async function changeMemberRole(
+  db: Db,
+  householdId: string,
+  userId: string,
+  role: HouseholdRole,
+  adminEmails: string | undefined,
+): Promise<HouseholdMemberDto> {
+  const current = await loadMember(db, householdId, userId, adminEmails)
+  if (current.role === 'owner' && role !== 'owner' && (await ownerCount(db, householdId)) <= 1) {
+    throw lastOwner()
+  }
+  await db
+    .update(householdMembers)
+    .set({ role })
+    .where(and(eq(householdMembers.householdId, householdId), eq(householdMembers.userId, userId)))
+  return { ...current, role }
+}
+
+/** Odoberie členstvo (účet ostáva, aby sa dal znova pozvať). */
+export async function removeMember(
+  db: Db,
+  householdId: string,
+  userId: string,
+  adminEmails: string | undefined,
+): Promise<void> {
+  const current = await loadMember(db, householdId, userId, adminEmails)
+  if (current.locked) {
+    throw new HttpError(409, 'locked', 'Tento e-mail je nastavený pri nasadení a v aplikácii sa neodoberie.')
+  }
+  if (current.role === 'owner' && (await ownerCount(db, householdId)) <= 1) throw lastOwner()
+  await db
+    .delete(householdMembers)
+    .where(and(eq(householdMembers.householdId, householdId), eq(householdMembers.userId, userId)))
+}
+
+/** Premenuje domácnosť. */
+export async function renameHousehold(db: Db, householdId: string, name: string): Promise<void> {
+  await db.update(households).set({ name }).where(eq(households.id, householdId))
 }

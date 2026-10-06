@@ -5,8 +5,11 @@ import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from 'jose'
 import { getDb } from '../db/client'
 import type { AppEnv } from '../env'
 import { HttpError } from '../errors'
+import { isAllowedEmail } from '../services/accessList'
 import { ensureUser, findUserByEmail } from '../services/household'
 import { listMemberships, touchLogin, type Membership } from '../services/memberships'
+
+export { isAllowedEmail }
 
 export interface AuthDeps {
   /** Kľúč na overenie Access JWT; v testoch lokálny JWKS, inak sa načíta z Cloudflare. */
@@ -30,16 +33,6 @@ function remoteJwks(teamDomain: string): JWTVerifyGetKey {
     jwksCache.set(teamDomain, jwks)
   }
   return jwks
-}
-
-export function isAllowedEmail(email: string, allowed: string | undefined): boolean {
-  const normalized = email.trim().toLowerCase()
-  if (!normalized) return false
-  return (allowed ?? '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-    .includes(normalized)
 }
 
 /**

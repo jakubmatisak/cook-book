@@ -29,6 +29,16 @@ export interface HouseholdDto {
   name: string
 }
 
+/** Člen domácnosti (prihlasovací účet, nie osoba z rodiny). `locked`: e-mail je v zozname správcov, v aplikácii sa neodoberie. */
+export interface HouseholdMemberDto {
+  userId: string
+  email: string
+  name: string
+  role: HouseholdRole
+  lastLoginAt: string | null
+  locked: boolean
+}
+
 /** Domácnosť, v ktorej je používateľ členom, s jeho rolou. */
 export interface HouseholdSummaryDto {
   id: string

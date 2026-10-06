@@ -6,6 +6,7 @@ import { authMiddleware, requireHousehold, type AuthDeps } from './middleware/au
 import { ingredientRoutes, shopCategoryRoutes, tagRoutes } from './routes/catalog'
 import { exportRoutes } from './routes/export'
 import { memberRoutes, settingsRoutes, slotRoutes } from './routes/family'
+import { householdRoutes } from './routes/household'
 import { householdsRoutes } from './routes/households'
 import { imageServeRoutes, imageUploadRoutes } from './routes/images'
 import { meRoutes } from './routes/me'
@@ -37,6 +38,7 @@ export function createApp(deps: AppDeps = {}) {
   app.use('/api/v1/*', requireHousehold)
   app.use('/img/*', auth)
   app.route('/api/v1/households', householdsRoutes)
+  app.route('/api/v1/household', householdRoutes)
   app.route('/api/v1/me', meRoutes)
   app.route('/api/v1/export', exportRoutes)
   app.route('/api/v1/recipes', recipeRoutes)
