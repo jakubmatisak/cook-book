@@ -1,5 +1,6 @@
 /** Shopping list: page, generating from the meal plan, editing an item. */
 export default {
+  printView: { heading: 'Shopping list · {date}' },
   title: 'Shopping list',
   fromPlan: 'From meal plan',
   moreActions: 'More actions',

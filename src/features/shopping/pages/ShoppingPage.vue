@@ -38,6 +38,7 @@ import GenerateDialog from '../components/GenerateDialog.vue'
 import ItemEditDialog from '../components/ItemEditDialog.vue'
 import { summarizeGenerate } from '@/features/pantry/format'
 import ShoppingItemRow from '../components/ShoppingItemRow.vue'
+import ShoppingPrintList from '../components/ShoppingPrintList.vue'
 
 const { t } = useI18n()
 const client = useQueryClient()
@@ -225,7 +226,10 @@ function onGenerated(result: GenerateResult) {
         class="mb-4"
       />
 
-      <v-card v-if="groups.length" class="mb-4">
+      <!-- Pri tlači sa namiesto interaktívneho zoznamu vytlačí zhustený pohľad do obchodu. -->
+      <ShoppingPrintList v-if="groups.length" :groups="groups" :date="today" />
+
+      <v-card v-if="groups.length" class="mb-4 d-print-none" data-test="interactive-list">
         <v-list lines="two" class="py-0">
           <template v-for="(group, gi) in groups" :key="group.id">
             <v-divider v-if="gi > 0" />

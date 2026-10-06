@@ -279,7 +279,7 @@ function goBack() {
       max-height="420"
       cover
       rounded="md"
-      class="mb-4"
+      class="mb-4 d-print-none"
     />
 
     <h1 class="text-h4 font-weight-bold mb-3">{{ recipe.title }}</h1>
