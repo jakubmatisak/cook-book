@@ -29,8 +29,16 @@ function onNameChange(row: IngredientRow, name: string | null) {
   if (known?.defaultUnit) row.unit = known.defaultUnit as UnitCode
 }
 
+/** Skupiny, ktoré recept už má (Korpus, Náplň…), na výber v poli Skupina. */
+const groupNames = computed(() => [
+  ...new Set(rows.value.map((r) => (r.groupName ?? '').trim()).filter((name) => name !== '')),
+])
+
+/** Nový riadok patrí zvyčajne do rovnakej skupiny ako predošlý, tak ju preberie. */
 function add() {
-  rows.value.push(emptyIngredientRow())
+  const next = emptyIngredientRow()
+  next.groupName = rows.value[rows.value.length - 1]?.groupName ?? ''
+  rows.value.push(next)
 }
 
 function remove(index: number) {
@@ -92,8 +100,9 @@ function move(index: number, delta: number) {
           />
         </v-col>
         <v-col cols="12" sm="6">
-          <v-text-field
+          <v-combobox
             v-model="row.groupName"
+            :items="groupNames"
             autocomplete="off"
             :label="t('recipes.ingredients.group')"
             hide-details

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  assignIngredientGroups,
   decodeEntities,
   extractRecipe,
   mapCategory,
@@ -510,5 +511,68 @@ describe('varecha.pravda.sk – Grófkin jablkový koláč', () => {
     expect(r.servings).toBe(15)
     expect(r.prepMinutes).toBe(70)
     expect(r.cookMinutes).toBe(30)
+  })
+})
+
+describe('skupiny ingrediencií (Korpus, Náplň, Poleva…)', () => {
+  const g = (text: string) => ({ kind: 'group' as const, text })
+  const row = { kind: 'row' as const }
+
+  it('každý riadok dostane skupinu, ktorá mu predchádza; dvojbodka sa odstráni', () => {
+    const marks = [g('Korpus:'), row, row, g(' Náplň : '), row, row, g('Zdobenie:'), row]
+    expect(assignIngredientGroups(5, marks)).toEqual(['Korpus', 'Korpus', 'Náplň', 'Náplň', 'Zdobenie'])
+  })
+
+  it('riadky pred prvou skupinou sú bez skupiny', () => {
+    expect(assignIngredientGroups(3, [row, g('Poleva:'), row, row])).toEqual([null, 'Poleva', 'Poleva'])
+  })
+
+  it('počet riadkov musí sedieť s počtom ingrediencií, inak sa skupiny nepoužijú', () => {
+    expect(assignIngredientGroups(4, [g('A:'), row, row, row])).toBeNull()
+    expect(assignIngredientGroups(2, [])).toBeNull()
+    expect(assignIngredientGroups(2, [row, row])).toBeNull() // žiadna skupina nie je čo priradiť
+  })
+
+  it('prázdne a príliš dlhé názvy skupín sa ošetria', () => {
+    expect(assignIngredientGroups(2, [g('  :  '), row, g('x'.repeat(200)), row])).toEqual([
+      null,
+      'x'.repeat(80),
+    ])
+  })
+
+  it('extractRecipe priradí skupiny k ingredienciám podľa poradia', () => {
+    const marks = [
+      { kind: 'group' as const, text: 'Korpus:' },
+      { kind: 'row' as const },
+      { kind: 'row' as const },
+      { kind: 'group' as const, text: 'Náplň:' },
+      { kind: 'row' as const },
+    ]
+    const result = extractRecipe(
+      sources(
+        [
+          {
+            '@type': 'Recipe',
+            name: 'Cheesecake',
+            recipeIngredient: ['sušienky, 200 g', 'maslo, 90 g', 'syr, 600 g'],
+          },
+        ],
+        { ingredientMarks: marks },
+      ),
+    )
+    expect(result?.recipe.ingredients?.map((i) => [i.name, i.groupName])).toEqual([
+      ['sušienky', 'Korpus'],
+      ['maslo', 'Korpus'],
+      ['syr', 'Náplň'],
+    ])
+  })
+
+  it('bez značiek alebo pri nesúlade počtu ostanú ingrediencie bez skupín', () => {
+    const ld = [{ '@type': 'Recipe', name: 'X', recipeIngredient: ['a', 'b'] }]
+    expect(extractRecipe(sources(ld))?.recipe.ingredients?.every((i) => !i.groupName)).toBe(true)
+    const bad = [{ kind: 'group' as const, text: 'A:' }, { kind: 'row' as const }]
+    expect(
+      extractRecipe(sources(ld, { ingredientMarks: bad }))?.recipe.ingredients?.every((i) => !i.groupName),
+    ).toBe(true)
   })
 })

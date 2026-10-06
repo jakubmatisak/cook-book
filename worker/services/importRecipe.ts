@@ -1,5 +1,5 @@
 import type { ImportRecipeResultDto } from '../../shared/api'
-import { extractRecipe, type ImportSources } from '../../shared/import/schemaOrg'
+import { extractRecipe, type ImportSources, type IngredientMark } from '../../shared/import/schemaOrg'
 import { MAX_IMAGE_BYTES } from '../../shared/recipes'
 import { normalizeText } from '../../shared/text'
 import type { Db } from '../db/client'
@@ -169,6 +169,13 @@ const CANONICAL_PROPS: Readonly<Record<string, string>> = {
   recipeinstructions: 'recipeInstructions',
 }
 
+/**
+ * Značky skupín a riadkov ingrediencií známych webov: varecha.pravda.sk (`recipe-ingredients__*`) a WP Recipe Maker
+ * (`wprm-recipe-*`). JSON-LD skupiny nenesie, preto sa čítajú z HTML.
+ */
+const GROUP_SELECTOR = '.recipe-ingredients__group, .wprm-recipe-group-name'
+const ROW_SELECTOR = '.recipe-ingredients__row, .wprm-recipe-ingredient'
+
 /** Z HTML vytiahne JSON-LD, og: meta a hodnoty `itemprop` pomocou HTMLRewriter. */
 async function collectSources(
   html: Uint8Array,
@@ -180,6 +187,8 @@ async function collectSources(
   const microdata: ImportSources['microdata'] = []
   let ldBuffer = ''
   const open: { prop: string; text: string }[] = []
+  const marks: IngredientMark[] = []
+  let openGroup: { kind: 'group'; text: string } | null = null
 
   const rewriter = new HTMLRewriter()
     .on('script[type="application/ld+json"]', {
@@ -196,6 +205,25 @@ async function collectSources(
         const property = el.getAttribute('property')?.toLowerCase()
         const content = el.getAttribute('content')
         if (property && content && !(property in meta)) meta[property] = content
+      },
+    })
+    .on(GROUP_SELECTOR, {
+      element(el) {
+        const mark: { kind: 'group'; text: string } = { kind: 'group', text: '' }
+        marks.push(mark)
+        openGroup = mark
+        el.onEndTag(() => {
+          if (openGroup === mark) openGroup = null
+          mark.text = mark.text.replace(/\s+/g, ' ').trim()
+        })
+      },
+      text(chunk) {
+        if (openGroup) openGroup.text += chunk.text
+      },
+    })
+    .on(ROW_SELECTOR, {
+      element() {
+        marks.push({ kind: 'row' })
       },
     })
     .on('[itemprop]', {
@@ -228,7 +256,7 @@ async function collectSources(
     })
 
   await rewriter.transform(new Response(html, { headers: { 'content-type': contentType } })).arrayBuffer()
-  return { jsonLd, meta, microdata, sourceUrl }
+  return { jsonLd, meta, microdata, ingredientMarks: marks, sourceUrl }
 }
 
 export interface ImportContext {

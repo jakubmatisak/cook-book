@@ -97,7 +97,7 @@ const intOrNull = (value: string) => {
   return Number.isFinite(n) ? Math.round(n) : NaN
 }
 
-const textOrNull = (value: string) => (value.trim() ? value.trim() : null)
+const textOrNull = (value: string | null | undefined) => (value?.trim() ? value.trim() : null)
 
 /** Číslo do políčka formulára: desatinná čiarka podľa jazyka, bez oddeľovania tisícov (aby sa dalo načítať späť). */
 const formatNumber = (n: number | null) =>

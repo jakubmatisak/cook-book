@@ -15,8 +15,15 @@ export interface ImportSources {
   meta: Record<string, string>
   /** Hodnoty prvkov s `itemprop` (microdata) v poradí v dokumente. */
   microdata: { prop: string; value: string }[]
+  /**
+   * Nadpisy skupín ingrediencií (Korpus, Náplň…) a riadky ingrediencií v poradí v dokumente, z HTML značiek známych
+   * webov. Skupiny sa k ingredienciám z JSON-LD priradia podľa poradia (pozri `assignIngredientGroups`).
+   */
+  ingredientMarks?: IngredientMark[]
   sourceUrl: string | null
 }
+
+export type IngredientMark = { kind: 'group'; text: string } | { kind: 'row' }
 
 export interface ImportedRecipe {
   recipe: RecipeInputRaw
@@ -452,21 +459,48 @@ function absoluteUrl(url: string | null, base: string | null): string | null {
   }
 }
 
+const MAX_GROUP_NAME = 80
+
+/**
+ * Skupina (na čo sa ingrediencia používa) pre každú z `count` ingrediencií: riadky dostanú posledný nadpis skupiny pred
+ * sebou. Platí len keď počet riadkov v HTML sedí s počtom ingrediencií (inak by sa skupiny posunuli) a nájde sa aspoň
+ * jedna skupina; inak `null`.
+ */
+export function assignIngredientGroups(
+  count: number,
+  marks: readonly IngredientMark[],
+): (string | null)[] | null {
+  const rows = marks.filter((m) => m.kind === 'row').length
+  if (rows === 0 || rows !== count) return null
+  const groups: (string | null)[] = []
+  let current: string | null = null
+  for (const mark of marks) {
+    if (mark.kind === 'group') {
+      current = clip(cleanText(mark.text).replace(/\s*:\s*$/, ''), MAX_GROUP_NAME) || null
+    } else groups.push(current)
+  }
+  return groups.some(Boolean) ? groups : null
+}
+
 /** Zloží `RecipeInputRaw` z uzla podobného schema.org Recipe. */
 function build(node: Obj, sources: ImportSources, requireContent: boolean): ImportedRecipe | null {
   const title = clip(cleanText(node['name']) || cleanText(sources.meta['og:title']), 200)
   if (!title) return null
 
-  const ingredients = asList(node['recipeIngredient'] ?? node['ingredients'])
-    .flatMap((line) => (typeof line === 'string' ? [line] : []))
-    .map(parseIngredientLine)
-    .filter((i) => i.name)
-    .map((i) => ({
+  const lines = asList(node['recipeIngredient'] ?? node['ingredients']).flatMap((line) =>
+    typeof line === 'string' ? [line] : [],
+  )
+  const groups = assignIngredientGroups(lines.length, sources.ingredientMarks ?? [])
+  const ingredients = lines
+    .map((line, index) => ({ parsed: parseIngredientLine(line), group: groups?.[index] ?? null }))
+    .filter(({ parsed }) => parsed.name)
+    .map(({ parsed: i, group }) => ({
       name: clip(i.name, 120),
       quantity: i.quantity,
       unit: i.unit,
       note: i.note ? clip(i.note, 200) : null,
       isOptional: false,
+      ...(group ? { groupName: group } : {}),
     }))
   const steps = splitLongStep(flattenInstructions(node['recipeInstructions'])).map((text) => ({
     text: clip(text, 5000),

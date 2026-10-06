@@ -180,6 +180,56 @@ describe('POST /recipes/import', () => {
     ])
   })
 
+  it('skupiny ingrediencií z HTML (Korpus, Náplň…) sa prevezmú k ingredienciám', async () => {
+    const row = (amount: string, name: string) =>
+      `<tr class="recipe-ingredients__row clearfix"><td class="recipe-ingredients__amount">${amount}</td><td class="recipe-ingredients__ingredient"><div class="checkbox"><label><span><a href="/s/">${name}</a></span></label></div></td></tr>`
+    const group = (name: string) =>
+      `<tr class="ingredients__group"><td class="recipe-ingredients__group" colspan="2"><strong>${name}</strong></td></tr>`
+    const table = `<table class="table"><tbody>${group('Korpus:')}${row('200&nbsp;g', 'sušienky')}${row('90&nbsp;g', 'maslo')}${group('Náplň:')}${row('600&nbsp;g', 'syr krémový')}</tbody></table>`
+    const ld = {
+      '@type': 'Recipe',
+      name: 'Nepečený cheesecake',
+      recipeYield: '12 porcií',
+      recipeIngredient: ['sušienky, 200 g', 'maslo, 90 g', 'syr krémový , 600 g'],
+      recipeInstructions: [{ '@type': 'HowToStep', text: 'Zmiešaj a uložte do chladu.' }],
+    }
+    const { fn } = fakeFetch({
+      'https://example.com/cheesecake': html(
+        page(table, `<script type="application/ld+json">${JSON.stringify(ld)}</script>`),
+      ),
+    })
+    const body = await (await importUrl(fn, 'https://example.com/cheesecake')).json<ImportRecipeResultDto>()
+    expect(body.recipe.ingredients?.map((i) => [i.name, i.groupName ?? null])).toEqual([
+      ['sušienky', 'Korpus'],
+      ['maslo', 'Korpus'],
+      ['syr krémový', 'Náplň'],
+    ])
+  })
+
+  it('skupiny z WP Recipe Maker (wprm) sa prevezmú tiež', async () => {
+    const ld = {
+      '@type': 'Recipe',
+      name: 'Koláč',
+      recipeIngredient: ['1 vajce', '2 jablká'],
+      recipeInstructions: ['Upeč.'],
+    }
+    const body = `<div class="wprm-recipe-ingredient-group"><h4 class="wprm-recipe-group-name">Cesto</h4><ul><li class="wprm-recipe-ingredient">1 vajce</li></ul></div>
+      <div class="wprm-recipe-ingredient-group"><h4 class="wprm-recipe-group-name">Posyp</h4><ul><li class="wprm-recipe-ingredient">2 jablká</li></ul></div>`
+    const { fn } = fakeFetch({
+      'https://example.com/kolac': html(
+        page(body, `<script type="application/ld+json">${JSON.stringify(ld)}</script>`),
+      ),
+    })
+    const res = await (await importUrl(fn, 'https://example.com/kolac')).json<ImportRecipeResultDto>()
+    expect(res.recipe.ingredients?.map((i) => i.groupName ?? null)).toEqual(['Cesto', 'Posyp'])
+  })
+
+  it('stránka bez skupín dá ingrediencie bez skupiny', async () => {
+    const { fn } = fakeFetch({ 'https://example.com/p': html(jsonLdPage(recipeLd)) })
+    const body = await (await importUrl(fn, 'https://example.com/p')).json<ImportRecipeResultDto>()
+    expect(body.recipe.ingredients?.every((i) => !i.groupName)).toBe(true)
+  })
+
   it('stránka bez receptu je 422 no_recipe', async () => {
     const { fn } = fakeFetch({ 'https://example.com/blog': html(page('<p>Len text.</p>')) })
     const res = await importUrl(fn, 'https://example.com/blog')
