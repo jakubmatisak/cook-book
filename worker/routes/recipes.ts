@@ -31,8 +31,12 @@ export const recipeRoutes = new Hono<AppEnv>()
     const filters = recipeListQuerySchema.parse(c.req.query())
     const user = c.get('user')
     await backfillCookLog(c.get('db'), user.householdId, todayInZone(new Date(), HOUSEHOLD_TIME_ZONE))
-    const { missing, ...rest } = filters
-    const options = missing === undefined ? rest : { ...rest, missingMax: missing }
+    const { missing, kids, ...rest } = filters
+    const options = {
+      ...rest,
+      ...(missing === undefined ? {} : { missingMax: missing }),
+      ...(kids ? { includeKids: true } : {}),
+    }
     return c.json(await listRecipes(c.get('db'), user.householdId, user.id, options))
   })
   // Pred `/:id`, aby „suggestions“ nepadlo ako id receptu.

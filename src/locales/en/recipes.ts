@@ -26,6 +26,7 @@ export default {
     missingMaxOne: 'Missing 1 at most ({n})',
     search: 'Search by name or ingredient',
     filters: 'Filters',
+    kids: 'Include baby food',
     favorites: 'Favorites',
     canCook: 'What can I cook',
     sort: 'Sort by',

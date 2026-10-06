@@ -3,6 +3,7 @@ import {
   mdiBookOpenPageVariantOutline,
   mdiCheck,
   mdiFilterVariant,
+  mdiBabyFaceOutline,
   mdiFridgeOutline,
   mdiHeart,
   mdiMagnify,
@@ -164,6 +165,10 @@ const favorite = computed({
   get: () => state.value.favorite,
   set: (value: boolean) => setQuery({ oblubene: value ? '1' : undefined }),
 })
+const kids = computed({
+  get: () => state.value.kids,
+  set: (value: boolean) => setQuery({ detske: value ? '1' : undefined }),
+})
 const pantryMode = computed({
   get: () => state.value.pantry,
   set: (value: boolean) => setQuery({ doma: value ? '1' : undefined, chyba: undefined }),
@@ -187,6 +192,7 @@ function resetAll() {
     narocnost: undefined,
     cas: undefined,
     oblubene: undefined,
+    detske: undefined,
     doma: undefined,
     chyba: undefined,
     zoradit: undefined,
@@ -331,6 +337,16 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         @click="favorite = !favorite"
       >
         {{ t('recipes.list.favorites') }}
+      </v-btn>
+      <v-btn
+        :prepend-icon="kids ? mdiCheck : mdiBabyFaceOutline"
+        :color="kids ? 'primary' : undefined"
+        :variant="kids ? 'flat' : 'outlined'"
+        height="40"
+        data-test="kids-toggle"
+        @click="kids = !kids"
+      >
+        {{ t('recipes.list.kids') }}
       </v-btn>
       <v-btn
         :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"

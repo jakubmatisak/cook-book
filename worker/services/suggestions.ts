@@ -1,4 +1,4 @@
-import { and, asc, between, eq, inArray, isNotNull, isNull, or, gte } from 'drizzle-orm'
+import { and, asc, between, eq, inArray, isNotNull, isNull, ne, or, gte } from 'drizzle-orm'
 import { addDays } from '../../shared/dates'
 import { scoreSuggestions, type Suggestion, type SuggestCandidate } from '../../shared/suggest'
 import type { Db } from '../db/client'
@@ -38,7 +38,10 @@ export async function suggestRecipes(
     })
     .from(recipes)
     .leftJoin(images, eq(images.id, recipes.coverImageId))
-    .where(and(eq(recipes.householdId, householdId), isNull(recipes.deletedAt)))
+    // Detské jedlá (kaše, príkrmy) sa do návrhov „čo uvariť dnes“ nepoužívajú.
+    .where(
+      and(eq(recipes.householdId, householdId), isNull(recipes.deletedAt), ne(recipes.category, 'detske')),
+    )
     .orderBy(asc(recipes.titleNormalized))
   if (rows.length === 0) return []
 

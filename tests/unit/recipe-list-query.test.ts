@@ -21,6 +21,7 @@ describe('parseListQuery', () => {
       time: [],
       favorite: false,
       pantry: false,
+      kids: false,
       missing: undefined,
       sort: undefined,
       dir: undefined,

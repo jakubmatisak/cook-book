@@ -17,6 +17,8 @@ export interface RecipeListState {
   time: TimeBucket[]
   favorite: boolean
   pantry: boolean
+  /** Zobraziť aj detské recepty (parameter `detske=1`). */
+  kids: boolean
   /** Najviac toľko chýbajúcich surovín (0 = viem uvariť, 1 = chýba jedna); len pri „Čo viem uvariť“. */
   missing: 0 | 1 | undefined
   sort: SortKey | undefined
@@ -55,6 +57,7 @@ export function parseListQuery(query: Query): RecipeListState {
     time: pick(many(query.cas), TIME_BUCKETS),
     favorite: one(query.oblubene) === '1',
     pantry: one(query.doma) === '1',
+    kids: one(query.detske) === '1',
     missing: one(query.doma) === '1' ? MISSING_VALUES[one(query.chyba) ?? ''] : undefined,
     sort: pick(sort ? [sort] : [], SORT_KEYS)[0],
     dir: dir === 'asc' || dir === 'desc' ? dir : undefined,
@@ -112,6 +115,7 @@ const SAVED_QUERY_KEYS = [
   'narocnost',
   'cas',
   'oblubene',
+  'detske',
   'doma',
   'chyba',
   'zoradit',

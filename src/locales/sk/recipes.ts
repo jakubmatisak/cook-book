@@ -25,6 +25,7 @@ export default {
     missingMaxOne: 'Chýba max. 1 ({n})',
     search: 'Hľadať podľa názvu alebo ingrediencie',
     filters: 'Filtre',
+    kids: 'Aj detské',
     favorites: 'Obľúbené',
     canCook: 'Čo viem uvariť',
     sort: 'Zoradiť',

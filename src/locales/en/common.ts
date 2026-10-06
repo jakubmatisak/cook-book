@@ -93,6 +93,7 @@ export default {
     dezert: 'Dessert',
     ranajky: 'Breakfast',
     desiata: 'Snack',
+    detske: 'Baby and toddler',
     napoj: 'Drink',
     ine: 'Other',
   },

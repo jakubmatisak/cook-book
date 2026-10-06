@@ -7,6 +7,7 @@ export const RECIPE_CATEGORIES = [
   'ranajky',
   'desiata',
   'napoj',
+  'detske',
   'ine',
 ] as const
 
@@ -25,6 +26,7 @@ export const RECIPE_CATEGORY_LABELS: Record<RecipeCategory, string> = {
   ranajky: 'Raňajky',
   desiata: 'Desiata',
   napoj: 'Nápoj',
+  detske: 'Detské',
   ine: 'Iné',
 }
 
