@@ -86,7 +86,7 @@ const toMemberDto = (
   adminEmails: string | undefined,
 ): HouseholdMemberDto => ({ ...row, locked: isAllowedEmail(row.email, adminEmails) })
 
-const memberRows = (db: Db, householdId: string) =>
+const memberRows = (db: Db) =>
   db
     .select({
       userId: householdMembers.userId,
@@ -104,14 +104,14 @@ export async function listHouseholdMembers(
   householdId: string,
   adminEmails: string | undefined,
 ): Promise<HouseholdMemberDto[]> {
-  const rows = await memberRows(db, householdId)
+  const rows = await memberRows(db)
     .where(eq(householdMembers.householdId, householdId))
     .orderBy(sql`${householdMembers.role} = 'owner' desc`, asc(users.email))
   return rows.map((r) => toMemberDto(r, adminEmails))
 }
 
 async function loadMember(db: Db, householdId: string, userId: string, adminEmails: string | undefined) {
-  const row = await memberRows(db, householdId)
+  const row = await memberRows(db)
     .where(and(eq(householdMembers.householdId, householdId), eq(householdMembers.userId, userId)))
     .get()
   if (!row) throw new HttpError(404, 'not_found', 'Člen domácnosti neexistuje.')
