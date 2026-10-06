@@ -163,6 +163,18 @@ a readable text file. D1 also keeps 7 days of history (Time Travel).
 PDF: use **Print** in the menu of a recipe, the meal plan or the shopping list and choose **Save as PDF** in the
 print dialog (on iPhone: Share → Save to Files).
 
+## Chrome extension (add a recipe from the page you are on)
+
+The `extension/` folder is a small Chrome extension: click its icon on a page with a recipe and the app opens with
+the recipe already imported, ready to check and save.
+
+1. Open `chrome://extensions`, turn on **Developer mode** and choose **Load unpacked** → the `extension/` folder.
+2. Enter the address of your app in the extension settings (it opens after installing; it is stored only in your browser).
+3. Pin the icon (puzzle icon in the toolbar → pin). On a page with a recipe, click it.
+
+No extension? Save a bookmark whose address is `<your app>/recepty/import?url=<recipe address>`, or paste the
+address into **Import from the web** in the app.
+
 ## Project structure
 
 ```
@@ -301,6 +313,18 @@ Nastavenia → **Exportovať dáta** stiahne celú domácnosť ako JSON, **Recep
 
 PDF: pri recepte, jedálničku a nákupe zvoľ v menu **Tlačiť** a v okne tlače **Uložiť ako PDF** (na iPhone cez
 Zdieľať → Uložiť do Súborov).
+
+## Rozšírenie do Chromu (pridať recept zo stránky, na ktorej si)
+
+Priečinok `extension/` je malé rozšírenie do Chromu: klikneš na jeho ikonu na stránke s receptom a aplikácia sa
+otvorí s už načítaným receptom na kontrolu a uloženie.
+
+1. Otvor `chrome://extensions`, zapni **Režim pre vývojárov** a zvoľ **Načítať nezabalené** → priečinok `extension/`.
+2. V nastaveniach rozšírenia zadaj adresu svojej aplikácie (otvoria sa po inštalácii; uloží sa len v tvojom prehliadači).
+3. Pripni ikonu (puzzle ikona v lište → pripnúť). Na stránke s receptom na ňu klikni.
+
+Bez rozšírenia: ulož záložku s adresou `<tvoja aplikácia>/recepty/import?url=<adresa receptu>` alebo vlož adresu do
+**Importovať z webu** v aplikácii.
 
 ## Štruktúra
 

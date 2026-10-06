@@ -91,6 +91,11 @@ export default {
     failed: 'The recipe could not be loaded.',
     submit: 'Load recipe',
   },
+  importFromUrl: {
+    loading: 'Loading the recipe from the web…',
+    retry: 'Try again',
+    manual: 'Fill in manually',
+  },
   ingredients: {
     name: 'Ingredient',
     quantity: 'Quantity',

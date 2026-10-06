@@ -7,6 +7,7 @@ import { useImportRecipe } from '@/api/recipes'
 import { useOnline } from '@/composables/useOnline'
 import { errorText } from '@/i18n/errors'
 import { importHandoff } from '../importHandoff'
+import { normalizeUrl } from '../importUrl'
 
 const { t } = useI18n()
 const open = defineModel<boolean>({ required: true })
@@ -24,9 +25,6 @@ watch(open, (isOpen) => {
   error.value = ''
   importer.reset()
 })
-
-/** Adresa bez úvodného „https://“ (napr. skopírovaná z lišty) sa doplní. */
-const normalizeUrl = (value: string) => (/^https?:\/\//i.test(value) ? value : `https://${value}`)
 
 async function submit() {
   error.value = ''

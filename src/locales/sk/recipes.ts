@@ -86,6 +86,11 @@ export default {
     failed: 'Recept sa nepodarilo načítať.',
     submit: 'Načítať recept',
   },
+  importFromUrl: {
+    loading: 'Načítavam recept z webu…',
+    retry: 'Skúsiť znova',
+    manual: 'Vyplniť ručne',
+  },
   ingredients: {
     name: 'Ingrediencia',
     quantity: 'Množstvo',

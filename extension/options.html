@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="sk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kuchárska kniha – nastavenia rozšírenia</title>
+  </head>
+  <body style="font-family: system-ui, sans-serif; max-width: 32rem; margin: 2rem auto; padding: 0 1rem">
+    <h1>Kuchárska kniha</h1>
+    <p>Zadaj adresu svojej aplikácie. Uloží sa len v tomto prehliadači.</p>
+    <form id="form">
+      <label for="app-url">Adresa aplikácie</label><br />
+      <input
+        id="app-url"
+        type="url"
+        placeholder="https://moja-kniha.example.com"
+        style="width: 100%"
+        required
+      />
+      <p><button type="submit">Uložiť</button> <span id="status" role="status"></span></p>
+    </form>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

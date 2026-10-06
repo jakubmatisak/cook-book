@@ -82,11 +82,14 @@ describe('vypnuté detské jedlá v nastaveniach', () => {
 })
 
 describe('hlavička zoznamu receptov', () => {
-  it('nadpis, hľadanie a filtre sú v lepkavej hlavičke, posúva sa len zoznam', async () => {
+  it('nadpis, hľadanie a filtre sú v pevnej hlavičke, posúva sa len zoznam pod nimi', async () => {
     const { wrapper } = await mountPage()
-    const sticky = wrapper.find('[data-test="sticky-header"]')
-    expect(sticky.exists()).toBe(true)
-    expect(sticky.find('input').exists()).toBe(true)
-    expect(sticky.find('[data-test="filters-button"]').exists()).toBe(true)
+    const header = wrapper.find('[data-test="list-header"]')
+    expect(header.exists()).toBe(true)
+    expect(header.find('input').exists()).toBe(true)
+    expect(header.find('[data-test="filters-button"]').exists()).toBe(true)
+    const body = wrapper.find('[data-test="list-body"]')
+    expect(body.classes()).toContain('overflow-y-auto')
+    expect(header.element.contains(body.element)).toBe(false)
   })
 })

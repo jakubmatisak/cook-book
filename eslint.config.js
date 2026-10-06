@@ -28,6 +28,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
   },
   {
+    // Rozšírenie do Chromu: čisté JS moduly s globálnym objektom `chrome`.
+    files: ['extension/**/*.js'],
+    languageOptions: { sourceType: 'module', globals: { ...globals.browser, chrome: 'readonly' } },
+  },
+  {
     files: ['*.config.{ts,js}'],
     languageOptions: { globals: globals.node },
   },

@@ -30,7 +30,7 @@ import {
 } from '@/api/shopping'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
-import StickyHeader from '@/components/StickyHeader.vue'
+import ListLayout from '@/components/ListLayout.vue'
 import { useOnline } from '@/composables/useOnline'
 import { useToday } from '@/composables/useToday'
 import { printPage } from '@/composables/usePrintMode'
@@ -149,8 +149,8 @@ function onGenerated(result: GenerateResult) {
 </script>
 
 <template>
-  <div>
-    <StickyHeader>
+  <ListLayout>
+    <template #header>
       <PageHeader :title="t('shopping.title')" :subtitle="subtitle">
         <v-btn
           color="primary"
@@ -214,7 +214,7 @@ function onGenerated(result: GenerateResult) {
           :aria-label="t('shopping.add.aria')"
         />
       </v-form>
-    </StickyHeader>
+    </template>
 
     <v-alert v-if="error" type="error" :text="errorText(error)" />
     <v-skeleton-loader v-else-if="isPending" type="list-item@6" />
@@ -310,5 +310,5 @@ function onGenerated(result: GenerateResult) {
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">{{
       snackbar.text
     }}</v-snackbar>
-  </div>
+  </ListLayout>
 </template>

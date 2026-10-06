@@ -18,6 +18,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { titleKey: 'common.pageTitle.recipeNew' },
   },
   {
+    path: '/recepty/import',
+    name: 'recipe-import',
+    component: () => import('@/features/recipes/pages/ImportFromUrlPage.vue'),
+    meta: { titleKey: 'common.pageTitle.recipeImport' },
+  },
+  {
     path: '/recepty/:id/varenie',
     name: 'recipe-cooking',
     component: () => import('@/features/recipes/pages/CookingModePage.vue'),

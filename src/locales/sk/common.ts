@@ -19,6 +19,7 @@ export default {
   },
   pageTitle: {
     recipeNew: 'Nový recept',
+    recipeImport: 'Import receptu',
     cooking: 'Režim varenia',
     recipeEdit: 'Upraviť recept',
     recipe: 'Recept',

@@ -20,6 +20,7 @@ export default {
   },
   pageTitle: {
     recipeNew: 'New recipe',
+    recipeImport: 'Import recipe',
     cooking: 'Cooking mode',
     recipeEdit: 'Edit recipe',
     recipe: 'Recipe',
