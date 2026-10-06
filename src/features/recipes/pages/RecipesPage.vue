@@ -52,6 +52,7 @@ import {
   toggleValue,
   type FilterDimension,
   type KidsMode,
+  type PublicMode,
   type RecipeView,
   type TableSort,
 } from '../listQuery'
@@ -184,6 +185,14 @@ const kids = computed({
   set: (value: KidsMode) => setQuery({ detske: KIDS_PARAMS[value] }),
 })
 const KIDS_MODES: readonly KidsMode[] = ['hide', 'include', 'only']
+const PUBLIC_PARAMS = { hide: undefined, include: '1', only: 'len' } as const
+const publicMode = computed({
+  get: () => state.value.public,
+  set: (value: PublicMode) => setQuery({ verejne: PUBLIC_PARAMS[value] }),
+})
+const publicItems = computed(() =>
+  KIDS_MODES.map((mode) => ({ value: mode, title: t(`recipes.list.public_${mode}`) })),
+)
 const kidsItems = computed(() =>
   KIDS_MODES.map((mode) => ({ value: mode, title: t(`recipes.list.kids_${mode}`) })),
 )
@@ -211,6 +220,7 @@ function resetAll() {
     cas: undefined,
     oblubene: undefined,
     detske: undefined,
+    verejne: undefined,
     doma: undefined,
     chyba: undefined,
     zoradit: undefined,
@@ -285,7 +295,8 @@ const onboarding = computed(() =>
 
 // ─── Hromadné úpravy: výber zaškrtávacími poľami, úprava a mazanie ───────────
 const selection = useSelection()
-const visibleIds = computed(() => recipes.value?.map((r) => r.id) ?? [])
+// Hromadne sa upravujú a mažú len recepty domácnosti, nie cudzie verejné.
+const visibleIds = computed(() => recipes.value?.filter((r) => !r.householdName).map((r) => r.id) ?? [])
 watch(visibleIds, (ids) => selection.keepOnly(ids))
 const bulkEditOpen = ref(false)
 const bulkDeleteOpen = ref(false)
@@ -393,6 +404,16 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             class="flex-grow-0"
             style="min-width: 11rem"
             data-test="kids-select"
+          />
+          <v-select
+            v-model="publicMode"
+            :items="publicItems"
+            :label="t('recipes.list.public')"
+            density="compact"
+            hide-details
+            class="flex-grow-0"
+            style="min-width: 11rem"
+            data-test="public-select"
           />
           <v-btn
             :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"

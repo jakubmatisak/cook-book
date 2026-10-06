@@ -6,7 +6,6 @@ import { VApp } from 'vuetify/components'
 import type { PublicRecipeDetailDto, PublicRecipeSummaryDto, RecipeDetailDto } from '@shared/api'
 import { setLocale } from '@/i18n'
 import PublicRecipePage from '@/features/recipes/pages/PublicRecipePage.vue'
-import PublicRecipesPage from '@/features/recipes/pages/PublicRecipesPage.vue'
 import VisibilityDialog from '@/features/recipes/components/VisibilityDialog.vue'
 import { jsonResponse, me, mountPlugins, stubApi, type StubCall } from './helpers/apiStub'
 
@@ -82,55 +81,6 @@ afterEach(() => {
   setLocale('sk')
   vi.unstubAllGlobals()
   document.body.innerHTML = ''
-})
-
-describe('Verejné recepty – zoznam', () => {
-  it('ukáže karty s autorom a vlastné recepty označí', async () => {
-    stubBase({
-      '/public/recipes': [
-        summary({ id: 'p1', title: 'Grófkin koláč', householdName: 'Rodičia' }),
-        summary({ id: 'p2', title: 'Môj guláš', ownedByMe: true }),
-      ],
-    })
-    const { wrapper } = await mountPage(PublicRecipesPage, '/verejne')
-    const cards = wrapper.findAll('[data-test="public-card"]')
-    expect(cards).toHaveLength(2)
-    expect(cards[0]!.text()).toContain('Grófkin koláč')
-    expect(cards[0]!.find('[data-test="author-chip"]').text()).toBe('Od: Rodičia')
-    expect(cards[1]!.find('[data-test="mine-chip"]').text()).toBe('Tvoj recept')
-  })
-
-  it('typ jedla filtruje na serveri', async () => {
-    const calls = stubBase()
-    const { wrapper } = await mountPage(PublicRecipesPage, '/verejne')
-    const chip = wrapper.findAll('.v-chip').find((c) => c.text() === 'Dezert')!
-    await chip.trigger('click')
-    await flushPromises()
-    expect(calls.some((c) => c.path === '/public/recipes' && c.method === 'GET')).toBe(true)
-    expect(calls.map((c) => c.path)).toContain('/public/recipes')
-    // druhé volanie nesie vybraný typ jedla (adresa s ?category=dezert sa v stube odreže, preto ho kontrolujeme cez fetch)
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>
-    expect(fetchMock.mock.calls.map((c) => String(c[0])).some((u) => u.includes('category=dezert'))).toBe(
-      true,
-    )
-  })
-
-  it('prázdny zoznam vysvetlí, ako sa recept zverejní', async () => {
-    stubBase()
-    const { wrapper } = await mountPage(PublicRecipesPage, '/verejne')
-    expect(wrapper.text()).toContain('Zatiaľ tu nič nie je')
-    expect(wrapper.text()).toContain('Vlastník domácnosti môže recept zverejniť')
-  })
-
-  it('v angličtine sú texty aj názvy typov jedla po anglicky', async () => {
-    setLocale('en')
-    stubBase({ '/public/recipes': [summary({ id: 'p1', title: 'Apple cake' })] })
-    const { wrapper } = await mountPage(PublicRecipesPage, '/verejne')
-    expect(wrapper.text()).toContain('Public recipes')
-    expect(wrapper.text()).toContain('From: Rodičia')
-    expect(wrapper.text()).toContain('Dessert')
-    expect(wrapper.text()).not.toContain('Verejné recepty')
-  })
 })
 
 describe('Verejné recepty – detail', () => {

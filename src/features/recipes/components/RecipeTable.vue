@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiPotSteamOutline } from '@mdi/js'
+import { mdiEarth, mdiPotSteamOutline } from '@mdi/js'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -32,7 +32,8 @@ const headers = computed(() => [
 const minutes = (r: RecipeSummaryDto) => totalMinutes(r.prepMinutes, r.cookMinutes)
 // V režime výberu klik na riadok recept vyberie, inak ho otvorí.
 const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
-  if (props.selectable) {
+  if (item.householdName) void router.push(`/verejne/${item.id}`)
+  else if (props.selectable) {
     selected.value = selected.value.includes(item.id)
       ? selected.value.filter((id) => id !== item.id)
       : [...selected.value, item.id]
@@ -58,6 +59,7 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
       :mobile="smAndDown"
       :hide-default-header="smAndDown"
       :show-select="selectable"
+      :item-selectable="(item: RecipeSummaryDto) => !item.householdName"
       @click:row="openRecipe"
     >
       <template #item.coverImageUrl="{ item }">
@@ -68,6 +70,21 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
       </template>
       <template #item.title="{ item }">
         <div class="font-weight-bold">{{ item.title }}</div>
+        <v-chip
+          v-if="item.visibility === 'public'"
+          size="x-small"
+          color="info"
+          variant="tonal"
+          :prepend-icon="mdiEarth"
+          class="mt-1"
+          data-test="public-badge"
+        >
+          {{
+            item.householdName
+              ? t('recipes.badge.publicFrom', { name: item.householdName })
+              : t('recipes.badge.public')
+          }}
+        </v-chip>
         <div v-if="item.missing" class="text-caption text-medium-emphasis">
           {{
             item.missing.length === 0
@@ -90,7 +107,12 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
       </template>
       <template #item.createdAt="{ item }">{{ formatDate(item.createdAt) }}</template>
       <template #item.isFavorite="{ item }">
-        <FavoriteButton :recipe-id="item.id" :is-favorite="item.isFavorite" size="x-small" />
+        <FavoriteButton
+          v-if="!item.householdName"
+          :recipe-id="item.id"
+          :is-favorite="item.isFavorite"
+          size="x-small"
+        />
       </template>
     </v-data-table-server>
   </v-card>

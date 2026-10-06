@@ -104,6 +104,14 @@ export const recipeListQuerySchema = z.object({
     .transform((v) =>
       v === undefined ? undefined : v === 'only' ? ('only' as const) : ('include' as const),
     ),
+  /**
+   * Verejné recepty iných domácností v zozname: `hide` (predvolene) ich nezobrazí, `include` ich pridá k mojim,
+   * `only` ukáže len verejné (moje aj cudzie).
+   */
+  public: z
+    .enum(['hide', 'include', 'only'])
+    .optional()
+    .transform((v) => (v === 'include' || v === 'only' ? v : undefined)),
   /** Najviac toľko chýbajúcich surovín (len s `pantry=1`). */
   missing: z.coerce.number().int().min(0).max(20).optional(),
   sort: z.enum(SORT_KEYS).optional(),

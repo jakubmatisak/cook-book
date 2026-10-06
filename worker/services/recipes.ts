@@ -1,4 +1,4 @@
-import { and, asc, eq, exists, inArray, isNull, ne, or, sql, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, exists, inArray, isNull, ne, or, sql } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type {
   RecipeDetailDto,
@@ -23,6 +23,7 @@ import { normalizeText, slugify } from '../../shared/text'
 import { newId } from '../../shared/ids'
 import type { Db } from '../db/client'
 import {
+  households,
   images,
   ingredients,
   mealPlanEntries,
@@ -45,9 +46,14 @@ export interface RecipeListOptions extends FacetFilters {
   q?: string
   /** Pridať chýbajúce ingrediencie a (bez explicitného zoradenia) zoradiť podľa nich. */
   pantry?: boolean
+  /** Verejné recepty iných domácností: `include` ich pridá, `only` ukáže len verejné (aj moje). */
+  publicMode?: 'include' | 'only'
   sort?: SortKey
   dir?: SortDir
 }
+
+/** Najviac toľko cudzích verejných receptov sa pridá do zoznamu (zoznam je na prehliadanie). */
+const FOREIGN_LIMIT = 200
 
 export const imageUrl = (r2Key: string) => `/img/${r2Key}`
 
@@ -385,7 +391,8 @@ async function missingByRecipe(
 /**
  * Zoznam receptov s počtami pre filtre. SQL vyberie recepty domácnosti (a hľadaný text),
  * filtre, počty a zoradenie robí čistá logika zo `shared/recipeFacets` – domácnosť má
- * desiatky až stovky receptov, takže to ide v pamäti.
+ * desiatky až stovky receptov, takže to ide v pamäti. S `publicMode` pribudnú verejné recepty iných
+ * domácností (s názvom domácnosti); štítky sa s mojimi párujú podľa názvu.
  */
 export async function listRecipes(
   db: Db,
@@ -393,13 +400,11 @@ export async function listRecipes(
   userId: string,
   options: RecipeListOptions,
 ): Promise<RecipeListDto> {
-  const conditions: (SQL | undefined)[] = [eq(recipes.householdId, householdId), isNull(recipes.deletedAt)]
   const needle = options.q ? normalizeText(options.q).replace(/[%_\\]/g, '') : ''
   if (options.q !== undefined && options.q.trim() !== '' && !needle) return emptyList()
-  if (needle) {
-    const like = `%${needle}%`
-    conditions.push(
-      or(
+  const like = `%${needle}%`
+  const needleSql = needle
+    ? or(
         sql`${recipes.titleNormalized} like ${like}`,
         exists(
           db
@@ -413,9 +418,8 @@ export async function listRecipes(
               ),
             ),
         ),
-      ),
-    )
-  }
+      )
+    : undefined
 
   const rows = await db
     .select({
@@ -426,48 +430,114 @@ export async function listRecipes(
     })
     .from(recipes)
     .leftJoin(images, eq(images.id, recipes.coverImageId))
-    .where(and(...conditions))
-  if (rows.length === 0) return emptyList()
+    .where(
+      and(
+        eq(recipes.householdId, householdId),
+        isNull(recipes.deletedAt),
+        options.publicMode === 'only' ? eq(recipes.visibility, 'public') : undefined,
+        needleSql,
+      ),
+    )
+
+  // Cudzie verejné recepty (nie pri „čo viem uvariť“, kde sa počíta moja špajza).
+  const foreignRows =
+    options.publicMode && !options.pantry
+      ? await db
+          .select({ recipe: recipes, r2Key: images.r2Key, householdName: households.name })
+          .from(recipes)
+          .innerJoin(households, eq(households.id, recipes.householdId))
+          .leftJoin(images, eq(images.id, recipes.coverImageId))
+          .where(
+            and(
+              eq(recipes.visibility, 'public'),
+              isNull(recipes.deletedAt),
+              ne(recipes.householdId, householdId),
+              needleSql,
+            ),
+          )
+          .orderBy(desc(recipes.createdAt))
+          .limit(FOREIGN_LIMIT)
+      : []
+  if (rows.length === 0 && foreignRows.length === 0) return emptyList()
 
   const ids = rows.map((r) => r.recipe.id)
   const tagsByRecipe = new Map<string, TagDto[]>()
-  const tagRows = await db
-    .select({ recipeId: recipeTags.recipeId, id: tags.id, name: tags.name, color: tags.color })
-    .from(recipeTags)
-    .innerJoin(tags, eq(tags.id, recipeTags.tagId))
-    .where(
-      ids.length <= 90
-        ? inArray(recipeTags.recipeId, ids)
-        : inArray(
-            recipeTags.recipeId,
-            db
-              .select({ id: recipes.id })
-              .from(recipes)
-              .where(and(eq(recipes.householdId, householdId), isNull(recipes.deletedAt))),
-          ),
+  const addTagRows = (tagRows: { recipeId: string; id: string; name: string; color: string | null }[]) => {
+    for (const t of tagRows) {
+      const list = tagsByRecipe.get(t.recipeId) ?? []
+      list.push({ id: t.id, name: t.name, color: t.color })
+      tagsByRecipe.set(t.recipeId, list)
+    }
+  }
+  if (ids.length > 0) {
+    addTagRows(
+      await db
+        .select({ recipeId: recipeTags.recipeId, id: tags.id, name: tags.name, color: tags.color })
+        .from(recipeTags)
+        .innerJoin(tags, eq(tags.id, recipeTags.tagId))
+        .where(
+          ids.length <= 90
+            ? inArray(recipeTags.recipeId, ids)
+            : inArray(
+                recipeTags.recipeId,
+                db
+                  .select({ id: recipes.id })
+                  .from(recipes)
+                  .where(and(eq(recipes.householdId, householdId), isNull(recipes.deletedAt))),
+              ),
+        )
+        .orderBy(asc(tags.name)),
     )
-    .orderBy(asc(tags.name))
-  for (const t of tagRows) {
-    const list = tagsByRecipe.get(t.recipeId) ?? []
-    list.push({ id: t.id, name: t.name, color: t.color })
-    tagsByRecipe.set(t.recipeId, list)
+  }
+  for (const part of chunk(
+    foreignRows.map((r) => r.recipe.id),
+    90,
+  )) {
+    addTagRows(
+      await db
+        .select({ recipeId: recipeTags.recipeId, id: tags.id, name: tags.name, color: tags.color })
+        .from(recipeTags)
+        .innerJoin(tags, eq(tags.id, recipeTags.tagId))
+        .where(inArray(recipeTags.recipeId, part))
+        .orderBy(asc(tags.name)),
+    )
+  }
+  // Štítky cudzieho receptu sa v mojich filtroch zhodujú podľa názvu (id patria inej domácnosti).
+  const myTagIdByName = new Map<string, string>()
+  if (foreignRows.length > 0) {
+    const mine = await db
+      .select({ id: tags.id, name: tags.name })
+      .from(tags)
+      .where(eq(tags.householdId, householdId))
+    for (const t of mine) myTagIdByName.set(normalizeText(t.name), t.id)
   }
 
   const ignored = options.pantry ? await ignoredPantryCategoryIds(db, householdId) : new Set<string>()
-  const missing = options.pantry ? await missingByRecipe(db, householdId, ids, ignored) : null
-  const candidates = rows.map((r) => {
-    const tagList = tagsByRecipe.get(r.recipe.id) ?? []
+  const missing =
+    options.pantry && ids.length > 0 ? await missingByRecipe(db, householdId, ids, ignored) : null
+  const toCandidate = (
+    recipe: RecipeRow,
+    r2Key: string | null,
+    isFavorite: boolean,
+    lastCookedAt: string | null,
+    householdName?: string,
+  ) => {
+    const tagList = tagsByRecipe.get(recipe.id) ?? []
     const summary: RecipeSummaryDto = {
-      ...toSummary(r.recipe, r.r2Key, r.isFavorite, tagList, r.lastCookedAt),
-      ...(missing ? { missing: missing.get(r.recipe.id) ?? [] } : {}),
+      ...toSummary(recipe, r2Key, isFavorite, tagList, lastCookedAt),
+      ...(missing ? { missing: missing.get(recipe.id) ?? [] } : {}),
+      ...(householdName ? { householdName } : {}),
     }
+    const tagIds = householdName
+      ? tagList.flatMap((t) => myTagIdByName.get(normalizeText(t.name)) ?? [])
+      : tagList.map((t) => t.id)
     const facetRow: FacetRow & { summary: RecipeSummaryDto } = {
       id: summary.id,
       title: summary.title,
       category: summary.category,
       difficulty: summary.difficulty,
       totalMinutes: totalMinutes(summary),
-      tagIds: tagList.map((t) => t.id),
+      tagIds,
       isFavorite: summary.isFavorite,
       createdAt: summary.createdAt,
       lastCookedAt: summary.lastCookedAt,
@@ -475,10 +545,14 @@ export async function listRecipes(
       summary,
     }
     return facetRow
-  })
+  }
+  const candidates = [
+    ...rows.map((r) => toCandidate(r.recipe, r.r2Key, r.isFavorite, r.lastCookedAt)),
+    ...foreignRows.map((r) => toCandidate(r.recipe, r.r2Key, false, null, r.householdName)),
+  ]
 
   // Filter „chýba najviac N“ dáva zmysel len pri „Čo viem uvariť“, kde recepty nesú chýbajúce suroviny.
-  const { missingMax, ...rest } = options
+  const { missingMax, publicMode: _publicMode, ...rest } = options
   const filters = options.pantry && missingMax !== undefined ? { ...rest, missingMax } : rest
   const filtered = applyRecipeFilters(candidates, filters)
   // „Čo viem uvariť“ bez vlastného zoradenia: najmenej chýbajúceho ako prvé.

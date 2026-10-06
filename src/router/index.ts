@@ -46,12 +46,8 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/features/recipes/pages/RecipeDetailPage.vue'),
     meta: { titleKey: 'common.pageTitle.recipe' },
   },
-  {
-    path: '/verejne',
-    name: 'public-recipes',
-    component: () => import('@/features/recipes/pages/PublicRecipesPage.vue'),
-    meta: { titleKey: 'common.nav.publicRecipes' },
-  },
+  // Verejné recepty sú súčasťou zoznamu receptov (filter „Verejné recepty“); stará adresa vedie naň.
+  { path: '/verejne', redirect: { path: '/recepty', query: { verejne: 'len' } } },
   {
     path: '/verejne/:id',
     name: 'public-recipe',

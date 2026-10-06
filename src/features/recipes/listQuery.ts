@@ -19,6 +19,8 @@ export interface RecipeListState {
   pantry: boolean
   /** Detské recepty: skryté (predvolene), pridané (`detske=1`) alebo len ony (`detske=len`). */
   kids: KidsMode
+  /** Verejné recepty iných domácností: bez (predvolene), s nimi (`verejne=1`) alebo len verejné (`verejne=len`). */
+  public: PublicMode
   /** Najviac toľko chýbajúcich surovín (0 = viem uvariť, 1 = chýba jedna); len pri „Čo viem uvariť“. */
   missing: 0 | 1 | undefined
   sort: SortKey | undefined
@@ -45,6 +47,9 @@ const pick = <T extends string>(values: string[], allowed: readonly T[]): T[] =>
 export type KidsMode = 'hide' | 'include' | 'only'
 const KIDS_PARAM: Readonly<Record<string, KidsMode>> = { '1': 'include', len: 'only' }
 
+export type PublicMode = 'hide' | 'include' | 'only'
+const PUBLIC_PARAM: Readonly<Record<string, PublicMode>> = { '1': 'include', len: 'only' }
+
 const MISSING_VALUES: Readonly<Record<string, 0 | 1>> = { '0': 0, '1': 1 }
 
 export function parseListQuery(query: Query): RecipeListState {
@@ -61,6 +66,7 @@ export function parseListQuery(query: Query): RecipeListState {
     favorite: one(query.oblubene) === '1',
     pantry: one(query.doma) === '1',
     kids: KIDS_PARAM[one(query.detske) ?? ''] ?? 'hide',
+    public: PUBLIC_PARAM[one(query.verejne) ?? ''] ?? 'hide',
     missing: one(query.doma) === '1' ? MISSING_VALUES[one(query.chyba) ?? ''] : undefined,
     sort: pick(sort ? [sort] : [], SORT_KEYS)[0],
     dir: dir === 'asc' || dir === 'desc' ? dir : undefined,
@@ -119,6 +125,7 @@ const SAVED_QUERY_KEYS = [
   'cas',
   'oblubene',
   'detske',
+  'verejne',
   'doma',
   'chyba',
   'zoradit',

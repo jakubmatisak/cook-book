@@ -22,6 +22,7 @@ describe('parseListQuery', () => {
       favorite: false,
       pantry: false,
       kids: 'hide',
+      public: 'hide',
       missing: undefined,
       sort: undefined,
       dir: undefined,

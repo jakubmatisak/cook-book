@@ -1,36 +1,14 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import type { PublicRecipeDetailDto, PublicRecipeSummaryDto, RecipeDetailDto } from '@shared/api'
-import type { RecipeCategory, RecipeVisibility } from '@shared/recipes'
+import type { PublicRecipeDetailDto, RecipeDetailDto } from '@shared/api'
+import type { RecipeVisibility } from '@shared/recipes'
 import { apiFetch } from './http'
 import { recipeKeys } from './recipes'
 
-export interface PublicRecipeFilters {
-  q?: string | undefined
-  category?: RecipeCategory[] | undefined
-}
-
 export const publicKeys = {
   all: ['public'] as const,
-  list: (filters: PublicRecipeFilters) => ['public', 'recipes', filters] as const,
   detail: (id: string) => ['public', 'recipe', id] as const,
 }
-
-function toQuery(filters: PublicRecipeFilters): string {
-  const params = new URLSearchParams()
-  if (filters.q?.trim()) params.set('q', filters.q.trim())
-  if (filters.category?.length) params.set('category', filters.category.join(','))
-  const query = params.toString()
-  return query ? `?${query}` : ''
-}
-
-/** Verejné recepty všetkých domácností. */
-export const usePublicRecipes = (filters: MaybeRefOrGetter<PublicRecipeFilters>) =>
-  useQuery({
-    queryKey: computed(() => publicKeys.list(toValue(filters))),
-    queryFn: () => apiFetch<PublicRecipeSummaryDto[]>(`/public/recipes${toQuery(toValue(filters))}`),
-    placeholderData: (previous) => previous,
-  })
 
 export const usePublicRecipe = (id: MaybeRefOrGetter<string | undefined>) =>
   useQuery({

@@ -181,6 +181,8 @@ export interface RecipeSummaryDto {
   lastCookedAt: string | null
   /** Pri filtri „čo mám doma“: povinné ingrediencie, ktoré chýbajú. */
   missing?: string[]
+  /** Len pri cudzom verejnom recepte (zoznam so zapnutými verejnými): názov domácnosti, ktorá ho zverejnila. */
+  householdName?: string
 }
 
 export interface RecipeIngredientDto {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiCheckCircleOutline, mdiClockOutline, mdiPotSteamOutline } from '@mdi/js'
+import { mdiCheckCircleOutline, mdiClockOutline, mdiEarth, mdiPotSteamOutline } from '@mdi/js'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { RecipeSummaryDto } from '@shared/api'
@@ -11,6 +11,11 @@ const props = defineProps<{ recipe: RecipeSummaryDto; selectable?: boolean; sele
 defineEmits<{ toggle: [] }>()
 const { t } = useI18n()
 
+// Cudzí verejný recept (iná domácnosť) sa len číta a kopíruje, otvára sa vo verejnom detaile.
+const foreign = computed(() => Boolean(props.recipe.householdName))
+const link = computed(() => (foreign.value ? `/verejne/${props.recipe.id}` : `/recepty/${props.recipe.id}`))
+const canSelect = computed(() => props.selectable && !foreign.value)
+
 const time = computed(() => totalMinutes(props.recipe.prepMinutes, props.recipe.cookMinutes))
 const subtitle = computed(() => {
   const parts = [t(`common.category.${props.recipe.category}`)]
@@ -21,12 +26,12 @@ const subtitle = computed(() => {
 
 <template>
   <v-card
-    :to="selectable ? undefined : `/recepty/${recipe.id}`"
+    :to="canSelect ? undefined : link"
     class="h-100 d-flex flex-column"
     :class="{ 'border-primary border-opacity-100': selected }"
     :variant="selected ? 'outlined' : 'elevated'"
     :data-test="`recipe-card-${recipe.id}`"
-    @click="selectable && $emit('toggle')"
+    @click="canSelect && $emit('toggle')"
   >
     <!-- Fotka má vždy rovnaký pomer strán a neroztiahne sa (v-responsive inak vyplní zvyšok karty). -->
     <v-img
@@ -41,7 +46,7 @@ const subtitle = computed(() => {
         <v-icon :icon="mdiPotSteamOutline" size="56" color="primary" class="opacity-60" />
       </div>
     </v-responsive>
-    <div v-if="selectable" class="position-absolute top-0 left-0 ma-1 bg-surface rounded-circle">
+    <div v-if="canSelect" class="position-absolute top-0 left-0 ma-1 bg-surface rounded-circle">
       <v-checkbox-btn
         :model-value="selected"
         color="primary"
@@ -51,7 +56,7 @@ const subtitle = computed(() => {
         @update:model-value="$emit('toggle')"
       />
     </div>
-    <div class="position-absolute top-0 right-0 ma-1">
+    <div v-if="!foreign" class="position-absolute top-0 right-0 ma-1">
       <FavoriteButton :recipe-id="recipe.id" :is-favorite="recipe.isFavorite" />
     </div>
     <v-card-item>
@@ -93,6 +98,18 @@ const subtitle = computed(() => {
     </v-card-text>
     <!-- Riadok tagov je vždy vyhradený, aj keď recept tagy nemá. -->
     <v-card-text class="pt-0 d-flex flex-wrap ga-1 align-start mt-auto" style="min-height: 2.25rem">
+      <v-chip
+        v-if="recipe.visibility === 'public'"
+        size="x-small"
+        color="info"
+        variant="tonal"
+        :prepend-icon="mdiEarth"
+        data-test="public-badge"
+      >
+        {{
+          foreign ? t('recipes.badge.publicFrom', { name: recipe.householdName }) : t('recipes.badge.public')
+        }}
+      </v-chip>
       <v-chip
         v-for="tag in recipe.tags.slice(0, 3)"
         :key="tag.id"

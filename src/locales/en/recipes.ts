@@ -27,6 +27,10 @@ export default {
     search: 'Search by name or ingredient',
     filters: 'Filters',
     kids: 'Baby food',
+    public: 'Public recipes',
+    public_hide: 'Without public',
+    public_include: 'With public',
+    public_only: 'Public only',
     kids_hide: 'No baby food',
     kids_include: 'With baby food',
     kids_only: 'Baby food only',
@@ -90,6 +94,10 @@ export default {
     enterUrl: 'Enter the recipe URL.',
     failed: 'The recipe could not be loaded.',
     submit: 'Load recipe',
+  },
+  badge: {
+    public: 'Public',
+    publicFrom: 'Public · {name}',
   },
   importFromUrl: {
     loading: 'Loading the recipe from the web…',

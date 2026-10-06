@@ -17,7 +17,6 @@ const ALL_TITLES = [
   'Ingrediencie',
   'Tagy',
   'Špajza',
-  'Verejné recepty',
   'Nastavenia',
 ]
 

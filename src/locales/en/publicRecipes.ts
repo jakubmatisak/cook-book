@@ -1,17 +1,5 @@
 /** Public recipes: list, detail, copying into your own household and publishing a recipe. */
 export default {
-  title: 'Public recipes',
-  subtitle: 'Recipes shared by households in the app. You can add them to your own recipes.',
-  search: 'Search by name',
-  categories: 'Meal type',
-  by: 'From: {name}',
-  mine: 'Your recipe',
-  public: 'Public',
-  empty: {
-    title: 'Nothing here yet',
-    text: 'A household owner can publish a recipe from its menu (the three dots on the recipe).',
-  },
-  emptyFiltered: { title: 'Nothing found', text: 'Try another word or meal type.' },
   detail: {
     from: 'Shared by: {name}',
     copy: 'Add to my recipes',

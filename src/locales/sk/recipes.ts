@@ -26,6 +26,10 @@ export default {
     search: 'Hľadať podľa názvu alebo ingrediencie',
     filters: 'Filtre',
     kids: 'Detské recepty',
+    public: 'Verejné recepty',
+    public_hide: 'Bez verejných',
+    public_include: 'S verejnými',
+    public_only: 'Len verejné',
     kids_hide: 'Bez detských',
     kids_include: 'Aj detské',
     kids_only: 'Len detské',
@@ -85,6 +89,10 @@ export default {
     enterUrl: 'Vlož adresu receptu.',
     failed: 'Recept sa nepodarilo načítať.',
     submit: 'Načítať recept',
+  },
+  badge: {
+    public: 'Verejný',
+    publicFrom: 'Verejný · {name}',
   },
   importFromUrl: {
     loading: 'Načítavam recept z webu…',

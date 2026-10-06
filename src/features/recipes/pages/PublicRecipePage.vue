@@ -97,7 +97,7 @@ const openCopy = () => router.push(`/recepty/${snackbar.value.recipeId}`)
       :icon="mdiArrowLeft"
       variant="text"
       :aria-label="t('common.actions.back')"
-      @click="router.push('/verejne')"
+      @click="router.push({ path: '/recepty', query: { verejne: 'len' } })"
     />
   </div>
 
@@ -108,7 +108,9 @@ const openCopy = () => router.push(`/recepty/${snackbar.value.recipeId}`)
     :title="t('publicRecipes.detail.notFound.title')"
     :text="t('publicRecipes.detail.notFound.text')"
   >
-    <v-btn color="primary" to="/verejne">{{ t('publicRecipes.detail.notFound.back') }}</v-btn>
+    <v-btn color="primary" :to="{ path: '/recepty', query: { verejne: 'len' } }">{{
+      t('publicRecipes.detail.notFound.back')
+    }}</v-btn>
   </EmptyState>
   <v-alert v-else-if="error" type="error" :text="errorText(error)" />
 

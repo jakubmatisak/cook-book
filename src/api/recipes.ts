@@ -28,6 +28,8 @@ export interface RecipeFilters {
   favorite?: boolean | undefined
   /** Zahrnúť aj detské recepty (inak sa v zozname skrývajú). */
   kids?: 'hide' | 'include' | 'only' | undefined
+  /** Verejné recepty iných domácností v zozname. */
+  public?: 'hide' | 'include' | 'only' | undefined
   /** „Čo viem uvariť“: zoradiť podľa toho, čo je doma, s chýbajúcimi ingredienciami. */
   pantry?: boolean | undefined
 }
@@ -50,6 +52,7 @@ function toQuery(filters: RecipeFilters): string {
   if (filters.favorite) params.set('favorite', '1')
   if (filters.kids === 'include') params.set('kids', '1')
   if (filters.kids === 'only') params.set('kids', 'only')
+  if (filters.public === 'include' || filters.public === 'only') params.set('public', filters.public)
   if (filters.pantry) params.set('pantry', '1')
   if (filters.pantry && filters.missing !== undefined) params.set('missing', String(filters.missing))
   const query = params.toString()

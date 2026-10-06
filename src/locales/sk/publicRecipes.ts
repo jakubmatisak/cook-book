@@ -1,17 +1,5 @@
 /** Verejné recepty: zoznam, detail, kópia do vlastnej domácnosti a zverejnenie receptu. */
 export default {
-  title: 'Verejné recepty',
-  subtitle: 'Recepty, ktoré zdieľajú domácnosti v aplikácii. Môžeš si ich pridať do svojich receptov.',
-  search: 'Hľadať podľa názvu',
-  categories: 'Typ jedla',
-  by: 'Od: {name}',
-  mine: 'Tvoj recept',
-  public: 'Verejný',
-  empty: {
-    title: 'Zatiaľ tu nič nie je',
-    text: 'Vlastník domácnosti môže recept zverejniť v jeho menu (tri bodky pri recepte).',
-  },
-  emptyFiltered: { title: 'Nič sa nenašlo', text: 'Skús iné slovo alebo iný typ jedla.' },
   detail: {
     from: 'Zdieľa: {name}',
     copy: 'Pridať do mojich receptov',

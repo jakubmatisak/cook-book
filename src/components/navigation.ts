@@ -4,7 +4,6 @@ import {
   mdiCalendarMonthOutline,
   mdiCartOutline,
   mdiCogOutline,
-  mdiEarth,
   mdiFormatListChecks,
   mdiFridgeOutline,
   mdiTagMultipleOutline,
@@ -34,7 +33,6 @@ export const SECONDARY_NAV: readonly NavItem[] = [
   { to: '/ingrediencie', titleKey: 'common.nav.ingredients', icon: mdiFormatListChecks },
   { to: '/tagy', titleKey: 'common.nav.tags', icon: mdiTagMultipleOutline },
   { to: '/spajza', titleKey: 'common.nav.pantry', icon: mdiFridgeOutline },
-  { to: '/verejne', titleKey: 'common.nav.publicRecipes', icon: mdiEarth },
   { to: '/nastavenia', titleKey: 'common.nav.settings', icon: mdiCogOutline },
 ]
 
