@@ -1,5 +1,7 @@
 import type { Db } from './db/client'
+import type { HouseholdRole } from '../shared/family'
 import type { users } from './db/schema'
+import type { Membership } from './services/memberships'
 
 /**
  * Bindingy Workera. Premenné prostredia sú voliteľné: v produkcii DEV_USER_EMAIL neexistuje
@@ -16,7 +18,10 @@ export interface Bindings {
 
 export type UserRow = typeof users.$inferSelect
 
+/** Prihlásený používateľ; `householdId` a `role` platia pre aktívnu domácnosť (prázdne ID = ešte nezvolená). */
+export type AuthUser = UserRow & { role: HouseholdRole }
+
 export interface AppEnv {
   Bindings: Bindings
-  Variables: { user: UserRow; db: Db; fetchFn: typeof fetch }
+  Variables: { user: AuthUser; memberships: Membership[]; db: Db; fetchFn: typeof fetch }
 }

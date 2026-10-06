@@ -15,3 +15,7 @@ export const MEMBER_COLORS = [
   '#C2185B',
   '#00897B',
 ] as const
+
+/** Rola v domácnosti: vlastník spravuje domácnosť a členov, člen robí všetko okolo varenia. */
+export const HOUSEHOLD_ROLES = ['owner', 'member'] as const
+export type HouseholdRole = (typeof HOUSEHOLD_ROLES)[number]

@@ -1,9 +1,10 @@
 import { asc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import type { MeResponse } from '../../shared/api'
+import type { HouseholdSummaryDto, MeResponse } from '../../shared/api'
 import { familyMembers, households, mealSlots, settings } from '../db/schema'
 import type { AppEnv } from '../env'
 import { HttpError } from '../errors'
+import type { Membership } from '../services/memberships'
 import {
   groupPreferences,
   mergeSettings,
@@ -11,6 +12,12 @@ import {
   toMemberDto,
   toSlotDto,
 } from '../services/family'
+
+export const toHouseholdSummary = (m: Membership): HouseholdSummaryDto => ({
+  id: m.householdId,
+  name: m.name,
+  role: m.role,
+})
 
 export const meRoutes = new Hono<AppEnv>().get('/', async (c) => {
   const db = c.get('db')
@@ -37,8 +44,9 @@ export const meRoutes = new Hono<AppEnv>().get('/', async (c) => {
 
   const prefs = groupPreferences(prefRows)
   const body: MeResponse = {
-    user: { id: user.id, email: user.email, name: user.name, memberId: user.memberId },
+    user: { id: user.id, email: user.email, name: user.name, memberId: user.memberId, role: user.role },
     household: { id: household.id, name: household.name },
+    households: c.get('memberships').map(toHouseholdSummary),
     members: memberRows.map((m) => toMemberDto(m, prefs.get(m.id))),
     slots: slotRows.map(toSlotDto),
     settings: mergeSettings(settingRows),

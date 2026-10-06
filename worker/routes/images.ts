@@ -37,9 +37,11 @@ export const imageUploadRoutes = new Hono<AppEnv>().post('/', async (c) => {
 
 /** GET /img/:householdId/:file – fotka z R2, len pre vlastnú domácnosť. */
 export const imageServeRoutes = new Hono<AppEnv>().get('/:householdId/:file', async (c) => {
-  const user = c.get('user')
   const { householdId, file } = c.req.param()
-  if (householdId !== user.householdId) throw new HttpError(404, 'not_found', 'Fotka neexistuje.')
+  // Fotky nenesú `?h=`, o prístupe rozhoduje členstvo v domácnosti z adresy.
+  if (!c.get('memberships').some((m) => m.householdId === householdId)) {
+    throw new HttpError(404, 'not_found', 'Fotka neexistuje.')
+  }
 
   const r2Key = `${householdId}/${file}`
   const row = await c

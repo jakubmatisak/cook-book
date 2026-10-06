@@ -49,7 +49,7 @@ describe('/export', () => {
     const body = await res.json<ExportFile>()
     expect(body.format).toBe('kucharska-kniha-export')
     expect(body.version).toBe(1)
-    expect(Object.keys(body.tables)).toHaveLength(27)
+    expect(Object.keys(body.tables)).toHaveLength(28)
     expect(body.tables.households).toHaveLength(1)
     expect(body.tables.users).toHaveLength(1)
     expect(body.tables.mealSlots).toHaveLength(5)

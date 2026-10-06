@@ -1,4 +1,4 @@
-import type { MemberKind, PlanAudience } from './family'
+import type { HouseholdRole, MemberKind, PlanAudience } from './family'
 import type { MemberPreference, PreferenceWarning } from './preferences'
 import type { Suggestion } from './suggest'
 import type { RecipeFacets } from './recipeFacets'
@@ -20,11 +20,20 @@ export interface UserDto {
   email: string
   name: string
   memberId: string | null
+  /** Rola v aktívnej domácnosti. */
+  role: HouseholdRole
 }
 
 export interface HouseholdDto {
   id: string
   name: string
+}
+
+/** Domácnosť, v ktorej je používateľ členom, s jeho rolou. */
+export interface HouseholdSummaryDto {
+  id: string
+  name: string
+  role: HouseholdRole
 }
 
 export type { MemberKind }
@@ -70,6 +79,8 @@ export interface HouseholdSettings {
 export interface MeResponse {
   user: UserDto
   household: HouseholdDto
+  /** Všetky domácnosti používateľa (pre prepínač). */
+  households: HouseholdSummaryDto[]
   members: FamilyMemberDto[]
   slots: MealSlotDto[]
   settings: HouseholdSettings
@@ -79,6 +90,7 @@ export interface MeResponse {
 export const EXPORT_TABLES = [
   'households',
   'users',
+  'householdMembers',
   'familyMembers',
   'shopCategories',
   'ingredients',

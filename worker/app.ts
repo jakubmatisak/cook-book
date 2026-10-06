@@ -2,10 +2,11 @@ import { Hono } from 'hono'
 import type { AppEnv } from './env'
 import { notFound, onError } from './errors'
 import { createMiddleware } from 'hono/factory'
-import { authMiddleware, type AuthDeps } from './middleware/auth'
+import { authMiddleware, requireHousehold, type AuthDeps } from './middleware/auth'
 import { ingredientRoutes, shopCategoryRoutes, tagRoutes } from './routes/catalog'
 import { exportRoutes } from './routes/export'
 import { memberRoutes, settingsRoutes, slotRoutes } from './routes/family'
+import { householdsRoutes } from './routes/households'
 import { imageServeRoutes, imageUploadRoutes } from './routes/images'
 import { meRoutes } from './routes/me'
 import { pantryRoutes } from './routes/pantry'
@@ -33,7 +34,9 @@ export function createApp(deps: AppDeps = {}) {
     }),
   )
   app.use('/api/v1/*', auth)
+  app.use('/api/v1/*', requireHousehold)
   app.use('/img/*', auth)
+  app.route('/api/v1/households', householdsRoutes)
   app.route('/api/v1/me', meRoutes)
   app.route('/api/v1/export', exportRoutes)
   app.route('/api/v1/recipes', recipeRoutes)

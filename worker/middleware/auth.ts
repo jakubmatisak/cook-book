@@ -5,7 +5,8 @@ import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from 'jose'
 import { getDb } from '../db/client'
 import type { AppEnv } from '../env'
 import { HttpError } from '../errors'
-import { ensureUser } from '../services/household'
+import { ensureUser, findUserByEmail } from '../services/household'
+import { listMemberships, touchLogin, type Membership } from '../services/memberships'
 
 export interface AuthDeps {
   /** Kľúč na overenie Access JWT; v testoch lokálny JWKS, inak sa načíta z Cloudflare. */
@@ -77,14 +78,49 @@ export async function resolveEmail(c: Context<AppEnv>, accessKey?: JWTVerifyGetK
   throw new HttpError(401, 'unauthorized', 'Nie si prihlásený.')
 }
 
+/**
+ * Vstup do aplikácie: e-mail zo zoznamu správcov (ALLOWED_EMAILS) alebo e-mail s členstvom v nejakej domácnosti.
+ * Aktívna domácnosť sa vyberá parametrom `?h=<id>`; bez neho sa použije jediná domácnosť používateľa.
+ * Ak ich má viac a `h` chýba, `user.householdId` ostane prázdne a `requireHousehold` odpovie 400.
+ */
 export const authMiddleware = (deps: AuthDeps = {}) =>
   createMiddleware<AppEnv>(async (c, next) => {
     const email = (await resolveEmail(c, deps.accessKey)).trim().toLowerCase()
-    if (!isAllowedEmail(email, c.env.ALLOWED_EMAILS)) {
+    const admin = isAllowedEmail(email, c.env.ALLOWED_EMAILS)
+    const db = getDb(c.env)
+
+    let user = await findUserByEmail(db, email)
+    let memberships: Membership[] = user ? await listMemberships(db, user.id) : []
+    if (!admin && memberships.length === 0) {
       throw new HttpError(403, 'forbidden', 'Tento účet nemá prístup ku kuchárskej knihe.')
     }
-    const db = getDb(c.env)
+    if (admin && memberships.length === 0) {
+      user = await ensureUser(db, email)
+      memberships = await listMemberships(db, user.id)
+    }
+    if (!user) throw new HttpError(403, 'forbidden', 'Tento účet nemá prístup ku kuchárskej knihe.')
+
+    const requested = c.req.query('h')
+    const active = requested
+      ? memberships.find((m) => m.householdId === requested)
+      : memberships.length === 1
+        ? memberships[0]
+        : undefined
+    if (requested && !active) {
+      throw new HttpError(403, 'forbidden', 'Do tejto domácnosti nemáš prístup.')
+    }
+    if (active) await touchLogin(db, user.id, active)
+
     c.set('db', db)
-    c.set('user', await ensureUser(db, email))
+    c.set('memberships', memberships)
+    c.set('user', { ...user, householdId: active?.householdId ?? '', role: active?.role ?? 'member' })
     await next()
   })
+
+/** Dáta domácnosti sa dajú čítať až po výbere domácnosti (okrem zoznamu domácností a fotiek). */
+export const requireHousehold = createMiddleware<AppEnv>(async (c, next) => {
+  if (!c.get('user').householdId && c.req.path !== '/api/v1/households') {
+    throw new HttpError(400, 'household_required', 'Najprv vyber domácnosť.')
+  }
+  await next()
+})

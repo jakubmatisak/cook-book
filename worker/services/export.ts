@@ -31,9 +31,15 @@ export async function exportHousehold(db: Db, householdId: string): Promise<Expo
     .from(t.shoppingItems)
     .where(inArray(t.shoppingItems.listId, listIds))
 
+  const memberUserIds = db
+    .select({ id: t.householdMembers.userId })
+    .from(t.householdMembers)
+    .where(own(t.householdMembers.householdId))
+
   const queries = {
     households: db.select().from(t.households).where(eq(t.households.id, householdId)),
-    users: db.select().from(t.users).where(own(t.users.householdId)),
+    users: db.select().from(t.users).where(inArray(t.users.id, memberUserIds)),
+    householdMembers: db.select().from(t.householdMembers).where(own(t.householdMembers.householdId)),
     familyMembers: db.select().from(t.familyMembers).where(own(t.familyMembers.householdId)),
     shopCategories: db.select().from(t.shopCategories).where(own(t.shopCategories.householdId)),
     ingredients: db.select().from(t.ingredients).where(own(t.ingredients.householdId)),

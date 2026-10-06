@@ -15,7 +15,7 @@ import {
 import { newId } from '../../shared/ids'
 import { UNIT_CODES } from '../../shared/units'
 import { RECIPE_CATEGORIES } from '../../shared/recipes'
-import { MEMBER_KINDS, PLAN_AUDIENCES } from '../../shared/family'
+import { HOUSEHOLD_ROLES, MEMBER_KINDS, PLAN_AUDIENCES } from '../../shared/family'
 
 const nowIso = () => new Date().toISOString()
 
@@ -52,6 +52,24 @@ export const users = sqliteTable('users', {
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 })
+
+/** Členstvo používateľa v domácnosti s rolou; človek môže byť členom viacerých domácností. */
+export const householdMembers = sqliteTable(
+  'household_members',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    householdId: householdRef(),
+    role: text('role', { enum: HOUSEHOLD_ROLES }).notNull().default('member'),
+    lastLoginAt: text('last_login_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.householdId] }),
+    index('household_members_household_idx').on(t.householdId),
+  ],
+)
 
 export const familyMembers = sqliteTable(
   'family_members',

@@ -1,7 +1,17 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
+import { newId } from '../../shared/ids'
 import type { Db } from '../db/client'
-import { households, mealSlots, settings, shopCategories, shoppingLists, users } from '../db/schema'
+import {
+  households,
+  householdMembers,
+  mealSlots,
+  settings,
+  shopCategories,
+  shoppingLists,
+  users,
+} from '../db/schema'
 import type { UserRow } from '../env'
+import { addMembership, listMemberships } from './memberships'
 
 /** Aplikácia má zatiaľ jednu domácnosť; pevné ID robí jej založenie idempotentným. */
 export const DEFAULT_HOUSEHOLD_ID = 'default'
@@ -38,16 +48,12 @@ export const DEFAULT_SETTINGS = {
 } as const
 
 /**
- * Zabezpečí existenciu domácnosti s predvolenými slotmi, kategóriami, zoznamom a nastaveniami.
- * Bezpečné pri súbežnom volaní: všetky inserty sú `on conflict do nothing` nad unikátnymi kľúčmi.
+ * Založí domácnosť s predvolenými slotmi, kategóriami, nákupným zoznamom a nastaveniami.
+ * Bezpečné pri súbežnom volaní s rovnakým `id`: všetky inserty sú `on conflict do nothing` nad unikátnymi kľúčmi.
  */
-export async function ensureHousehold(db: Db): Promise<string> {
-  const id = DEFAULT_HOUSEHOLD_ID
-  const existing = await db.select({ id: households.id }).from(households).where(eq(households.id, id)).get()
-  if (existing) return existing.id
-
+export async function createHousehold(db: Db, name: string, id: string = newId()): Promise<string> {
   await db.batch([
-    db.insert(households).values({ id, name: 'Naša domácnosť' }).onConflictDoNothing(),
+    db.insert(households).values({ id, name }).onConflictDoNothing(),
     db
       .insert(mealSlots)
       .values(
@@ -75,19 +81,40 @@ export async function ensureHousehold(db: Db): Promise<string> {
   return id
 }
 
-const findUser = (db: Db, email: string) => db.select().from(users).where(eq(users.email, email)).get()
+/** Predvolená domácnosť, do ktorej sa pri prvom prihlásení zaradia e-maily zo zoznamu správcov (ALLOWED_EMAILS). */
+export async function ensureHousehold(db: Db): Promise<string> {
+  const id = DEFAULT_HOUSEHOLD_ID
+  const existing = await db.select({ id: households.id }).from(households).where(eq(households.id, id)).get()
+  if (existing) return existing.id
+  return createHousehold(db, 'Naša domácnosť', id)
+}
 
-/** Vráti používateľa podľa e-mailu; pri prvom prihlásení ho založí v domácnosti. */
+export const findUserByEmail = (db: Db, rawEmail: string) =>
+  db.select().from(users).where(eq(users.email, rawEmail.trim().toLowerCase())).get()
+
+/**
+ * Používateľ zo zoznamu správcov: založí ho (ak treba) a bez členstva ho zaradí do predvolenej domácnosti.
+ * Prvý človek v domácnosti je vlastník, ďalší členovia.
+ */
 export async function ensureUser(db: Db, rawEmail: string): Promise<UserRow> {
   const email = rawEmail.trim().toLowerCase()
-  const found = await findUser(db, email)
-  if (found) return found
-
   const householdId = await ensureHousehold(db)
-  const name = email.split('@')[0] || email
-  await db.insert(users).values({ householdId, email, name }).onConflictDoNothing()
 
-  const created = await findUser(db, email)
-  if (!created) throw new Error(`Používateľa ${email} sa nepodarilo založiť.`)
-  return created
+  let user = await findUserByEmail(db, email)
+  if (!user) {
+    const name = email.split('@')[0] || email
+    await db.insert(users).values({ householdId, email, name }).onConflictDoNothing()
+    user = await findUserByEmail(db, email)
+  }
+  if (!user) throw new Error(`Používateľa ${email} sa nepodarilo založiť.`)
+
+  if ((await listMemberships(db, user.id)).length === 0) {
+    const owner = await db
+      .select({ userId: householdMembers.userId })
+      .from(householdMembers)
+      .where(and(eq(householdMembers.householdId, householdId), eq(householdMembers.role, 'owner')))
+      .get()
+    await addMembership(db, user.id, householdId, owner ? 'member' : 'owner')
+  }
+  return user
 }
