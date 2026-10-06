@@ -57,13 +57,15 @@ const detail = (over: Partial<PublicRecipeDetailDto> = {}): PublicRecipeDetailDt
 const stubBase = (extra: Record<string, unknown> = {}) =>
   stubApi({ '/me': me('owner'), '/public/recipes': [], ...extra })
 
+const Blank = defineComponent({ render: () => h('div') })
+
 async function mountPage(page: object, url: string, route = '/verejne') {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: route, component: defineComponent({ render: () => h('div') }) },
-      { path: '/recepty/:id', component: defineComponent({ render: () => h('div') }) },
-      { path: '/verejne', component: defineComponent({ render: () => h('div') }) },
+      { path: route, component: Blank },
+      { path: '/recepty/:id', component: Blank },
+      { path: '/verejne', component: Blank },
     ],
   })
   await router.push(url)
