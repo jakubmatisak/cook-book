@@ -8,6 +8,7 @@ import {
   mdiFormatListChecks,
   mdiFridgeOutline,
   mdiTagMultipleOutline,
+  mdiViewDashboardOutline,
 } from '@mdi/js'
 
 export interface NavItem {
@@ -15,10 +16,13 @@ export interface NavItem {
   /** Kľúč názvu v i18n (`common.nav.*`). */
   titleKey: string
   icon: string
+  /** Aktívna len na presnej adrese (úvod `/` by inak svietil na každej stránke). */
+  exact?: boolean
 }
 
 /** Hlavné stránky: v bočnom menu aj v spodnej navigácii na mobile. */
 export const PRIMARY_NAV: readonly NavItem[] = [
+  { to: '/', titleKey: 'common.nav.home', icon: mdiViewDashboardOutline, exact: true },
   { to: '/recepty', titleKey: 'common.nav.recipes', icon: mdiBookOpenPageVariantOutline },
   { to: '/plan', titleKey: 'common.nav.plan', icon: mdiCalendarMonthOutline },
   { to: '/nakup', titleKey: 'common.nav.shopping', icon: mdiCartOutline },

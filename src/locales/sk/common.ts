@@ -26,6 +26,7 @@ export default {
     notFound: 'Nenájdené',
   },
   nav: {
+    home: 'Prehľad',
     recipes: 'Recepty',
     plan: 'Plán',
     shopping: 'Nákup',

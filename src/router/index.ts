@@ -4,7 +4,12 @@ import { i18n, t } from '@/i18n'
 import { scrollOnNavigate } from './scroll'
 
 export const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/recepty' },
+  {
+    path: '/',
+    name: 'home',
+    component: () => import('@/features/home/pages/HomePage.vue'),
+    meta: { titleKey: 'common.nav.home' },
+  },
   {
     path: '/recepty',
     name: 'recipes',

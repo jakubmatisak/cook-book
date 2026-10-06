@@ -7,7 +7,8 @@ import { formatMinutes } from '@/i18n/format'
 import { totalMinutes } from '@/lib/format'
 import FavoriteButton from './FavoriteButton.vue'
 
-const props = defineProps<{ recipe: RecipeSummaryDto }>()
+const props = defineProps<{ recipe: RecipeSummaryDto; selectable?: boolean; selected?: boolean }>()
+defineEmits<{ toggle: [] }>()
 const { t } = useI18n()
 
 const time = computed(() => totalMinutes(props.recipe.prepMinutes, props.recipe.cookMinutes))
@@ -19,7 +20,14 @@ const subtitle = computed(() => {
 </script>
 
 <template>
-  <v-card :to="`/recepty/${recipe.id}`" class="h-100 d-flex flex-column">
+  <v-card
+    :to="selectable ? undefined : `/recepty/${recipe.id}`"
+    class="h-100 d-flex flex-column"
+    :class="{ 'border-primary border-opacity-100': selected }"
+    :variant="selected ? 'outlined' : 'elevated'"
+    :data-test="`recipe-card-${recipe.id}`"
+    @click="selectable && $emit('toggle')"
+  >
     <!-- Fotka má vždy rovnaký pomer strán a neroztiahne sa (v-responsive inak vyplní zvyšok karty). -->
     <v-img
       v-if="recipe.coverImageUrl"
@@ -33,6 +41,16 @@ const subtitle = computed(() => {
         <v-icon :icon="mdiPotSteamOutline" size="56" color="primary" class="opacity-60" />
       </div>
     </v-responsive>
+    <div v-if="selectable" class="position-absolute top-0 left-0 ma-1 bg-surface rounded-circle">
+      <v-checkbox-btn
+        :model-value="selected"
+        color="primary"
+        :aria-label="t('bulk.selectAria', { name: recipe.title })"
+        :data-test="`select-${recipe.id}`"
+        @click.stop
+        @update:model-value="$emit('toggle')"
+      />
+    </div>
     <div class="position-absolute top-0 right-0 ma-1">
       <FavoriteButton :recipe-id="recipe.id" :is-favorite="recipe.isFavorite" />
     </div>

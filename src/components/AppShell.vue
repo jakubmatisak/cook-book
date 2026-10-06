@@ -172,6 +172,7 @@ const mobileMenu = ref(false)
           v-for="item in PRIMARY_NAV"
           :key="item.to"
           :to="item.to"
+          :exact="item.exact"
           :prepend-icon="item.icon"
           :title="t(item.titleKey)"
           rounded="sm"
@@ -182,6 +183,7 @@ const mobileMenu = ref(false)
           v-for="item in SECONDARY_NAV"
           :key="item.to"
           :to="item.to"
+          :exact="item.exact"
           :prepend-icon="item.icon"
           :title="t(item.titleKey)"
           rounded="sm"
@@ -214,6 +216,7 @@ const mobileMenu = ref(false)
           v-for="item in SECONDARY_NAV"
           :key="item.to"
           :to="item.to"
+          :exact="item.exact"
           :prepend-icon="item.icon"
           :title="t(item.titleKey)"
           rounded="sm"
@@ -249,7 +252,13 @@ const mobileMenu = ref(false)
     </v-main>
 
     <v-bottom-navigation v-if="!mdAndUp && showChrome" border="t" data-test="bottom-nav">
-      <v-btn v-for="item in PRIMARY_NAV" :key="item.to" :to="item.to" data-test="nav-item">
+      <v-btn
+        v-for="item in PRIMARY_NAV"
+        :key="item.to"
+        :to="item.to"
+        :exact="item.exact"
+        data-test="nav-item"
+      >
         <v-icon :icon="item.icon" />
         <span>{{ t(item.titleKey) }}</span>
       </v-btn>

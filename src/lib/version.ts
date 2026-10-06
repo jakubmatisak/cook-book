@@ -2,7 +2,7 @@
 declare const __APP_VERSION__: string | undefined
 
 /** Štádium aplikácie; pri vydaní stabilnej verzie sa zmení na prázdny text. */
-export const APP_STAGE = 'beta'
+export const APP_STAGE = ''
 
 export const formatAppVersion = (version: string, stage: string): string =>
   stage ? `${version} ${stage}` : version

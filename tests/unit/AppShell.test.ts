@@ -9,6 +9,7 @@ import { setActiveHousehold } from '@/lib/household'
 import { createAppVuetify } from '@/plugins/vuetify'
 
 const ALL_TITLES = [
+  'Prehľad',
   'Recepty',
   'Plán',
   'Nákup',
@@ -89,11 +90,11 @@ describe('AppShell', () => {
   it('na mobile má spodnú navigáciu s hlavnými stránkami a tlačidlo menu otvorí len ostatné (bez duplicít s kartami)', async () => {
     const wrapper = await mountShell(375)
     expect(wrapper.find('[data-test="side-nav"]').exists()).toBe(false)
-    expect(navTitles(wrapper, 'bottom-nav')).toEqual(['Recepty', 'Plán', 'Nákup', 'Menu'])
+    expect(navTitles(wrapper, 'bottom-nav')).toEqual(['Prehľad', 'Recepty', 'Plán', 'Nákup', 'Menu'])
 
     await wrapper.find('[data-test="bottom-nav"] [data-menu="open"]').trigger('click')
     await flushPromises()
-    expect(navTitles(wrapper, 'mobile-nav')).toEqual(ALL_TITLES.slice(3))
+    expect(navTitles(wrapper, 'mobile-nav')).toEqual(ALL_TITLES.slice(4))
   })
 
   it('vyrenderuje obsah stránky', async () => {
@@ -114,7 +115,7 @@ describe('AppShell', () => {
       const wrapper = await mountShell(width)
       await wrapper.find('[data-test="account"]').trigger('click')
       await flushPromises()
-      expect(document.body.textContent).toContain('Verzia 0.1.0 beta')
+      expect(document.body.textContent).toContain('Verzia 1.0.0')
       // lokálne (bez Cloudflare Access) sa odhlásenie neponúka
       expect(document.querySelector('[data-test="logout"]')).toBeNull()
       wrapper.unmount()

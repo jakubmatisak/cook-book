@@ -12,7 +12,8 @@ import FavoriteButton from './FavoriteButton.vue'
 
 const { t } = useI18n()
 const sortBy = defineModel<TableSort[]>('sortBy', { required: true })
-defineProps<{ items: RecipeSummaryDto[] }>()
+const props = defineProps<{ items: RecipeSummaryDto[]; selectable?: boolean }>()
+const selected = defineModel<string[]>('selected', { default: () => [] })
 const router = useRouter()
 // Na malom displeji tabuľka prejde do zobrazenia po riadkoch (každý záznam ako blok); zoradenie je hore.
 const { smAndDown } = useDisplay()
@@ -29,14 +30,21 @@ const headers = computed(() => [
 ])
 
 const minutes = (r: RecipeSummaryDto) => totalMinutes(r.prepMinutes, r.cookMinutes)
-const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) =>
-  void router.push(`/recepty/${item.id}`)
+// V režime výberu klik na riadok recept vyberie, inak ho otvorí.
+const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
+  if (props.selectable) {
+    selected.value = selected.value.includes(item.id)
+      ? selected.value.filter((id) => id !== item.id)
+      : [...selected.value, item.id]
+  } else void router.push(`/recepty/${item.id}`)
+}
 </script>
 
 <template>
   <v-card>
     <!-- Zoradenie robí server (rovnaká logika ako pri mriežke), tabuľka len zobrazuje a posiela zvolený stĺpec. -->
     <v-data-table-server
+      v-model="selected"
       v-model:sort-by="sortBy"
       :headers="headers"
       :items="items"
@@ -49,6 +57,7 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) =>
       must-sort
       :mobile="smAndDown"
       :hide-default-header="smAndDown"
+      :show-select="selectable"
       @click:row="openRecipe"
     >
       <template #item.coverImageUrl="{ item }">

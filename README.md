@@ -5,7 +5,7 @@ free tier of Cloudflare: one Worker serves the Vue frontend and the API, data li
 sign-in is handled by Cloudflare Access.
 
 > The app UI is in **Slovak**. This README is in English first, [Slovenská verzia](#slovenská-verzia) is below.
-> Status: **0.1.0 beta**.
+> Status: **1.0.0**.
 
 - Design and phases: [docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md](docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md) (Slovak)
 - Research and idea list: [docs/2026-10-05-napady-a-prieskum-hostingu.md](docs/2026-10-05-napady-a-prieskum-hostingu.md) (Slovak)
@@ -212,7 +212,7 @@ The repository contains no secrets or personal addresses: they live in Worker se
 
 Rodinná webová aplikácia (PWA) na recepty, týždenný jedálniček a nákupný zoznam. Beží celá zadarmo na
 Cloudflare: jeden Worker servíruje Vue frontend aj API, dáta sú v D1, fotky v R2 a prihlásenie rieši
-Cloudflare Access. Verzia **0.1.0 beta**.
+Cloudflare Access. Verzia **1.0.0**.
 
 ## Čo aplikácia vie
 

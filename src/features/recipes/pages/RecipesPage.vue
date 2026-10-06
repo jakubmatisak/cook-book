@@ -2,6 +2,7 @@
 import {
   mdiBookOpenPageVariantOutline,
   mdiCheck,
+  mdiCheckboxMarkedOutline,
   mdiFilterVariant,
   mdiFridgeOutline,
   mdiHeart,
@@ -30,7 +31,12 @@ import PageHeader from '@/components/PageHeader.vue'
 import ListLayout from '@/components/ListLayout.vue'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
+import { useBulkDeleteRecipes } from '@/api/bulk'
+import BulkBar from '@/components/BulkBar.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useSelection } from '@/composables/useSelection'
 import ImportRecipeDialog from '../components/ImportRecipeDialog.vue'
+import RecipeBulkEditDialog from '../components/RecipeBulkEditDialog.vue'
 import RecipeCard from '../components/RecipeCard.vue'
 import RecipeFilterPanel from '../components/RecipeFilterPanel.vue'
 import RecipeTable from '../components/RecipeTable.vue'
@@ -274,6 +280,31 @@ const onboarding = computed(() =>
   })),
 )
 
+// ─── Hromadné úpravy: výber zaškrtávacími poľami, úprava a mazanie ───────────
+const selection = useSelection()
+const visibleIds = computed(() => recipes.value?.map((r) => r.id) ?? [])
+watch(visibleIds, (ids) => selection.keepOnly(ids))
+const bulkEditOpen = ref(false)
+const bulkDeleteOpen = ref(false)
+const bulkDelete = useBulkDeleteRecipes()
+const bulkSnackbar = ref({ show: false, text: '', color: 'success' })
+const notifyBulk = (text: string, color = 'success') => (bulkSnackbar.value = { show: true, text, color })
+async function onBulkDelete() {
+  try {
+    const deleted = await bulkDelete.mutateAsync(selection.selected.value)
+    bulkDeleteOpen.value = false
+    selection.stop()
+    notifyBulk(t('bulk.recipes.deleted', { recipes: tc('common.plural.recipes', deleted) }))
+  } catch (e) {
+    bulkDeleteOpen.value = false
+    notifyBulk(errorText(e, 'bulk.recipes.deleteFailed'), 'error')
+  }
+}
+function onBulkEdited(affected: number) {
+  selection.clear()
+  notifyBulk(t('bulk.recipes.updated', { recipes: tc('common.plural.recipes', affected) }))
+}
+
 const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry || filterCount.value))
 </script>
 
@@ -411,8 +442,29 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             <v-btn :icon="mdiViewGridOutline" value="grid" :aria-label="t('recipes.list.viewGrid')" />
             <v-btn :icon="mdiViewHeadline" value="table" :aria-label="t('recipes.list.viewTable')" />
           </v-btn-toggle>
+          <v-btn
+            :icon="mdiCheckboxMarkedOutline"
+            :variant="selection.active.value ? 'flat' : 'tonal'"
+            :color="selection.active.value ? 'primary' : undefined"
+            height="40"
+            width="40"
+            :aria-label="t('bulk.select')"
+            data-test="select-mode"
+            @click="selection.active.value ? selection.stop() : selection.start()"
+          />
         </div>
       </div>
+
+      <BulkBar
+        v-if="selection.active.value"
+        :count="selection.count.value"
+        :total="visibleIds.length"
+        @select-all="selection.set(visibleIds)"
+        @clear="selection.clear()"
+        @close="selection.stop()"
+        @edit="bulkEditOpen = true"
+        @remove="bulkDeleteOpen = true"
+      />
 
       <div
         v-if="activeChips.length || hasSavedState"
@@ -476,15 +528,39 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       </EmptyState>
     </template>
 
-    <RecipeTable v-else-if="recipes && view === 'table'" v-model:sort-by="tableSort" :items="recipes" />
+    <RecipeTable
+      v-else-if="recipes && view === 'table'"
+      v-model:sort-by="tableSort"
+      v-model:selected="selection.selected.value"
+      :items="recipes"
+      :selectable="selection.active.value"
+    />
 
     <v-row v-else-if="recipes">
       <v-col v-for="recipe in recipes" :key="recipe.id" cols="12" sm="6" lg="4">
-        <RecipeCard :recipe="recipe" />
+        <RecipeCard
+          :recipe="recipe"
+          :selectable="selection.active.value"
+          :selected="selection.has(recipe.id)"
+          @toggle="selection.toggle(recipe.id)"
+        />
       </v-col>
     </v-row>
 
     <ImportRecipeDialog v-model="importOpen" />
+
+    <RecipeBulkEditDialog v-model="bulkEditOpen" :ids="selection.selected.value" @saved="onBulkEdited" />
+    <ConfirmDialog
+      v-model="bulkDeleteOpen"
+      :title="t('bulk.recipes.deleteTitle')"
+      :text="t('bulk.recipes.deleteText', { recipes: tc('common.plural.recipes', selection.count.value) })"
+      :confirm-label="t('bulk.remove')"
+      :loading="bulkDelete.isPending.value"
+      @confirm="onBulkDelete"
+    />
+    <v-snackbar v-model="bulkSnackbar.show" :color="bulkSnackbar.color" timeout="4000">{{
+      bulkSnackbar.text
+    }}</v-snackbar>
 
     <RecipeFilterPanel
       v-if="list"

@@ -223,6 +223,17 @@ export interface PublicRecipeDetailDto extends RecipeDetailDto {
   ownedByMe: boolean
 }
 
+/** Hromadná úprava či mazanie: na koľkých položkách domácnosti sa zmena uplatnila. */
+export interface BulkAffectedDto {
+  affected: number
+}
+
+/** Hromadné mazanie ingrediencií: koľko sa zmazalo a ktoré (použité v receptoch) sa preskočili. */
+export interface IngredientBulkDeleteResult {
+  deleted: number
+  skipped: string[]
+}
+
 /** Pridávanie ukážkových receptov po dávkach: koľko sa práve pridalo a koľko ešte ostáva. */
 export interface SampleRecipesResult {
   added: number

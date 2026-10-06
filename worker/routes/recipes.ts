@@ -15,6 +15,9 @@ import { todayInZone } from '../../shared/dates'
 import { backfillCookLog } from '../services/cookLog'
 import { importRecipe } from '../services/importRecipe'
 import { suggestRecipes } from '../services/suggestions'
+import { bulkDeleteRecipes, bulkUpdateRecipes } from '../services/bulk'
+import { bulkIdsSchema, recipeBulkUpdateSchema } from '../../shared/schemas/bulk'
+import { HttpError } from '../errors'
 import { getUserSettings } from '../services/userSettings'
 import { requireOwner } from '../middleware/owner'
 import {
@@ -69,6 +72,19 @@ export const recipeRoutes = new Hono<AppEnv>()
   .post('/samples', requireOwner, async (c) => {
     const { set } = sampleSetQuerySchema.parse(c.req.query())
     return c.json(await addSampleRecipes(c.get('db'), c.get('user'), set))
+  })
+  // Hromadné mazanie a úprava vybraných receptov (viditeľnosť smie meniť len vlastník).
+  .post('/bulk/delete', async (c) => {
+    const { ids } = await parseBody(c, bulkIdsSchema)
+    return c.json(await bulkDeleteRecipes(c.get('db'), c.get('user').householdId, ids))
+  })
+  .post('/bulk/update', async (c) => {
+    const input = await parseBody(c, recipeBulkUpdateSchema)
+    const user = c.get('user')
+    if (input.visibility !== undefined && user.role !== 'owner') {
+      throw new HttpError(403, 'owner_required', 'Túto zmenu môže urobiť len vlastník domácnosti.')
+    }
+    return c.json(await bulkUpdateRecipes(c.get('db'), user, input))
   })
   // Zverejnenie a skrytie receptu smie len vlastník domácnosti.
   .put('/:id/visibility', requireOwner, async (c) => {

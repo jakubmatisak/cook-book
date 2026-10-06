@@ -27,6 +27,7 @@ export default {
     notFound: 'Not found',
   },
   nav: {
+    home: 'Overview',
     recipes: 'Recipes',
     plan: 'Plan',
     shopping: 'Shopping',

@@ -7,7 +7,7 @@ describe('formatAppVersion', () => {
     expect(formatAppVersion('1.2.3', '')).toBe('1.2.3')
   })
 
-  it('verzia aplikácie je z package.json a má štádium beta', () => {
-    expect(APP_VERSION_LABEL).toBe('0.1.0 beta')
+  it('verzia aplikácie je z package.json a stabilná verzia nemá štádium', () => {
+    expect(APP_VERSION_LABEL).toBe('1.0.0')
   })
 })

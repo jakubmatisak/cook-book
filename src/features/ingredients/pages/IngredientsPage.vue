@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { unitText } from '@/i18n/quantity'
-import { mdiCheck, mdiFormatListChecks, mdiMagnify, mdiPencilOutline, mdiPlaylistPlus } from '@mdi/js'
-import { computed, ref } from 'vue'
+import {
+  mdiCheck,
+  mdiCheckboxMarkedOutline,
+  mdiFormatListChecks,
+  mdiMagnify,
+  mdiPencilOutline,
+  mdiPlaylistPlus,
+} from '@mdi/js'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
 import type { IngredientDto } from '@shared/api'
@@ -13,11 +20,16 @@ import {
   useShopCategories,
   useUpdateIngredient,
 } from '@/api/catalog'
+import { useBulkDeleteIngredients } from '@/api/bulk'
+import BulkBar from '@/components/BulkBar.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useSelection } from '@/composables/useSelection'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import ListLayout from '@/components/ListLayout.vue'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
+import IngredientBulkEditDialog from '../components/IngredientBulkEditDialog.vue'
 import IngredientEditDialog from '../components/IngredientEditDialog.vue'
 
 const { t } = useI18n()
@@ -89,6 +101,43 @@ function edit(item: IngredientDto) {
   editOpen.value = true
 }
 
+// ─── Hromadné úpravy: výber zaškrtávacími poľami, úprava a mazanie ───────────
+const selection = useSelection()
+const visibleIds = computed(() => filtered.value.map((i) => i.id))
+watch(visibleIds, (ids) => selection.keepOnly(ids))
+const bulkEditOpen = ref(false)
+const bulkDeleteOpen = ref(false)
+const bulkDelete = useBulkDeleteIngredients()
+function onBulkEdited(affected: number) {
+  selection.clear()
+  snackbar.value = {
+    show: true,
+    color: 'success',
+    text: t('bulk.ingredients.updated', { items: tc('ingredients.count', affected) }),
+  }
+}
+async function onBulkDelete() {
+  try {
+    const { deleted, skipped } = await bulkDelete.mutateAsync(selection.selected.value)
+    bulkDeleteOpen.value = false
+    selection.stop()
+    const parts = [
+      deleted
+        ? t('bulk.ingredients.deleted', { items: tc('ingredients.count', deleted) })
+        : t('bulk.ingredients.nothingDeleted'),
+      skipped.length ? t('bulk.ingredients.skipped', { names: skipped.join(', ') }) : '',
+    ]
+    snackbar.value = {
+      show: true,
+      color: deleted ? 'success' : 'warning',
+      text: parts.filter(Boolean).join(' '),
+    }
+  } catch (e) {
+    bulkDeleteOpen.value = false
+    snackbar.value = { show: true, color: 'error', text: errorText(e, 'bulk.ingredients.deleteFailed') }
+  }
+}
+
 const usage = (item: IngredientDto) =>
   item.usageCount ? tc('ingredients.usedIn', item.usageCount) : t('ingredients.page.unused')
 </script>
@@ -109,7 +158,27 @@ const usage = (item: IngredientDto) =>
         >
           {{ t('ingredients.page.addStarters') }}
         </v-btn>
+        <v-btn
+          :prepend-icon="mdiCheckboxMarkedOutline"
+          :variant="selection.active.value ? 'flat' : 'tonal'"
+          :color="selection.active.value ? 'primary' : undefined"
+          data-test="select-mode"
+          @click="selection.active.value ? selection.stop() : selection.start()"
+        >
+          {{ t('bulk.select') }}
+        </v-btn>
       </PageHeader>
+
+      <BulkBar
+        v-if="selection.active.value"
+        :count="selection.count.value"
+        :total="visibleIds.length"
+        @select-all="selection.set(visibleIds)"
+        @clear="selection.clear()"
+        @close="selection.stop()"
+        @edit="bulkEditOpen = true"
+        @remove="bulkDeleteOpen = true"
+      />
 
       <div class="d-flex flex-wrap align-center ga-3 mb-4">
         <v-text-field
@@ -159,6 +228,15 @@ const usage = (item: IngredientDto) =>
         <v-divider v-if="index > 0" />
         <v-row dense align="center" class="px-4 py-2 ma-0">
           <v-col cols="12" sm="4" class="d-flex align-center">
+            <v-checkbox-btn
+              v-if="selection.active.value"
+              :model-value="selection.has(item.id)"
+              color="primary"
+              class="flex-grow-0 me-2"
+              :aria-label="t('bulk.selectAria', { name: item.name })"
+              :data-test="`select-${item.id}`"
+              @update:model-value="selection.toggle(item.id)"
+            />
             <div class="flex-grow-1">
               <div class="text-body-1 font-weight-bold">{{ item.name }}</div>
               <div class="text-caption text-medium-emphasis">{{ usage(item) }}</div>
@@ -200,6 +278,15 @@ const usage = (item: IngredientDto) =>
     </v-card>
 
     <IngredientEditDialog v-model="editOpen" :ingredient="editTarget" />
+    <IngredientBulkEditDialog v-model="bulkEditOpen" :ids="selection.selected.value" @saved="onBulkEdited" />
+    <ConfirmDialog
+      v-model="bulkDeleteOpen"
+      :title="t('bulk.ingredients.deleteTitle')"
+      :text="t('bulk.ingredients.deleteText', { items: tc('ingredients.count', selection.count.value) })"
+      :confirm-label="t('bulk.remove')"
+      :loading="bulkDelete.isPending.value"
+      @confirm="onBulkDelete"
+    />
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">{{
       snackbar.text
