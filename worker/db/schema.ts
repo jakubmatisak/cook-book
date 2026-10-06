@@ -71,6 +71,20 @@ export const householdMembers = sqliteTable(
   ],
 )
 
+/** Nastavenia jedného používateľa (jazyk, vzhľad, predvolené filtre), nezávislé od domácnosti. */
+export const userSettings = sqliteTable(
+  'user_settings',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    key: text('key').notNull(),
+    value: text('value', { mode: 'json' }).$type<unknown>().notNull(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.key] })],
+)
+
 export const familyMembers = sqliteTable(
   'family_members',
   {

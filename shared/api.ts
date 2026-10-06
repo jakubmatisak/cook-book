@@ -5,6 +5,7 @@ import type { RecipeFacets } from './recipeFacets'
 import type { RecipeCategory } from './recipes'
 import type { RecipeInputRaw } from './schemas/recipe'
 import type { UnitCode } from './units'
+import type { UserSettingsDto } from './userSettings'
 
 /**
  * DTO typy API zdieľané medzi frontendom (src/) a Workerom (worker/).
@@ -93,6 +94,8 @@ export interface MeResponse {
   household: HouseholdDto
   /** Všetky domácnosti používateľa (pre prepínač). */
   households: HouseholdSummaryDto[]
+  /** Nastavenia prihláseného človeka (jazyk, vzhľad, predvolené filtre). */
+  userSettings: UserSettingsDto
   members: FamilyMemberDto[]
   slots: MealSlotDto[]
   settings: HouseholdSettings

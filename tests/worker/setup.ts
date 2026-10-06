@@ -29,6 +29,7 @@ const TABLES_CHILD_FIRST = [
   'tags',
   'ingredients',
   'shop_categories',
+  'user_settings',
   'household_members',
   'users',
   'family_members',
