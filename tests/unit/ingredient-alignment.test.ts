@@ -15,7 +15,12 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-const ingredient = (id: string, name: string, quantity: number | null, unit: 'g' | 'PL' | null) => ({
+const ingredient = (
+  id: string,
+  name: string,
+  quantity: number | null,
+  unit: 'g' | 'PL' | 'balenie' | null,
+) => ({
   id,
   ingredientId: `g-${id}`,
   name,
@@ -96,5 +101,19 @@ describe('zarovnanie ingrediencií bez množstva', () => {
       '/public/recipes/r1': detail,
     })
     expect(hasQuantityColumn(wrapper)).toEqual([true, true, true])
+  })
+
+  it('dlhé množstvo (0,5 balenie) rozšíri stĺpec pre všetky riadky, názvy ostanú pod sebou', async () => {
+    const detail = {
+      ...base,
+      ingredients: [...base.ingredients, ingredient('i4', 'hrozienok', 0.5, 'balenie')],
+    }
+    const wrapper = await mountAt('/recepty/r1', '/recepty/:id', RecipeDetailPage, { '/recipes/r1': detail })
+    const widths = wrapper
+      .findAll('[data-test="ingredient-quantity"]')
+      .map((el) => (el.element as HTMLElement).style.minWidth)
+    expect(widths).toHaveLength(4)
+    expect(new Set(widths).size).toBe(1)
+    expect(parseFloat(widths[0]!)).toBeGreaterThan('0,5 balenie'.length)
   })
 })

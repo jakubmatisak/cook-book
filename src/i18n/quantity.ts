@@ -12,6 +12,10 @@ const FORMAT: QuantityFormat = { number: formatNumber, unit: unitText }
 export const formatQuantity = (quantity: number | null, unit: UnitCode | null): string =>
   sharedFormatQuantity(quantity, unit, FORMAT)
 
+/** Šírka stĺpca s množstvom: rovnaká pre všetky riadky receptu, aby sa zmestilo aj „0,5 balenie“. */
+export const quantityColumnWidth = (labels: string[]): string =>
+  `${Math.max(8, ...labels.map((label) => label.length + 1))}ch`
+
 /** Prepočítané množstvo (zlomky pre kusy a lyžice) v jazyku aplikácie. */
 export const formatScaled = (quantity: number | null, factor: number, unit: UnitCode | null): string =>
   sharedFormatScaled(quantity, factor, unit, FORMAT)

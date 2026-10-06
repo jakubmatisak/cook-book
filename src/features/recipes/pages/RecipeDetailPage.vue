@@ -25,7 +25,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { RecipeIngredientDto } from '@shared/api'
 import { addDays } from '@shared/dates'
-import { formatScaled } from '@/i18n/quantity'
+import { formatScaled, quantityColumnWidth } from '@/i18n/quantity'
 import { markdownFilename, recipeToMarkdown } from '@shared/markdown'
 import { ApiError, downloadFile } from '@/api/http'
 import { useIsOwner, useMe } from '@/api/me'
@@ -57,6 +57,12 @@ const groups = computed(() => {
   }
   return [...map.entries()].map(([name, items]) => ({ name, items }))
 })
+
+const quantityWidth = computed(() =>
+  quantityColumnWidth(
+    (recipe.value?.ingredients ?? []).map((item) => formatScaled(item.quantity, factor.value, item.unit)),
+  ),
+)
 
 const ingredientSuffix = (item: RecipeIngredientDto) =>
   (item.note ? `, ${item.note}` : '') + (item.isOptional ? ` (${t('recipes.detail.optional')})` : '')
@@ -351,7 +357,11 @@ function goBack() {
               </v-list-subheader>
               <v-list-item v-for="item in group.items" :key="item.id">
                 <template #prepend>
-                  <span class="font-weight-bold text-no-wrap me-3" style="min-width: 4.5rem">
+                  <span
+                    class="font-weight-bold text-no-wrap me-3"
+                    :style="{ minWidth: quantityWidth }"
+                    data-test="ingredient-quantity"
+                  >
                     {{ formatScaled(item.quantity, factor, item.unit) }}
                   </span>
                 </template>

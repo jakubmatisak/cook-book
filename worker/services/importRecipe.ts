@@ -177,6 +177,7 @@ const GROUP_SELECTOR = [
   '.recipe-ingredients__group', // varecha.pravda.sk
   '.wprm-recipe-group-name', // WP Recipe Maker
   '.ingredients-title', // recepty.aktuality.sk, dobruchut.aktuality.sk
+  '.substances-list h3', // dobruchut.aktuality.sk (starší vzhľad)
   '.ingredients .key-value h3', // najrecept.topky.sk
   '.ing h2', // kuchynalidla.sk
 ].join(', ')
@@ -184,6 +185,7 @@ const ROW_SELECTOR = [
   '.recipe-ingredients__row',
   '.wprm-recipe-ingredient',
   '.ingredient-item',
+  '.substances-list .item',
   '.ingredients .key-value .value',
   '.ing li',
   '.ing p',

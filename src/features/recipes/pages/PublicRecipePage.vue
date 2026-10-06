@@ -17,7 +17,7 @@ import { useCopyPublicRecipe, usePublicRecipe } from '@/api/publicRecipes'
 import EmptyState from '@/components/EmptyState.vue'
 import { errorText } from '@/i18n/errors'
 import { formatMinutes, tc } from '@/i18n/format'
-import { formatQuantity } from '@/i18n/quantity'
+import { formatQuantity, quantityColumnWidth } from '@/i18n/quantity'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -44,6 +44,12 @@ const groups = computed(() => {
   }
   return [...map.entries()].map(([name, items]) => ({ name, items }))
 })
+
+const quantityWidth = computed(() =>
+  quantityColumnWidth(
+    (recipe.value?.ingredients ?? []).map((item) => formatQuantity(item.quantity, item.unit)),
+  ),
+)
 
 const suffix = (item: RecipeIngredientDto) =>
   (item.note ? `, ${item.note}` : '') + (item.isOptional ? ` (${t('recipes.detail.optional')})` : '')
@@ -194,7 +200,11 @@ const openCopy = () => router.push(`/recepty/${snackbar.value.recipeId}`)
               </v-list-subheader>
               <v-list-item v-for="item in group.items" :key="item.id">
                 <template #prepend>
-                  <span class="font-weight-bold text-no-wrap me-3" style="min-width: 4.5rem">
+                  <span
+                    class="font-weight-bold text-no-wrap me-3"
+                    :style="{ minWidth: quantityWidth }"
+                    data-test="ingredient-quantity"
+                  >
                     {{ formatQuantity(item.quantity, item.unit) }}
                   </span>
                 </template>

@@ -53,6 +53,35 @@ describe('import z ďalších slovenských webov', () => {
     ])
   })
 
+  it('dobruchut.aktuality.sk (starší vzhľad): skupiny z h3 v .substances-list, riadky .item', async () => {
+    const ld = {
+      '@type': 'Recipe',
+      name: 'Grófkin koláč či barónkine rezy',
+      recipeIngredient: [
+        '450 g polohrubej múky',
+        ' trochu citrónovej kôry',
+        '7 ks jabĺk',
+        ' čokoládová poleva',
+      ],
+    }
+    const item = (amount: string, title: string) =>
+      `<div class="item"><div class="wrap"><div class="amount">
+        ${amount}  </div><div class="title">${title}</div><div class="tiny-clear"></div></div></div>`
+    const body = page(
+      `<div class="substances-list side-section"><h2 class="title-red">ingrediencie</h2>
+        <h3 class="title-red-small">Cesto</h3>${item('450\n g', 'polohrubej múky')}${item('trochu', 'citrónovej kôry')}
+        <h3 class="title-red-small">Plnka</h3>${item('7\n ks', 'jabĺk')}${item('', 'čokoládová poleva')}</div>`,
+      ldScript(JSON.stringify(ld)),
+    )
+    const result = await importFrom('https://dobruchut.example.sk/recept/74623/grofkin-kolac/', body)
+    expect(shape(result)?.map(([group, , , name]) => [group, name])).toEqual([
+      ['Cesto', 'polohrubej múky'],
+      ['Cesto', 'trochu citrónovej kôry'],
+      ['Plnka', 'jabĺk'],
+      ['Plnka', 'čokoládová poleva'],
+    ])
+  })
+
   it('najrecept.topky.sk: skupiny z h3 v .key-value (riadky sú dvojice .key a .value)', async () => {
     const ld = {
       '@type': 'Recipe',
