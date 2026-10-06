@@ -7,7 +7,7 @@ const entry: PlanEntryDto = {
   date: '2026-10-05',
   slotId: 'obed',
   recipeId: 'r1',
-  recipe: { id: 'r1', title: 'Guláš', servings: 4, coverImageUrl: null, deleted: false },
+  recipe: { id: 'r1', title: 'Guláš', servings: 4, coverImageUrl: null, deleted: false, category: 'hlavne' },
   freeText: null,
   servingsOverride: 6,
   note: 'bez soli',

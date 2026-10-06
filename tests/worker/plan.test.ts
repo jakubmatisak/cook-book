@@ -95,6 +95,22 @@ describe('jedálniček – záznamy', () => {
     expect(entries.map((e) => e.recipe?.title ?? e.freeText)).toEqual(['Zvyšky', 'Palacinky'])
   })
 
+  it('záznam naviazaný na už zmazaný recept sa v jedálničku nezobrazuje', async () => {
+    const { obed, vecera, recipe } = await setup()
+    await addEntry({ date: '2026-10-05', slotId: obed, recipeId: recipe.id })
+    await addEntry({ date: '2026-10-05', slotId: vecera, freeText: 'Zvyšky' })
+    // stav spred opravy: recept zmazaný, záznam v pláne ostal
+    await env.DB.prepare("update recipes set deleted_at = '2026-10-06T00:00:00.000Z'").run()
+    const entries = await week('2026-10-05', '2026-10-05')
+    expect(entries.map((e) => e.freeText)).toEqual(['Zvyšky'])
+  })
+
+  it('záznam obsahuje typ jedla receptu', async () => {
+    const { obed, recipe } = await setup()
+    const entry = await addEntry({ date: '2026-10-05', slotId: obed, recipeId: recipe.id })
+    expect(entry.recipe).toMatchObject({ category: 'hlavne' })
+  })
+
   it('presunie záznam na iný deň a slot a zmaže ho', async () => {
     const { obed, vecera, recipe } = await setup()
     const entry = await addEntry({ date: '2026-10-05', slotId: obed, recipeId: recipe.id })

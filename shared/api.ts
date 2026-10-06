@@ -238,6 +238,8 @@ export interface PlanEntryRecipeDto {
   servings: number
   /** Recept bol po naplánovaní zmazaný. */
   deleted: boolean
+  /** Typ jedla receptu (polievka, dezert…); slúži na filter v jedálničku. */
+  category: RecipeCategory
 }
 
 export interface PlanEntryDto {

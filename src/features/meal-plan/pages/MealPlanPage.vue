@@ -12,6 +12,7 @@ import {
 import { computed, nextTick, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { PlanEntryDto, TemplateApplyResult, WeekTemplateDto } from '@shared/api'
+import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type RecipeCategory } from '@shared/recipes'
 import { addDays, formatWeekRange, weekDates } from '@shared/dates'
 import { useMe } from '@/api/me'
 import { useCopyPlan, useDeleteEntry, usePlan, useSaveEntry } from '@/api/plan'
@@ -28,6 +29,7 @@ import WeekGrid from '../components/WeekGrid.vue'
 import WeekList from '../components/WeekList.vue'
 import {
   entryToInput,
+  filterEntriesByCategory,
   groupEntries,
   moveTarget,
   gridFits,
@@ -57,7 +59,18 @@ const dates = computed(() => weekDates(start.value))
 const isCurrentWeek = computed(() => dates.value.includes(today.value))
 
 const { data: entries, isPending, error } = usePlan(start, () => addDays(start.value, 6))
-const groups = computed(() => groupEntries(entries.value ?? []))
+// Filter podľa typu jedla (dezert, polievka…): chipy ukazujú typy, ktoré sa v týždni vyskytujú, a zvolené.
+const selectedCategories = ref<RecipeCategory[]>([])
+const categoryOptions = computed(() => {
+  const present = new Set<RecipeCategory>(selectedCategories.value)
+  for (const e of entries.value ?? []) if (e.recipe) present.add(e.recipe.category)
+  return RECIPE_CATEGORIES.filter((c) => present.has(c)).map((c) => ({
+    value: c,
+    title: RECIPE_CATEGORY_LABELS[c],
+  }))
+})
+const shownEntries = computed(() => filterEntriesByCategory(entries.value ?? [], selectedCategories.value))
+const groups = computed(() => groupEntries(shownEntries.value))
 const slots = computed(() => visibleSlots(me.value?.slots ?? [], entries.value ?? []))
 const members = computed(() => me.value?.members ?? [])
 
@@ -257,6 +270,26 @@ async function copyToNextWeek() {
       <router-link to="/rodina" class="text-primary font-weight-bold">Rodina</router-link>
       a porcie sa budú počítať automaticky.
     </v-alert>
+    <v-chip-group
+      v-if="categoryOptions.length > 1 || selectedCategories.length"
+      v-model="selectedCategories"
+      multiple
+      filter
+      color="primary"
+      class="mb-3 d-print-none"
+      aria-label="Typ jedla"
+      data-test="category-filter"
+    >
+      <v-chip
+        v-for="option in categoryOptions"
+        :key="option.value"
+        :value="option.value"
+        variant="outlined"
+        filter
+      >
+        {{ option.title }}
+      </v-chip>
+    </v-chip-group>
     <SuggestionsCard v-if="isCurrentWeek" class="d-print-none" :date="today" @plan="onPlanSuggestion" />
     <WeekGrid
       v-if="canGrid"

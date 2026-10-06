@@ -61,6 +61,27 @@ describe('decodeEntities', () => {
   })
 })
 
+describe('decodeEntities – diakritika a dvojité kódovanie', () => {
+  it('dekóduje slovenskú diakritiku zapísanú entitami', () => {
+    expect(
+      decodeEntities('gr&oacute;fkin kol&aacute;&#269; &scaron;&uacute;&zcaron;&yacute; &ocirc;sm&yacute;'),
+    ).toBe('grófkin koláč šúžý ôsmý')
+    expect(
+      decodeEntities(
+        '&Eacute;&Scaron;&Zcaron;&ccaron;&ncaron;&tcaron;&dcaron;&lcaron;&racute;&lacute;&auml;&uuml;&ouml;',
+      ),
+    ).toBe('ÉŠŽčňťďľŕĺäüö')
+  })
+
+  it('dekóduje aj dvojito zakódované entity (&amp;oacute;)', () => {
+    expect(decodeEntities('gr&amp;oacute;fkin kol&amp;aacute;&amp;#269;')).toBe('grófkin koláč')
+  })
+
+  it('neznáme entity nechá bez zmeny', () => {
+    expect(decodeEntities('a &neexistuje; b')).toBe('a &neexistuje; b')
+  })
+})
+
 describe('mapCategory', () => {
   it('namapuje bežné názvy kategórií', () => {
     expect(mapCategory('Dessert')).toBe('dezert')
