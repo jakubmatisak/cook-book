@@ -4,6 +4,8 @@ import {
   listToParam,
   parseListQuery,
   parseRecipeView,
+  queryToRestore,
+  savableListQuery,
   stateToTableSort,
   tableSortToState,
   toggleValue,
@@ -122,5 +124,44 @@ describe('parseRecipeView', () => {
     expect(parseRecipeView('grid')).toBe('grid')
     expect(parseRecipeView('hocico')).toBe('grid')
     expect(parseRecipeView(null)).toBe('grid')
+  })
+})
+
+describe('predvolené filtre (pamätajú sa na používateľa)', () => {
+  it('uloží len parametre filtrov a zoradenia, bez hľadaného textu a cudzích kľúčov', () => {
+    expect(
+      savableListQuery({
+        q: 'guláš',
+        kategoria: 'dezert',
+        doma: '1',
+        zoradit: 'time',
+        smer: 'asc',
+        tyzden: 'x',
+      }),
+    ).toEqual({ kategoria: 'dezert', doma: '1', zoradit: 'time', smer: 'asc' })
+  })
+
+  it('berie prvú hodnotu opakovaného parametra a zahodí prázdne a nie textové', () => {
+    expect(
+      savableListQuery({ kategoria: ['dezert', 'polievka'], tag: '', cas: null, narocnost: '2' }),
+    ).toEqual({
+      kategoria: 'dezert',
+      narocnost: '2',
+    })
+  })
+
+  it('bez filtrov vráti null (nič sa neukladá, uložené sa vymaže)', () => {
+    expect(savableListQuery({})).toBeNull()
+    expect(savableListQuery({ q: 'guláš' })).toBeNull()
+  })
+
+  it('uložené filtre sa vrátia len keď adresa nenesie žiadny filter ani hľadanie', () => {
+    const saved = { kategoria: 'dezert' }
+    expect(queryToRestore({}, saved)).toEqual({ kategoria: 'dezert' })
+    expect(queryToRestore({ doma: '1' }, saved)).toBeNull()
+    expect(queryToRestore({ q: 'guláš' }, saved)).toBeNull()
+    expect(queryToRestore({ tyzden: 'x' }, saved)).toEqual({ kategoria: 'dezert' })
+    expect(queryToRestore({}, undefined)).toBeNull()
+    expect(queryToRestore({}, {})).toBeNull()
   })
 })

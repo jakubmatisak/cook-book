@@ -18,8 +18,15 @@ const subtitle = computed(() => {
 
 <template>
   <v-card :to="`/recepty/${recipe.id}`" class="h-100 d-flex flex-column">
-    <v-img v-if="recipe.coverImageUrl" :src="recipe.coverImageUrl" :aspect-ratio="4 / 3" cover />
-    <v-responsive v-else :aspect-ratio="4 / 3" class="bg-surface-variant">
+    <!-- Fotka má vždy rovnaký pomer strán a neroztiahne sa (v-responsive inak vyplní zvyšok karty). -->
+    <v-img
+      v-if="recipe.coverImageUrl"
+      :src="recipe.coverImageUrl"
+      :aspect-ratio="4 / 3"
+      cover
+      class="flex-grow-0 flex-shrink-0"
+    />
+    <v-responsive v-else :aspect-ratio="4 / 3" class="bg-surface-variant flex-grow-0 flex-shrink-0">
       <div class="d-flex align-center justify-center h-100">
         <v-icon :icon="mdiPotSteamOutline" size="56" color="primary" class="opacity-60" />
       </div>
@@ -28,7 +35,18 @@ const subtitle = computed(() => {
       <FavoriteButton :recipe-id="recipe.id" :is-favorite="recipe.isFavorite" />
     </div>
     <v-card-item>
-      <v-card-title class="text-wrap text-subtitle-1 font-weight-bold" style="line-height: 1.3">
+      <!-- Nadpis má vždy vyhradené dva riadky (dlhší sa skráti), aby mali všetky karty rovnakú výšku. -->
+      <v-card-title
+        class="text-wrap text-subtitle-1 font-weight-bold"
+        style="
+          line-height: 1.3;
+          min-height: 2.6em;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        "
+      >
         {{ recipe.title }}
       </v-card-title>
       <v-card-subtitle>
@@ -49,7 +67,8 @@ const subtitle = computed(() => {
         Chýba: {{ recipe.missing.slice(0, 3).join(', ') }}{{ recipe.missing.length > 3 ? '…' : '' }}
       </v-chip>
     </v-card-text>
-    <v-card-text v-if="recipe.tags.length" class="pt-0 d-flex flex-wrap ga-1">
+    <!-- Riadok tagov je vždy vyhradený, aj keď recept tagy nemá. -->
+    <v-card-text class="pt-0 d-flex flex-wrap ga-1 align-start mt-auto" style="min-height: 2.25rem">
       <v-chip
         v-for="tag in recipe.tags.slice(0, 3)"
         :key="tag.id"

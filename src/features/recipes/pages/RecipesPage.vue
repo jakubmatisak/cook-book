@@ -26,7 +26,9 @@ import {
 import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS, type RecipeCategory } from '@shared/recipes'
 import type { TimeBucket } from '@shared/recipeFacets'
 import { useTags } from '@/api/catalog'
+import { useMe } from '@/api/me'
 import { useRecipes } from '@/api/recipes'
+import { useSaveUserSettings } from '@/api/userSettings'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { plural } from '@/lib/format'
@@ -38,6 +40,8 @@ import {
   activeFilterCount,
   listToParam,
   parseListQuery,
+  queryToRestore,
+  savableListQuery,
   parseRecipeView,
   stateToTableSort,
   tableSortToState,
@@ -96,6 +100,46 @@ watch(view, (value) => {
   }
 })
 
+// ─── Pamätanie na používateľa: pohľad a predvolené filtre ─────────────────────
+// Po načítaní nastavení sa vrátia uložené filtre (len keď adresa nenesie žiadny) a pohľad; zmeny sa ukladajú.
+const { data: me } = useMe()
+const saveSettings = useSaveUserSettings()
+const settingsRestored = ref(false)
+watch(
+  () => me.value?.userSettings,
+  (settings) => {
+    if (!settings || settingsRestored.value) return
+    settingsRestored.value = true
+    const restore = queryToRestore(route.query, settings.recipeQuery)
+    if (restore) void router.replace({ query: { ...route.query, ...restore } })
+    if (settings.recipeView) view.value = settings.recipeView
+  },
+  { immediate: true },
+)
+
+let saveTimer: ReturnType<typeof setTimeout> | undefined
+watch(
+  () => JSON.stringify(savableListQuery(route.query)),
+  (serialized) => {
+    if (!settingsRestored.value) return
+    clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+      const wanted = savableListQuery(route.query)
+      const stored = me.value?.userSettings.recipeQuery
+      if (JSON.stringify(wanted) !== JSON.stringify(stored ?? null))
+        saveSettings.mutate({ recipeQuery: wanted })
+    }, 800)
+    void serialized
+  },
+)
+onBeforeUnmount(() => clearTimeout(saveTimer))
+
+watch(view, (value) => {
+  if (settingsRestored.value && value !== (me.value?.userSettings.recipeView ?? 'grid')) {
+    saveSettings.mutate({ recipeView: value })
+  }
+})
+
 // ─── Filtre ───────────────────────────────────────────────────────────────────
 const filtersOpen = ref(false)
 const importOpen = ref(false)
@@ -137,6 +181,23 @@ function clearFilters() {
     oblubene: undefined,
   })
 }
+
+/** Úplný reset: všetky filtre, „Čo viem uvariť“, obľúbené aj zoradenie späť na predvolené (vymaže sa aj uložené). */
+function resetAll() {
+  setQuery({
+    kategoria: undefined,
+    tag: undefined,
+    narocnost: undefined,
+    cas: undefined,
+    oblubene: undefined,
+    doma: undefined,
+    chyba: undefined,
+    zoradit: undefined,
+    smer: undefined,
+  })
+}
+
+const hasSavedState = computed(() => savableListQuery(route.query) !== null)
 
 function clearAll() {
   search.value = ''
@@ -303,7 +364,11 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
     </div>
   </div>
 
-  <div v-if="activeChips.length" class="d-flex flex-wrap align-center ga-2 mb-3" data-test="active-filters">
+  <div
+    v-if="activeChips.length || hasSavedState"
+    class="d-flex flex-wrap align-center ga-2 mb-3"
+    data-test="active-filters"
+  >
     <v-chip
       v-for="chip in activeChips"
       :key="chip.key"
@@ -315,7 +380,9 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
     >
       {{ chip.label }}
     </v-chip>
-    <v-btn size="small" variant="text" @click="clearFilters">Zrušiť filtre</v-btn>
+    <v-btn size="small" variant="text" data-test="reset-filters" @click="resetAll"
+      >Zrušiť všetky filtre</v-btn
+    >
   </div>
 
   <v-alert v-if="error" type="error" :text="error.message" />

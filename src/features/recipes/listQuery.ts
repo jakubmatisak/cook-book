@@ -104,3 +104,39 @@ export type RecipeView = 'grid' | 'table'
 /** Uložený pohľad (mriežka/tabuľka); čokoľvek iné je mriežka. */
 export const parseRecipeView = (raw: string | null | undefined): RecipeView =>
   raw === 'table' ? 'table' : 'grid'
+
+/** Parametre adresy, ktoré sa ukladajú ako predvolené filtre a zoradenie (hľadaný text nie). */
+const SAVED_QUERY_KEYS = [
+  'kategoria',
+  'tag',
+  'narocnost',
+  'cas',
+  'oblubene',
+  'doma',
+  'chyba',
+  'zoradit',
+  'smer',
+] as const
+
+/** Všetky parametre zoznamu receptov vrátane hľadania; ak je niektorý v adrese, uložené filtre sa nevracajú. */
+const LIST_QUERY_KEYS = ['q', ...SAVED_QUERY_KEYS] as const
+
+/** Filtre a zoradenie z adresy na uloženie k používateľovi; bez filtrov `null` (uložené sa vymažú). */
+export function savableListQuery(query: Query): Record<string, string> | null {
+  const saved: Record<string, string> = {}
+  for (const key of SAVED_QUERY_KEYS) {
+    const value = one(query[key])
+    if (value) saved[key] = value
+  }
+  return Object.keys(saved).length > 0 ? saved : null
+}
+
+/** Uložené filtre na obnovenie pri otvorení Receptov bez filtrov v adrese, inak `null`. */
+export function queryToRestore(
+  query: Query,
+  saved: Record<string, string> | undefined,
+): Record<string, string> | null {
+  if (!saved || Object.keys(saved).length === 0) return null
+  if (LIST_QUERY_KEYS.some((key) => one(query[key]))) return null
+  return saved
+}

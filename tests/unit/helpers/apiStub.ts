@@ -9,6 +9,7 @@ export const me = (role: HouseholdRole, isAdmin = false): MeResponse => ({
   user: { id: 'u1', email: 'ja@example.com', name: 'ja', memberId: null, role, isAdmin },
   household: { id: 'h1', name: 'Doma' },
   households: [{ id: 'h1', name: 'Doma', role }],
+  userSettings: {},
   members: [],
   slots: [
     { id: 's1', name: 'Obed', sortOrder: 0, isEnabled: true, defaultTime: '12:00' },
