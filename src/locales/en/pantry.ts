@@ -28,6 +28,8 @@ export default {
     homeIntro:
       'Mark what you have at home. You can add a quantity and expiry date to an item; the shopping list then subtracts what you already have, and the “What can I cook” filter shows what you have everything for.',
     search: 'Search ingredients',
+    addIngredient: 'Add ingredient',
+    addFromSearch: 'Add "{name}" as an ingredient',
     category: 'Category',
     onlyHome: 'Only what I have',
     expiring: 'Expiring soon',
@@ -60,6 +62,17 @@ export default {
     quantityInvalid: 'Quantity, e.g. 500 or 1.5.',
     saveFailed: 'Saving failed.',
     removeFailed: 'Removing failed.',
+  },
+  new: {
+    title: 'New ingredient',
+    intro:
+      'Adds an ingredient that is missing from the list (e.g. hard cheese) so you can mark it as at home.',
+    name: 'Ingredient name',
+    nameRequired: 'Enter the ingredient name.',
+    category: 'Shop category',
+    unit: 'Default unit',
+    atHome: 'I have it at home',
+    saveFailed: 'The ingredient could not be added.',
   },
   staple: {
     newTitle: 'New recurring item',

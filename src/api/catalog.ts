@@ -47,6 +47,24 @@ export function useShopCategories() {
   return { ...query, data }
 }
 
+/** Vytvorí novú ingredienciu (ručne zo Špajze); nová sa rovno doplní do pamäte zoznamu surovín. */
+export function useCreateIngredient(): UseMutationReturnType<
+  IngredientDto,
+  Error,
+  { name: string; shopCategoryId: string | null; defaultUnit: UnitCode | null },
+  unknown
+> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (input) =>
+      apiFetch<IngredientDto>('/ingredients', { method: 'POST', body: JSON.stringify(input) }),
+    onSuccess: (created) => {
+      addIngredientsToCache(client, [created])
+      void client.invalidateQueries({ queryKey: [...INGREDIENTS_KEY, 'starter-status'] })
+    },
+  })
+}
+
 /** Koľko základných surovín chýba (tlačidlo „Pridať základné suroviny“ dáva zmysel, len keď niečo chýba). */
 export const useStarterStatus = () =>
   useQuery({

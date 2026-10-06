@@ -22,6 +22,7 @@ import { useToday } from '@/composables/useToday'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
 import IngredientEditDialog from '@/features/ingredients/components/IngredientEditDialog.vue'
+import NewIngredientDialog from '../components/NewIngredientDialog.vue'
 import PantryItemDialog from '../components/PantryItemDialog.vue'
 import StapleDialog from '../components/StapleDialog.vue'
 import { describeCadence, describeExpiry, expiryStatus } from '../format'
@@ -111,6 +112,14 @@ function editItem(ingredient: IngredientDto) {
   itemOpen.value = true
 }
 
+// ─── Nová surovina (ručné pridanie) ───────────────────────────────────────────
+const newOpen = ref(false)
+const newName = ref('')
+function addIngredient(name = '') {
+  newName.value = name
+  newOpen.value = true
+}
+
 // ─── Stále položky ───────────────────────────────────────────────────────────
 const stapleOpen = ref(false)
 const stapleTarget = ref<StapleDto | null>(null)
@@ -133,15 +142,19 @@ function editStaple(staple: StapleDto | null) {
         >
           {{ t('pantry.page.addStaple') }}
         </v-btn>
-        <v-btn
-          v-else
-          color="primary"
-          variant="tonal"
-          :prepend-icon="mdiPotSteamOutline"
-          :to="{ path: '/recepty', query: { doma: '1' } }"
-        >
-          {{ t('pantry.page.cookable') }}
-        </v-btn>
+        <template v-else>
+          <v-btn color="primary" :prepend-icon="mdiPlus" data-test="add-ingredient" @click="addIngredient()">
+            {{ t('pantry.page.addIngredient') }}
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            :prepend-icon="mdiPotSteamOutline"
+            :to="{ path: '/recepty', query: { doma: '1' } }"
+          >
+            {{ t('pantry.page.cookable') }}
+          </v-btn>
+        </template>
       </PageHeader>
 
       <v-tabs v-model="tab" color="primary" class="mb-4">
@@ -202,9 +215,19 @@ function editStaple(staple: StapleDto | null) {
         :title="t('pantry.page.empty.title')"
         :text="t('pantry.page.empty.text')"
       />
-      <p v-else-if="!groups.length" class="text-body-2 text-medium-emphasis">
-        {{ t('pantry.page.nothingFound') }}
-      </p>
+      <div v-else-if="!groups.length" class="d-flex flex-column align-start ga-2">
+        <p class="text-body-2 text-medium-emphasis">{{ t('pantry.page.nothingFound') }}</p>
+        <v-btn
+          v-if="search?.trim()"
+          variant="tonal"
+          color="primary"
+          :prepend-icon="mdiPlus"
+          data-test="add-from-search"
+          @click="addIngredient(search.trim())"
+        >
+          {{ t('pantry.page.addFromSearch', { name: search.trim() }) }}
+        </v-btn>
+      </div>
 
       <v-card v-else>
         <v-list class="py-0">
@@ -321,6 +344,7 @@ function editStaple(staple: StapleDto | null) {
     />
     <IngredientEditDialog v-model="ingredientEditOpen" :ingredient="itemTarget" />
     <StapleDialog v-model="stapleOpen" :staple="stapleTarget" />
+    <NewIngredientDialog v-model="newOpen" :initial-name="newName" />
 
     <v-snackbar v-model="snackbar.show" color="error">{{ snackbar.text }}</v-snackbar>
   </ListLayout>

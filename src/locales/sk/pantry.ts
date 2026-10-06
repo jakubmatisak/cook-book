@@ -29,6 +29,8 @@ export default {
     homeIntro:
       'Označ, čo máš doma. Pri položke môžeš doplniť množstvo a trvanlivosť, nákupný zoznam potom odpočíta, čo už máš, a filter „Čo viem uvariť“ ukáže, na čo máš všetko.',
     search: 'Hľadať ingredienciu',
+    addIngredient: 'Pridať surovinu',
+    addFromSearch: 'Pridať „{name}“ medzi suroviny',
     category: 'Kategória',
     onlyHome: 'Len čo mám doma',
     expiring: 'Končí trvanlivosť',
@@ -61,6 +63,17 @@ export default {
     quantityInvalid: 'Množstvo napr. 500 alebo 1,5.',
     saveFailed: 'Uloženie zlyhalo.',
     removeFailed: 'Odstránenie zlyhalo.',
+  },
+  new: {
+    title: 'Nová surovina',
+    intro:
+      'Pridá surovinu, ktorá v zozname chýba (napr. Syr tvrdý), aby si ju mohol označiť, že ju máš doma.',
+    name: 'Názov suroviny',
+    nameRequired: 'Zadaj názov suroviny.',
+    category: 'Kategória obchodu',
+    unit: 'Predvolená jednotka',
+    atHome: 'Mám to doma',
+    saveFailed: 'Surovinu sa nepodarilo pridať.',
   },
   staple: {
     newTitle: 'Nová stála položka',
