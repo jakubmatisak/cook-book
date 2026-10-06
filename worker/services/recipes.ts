@@ -1,12 +1,6 @@
 import { and, asc, eq, exists, inArray, isNull, ne, or, sql, type SQL } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
-import type {
-  RecipeDetailDto,
-  RecipeListDto,
-  RecipeSummaryDto,
-  SampleRecipesResult,
-  TagDto,
-} from '../../shared/api'
+import type { RecipeDetailDto, RecipeListDto, RecipeSummaryDto, TagDto } from '../../shared/api'
 import {
   applyRecipeFilters,
   computeFacets,
@@ -17,8 +11,7 @@ import {
   type SortKey,
 } from '../../shared/recipeFacets'
 import type { RecipeVisibility } from '../../shared/recipes'
-import { SAMPLE_RECIPES } from '../../shared/data/sampleRecipes'
-import { recipeInputSchema, type RecipeInput } from '../../shared/schemas/recipe'
+import type { RecipeInput } from '../../shared/schemas/recipe'
 import { normalizeText, slugify } from '../../shared/text'
 import { newId } from '../../shared/ids'
 import type { Db } from '../db/client'
@@ -175,25 +168,6 @@ export async function saveRecipe(db: Db, user: UserRow, input: RecipeInput, id?:
     const [first, ...rest] = statements
     return [first!, ...rest]
   }
-}
-
-/** Najviac toľko ukážkových receptov sa pridá na jedno volanie (limit dopytov na jedno spustenie Workera). */
-const SAMPLE_BATCH = 4
-
-/**
- * Pridá ukážkové recepty, ktoré domácnosť ešte nemá (podľa názvu bez diakritiky), po dávkach.
- * Vráti, koľko sa pridalo a koľko ešte chýba; volá sa opakovane, kým `remaining` nie je 0.
- */
-export async function addSampleRecipes(db: Db, user: UserRow): Promise<SampleRecipesResult> {
-  const existing = await db
-    .select({ title: recipes.titleNormalized })
-    .from(recipes)
-    .where(and(eq(recipes.householdId, user.householdId), isNull(recipes.deletedAt)))
-  const have = new Set(existing.map((r) => r.title))
-  const missing = SAMPLE_RECIPES.filter((r) => !have.has(normalizeText(r.title)))
-  const batch = missing.slice(0, SAMPLE_BATCH)
-  for (const sample of batch) await saveRecipe(db, user, recipeInputSchema.parse(sample))
-  return { added: batch.length, remaining: missing.length - batch.length }
 }
 
 /** Zmení viditeľnosť receptu domácnosti (súkromný ↔ verejný). */

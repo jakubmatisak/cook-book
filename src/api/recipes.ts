@@ -5,7 +5,6 @@ import type {
   ImportRecipeResultDto,
   RecipeDetailDto,
   RecipeListDto,
-  SampleRecipesResult,
   SuggestionDto,
 } from '@shared/api'
 import type { SortDir, SortKey, TimeBucket } from '@shared/recipeFacets'
@@ -86,28 +85,6 @@ export function useSaveRecipe(): UseMutationReturnType<RecipeDetailDto, Error, S
       // Nové suroviny z receptu sa doplnia do pamäte z odpovede, zoznam sa nesťahuje znova.
       addIngredientsToCache(client, ingredientsFromRecipe(detail))
       void client.invalidateQueries({ queryKey: ['tags'] })
-    },
-  })
-}
-
-/** Pridá ukážkové recepty po dávkach (server má limit dopytov) a vráti, koľko ich pribudlo. */
-export function useAddSampleRecipes(): UseMutationReturnType<number, Error, void, unknown> {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: async () => {
-      let total = 0
-      // Najviac 21 receptov po štyroch, poistka proti nekonečnému cyklu.
-      for (let batch = 0; batch < 10; batch++) {
-        const result = await apiFetch<SampleRecipesResult>('/recipes/samples', { method: 'POST' })
-        total += result.added
-        if (result.remaining === 0 || result.added === 0) break
-      }
-      return total
-    },
-    onSettled: () => {
-      void client.invalidateQueries({ queryKey: ['recipes', 'list'] })
-      void client.invalidateQueries({ queryKey: ['tags'] })
-      markIngredientsStale(client)
     },
   })
 }

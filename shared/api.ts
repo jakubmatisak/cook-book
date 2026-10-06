@@ -222,12 +222,6 @@ export interface PublicRecipeDetailDto extends RecipeDetailDto {
   ownedByMe: boolean
 }
 
-/** Pridávanie ukážkových receptov po dávkach: koľko sa práve pridalo a koľko ešte ostáva. */
-export interface SampleRecipesResult {
-  added: number
-  remaining: number
-}
-
 /** Výsledok importu z webu: predvyplnený recept na kontrolu, fotka je už uložená v domácnosti. */
 export interface ImportRecipeResultDto {
   recipe: RecipeInputRaw
