@@ -187,16 +187,32 @@ const CATEGORY_PATTERNS: readonly [RegExp, RecipeCategory][] = [
   [/desiat|snack/, 'desiata'],
 ]
 
-/** Kategória zo schema.org (`recipeCategory`) na našu; neznáma je hlavné jedlo. */
-export function mapCategory(value: unknown): RecipeCategory {
+/** Prvá rozpoznaná kategória (`recipeCategory`, kľúčové slová), inak null. */
+function matchCategory(value: unknown): RecipeCategory | null {
   const items = Array.isArray(value) ? value : [value]
   for (const item of items) {
     const text = normalizeText(cleanText(item))
     const hit = CATEGORY_PATTERNS.find(([pattern]) => pattern.test(text))
     if (hit) return hit[1]
   }
-  return 'hlavne'
+  return null
 }
+
+/** Kategória zo schema.org (`recipeCategory`) na našu; neznáma je hlavné jedlo. */
+export function mapCategory(value: unknown): RecipeCategory {
+  return matchCategory(value) ?? 'hlavne'
+}
+
+/** Slová z kľúčových slov, ktoré nič nehovoria o recepte (webové rubriky), ani ako tag. */
+const GENERIC_KEYWORDS: ReadonlySet<string> = new Set([
+  'chody',
+  'sposob pripravy',
+  'recepty',
+  'recepty z pravdy',
+])
+
+const keywordList = (value: unknown): string[] =>
+  asList(value).flatMap((v) => (typeof v === 'string' ? v.split(',').map(cleanText).filter(Boolean) : []))
 
 // ─── Ingrediencie ─────────────────────────────────────────────────────────────
 
@@ -377,6 +393,23 @@ function flattenInstructions(value: unknown): string[] {
   return []
 }
 
+/** Postup je niekedy jeden dlhý odsek; rozdelí sa po vetách na kroky do cca 300 znakov (nič sa nestratí). */
+const LONG_STEP = 400
+const STEP_TARGET = 300
+
+export function splitLongStep(steps: string[]): string[] {
+  if (steps.length !== 1 || steps[0]!.length <= LONG_STEP) return steps
+  const sentences = steps[0]!.split(/(?<=[.!?])\s+(?=[A-ZÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ])/u)
+  const grouped: string[] = []
+  for (const sentence of sentences) {
+    const last = grouped[grouped.length - 1]
+    if (last !== undefined && last.length + 1 + sentence.length <= STEP_TARGET) {
+      grouped[grouped.length - 1] = `${last} ${sentence}`
+    } else grouped.push(sentence)
+  }
+  return grouped
+}
+
 function firstImage(value: unknown): string | null {
   if (typeof value === 'string') return value.trim() || null
   if (Array.isArray(value)) {
@@ -396,13 +429,13 @@ const asList = (value: unknown): unknown[] =>
 const MAX_IMPORTED_TAGS = 8
 
 function splitKeywords(value: unknown): string[] {
-  const parts = asList(value).flatMap((v) => (typeof v === 'string' ? v.split(',') : []))
   const seen = new Set<string>()
   const tags: string[] = []
-  for (const part of parts) {
-    const tag = cleanText(part)
+  for (const tag of keywordList(value)) {
     const key = normalizeText(tag)
-    if (!tag || tag.length > 40 || seen.has(key)) continue
+    // Preč s hviezdičkovými rubrikami („* Recepty z Pravdy“), všeobecnými slovami a typom jedla (ten je v kategórii).
+    if (!/^[\p{L}\p{N}]/u.test(tag) || GENERIC_KEYWORDS.has(key) || matchCategory(tag)) continue
+    if (tag.length > 40 || seen.has(key)) continue
     seen.add(key)
     tags.push(tag)
   }
@@ -435,7 +468,9 @@ function build(node: Obj, sources: ImportSources, requireContent: boolean): Impo
       note: i.note ? clip(i.note, 200) : null,
       isOptional: false,
     }))
-  const steps = flattenInstructions(node['recipeInstructions']).map((text) => ({ text: clip(text, 5000) }))
+  const steps = splitLongStep(flattenInstructions(node['recipeInstructions'])).map((text) => ({
+    text: clip(text, 5000),
+  }))
   if (requireContent && ingredients.length === 0 && steps.length === 0) return null
 
   const yieldValue = parseYield(node['recipeYield'])
@@ -452,7 +487,8 @@ function build(node: Obj, sources: ImportSources, requireContent: boolean): Impo
   const recipe: RecipeInputRaw = {
     title,
     description: description || null,
-    category: mapCategory(node['recipeCategory']),
+    category:
+      matchCategory(node['recipeCategory']) ?? matchCategory(keywordList(node['keywords'])) ?? 'hlavne',
     servings: yieldValue ?? 4,
     prepMinutes: prep,
     cookMinutes: prep === null && cook === null ? total : cook,

@@ -414,3 +414,101 @@ describe('extractRecipe – tagy', () => {
     expect(result.recipe.tags).toEqual(Array.from({ length: 8 }, (_, i) => `tag${i}`))
   })
 })
+
+describe('varecha.pravda.sk – Grófkin jablkový koláč', () => {
+  const longStep =
+    'Heru, žĺtka a práškový cukor vymiešame elektrickým šľahačom. Pridáme múku spolu s kypriacim práškom. ' +
+    'Prenesieme na dosku a vypracujeme cesto. Z neho si tak 1/4-1/3 oddelíme a dáme do mrazničky. ' +
+    'Ostatné cesto dáme na cca 1 hodinu do chladničky. Potom rozohrejeme rúru, vyberieme cesto z chladničky a ' +
+    'vyvaľkáme ho na veľkosť plechu 25x35cm. Na cesto navrstvíme strúhané jablká, ktoré sme osladili cukrom. ' +
+    'Jablkovú plnku zarovnáme. Potom z bielkov ušľaháme sneh, ktorý dáme na jablkovú plnku. Pridala som aj hrozienka. ' +
+    'Z mrazničky vyberieme odložený kus cesta a na veľkých okách strúhadla ho nastrúhame na vrch koláča. ' +
+    'Takto upravený koláč dáme piecť do rúry predhriatej na 180 stupňov asi na 30 minút.'
+
+  const recipe = {
+    '@type': 'Recipe',
+    name: 'Grófkin jablkový koláč ',
+    recipeYield: '15 porcií',
+    prepTime: 'PT70M',
+    cookTime: 'PT30M',
+    totalTime: 'PT100M',
+    keywords: [
+      'Banskobystrický kraj',
+      'Bezmäsité jedlá',
+      'Chody',
+      'Dezerty',
+      'Lacné jedlá',
+      '* Recepty z Pravdy',
+      'Slovenská kuchyňa',
+      'Spôsob prípravy',
+    ],
+    recipeIngredient: [
+      'Hera, 150 g',
+      'cukor práškový, 120 g',
+      'prášok do pečiva, 1/2 balíčka',
+      'múka hladká, 450 g',
+      'žĺtky, 4 ks',
+      'jablká , 1 700ml pohár strúhané',
+      'cukor škoricový , 2 balíčky',
+      'cukor kryštál, 2 PL',
+      'hrozienka, 2 hrste',
+      'bielky, sneh zo 4  ks',
+    ],
+    recipeInstructions: [{ '@type': 'HowToStep', text: longStep }],
+  }
+
+  it('množstvá za čiarkou sa čítajú ako množstvá, balíček je balenie', () => {
+    const parsed = extractRecipe(sources([recipe]))!.recipe.ingredients!.map((i) => [
+      i.name,
+      i.quantity,
+      i.unit,
+      i.note,
+    ])
+    expect(parsed).toEqual([
+      ['Hera', 150, 'g', null],
+      ['cukor práškový', 120, 'g', null],
+      ['prášok do pečiva', 0.5, 'balenie', null],
+      ['múka hladká', 450, 'g', null],
+      ['žĺtky', 4, 'ks', null],
+      ['jablká', 1, null, '700ml pohár strúhané'],
+      ['cukor škoricový', 2, 'balenie', null],
+      ['cukor kryštál', 2, 'PL', null],
+      ['hrozienka', 2, null, 'hrste'],
+      ['bielky', null, null, 'sneh zo 4 ks'],
+    ])
+  })
+
+  it('typ jedla sa určí z kľúčových slov (Dezerty), keď web recipeCategory neuvádza', () => {
+    expect(extractRecipe(sources([recipe]))!.recipe.category).toBe('dezert')
+  })
+
+  it('tagy bez šumu: bez hviezdičkových, všeobecných slov a slova, ktoré už je typom jedla', () => {
+    expect(extractRecipe(sources([recipe]))!.recipe.tags).toEqual([
+      'Banskobystrický kraj',
+      'Bezmäsité jedlá',
+      'Lacné jedlá',
+      'Slovenská kuchyňa',
+    ])
+  })
+
+  it('jeden dlhý odsek postupu sa rozdelí na prehľadné kroky bez straty textu', () => {
+    const steps = extractRecipe(sources([recipe]))!.recipe.steps!.map((s) => s.text)
+    expect(steps.length).toBeGreaterThanOrEqual(3)
+    expect(Math.max(...steps.map((t) => t.length))).toBeLessThanOrEqual(340)
+    expect(steps.join(' ')).toBe(longStep)
+  })
+
+  it('krátky postup a postup už rozdelený webom sa nemení', () => {
+    const short = extractRecipe(sources([{ ...recipe, recipeInstructions: ['Zmiešaj. Upeč.'] }]))!
+    expect(short.recipe.steps).toEqual([{ text: 'Zmiešaj. Upeč.' }])
+    const many = extractRecipe(sources([{ ...recipe, recipeInstructions: [longStep, 'Podávaj.'] }]))!
+    expect(many.recipe.steps).toHaveLength(2)
+  })
+
+  it('porcie a časy sa prevezmú', () => {
+    const r = extractRecipe(sources([recipe]))!.recipe
+    expect(r.servings).toBe(15)
+    expect(r.prepMinutes).toBe(70)
+    expect(r.cookMinutes).toBe(30)
+  })
+})
