@@ -8,4 +8,6 @@ dist/
 .DS_Store
 .superpowers/
 dev-dist/
+# Vzniká pri dev/build zo súborov v extension/ (scripts/build-extension.mjs)
+public/rozsirenie-kucharska-kniha.zip
 .playwright-mcp/

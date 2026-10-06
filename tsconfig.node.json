@@ -12,6 +12,7 @@
     "pwa.config.ts",
     "pwa-assets.config.ts",
     "siteUrl.config.ts",
+    "scripts/**/*.d.mts",
     "eslint.config.js",
     "tests/config/**/*.ts"
   ]

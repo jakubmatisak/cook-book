@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { slotName } from '@/i18n/defaults'
-import { mdiDownload, mdiFileDocumentOutline, mdiLogout } from '@mdi/js'
+import {
+  mdiBookmarkPlusOutline,
+  mdiContentCopy,
+  mdiDownload,
+  mdiFileDocumentOutline,
+  mdiLogout,
+  mdiPuzzleOutline,
+} from '@mdi/js'
 import { computed, ref, watch } from 'vue'
 import { I18nT, useI18n } from 'vue-i18n'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -14,6 +21,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import HouseholdMembersCard from '@/features/households/components/HouseholdMembersCard.vue'
 import SampleRecipesButton from '@/features/recipes/components/SampleRecipesButton.vue'
 import LanguageCard from '../components/LanguageCard.vue'
+import { importBookmarklet } from '../bookmarklet'
 import { useThemePreference } from '@/composables/useThemePreference'
 import { ACCESS_LOGOUT_PATH, canLogout } from '@/lib/auth'
 import { errorText } from '@/i18n/errors'
@@ -28,6 +36,18 @@ const { preference: themePreference, set: setTheme } = useThemePreference()
 const snackbar = ref({ show: false, text: '', color: 'error' })
 const updateSlot = useUpdateSlot()
 const updateSettings = useUpdateSettings()
+
+// Pridávanie receptov z internetu: záložka na pretiahnutie a rozšírenie do Chromu na stiahnutie.
+const appAddress = location.origin
+const bookmarklet = importBookmarklet(appAddress)
+async function copyAddress() {
+  try {
+    await navigator.clipboard.writeText(appAddress)
+    snackbar.value = { show: true, text: t('settings.capture.copied'), color: 'success' }
+  } catch {
+    snackbar.value = { show: true, text: t('settings.capture.copyFailed'), color: 'error' }
+  }
+}
 
 const client = useQueryClient()
 const kidsEnabled = useKidsEnabled()
@@ -161,6 +181,59 @@ async function exportRecipes() {
           data-test="kids-switch"
           @update:model-value="saveKids"
         />
+      </v-card-text>
+    </v-card>
+
+    <v-card :title="t('settings.capture.title')" data-test="capture-card">
+      <v-card-text class="d-flex flex-column ga-4">
+        <div>
+          <div class="text-subtitle-1 font-weight-bold mb-1">{{ t('settings.capture.bookmarkTitle') }}</div>
+          <p class="text-body-2 mb-3">{{ t('settings.capture.bookmarkText') }}</p>
+          <!-- Odkaz je len na pretiahnutie; kliknutie v nastaveniach by otvorilo import stránky nastavení. -->
+          <v-btn
+            :href="bookmarklet"
+            :prepend-icon="mdiBookmarkPlusOutline"
+            color="primary"
+            variant="tonal"
+            draggable="true"
+            data-test="bookmarklet"
+            @click.prevent
+          >
+            {{ t('settings.capture.bookmarkButton') }}
+          </v-btn>
+          <p class="text-caption text-medium-emphasis mt-2">{{ t('settings.capture.bookmarkHint') }}</p>
+        </div>
+        <v-divider />
+        <div>
+          <div class="text-subtitle-1 font-weight-bold mb-1">{{ t('settings.capture.extensionTitle') }}</div>
+          <p class="text-body-2 mb-3">{{ t('settings.capture.extensionText') }}</p>
+          <v-btn
+            href="/rozsirenie-kucharska-kniha.zip"
+            download
+            :prepend-icon="mdiPuzzleOutline"
+            variant="tonal"
+            data-test="extension-download"
+          >
+            {{ t('settings.capture.extensionDownload') }}
+          </v-btn>
+          <ol class="text-body-2 mt-3 ps-5">
+            <li>{{ t('settings.capture.step1') }}</li>
+            <li>{{ t('settings.capture.step2') }}</li>
+            <li>{{ t('settings.capture.step3') }}</li>
+            <li>{{ t('settings.capture.step4') }}</li>
+          </ol>
+          <div class="d-flex align-center ga-2 mt-2">
+            <code class="text-body-2" data-test="app-address">{{ appAddress }}</code>
+            <v-btn
+              :icon="mdiContentCopy"
+              size="small"
+              variant="text"
+              :aria-label="t('settings.capture.copyAddress')"
+              data-test="copy-address"
+              @click="copyAddress"
+            />
+          </div>
+        </div>
       </v-card-text>
     </v-card>
 

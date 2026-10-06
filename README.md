@@ -179,8 +179,7 @@ the recipe already imported, ready to check and save.
 2. Enter the address of your app in the extension settings (it opens after installing; it is stored only in your browser).
 3. Pin the icon (puzzle icon in the toolbar → pin). On a page with a recipe, click it.
 
-No extension? Save a bookmark whose address is `<your app>/recepty/import?url=<recipe address>`, or paste the
-address into **Import from the web** in the app.
+No extension? Open **Settings → Add a recipe from the web with one click**: it has a bookmark you drag to the bookmarks bar (works in every browser) and the extension as a ready-to-download .zip with the steps to load it in Chrome. The zip is built from `extension/` during `npm run dev` and `npm run build`.
 
 ## Project structure
 
@@ -336,8 +335,7 @@ otvorí s už načítaným receptom na kontrolu a uloženie.
 2. V nastaveniach rozšírenia zadaj adresu svojej aplikácie (otvoria sa po inštalácii; uloží sa len v tvojom prehliadači).
 3. Pripni ikonu (puzzle ikona v lište → pripnúť). Na stránke s receptom na ňu klikni.
 
-Bez rozšírenia: ulož záložku s adresou `<tvoja aplikácia>/recepty/import?url=<adresa receptu>` alebo vlož adresu do
-**Importovať z webu** v aplikácii.
+Bez rozšírenia: v **Nastaveniach → Pridať recept z internetu jedným klikom** je záložka na pretiahnutie na lištu záložiek (funguje v každom prehliadači) a rozšírenie na stiahnutie ako .zip s postupom, ako ho načítať do Chromu. Súbor .zip vzniká z `extension/` pri `npm run dev` a `npm run build`.
 
 ## Štruktúra
 

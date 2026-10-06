@@ -33,6 +33,10 @@ export default tseslint.config(
     languageOptions: { sourceType: 'module', globals: { ...globals.browser, chrome: 'readonly' } },
   },
   {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     files: ['*.config.{ts,js}'],
     languageOptions: { globals: globals.node },
   },

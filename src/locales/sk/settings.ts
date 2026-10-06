@@ -28,6 +28,25 @@ export default {
     factorTimesAdult: '{factor} × dospelý',
     childPortionHint: 'Použije sa pri pridaní nového dieťaťa v Rodine.',
   },
+  capture: {
+    title: 'Pridať recept z internetu jedným klikom',
+    bookmarkTitle: 'Záložka v prehliadači (najjednoduchšie)',
+    bookmarkText:
+      'Funguje v každom prehliadači, nič sa neinštaluje. Pretiahni tlačidlo nižšie na lištu záložiek. Keď si na stránke s receptom, klikni na túto záložku a recept sa načíta do Kuchárskej knihy.',
+    bookmarkButton: 'Do kuchárskej knihy',
+    bookmarkHint:
+      'Tlačidlo nekliknite tu, len ho pretiahnite myšou na lištu záložiek (alebo naň kliknite pravým a zvoľte „Pridať záložku“).',
+    extensionTitle: 'Rozšírenie do Chromu',
+    extensionText: 'Ikonka v lište Chromu, ktorá recept z otvorenej stránky pridá jedným kliknutím.',
+    extensionDownload: 'Stiahnuť rozšírenie (.zip)',
+    step1: 'Rozbaľ stiahnutý súbor do priečinka.',
+    step2: 'V Chrome otvor chrome://extensions a zapni „Režim pre vývojárov“.',
+    step3: 'Klikni na „Načítať nezabalené“ a vyber rozbalený priečinok.',
+    step4: 'V nastaveniach rozšírenia (otvoria sa samy) vlož túto adresu aplikácie:',
+    copyAddress: 'Skopírovať adresu aplikácie',
+    copied: 'Adresa je skopírovaná.',
+    copyFailed: 'Adresu sa nepodarilo skopírovať.',
+  },
   kids: {
     title: 'Detské recepty',
     label: 'Zobrazovať detské recepty',

@@ -28,6 +28,25 @@ export default {
     factorTimesAdult: '{factor} × adult',
     childPortionHint: 'Used when you add a new child in Family.',
   },
+  capture: {
+    title: 'Add a recipe from the web with one click',
+    bookmarkTitle: 'Browser bookmark (easiest)',
+    bookmarkText:
+      'Works in any browser, nothing to install. Drag the button below to your bookmarks bar. When you are on a recipe page, click that bookmark and the recipe is loaded into the Cookbook.',
+    bookmarkButton: 'To the cookbook',
+    bookmarkHint:
+      'Do not click the button here, just drag it to the bookmarks bar (or right-click it and choose "Add bookmark").',
+    extensionTitle: 'Chrome extension',
+    extensionText: 'An icon in the Chrome toolbar that adds the recipe on the open page with one click.',
+    extensionDownload: 'Download the extension (.zip)',
+    step1: 'Unzip the downloaded file into a folder.',
+    step2: 'In Chrome open chrome://extensions and turn on "Developer mode".',
+    step3: 'Click "Load unpacked" and choose the unzipped folder.',
+    step4: 'In the extension settings (they open by themselves) paste this app address:',
+    copyAddress: 'Copy the app address',
+    copied: 'The address is copied.',
+    copyFailed: 'The address could not be copied.',
+  },
   kids: {
     title: 'Baby food recipes',
     label: 'Show baby food recipes',
