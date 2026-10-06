@@ -577,6 +577,49 @@ export function cleanRecipeTitle(title: string): string {
   return trimmed
 }
 
+const EQUIPMENT_HEADING =
+  /^(?:potrebujeme|budeme potrebovat|potrebne vybavenie|potrebne pomocky|pomocky)\s*:?$/
+const METHOD_HEADING = /^(?:postup(?: pripravy)?|priprava)\s*:?$/
+const normalizedLine = (line: string) => normalizeText(line).replace(/\s+/g, ' ').trim()
+
+/**
+ * Postup niektorých webov (kuchynalidla.sk) začína nadpisom „Potrebujeme“ s pomôckami po riadkoch a až potom
+ * „Postup“. Pomôcky sa zlúčia do jedného kroku („Potrebujeme: plátno, niť, sitko“) a nadpis „Postup“ nie je krok.
+ * Zlepené nadpisy z HTML („Potrebujemehrniec“, „POSTUPMäsoDo hrnca…“) sa rozlepia.
+ */
+export function tidySteps(lines: readonly string[]): string[] {
+  const unglued = lines.map((line) => {
+    const equipment = /^(Potrebujeme)(?=\p{Ll})/u.exec(line)
+    if (equipment) return `${equipment[1]}: ${line.slice(equipment[1]!.length)}`
+    const method = /^POSTUP(?=\p{L})/u.exec(line)
+    if (!method) return line
+    const rest = line.slice(method[0].length)
+    // Zlepený podnadpis („MäsoDo hrnca…“): krátke slovo s veľkým písmenom a hneď za ním veta.
+    const glued = /^(\p{Lu}\p{Ll}{2,12})(\p{Lu}\p{Ll}.*)$/u.exec(rest)
+    return glued ? `${glued[1]}: ${glued[2]}` : rest
+  })
+
+  const out: string[] = []
+  for (let i = 0; i < unglued.length; i++) {
+    const line = unglued[i]!
+    const key = normalizedLine(line)
+    if (METHOD_HEADING.test(key)) continue
+    if (EQUIPMENT_HEADING.test(key)) {
+      const items: string[] = []
+      while (i + 1 < unglued.length) {
+        const next = unglued[i + 1]!
+        if (METHOD_HEADING.test(normalizedLine(next)) || next.length > 60 || /[.!?]$/.test(next)) break
+        items.push(next)
+        i++
+      }
+      out.push(items.length ? `${line.replace(/\s*:\s*$/, '')}: ${items.join(', ')}` : line)
+      continue
+    }
+    out.push(line)
+  }
+  return out
+}
+
 const stripStepNumber = (text: string) => text.replace(/^\s*\d{1,2}\s*[.:)]\s+/, '')
 
 /** Ingrediencie ako riadky: zoznam reťazcov, alebo jeden reťazec s riadkami či `<br>`. */
@@ -627,9 +670,9 @@ function build(
       isOptional: false,
       ...(group ? { groupName: group } : {}),
     }))
-  const steps = splitLongStep(flattenInstructions(node['recipeInstructions']).map(stripStepNumber)).map(
-    (text) => ({ text: clip(text, 5000) }),
-  )
+  const steps = splitLongStep(
+    tidySteps(flattenInstructions(node['recipeInstructions'])).map(stripStepNumber),
+  ).map((text) => ({ text: clip(text, 5000) }))
   if (requireContent && ingredients.length === 0 && steps.length === 0) return null
 
   const yieldValue = parseYield(node['recipeYield'])

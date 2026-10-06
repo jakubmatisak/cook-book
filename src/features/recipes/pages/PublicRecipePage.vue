@@ -193,7 +193,7 @@ const openCopy = () => router.push(`/recepty/${snackbar.value.recipeId}`)
                 {{ group.name }}
               </v-list-subheader>
               <v-list-item v-for="item in group.items" :key="item.id">
-                <template v-if="formatQuantity(item.quantity, item.unit)" #prepend>
+                <template #prepend>
                   <span class="font-weight-bold text-no-wrap me-3" style="min-width: 4.5rem">
                     {{ formatQuantity(item.quantity, item.unit) }}
                   </span>

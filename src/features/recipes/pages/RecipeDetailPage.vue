@@ -350,7 +350,7 @@ function goBack() {
                 {{ group.name }}
               </v-list-subheader>
               <v-list-item v-for="item in group.items" :key="item.id">
-                <template v-if="formatScaled(item.quantity, factor, item.unit)" #prepend>
+                <template #prepend>
                   <span class="font-weight-bold text-no-wrap me-3" style="min-width: 4.5rem">
                     {{ formatScaled(item.quantity, factor, item.unit) }}
                   </span>

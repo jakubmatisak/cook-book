@@ -239,3 +239,52 @@ describe('názov receptu a čísla krokov', () => {
     expect(extractRecipe(sources([ld]))?.recipe.description).toBe('Spojenie jemného cesta.')
   })
 })
+
+describe('kuchynalidla.sk – „Potrebujeme“ a „Postup“ v postupe', () => {
+  const steps = (instructions: unknown) =>
+    extractRecipe(
+      sources([
+        {
+          '@type': 'Recipe',
+          name: 'Segedínsky guláš',
+          recipeIngredient: ['1 vajce'],
+          recipeInstructions: instructions,
+        },
+      ]),
+    )?.recipe.steps?.map((s) => s.text)
+
+  it('zoznam pomôcok pod „Potrebujeme“ je jeden krok a nadpis „Postup“ nie je krok', () => {
+    expect(
+      steps(
+        'Potrebujeme<br>plátno<br>niť<br>metličku na šľahanie<br>sitko<br>Postup<br>V hrnci osmažíme cibuľu. Pridáme mäso.',
+      ),
+    ).toEqual([
+      'Potrebujeme: plátno, niť, metličku na šľahanie, sitko',
+      'V hrnci osmažíme cibuľu. Pridáme mäso.',
+    ])
+  })
+
+  it('zlepený nadpis („Potrebujemehrniec“) a veľké „POSTUP“ sa rozpoznajú', () => {
+    expect(
+      steps('Potrebujemehrniec, špagát, odmerku<br>POSTUPMäsoDo hrnca pridáme masť a restujeme.'),
+    ).toEqual(['Potrebujeme: hrniec, špagát, odmerku', 'Mäso: Do hrnca pridáme masť a restujeme.'])
+  })
+
+  it('bez nadpisu „Postup“ sa k pomôckam pripoja len krátke riadky bez bodky', () => {
+    expect(steps(['Potrebujeme', 'hrniec', 'sitko', 'Cibuľu nakrájame nadrobno a orestujeme.'])).toEqual([
+      'Potrebujeme: hrniec, sitko',
+      'Cibuľu nakrájame nadrobno a orestujeme.',
+    ])
+  })
+
+  it('osamotený nadpis „Postup“ sa zahodí a bežné kroky ostanú', () => {
+    expect(steps(['Postup', 'Zmiešame múku.', 'Upečieme.'])).toEqual(['Zmiešame múku.', 'Upečieme.'])
+  })
+
+  it('veta začínajúca slovom Potrebujeme nie je nadpis', () => {
+    expect(steps(['Potrebujeme veľkú misu na cesto.', 'Zmiešame múku.'])).toEqual([
+      'Potrebujeme veľkú misu na cesto.',
+      'Zmiešame múku.',
+    ])
+  })
+})
