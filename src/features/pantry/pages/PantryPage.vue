@@ -107,9 +107,11 @@ const expiryColor = (item: PantryItemDto) => {
 const ingredientEditOpen = ref(false)
 const itemOpen = ref(false)
 const itemTarget = ref<IngredientDto | null>(null)
+// Surovina doma: množstvo a trvanlivosť; surovina, ktorú nemám doma, nemá zásobu, preto sa rovno upravuje ona sama.
 function editItem(ingredient: IngredientDto) {
   itemTarget.value = ingredient
-  itemOpen.value = true
+  if (inPantry.value.has(ingredient.id)) itemOpen.value = true
+  else ingredientEditOpen.value = true
 }
 
 // ─── Nová surovina (ručné pridanie) ───────────────────────────────────────────
@@ -271,12 +273,16 @@ function editStaple(staple: StapleDto | null) {
                   </span>
                 </span>
               </template>
-              <template v-if="inPantry.has(item.id)" #append>
+              <template #append>
                 <v-btn
                   :icon="mdiPencilOutline"
                   size="small"
                   variant="text"
-                  :aria-label="t('pantry.page.editAria', { name: item.name })"
+                  :aria-label="
+                    inPantry.has(item.id)
+                      ? t('pantry.page.editAria', { name: item.name })
+                      : t('pantry.page.editIngredientAria', { name: item.name })
+                  "
                   @click.stop="editItem(item)"
                 />
               </template>

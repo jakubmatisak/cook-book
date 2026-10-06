@@ -36,6 +36,7 @@ export default {
     expiring: 'Končí trvanlivosť',
     otherCategory: 'Ostatné',
     nothingFound: 'Nič sa nenašlo.',
+    editIngredientAria: 'Upraviť surovinu: {name}',
     editAria: 'Upraviť množstvo a trvanlivosť: {name}',
     changeFailed: 'Zmena sa neuložila.',
     empty: {

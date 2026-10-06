@@ -26,10 +26,12 @@ export default {
   edit: {
     title: 'Upraviť ingredienciu',
     name: 'Názov',
+    category: 'Kategória obchodu',
+    unit: 'Predvolená jednotka',
     nameRequired: 'Zadaj názov.',
     renameHint: 'Premenovanie sa prejaví vo všetkých receptoch, v špajzi aj v nákupnom zozname.',
     reallyDelete: 'Naozaj zmazať',
-    renameFailed: 'Premenovanie zlyhalo.',
+    renameFailed: 'Zmena sa neuložila.',
     deleteFailed: 'Zmazanie zlyhalo.',
   },
 }

@@ -159,3 +159,81 @@ describe('Špajza: ručné pridanie novej suroviny', () => {
     expect(wrapper.find('[data-test="add-ingredient"]').text()).toContain('Add ingredient')
   })
 })
+
+describe('Špajza: úprava existujúcej suroviny (nielen pridanie)', () => {
+  async function openEdit(wrapper: Awaited<ReturnType<typeof mountPantry>>['wrapper']) {
+    await wrapper.find('[aria-label^="Upraviť množstvo a trvanlivosť"]').trigger('click')
+    await flushPromises()
+    body().querySelector<HTMLElement>('[data-test="edit-ingredient-name"]')!.click()
+    await flushPromises()
+  }
+  const putCall = (calls: StubCall[]) => calls.find((c) => c.method === 'PUT' && c.path === '/ingredients/i1')
+
+  it('okno úpravy suroviny ukáže aj jej kategóriu a jednotku', async () => {
+    const { wrapper } = await mountPantry({
+      '/pantry': { ingredientIds: ['i1'], items: [] },
+      '/ingredients': [{ ...ing('i1', 'Mrkva', 'c1'), defaultUnit: 'g' }],
+    })
+    await openEdit(wrapper)
+    expect(body().querySelector('[data-test="edit-category"]')?.textContent).toContain('Zelenina')
+    expect(body().querySelector('[data-test="edit-unit"]')?.textContent).toContain('g')
+  })
+
+  it('zmena kategórie pošle len zmenené pole', async () => {
+    const { calls, wrapper } = await mountPantry({
+      '/pantry': { ingredientIds: ['i1'], items: [] },
+      'PUT /ingredients/i1': () => jsonResponse({ ...ing('i1', 'Mrkva', 'c2') }),
+    })
+    await openEdit(wrapper)
+    body()
+      .querySelector<HTMLElement>('[data-test="edit-category"] .v-field')!
+      .dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+    await flushPromises()
+    const option = [...body().querySelectorAll<HTMLElement>('.v-overlay .v-list-item')].find((el) =>
+      el.textContent?.includes('Mliečne'),
+    )
+    option!.click()
+    await flushPromises()
+    body().querySelector<HTMLElement>('[data-test="edit-save"]')!.click()
+    await flushPromises()
+    expect(putCall(calls)?.body).toEqual({ shopCategoryId: 'c2' })
+  })
+
+  it('bez zmeny sa nič neposiela a premenovanie posiela názov', async () => {
+    const { calls, wrapper } = await mountPantry({
+      '/pantry': { ingredientIds: ['i1'], items: [] },
+      'PUT /ingredients/i1': () => jsonResponse({ ...ing('i1', 'Mrkvička', 'c1') }),
+    })
+    await openEdit(wrapper)
+    body().querySelector<HTMLElement>('[data-test="edit-save"]')!.click()
+    await flushPromises()
+    expect(putCall(calls)).toBeUndefined()
+
+    await openEdit(wrapper)
+    const input = body().querySelector<HTMLInputElement>('[data-test="edit-name"] input')!
+    input.value = 'Mrkvička'
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    await flushPromises()
+    body().querySelector<HTMLElement>('[data-test="edit-save"]')!.click()
+    await flushPromises()
+    expect(putCall(calls)?.body).toEqual({ name: 'Mrkvička' })
+  })
+})
+
+describe('Špajza: úprava suroviny, ktorú nemám doma', () => {
+  it('aj surovina, ktorá nie je doma, má ceruzku a otvorí rovno úpravu suroviny', async () => {
+    const { wrapper } = await mountPantry()
+    const pencil = wrapper.find('[aria-label="Upraviť surovinu: Mrkva"]')
+    expect(pencil.exists()).toBe(true)
+    await pencil.trigger('click')
+    await flushPromises()
+    expect(body().querySelector('[data-test="edit-category"]')?.textContent).toContain('Zelenina')
+    expect(body().querySelector('[data-test="edit-ingredient-name"]')).toBeNull()
+  })
+
+  it('surovina doma má ďalej ceruzku na množstvo a trvanlivosť', async () => {
+    const { wrapper } = await mountPantry({ '/pantry': { ingredientIds: ['i1'], items: [] } })
+    expect(wrapper.find('[aria-label^="Upraviť množstvo a trvanlivosť: Mrkva"]').exists()).toBe(true)
+    expect(wrapper.find('[aria-label="Upraviť surovinu: Mrkva"]').exists()).toBe(false)
+  })
+})

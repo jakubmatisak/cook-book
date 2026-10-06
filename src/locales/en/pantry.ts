@@ -35,6 +35,7 @@ export default {
     expiring: 'Expiring soon',
     otherCategory: 'Other',
     nothingFound: 'Nothing found.',
+    editIngredientAria: 'Edit ingredient: {name}',
     editAria: 'Edit quantity and expiry: {name}',
     changeFailed: 'The change was not saved.',
     empty: {

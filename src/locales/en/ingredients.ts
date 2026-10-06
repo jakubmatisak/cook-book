@@ -26,10 +26,12 @@ export default {
   edit: {
     title: 'Edit ingredient',
     name: 'Name',
+    category: 'Shop category',
+    unit: 'Default unit',
     nameRequired: 'Enter a name.',
     renameHint: 'Renaming applies to all recipes, the pantry and the shopping list.',
     reallyDelete: 'Really delete',
-    renameFailed: 'Renaming failed.',
+    renameFailed: 'The change was not saved.',
     deleteFailed: 'Deleting failed.',
   },
 }
