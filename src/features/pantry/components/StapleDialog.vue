@@ -103,7 +103,7 @@ async function onDelete() {
         <v-select v-model="everyNWeeks" :items="cadenceItems" label="Ako často" hide-details />
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
-      <v-card-actions class="px-4 pb-4">
+      <v-card-actions class="px-4 pb-4 flex-wrap ga-1">
         <template v-if="staple">
           <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true"
             >Zmazať</v-btn

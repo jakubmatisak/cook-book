@@ -108,7 +108,7 @@ async function onGenerate() {
         </v-row>
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="flex-wrap ga-1">
         <v-spacer />
         <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
         <v-btn color="primary" :loading="generate.isPending.value" @click="onGenerate">Vygenerovať</v-btn>

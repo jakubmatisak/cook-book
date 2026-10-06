@@ -392,7 +392,7 @@ function goBack() {
         Recept „{{ recipe?.title }}“ zmizne zo zoznamu. Jedálničky, ktoré ho používajú, ostanú.
         <v-alert v-if="deleteError" type="error" class="mt-3" :text="deleteError" />
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="flex-wrap ga-1">
         <v-spacer />
         <v-btn variant="text" @click="confirmDelete = false">Zrušiť</v-btn>
         <v-btn color="error" :loading="remove.isPending.value" @click="onDelete">Zmazať</v-btn>

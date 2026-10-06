@@ -305,7 +305,7 @@ async function copyToNextWeek() {
           class="mt-2"
         />
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="flex-wrap ga-1">
         <v-spacer />
         <v-btn variant="text" @click="copyOpen = false">Zrušiť</v-btn>
         <v-btn color="primary" :loading="copy.isPending.value" @click="copyToNextWeek">Kopírovať</v-btn>

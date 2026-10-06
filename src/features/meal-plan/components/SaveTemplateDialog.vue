@@ -52,7 +52,7 @@ async function onSave() {
           @keydown.enter="onSave"
         />
       </v-card-text>
-      <v-card-actions class="px-4 pb-4">
+      <v-card-actions class="px-4 pb-4 flex-wrap ga-1">
         <v-spacer />
         <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
         <v-btn color="primary" :loading="save.isPending.value" @click="onSave">Uložiť</v-btn>

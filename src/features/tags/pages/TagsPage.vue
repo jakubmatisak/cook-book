@@ -136,7 +136,7 @@ const usage = (tag: TagDto) =>
         </div>
         <v-alert v-if="formError" type="error" density="compact" :text="formError" />
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="flex-wrap ga-1">
         <template v-if="editing">
           <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true"
             >Zmazať</v-btn

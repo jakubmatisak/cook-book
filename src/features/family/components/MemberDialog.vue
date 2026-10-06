@@ -206,7 +206,7 @@ async function onDelete() {
 
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="flex-wrap ga-1">
         <template v-if="member">
           <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true"
             >Zmazať</v-btn

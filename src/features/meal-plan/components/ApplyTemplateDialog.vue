@@ -98,7 +98,7 @@ async function onDelete(id: string) {
         />
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
-      <v-card-actions class="px-4 pb-4">
+      <v-card-actions class="px-4 pb-4 flex-wrap ga-1">
         <v-spacer />
         <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
         <v-btn

@@ -65,7 +65,7 @@ async function onDelete() {
         </p>
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
-      <v-card-actions class="px-4 pb-4">
+      <v-card-actions class="px-4 pb-4 flex-wrap ga-1">
         <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true">Zmazať</v-btn>
         <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete">Naozaj zmazať</v-btn>
         <v-spacer />
