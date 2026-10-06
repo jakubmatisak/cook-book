@@ -1,6 +1,6 @@
 /** Nákupný zoznam: stránka, generovanie z jedálnička, úprava položky. */
 export default {
-  printView: { heading: 'Nákupný zoznam · {date}' },
+  printView: { heading: 'Vytlačené {date}' },
   title: 'Nákupný zoznam',
   fromPlan: 'Z jedálnička',
   moreActions: 'Ďalšie akcie',

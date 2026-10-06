@@ -73,9 +73,9 @@ describe('tlačový pohľad nákupu', () => {
   })
 
   it('nadpis s dátumom je v jazyku aplikácie', () => {
-    expect(mountList().text()).toContain('Nákupný zoznam · 6. 10. 2026')
+    expect(mountList().text()).toContain('Vytlačené 6. 10. 2026')
     setLocale('en')
-    expect(mountList().text()).toContain('Shopping list · 10/6/2026')
+    expect(mountList().text()).toContain('Printed 10/6/2026')
   })
 })
 
