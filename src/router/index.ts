@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { scrollOnNavigate } from './scroll'
 
 export const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/recepty' },
@@ -86,7 +87,7 @@ export const routes: RouteRecordRaw[] = [
 export const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior: (_to, _from, saved) => saved ?? { top: 0 },
+  scrollBehavior: scrollOnNavigate,
 })
 
 router.afterEach((to) => {

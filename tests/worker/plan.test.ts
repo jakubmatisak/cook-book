@@ -79,12 +79,36 @@ describe('jedálniček – záznamy', () => {
     ).toBe(400)
   })
 
-  it('recept zmazaný po naplánovaní ostane v pláne s označením', async () => {
-    const { obed, recipe } = await setup()
+  it('zmazanie receptu odstráni jeho záznamy z jedálnička, ručné záznamy ostanú', async () => {
+    const { obed, vecera, recipe } = await setup()
     await addEntry({ date: '2026-10-05', slotId: obed, recipeId: recipe.id })
-    await send(app, 'DELETE', api(`/recipes/${recipe.id}`))
-    const [entry] = await week('2026-10-05', '2026-10-05')
-    expect(entry?.recipe).toMatchObject({ title: 'Guláš', deleted: true })
+    await addEntry({ date: '2026-10-06', slotId: vecera, recipeId: recipe.id, servingsOverride: 2 })
+    await addEntry({ date: '2026-10-05', slotId: vecera, freeText: 'Zvyšky' })
+    const other = await (
+      await send(app, 'POST', api('/recipes'), { title: 'Palacinky', servings: 2 })
+    ).json<RecipeDetailDto>()
+    await addEntry({ date: '2026-10-07', slotId: obed, recipeId: other.id })
+
+    expect((await send(app, 'DELETE', api(`/recipes/${recipe.id}`))).status).toBe(204)
+
+    const entries = await week('2026-10-05', '2026-10-11')
+    expect(entries.map((e) => e.recipe?.title ?? e.freeText)).toEqual(['Zvyšky', 'Palacinky'])
+  })
+
+  it('záznam naviazaný na už zmazaný recept sa v jedálničku nezobrazuje', async () => {
+    const { obed, vecera, recipe } = await setup()
+    await addEntry({ date: '2026-10-05', slotId: obed, recipeId: recipe.id })
+    await addEntry({ date: '2026-10-05', slotId: vecera, freeText: 'Zvyšky' })
+    // stav spred opravy: recept zmazaný, záznam v pláne ostal
+    await env.DB.prepare("update recipes set deleted_at = '2026-10-06T00:00:00.000Z'").run()
+    const entries = await week('2026-10-05', '2026-10-05')
+    expect(entries.map((e) => e.freeText)).toEqual(['Zvyšky'])
+  })
+
+  it('záznam obsahuje typ jedla receptu', async () => {
+    const { obed, recipe } = await setup()
+    const entry = await addEntry({ date: '2026-10-05', slotId: obed, recipeId: recipe.id })
+    expect(entry.recipe).toMatchObject({ category: 'hlavne' })
   })
 
   it('presunie záznam na iný deň a slot a zmaže ho', async () => {

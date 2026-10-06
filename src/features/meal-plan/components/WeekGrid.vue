@@ -51,64 +51,64 @@ function onDrop(event: DragEvent, date: string, slotId: string) {
 </script>
 
 <template>
+  <!-- Pevná mriežka z Vuetify riadkov a stĺpcov: dni majú rovnakú šírku a pri pridávaní jedál sa nič neposúva. -->
   <v-card>
-    <v-table density="comfortable" class="bg-transparent">
-      <thead>
-        <tr>
-          <th style="width: 7rem" />
-          <th
-            v-for="d in dates"
-            :key="d"
-            class="text-center"
-            :class="{ 'bg-primary': d === today }"
-            style="min-width: 8rem"
-          >
-            <div class="text-caption font-weight-bold text-uppercase">{{ formatDayLabel(d).short }}</div>
-            <div class="text-body-2">{{ formatDayLabel(d).date }}</div>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="slot in slots" :key="slot.id">
-          <th class="text-body-2 font-weight-bold" :class="{ 'opacity-60': !slot.isEnabled }">
-            {{ slot.name }}
-          </th>
-          <td
-            v-for="d in dates"
-            :key="d"
-            class="pa-1 align-top border-md border-dashed border-primary"
-            :class="[
-              d === today ? 'bg-surface-variant' : '',
-              dropKey === cellKey(d, slot.id) ? 'border-opacity-100' : 'border-opacity-0',
-            ]"
-            :data-cell="cellKey(d, slot.id)"
-            @dragover="onDragOver($event, cellKey(d, slot.id))"
-            @dragleave="onDragLeave($event, cellKey(d, slot.id))"
-            @drop="onDrop($event, d, slot.id)"
-          >
-            <div class="d-flex flex-column ga-1">
-              <PlanEntryCard
-                v-for="entry in groups.get(cellKey(d, slot.id)) ?? []"
-                :key="entry.id"
-                :entry="entry"
-                :members="members"
-                dense
-                draggable
-                @edit="$emit('edit', $event)"
-                @dragstart="onDragStart"
-              />
-              <v-btn
-                size="x-small"
-                variant="text"
-                :icon="mdiPlus"
-                class="align-self-center d-print-none"
-                :aria-label="`Pridať ${slot.name} ${formatDayLabel(d).long}`"
-                @click="$emit('add', d, slot.id)"
-              />
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </v-table>
+    <v-row no-gutters class="flex-nowrap">
+      <v-col class="border-thin" style="flex: 0 0 7rem; max-width: 7rem" />
+      <v-col
+        v-for="d in dates"
+        :key="d"
+        class="text-center border-thin pa-2 overflow-hidden"
+        :class="{ 'bg-primary': d === today }"
+        style="min-width: 0"
+      >
+        <div class="text-caption font-weight-bold text-uppercase">{{ formatDayLabel(d).short }}</div>
+        <div class="text-body-2">{{ formatDayLabel(d).date }}</div>
+      </v-col>
+    </v-row>
+    <v-row v-for="slot in slots" :key="slot.id" no-gutters class="flex-nowrap">
+      <v-col
+        class="border-thin pa-2 d-flex align-center text-body-2 font-weight-bold"
+        :class="{ 'opacity-60': !slot.isEnabled }"
+        style="flex: 0 0 7rem; max-width: 7rem"
+      >
+        {{ slot.name }}
+      </v-col>
+      <v-col
+        v-for="d in dates"
+        :key="d"
+        class="pa-1 border-thin overflow-hidden"
+        :class="[
+          d === today ? 'bg-surface-variant' : '',
+          dropKey === cellKey(d, slot.id) ? 'bg-primary-lighten-4 border-primary' : '',
+        ]"
+        style="min-width: 0"
+        :data-cell="cellKey(d, slot.id)"
+        @dragover="onDragOver($event, cellKey(d, slot.id))"
+        @dragleave="onDragLeave($event, cellKey(d, slot.id))"
+        @drop="onDrop($event, d, slot.id)"
+      >
+        <div class="d-flex flex-column ga-1">
+          <PlanEntryCard
+            v-for="entry in groups.get(cellKey(d, slot.id)) ?? []"
+            :key="entry.id"
+            :entry="entry"
+            :members="members"
+            dense
+            draggable
+            @edit="$emit('edit', $event)"
+            @dragstart="onDragStart"
+          />
+          <v-btn
+            size="x-small"
+            variant="text"
+            :icon="mdiPlus"
+            class="align-self-center d-print-none"
+            :aria-label="`Pridať ${slot.name} ${formatDayLabel(d).long}`"
+            @click="$emit('add', d, slot.id)"
+          />
+        </div>
+      </v-col>
+    </v-row>
   </v-card>
 </template>

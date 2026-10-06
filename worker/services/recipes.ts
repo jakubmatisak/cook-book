@@ -17,6 +17,7 @@ import type { Db } from '../db/client'
 import {
   images,
   ingredients,
+  mealPlanEntries,
   recipeFavorites,
   recipeIngredients,
   recipes,
@@ -168,12 +169,23 @@ export async function saveRecipe(db: Db, user: UserRow, input: RecipeInput, id?:
   }
 }
 
+/** Zmaže recept aj jeho záznamy v jedálničku (ručné záznamy bez receptu ostanú). */
 export async function deleteRecipe(db: Db, householdId: string, id: string): Promise<void> {
-  const deleted = await db
-    .update(recipes)
-    .set({ deletedAt: new Date().toISOString() })
-    .where(liveRecipe(householdId, id))
-    .returning({ id: recipes.id })
+  const [deleted] = await db.batch([
+    db
+      .update(recipes)
+      .set({ deletedAt: new Date().toISOString() })
+      .where(liveRecipe(householdId, id))
+      .returning({ id: recipes.id }),
+    db.delete(mealPlanEntries).where(
+      and(
+        eq(mealPlanEntries.householdId, householdId),
+        eq(mealPlanEntries.recipeId, id),
+        // len ak recept skutočne patrí domácnosti (inak by sa nesprávne ID dostalo k cudzím záznamom)
+        sql`exists (select 1 from recipes r where r.id = ${id} and r.household_id = ${householdId})`,
+      ),
+    ),
+  ])
   if (deleted.length === 0) throw notFound()
 }
 

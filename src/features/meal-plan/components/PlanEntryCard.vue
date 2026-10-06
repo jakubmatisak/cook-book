@@ -41,11 +41,6 @@ const subtitle = computed(() => {
     @dragstart="draggable && $emit('dragstart', $event, entry)"
   >
     <v-card-item class="pa-2">
-      <template v-if="entry.recipe?.coverImageUrl" #prepend>
-        <v-avatar :size="dense ? 28 : 40" rounded="sm">
-          <v-img :src="entry.recipe.coverImageUrl" cover />
-        </v-avatar>
-      </template>
       <template v-if="entry.warnings.length" #append>
         <v-icon
           :icon="mdiAlertOutline"
@@ -56,9 +51,13 @@ const subtitle = computed(() => {
           data-test="entry-warning"
         />
       </template>
-      <v-card-title class="text-body-2 font-weight-bold text-wrap" :class="{ 'font-italic': !entry.recipe }">
+      <!-- Nadpis cez v-card-subtitle: v-card-title má pevnú veľkú veľkosť písma, ktorú utility triedy neprebijú. -->
+      <v-card-subtitle
+        class="text-caption font-weight-bold text-wrap opacity-100 text-high-emphasis"
+        :class="{ 'font-italic': !entry.recipe }"
+      >
         {{ title }}
-      </v-card-title>
+      </v-card-subtitle>
       <v-card-subtitle v-if="subtitle" class="text-caption">
         <v-icon v-if="entry.note && dense" :icon="mdiNoteTextOutline" size="12" class="me-1" />{{ subtitle }}
       </v-card-subtitle>

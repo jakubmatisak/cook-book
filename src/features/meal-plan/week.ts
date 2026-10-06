@@ -1,4 +1,5 @@
 import type { MealSlotDto, PlanEntryDto } from '@shared/api'
+import type { RecipeCategory } from '@shared/recipes'
 import type { PlanEntryInputRaw } from '@shared/schemas/plan'
 import { isIsoDate, startOfWeek } from '@shared/dates'
 
@@ -11,6 +12,18 @@ export function resolveWeekStart(query: string | undefined, weekStartsOn: number
 export function visibleSlots(slots: readonly MealSlotDto[], entries: readonly PlanEntryDto[]): MealSlotDto[] {
   const used = new Set(entries.map((e) => e.slotId))
   return slots.filter((s) => s.isEnabled || used.has(s.id)).sort((a, b) => a.sortOrder - b.sortOrder)
+}
+
+/**
+ * Filter jedálnička podľa typu jedla receptu. Bez zvolených typov ostane všetko; so zvolenými len recepty
+ * daného typu (ručné záznamy bez receptu sa skryjú).
+ */
+export function filterEntriesByCategory(
+  entries: readonly PlanEntryDto[],
+  categories: readonly RecipeCategory[],
+): PlanEntryDto[] {
+  if (categories.length === 0) return [...entries]
+  return entries.filter((e) => e.recipe !== null && categories.includes(e.recipe.category))
 }
 
 export const cellKey = (date: string, slotId: string) => `${date}|${slotId}`

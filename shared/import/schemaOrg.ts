@@ -40,16 +40,102 @@ const NAMED_ENTITIES: Readonly<Record<string, string>> = {
   mdash: '—',
   hellip: '…',
   deg: '°',
+  copy: '©',
+  reg: '®',
+  trade: '™',
+  euro: '€',
+  times: '×',
+  middot: '·',
+  bull: '•',
+  plusmn: '±',
+  frac12: '½',
+  frac14: '¼',
+  frac34: '¾',
+  lsquo: '‘',
+  rsquo: '’',
+  ldquo: '“',
+  rdquo: '”',
+  bdquo: '„',
+  laquo: '«',
+  raquo: '»',
+  // slovenská a česká diakritika (veľkosť písmen rozhoduje: Eacute ≠ eacute)
+  aacute: 'á',
+  Aacute: 'Á',
+  auml: 'ä',
+  Auml: 'Ä',
+  ccaron: 'č',
+  Ccaron: 'Č',
+  dcaron: 'ď',
+  Dcaron: 'Ď',
+  eacute: 'é',
+  Eacute: 'É',
+  ecaron: 'ě',
+  Ecaron: 'Ě',
+  iacute: 'í',
+  Iacute: 'Í',
+  lacute: 'ĺ',
+  Lacute: 'Ĺ',
+  lcaron: 'ľ',
+  Lcaron: 'Ľ',
+  ncaron: 'ň',
+  Ncaron: 'Ň',
+  oacute: 'ó',
+  Oacute: 'Ó',
+  ocirc: 'ô',
+  Ocirc: 'Ô',
+  ouml: 'ö',
+  Ouml: 'Ö',
+  racute: 'ŕ',
+  Racute: 'Ŕ',
+  rcaron: 'ř',
+  Rcaron: 'Ř',
+  scaron: 'š',
+  Scaron: 'Š',
+  tcaron: 'ť',
+  Tcaron: 'Ť',
+  uacute: 'ú',
+  Uacute: 'Ú',
+  uring: 'ů',
+  Uring: 'Ů',
+  uuml: 'ü',
+  Uuml: 'Ü',
+  yacute: 'ý',
+  Yacute: 'Ý',
+  zcaron: 'ž',
+  Zcaron: 'Ž',
+  szlig: 'ß',
+  agrave: 'à',
+  egrave: 'è',
+  ecirc: 'ê',
+  euml: 'ë',
+  ccedil: 'ç',
+  ntilde: 'ñ',
+  acirc: 'â',
+  icirc: 'î',
+  ucirc: 'û',
 }
 
-export function decodeEntities(text: string): string {
-  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, body: string) => {
+const decodeOnce = (text: string): string =>
+  text.replace(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]*);/gi, (match, body: string) => {
     if (body[0] === '#') {
       const code = body[1]!.toLowerCase() === 'x' ? Number.parseInt(body.slice(2), 16) : Number(body.slice(1))
       return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match
     }
-    return NAMED_ENTITIES[body.toLowerCase()] ?? match
+    return NAMED_ENTITIES[body] ?? NAMED_ENTITIES[body.toLowerCase()] ?? match
   })
+
+/**
+ * Dekóduje HTML entity. Niektoré weby ich v dátach zakódujú dvakrát (`&amp;oacute;`), preto sa dekóduje,
+ * kým sa text mení (najviac trikrát).
+ */
+export function decodeEntities(text: string): string {
+  let current = text
+  for (let i = 0; i < 3; i++) {
+    const next = decodeOnce(current)
+    if (next === current) break
+    current = next
+  }
+  return current
 }
 
 const BLOCK_END = /<\/(?:p|li|div|h\d)>|<br\s*\/?>/gi

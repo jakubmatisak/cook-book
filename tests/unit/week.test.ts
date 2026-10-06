@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { MealSlotDto, PlanEntryDto } from '@shared/api'
-import { groupEntries, resolveWeekStart, visibleSlots } from '@/features/meal-plan/week'
+import type { RecipeCategory } from '@shared/recipes'
+import {
+  filterEntriesByCategory,
+  groupEntries,
+  resolveWeekStart,
+  visibleSlots,
+} from '@/features/meal-plan/week'
 
 const slot = (id: string, sortOrder: number, isEnabled = true): MealSlotDto => ({
   id,
@@ -63,5 +69,28 @@ describe('groupEntries', () => {
     expect(groups.get('2026-10-05|obed')?.map((e) => e.id)).toEqual(['a', 'b'])
     expect(groups.get('2026-10-06|obed')?.map((e) => e.id)).toEqual(['c'])
     expect(groups.get('2026-10-07|obed')).toBeUndefined()
+  })
+})
+
+describe('filterEntriesByCategory', () => {
+  const withRecipe = (id: string, category: RecipeCategory): PlanEntryDto => ({
+    ...entry(id, '2026-10-05', 'obed'),
+    recipeId: id,
+    freeText: null,
+    recipe: { id, title: id, servings: 4, coverImageUrl: null, deleted: false, category },
+  })
+  const all = [
+    withRecipe('gulas', 'hlavne'),
+    withRecipe('kolac', 'dezert'),
+    entry('zvysky', '2026-10-05', 'obed'),
+  ]
+
+  it('bez zvolených typov vráti všetky záznamy vrátane ručných', () => {
+    expect(filterEntriesByCategory(all, []).map((e) => e.id)).toEqual(['gulas', 'kolac', 'zvysky'])
+  })
+
+  it('so zvolenými typmi nechá len recepty daného typu a skryje ručné záznamy', () => {
+    expect(filterEntriesByCategory(all, ['dezert']).map((e) => e.id)).toEqual(['kolac'])
+    expect(filterEntriesByCategory(all, ['dezert', 'hlavne']).map((e) => e.id)).toEqual(['gulas', 'kolac'])
   })
 })

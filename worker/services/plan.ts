@@ -1,4 +1,4 @@
-import { and, asc, between, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, between, eq, inArray, isNull, or, sql } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { PlanEntryDto } from '../../shared/api'
 import { preferenceConflicts } from '../../shared/preferences'
@@ -27,6 +27,7 @@ const entryColumns = {
   recipeTitle: recipes.title,
   recipeServings: recipes.servings,
   recipeDeletedAt: recipes.deletedAt,
+  recipeCategory: recipes.category,
   r2Key: images.r2Key,
 }
 
@@ -58,6 +59,7 @@ function toEntryDto(row: JoinedRow): EntryBase {
             servings: row.recipeServings ?? 1,
             coverImageUrl: row.r2Key ? imageUrl(row.r2Key) : null,
             deleted: row.recipeDeletedAt !== null,
+            category: row.recipeCategory ?? 'ine',
           }
         : null,
     freeText: e.freeText,
@@ -115,7 +117,14 @@ export async function listPlan(
   to: string,
 ): Promise<PlanEntryDto[]> {
   const rows = await selectEntries(db)
-    .where(and(eq(mealPlanEntries.householdId, householdId), between(mealPlanEntries.date, from, to)))
+    .where(
+      and(
+        eq(mealPlanEntries.householdId, householdId),
+        between(mealPlanEntries.date, from, to),
+        // záznamy naviazané na zmazaný recept sa nezobrazujú (ručné záznamy bez receptu ostávajú)
+        or(isNull(mealPlanEntries.recipeId), isNull(recipes.deletedAt)),
+      ),
+    )
     .orderBy(
       asc(mealPlanEntries.date),
       asc(mealSlots.sortOrder),
