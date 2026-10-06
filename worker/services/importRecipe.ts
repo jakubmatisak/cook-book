@@ -173,8 +173,21 @@ const CANONICAL_PROPS: Readonly<Record<string, string>> = {
  * Značky skupín a riadkov ingrediencií známych webov: varecha.pravda.sk (`recipe-ingredients__*`) a WP Recipe Maker
  * (`wprm-recipe-*`). JSON-LD skupiny nenesie, preto sa čítajú z HTML.
  */
-const GROUP_SELECTOR = '.recipe-ingredients__group, .wprm-recipe-group-name'
-const ROW_SELECTOR = '.recipe-ingredients__row, .wprm-recipe-ingredient'
+const GROUP_SELECTOR = [
+  '.recipe-ingredients__group', // varecha.pravda.sk
+  '.wprm-recipe-group-name', // WP Recipe Maker
+  '.ingredients-title', // recepty.aktuality.sk, dobruchut.aktuality.sk
+  '.ingredients .key-value h3', // najrecept.topky.sk
+  '.ing h2', // kuchynalidla.sk
+].join(', ')
+const ROW_SELECTOR = [
+  '.recipe-ingredients__row',
+  '.wprm-recipe-ingredient',
+  '.ingredient-item',
+  '.ingredients .key-value .value',
+  '.ing li',
+  '.ing p',
+].join(', ')
 
 /** Z HTML vytiahne JSON-LD, og: meta a hodnoty `itemprop` pomocou HTMLRewriter. */
 async function collectSources(
@@ -189,6 +202,7 @@ async function collectSources(
   const open: { prop: string; text: string }[] = []
   const marks: IngredientMark[] = []
   let openGroup: { kind: 'group'; text: string } | null = null
+  let openRow: { kind: 'row'; text: string } | null = null
 
   const rewriter = new HTMLRewriter()
     .on('script[type="application/ld+json"]', {
@@ -222,8 +236,17 @@ async function collectSources(
       },
     })
     .on(ROW_SELECTOR, {
-      element() {
-        marks.push({ kind: 'row' })
+      element(el) {
+        const mark: { kind: 'row'; text: string } = { kind: 'row', text: '' }
+        marks.push(mark)
+        openRow = mark
+        el.onEndTag(() => {
+          if (openRow === mark) openRow = null
+          mark.text = mark.text.replace(/\s+/g, ' ').trim()
+        })
+      },
+      text(chunk) {
+        if (openRow) openRow.text += chunk.text
       },
     })
     .on('[itemprop]', {

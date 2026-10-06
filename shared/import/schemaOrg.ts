@@ -23,7 +23,8 @@ export interface ImportSources {
   sourceUrl: string | null
 }
 
-export type IngredientMark = { kind: 'group'; text: string } | { kind: 'row' }
+/** Nadpis skupiny, alebo riadok ingrediencie (s textom riadku, ak ho web v HTML má). */
+export type IngredientMark = { kind: 'group'; text: string } | { kind: 'row'; text?: string }
 
 export interface ImportedRecipe {
   recipe: RecipeInputRaw
@@ -192,6 +193,7 @@ const CATEGORY_PATTERNS: readonly [RegExp, RecipeCategory][] = [
   [/priloh|side/, 'priloha'],
   [/napoj|drink|beverage|cocktail/, 'napoj'],
   [/desiat|snack/, 'desiata'],
+  [/hlavn|main course|main dish|entree/, 'hlavne'],
 ]
 
 /** Prvá rozpoznaná kategória (`recipeCategory`, kľúčové slová), inak null. */
@@ -203,6 +205,38 @@ function matchCategory(value: unknown): RecipeCategory | null {
     if (hit) return hit[1]
   }
   return null
+}
+
+/** Vzory pre názov receptu (bez diakritiky, malými písmenami); užšie než vzory pre kategóriu, aby „rezeň“ nebol rez. */
+const TITLE_PATTERNS: readonly [RegExp, RecipeCategory][] = [
+  [/\b(?:polievk\w*|kapustnic\w*|gulasovk\w*|vyvar\w*)\b/, 'polievka'],
+  [/\bsalat\w*/, 'salat'],
+  [
+    /\b(?:kolac\w*|tort(?:a|y|u|ou|e)|zakusk\w*|rezy|strudl\w*|zerbo|buchty|buchta|perni\w*|medovnik\w*|cheesecake|tiramisu|pudin\w*|zmrzlin\w*|susienk\w*|keksy|rolka|babovk\w*|makovnik\w*|linecke|palacink\w*|lievance)\b/,
+    'dezert',
+  ],
+  [/\b(?:ranajk\w*|granola|musli|omeleta|praznica)\b/, 'ranajky'],
+]
+
+const matchTitleCategory = (title: string): RecipeCategory | null => {
+  const text = normalizeText(title)
+  return TITLE_PATTERNS.find(([pattern]) => pattern.test(text))?.[1] ?? null
+}
+
+/** Názvy z `BreadcrumbList` (omrvinková navigácia: Recepty › Dezerty › …). */
+function breadcrumbNames(node: unknown, depth = 0): string[] {
+  if (depth > 6) return []
+  if (Array.isArray(node)) return node.flatMap((n) => breadcrumbNames(n, depth + 1))
+  if (!isObj(node)) return []
+  if (hasType(node, 'BreadcrumbList')) {
+    return asList(node['itemListElement']).flatMap((entry) => {
+      if (!isObj(entry)) return []
+      const item = isObj(entry['item']) ? entry['item']['name'] : undefined
+      const name = cleanText(entry['name'] ?? item)
+      return name ? [name] : []
+    })
+  }
+  return breadcrumbNames(node['@graph'], depth + 1)
 }
 
 /** Kategória zo schema.org (`recipeCategory`) na našu; neznáma je hlavné jedlo. */
@@ -217,6 +251,10 @@ const GENERIC_KEYWORDS: ReadonlySet<string> = new Set([
   'recepty',
   'recepty z pravdy',
 ])
+
+/** Náhodné identifikátory namiesto slov (`9SRXqBzIWSB_VO4XyyiY`): jedno „slovo“ s číslami, podčiarkovníkmi alebo veľkými písmenami uprostred. */
+const isOpaqueId = (tag: string): boolean =>
+  /^[\w-]{14,}$/.test(tag) && (/\d/.test(tag) || /_/.test(tag) || /[a-z][A-Z]/.test(tag))
 
 const keywordList = (value: unknown): string[] =>
   asList(value).flatMap((v) => (typeof v === 'string' ? v.split(',').map(cleanText).filter(Boolean) : []))
@@ -326,6 +364,12 @@ export function parseIngredientLine(raw: string): ParsedIngredient {
 
   const q = takeQuantity(text)
   if (!q) return trailingQuantity()
+  if (q.quantity === 0 && q.rest) {
+    // „0 kocky droždia“: web množstvo zaokrúhlil na nulu, takže je neznáme (jednotka za ním je zbytočná).
+    const zeroUnit = takeUnit(q.rest, 0)
+    const name = zeroUnit ? zeroUnit.rest : q.rest
+    return name ? finish({ name, quantity: null, unit: null }, q.range) : whole()
+  }
   if (!(q.quantity > 0) || !q.rest) return whole()
 
   const unit = takeUnit(q.rest, q.quantity)
@@ -371,6 +415,45 @@ const hasType = (node: Obj, type: string): boolean => {
   const t = node['@type']
   const types = Array.isArray(t) ? t : [t]
   return types.some((x) => typeof x === 'string' && x.toLowerCase() === type.toLowerCase())
+}
+
+/**
+ * JSON.parse, ktorý prežije surové nové riadky a tabulátory v reťazcoch (niektoré weby ich tak vkladajú do JSON-LD,
+ * čo je neplatný JSON). Také znaky sa v reťazcoch nahradia za \\n, \\r a \\t. Nezachrániteľný text je null.
+ */
+export function parseJsonLenient(raw: string): unknown {
+  try {
+    return JSON.parse(raw)
+  } catch {
+    // skúsime opraviť
+  }
+  let out = ''
+  let inString = false
+  let escaped = false
+  for (const ch of raw) {
+    if (!inString) {
+      if (ch === '"') inString = true
+      out += ch
+    } else if (escaped) {
+      escaped = false
+      out += ch
+    } else if (ch === '\\') {
+      escaped = true
+      out += ch
+    } else if (ch === '"') {
+      inString = false
+      out += ch
+    } else if (ch === '\n') out += '\\n'
+    else if (ch === '\r') out += '\\r'
+    else if (ch === '\t') out += '\\t'
+    else if (ch.charCodeAt(0) < 0x20) out += ''
+    else out += ch
+  }
+  try {
+    return JSON.parse(out)
+  } catch {
+    return null
+  }
 }
 
 /** Hľadá uzol Recipe v koreni, poli, `@graph` aj `mainEntity`. */
@@ -442,7 +525,7 @@ function splitKeywords(value: unknown): string[] {
     const key = normalizeText(tag)
     // Preč s hviezdičkovými rubrikami („* Recepty z Pravdy“), všeobecnými slovami a typom jedla (ten je v kategórii).
     if (!/^[\p{L}\p{N}]/u.test(tag) || GENERIC_KEYWORDS.has(key) || matchCategory(tag)) continue
-    if (tag.length > 40 || seen.has(key)) continue
+    if (tag.length > 40 || seen.has(key) || isOpaqueId(tag)) continue
     seen.add(key)
     tags.push(tag)
   }
@@ -483,14 +566,56 @@ export function assignIngredientGroups(
 }
 
 /** Zloží `RecipeInputRaw` z uzla podobného schema.org Recipe. */
-function build(node: Obj, sources: ImportSources, requireContent: boolean): ImportedRecipe | null {
-  const title = clip(cleanText(node['name']) || cleanText(sources.meta['og:title']), 200)
+/**
+ * Reklamný dovetok za dvojbodkou („Jablkové rezy: Fantastické!“) sa odreže; krátka alebo všeobecná hlavička
+ * („Recept: Guláš“) ostáva.
+ */
+export function cleanRecipeTitle(title: string): string {
+  const trimmed = title.trim()
+  const m = /^(.{6,}?):\s+(.{12,})$/.exec(trimmed)
+  if (m && !/^(?:recept|tip|video|videorecept|novinka)$/i.test(m[1]!.trim())) return m[1]!.trim()
+  return trimmed
+}
+
+const stripStepNumber = (text: string) => text.replace(/^\s*\d{1,2}\s*[.:)]\s+/, '')
+
+/** Ingrediencie ako riadky: zoznam reťazcov, alebo jeden reťazec s riadkami či `<br>`. */
+const ingredientLines = (value: unknown): string[] =>
+  asList(value).flatMap((line) =>
+    typeof line === 'string'
+      ? line.replace(BLOCK_END, '\n').split(/\r?\n/).map(cleanText).filter(Boolean)
+      : [],
+  )
+
+/** Riadky bez textu (prázdne odseky medzi skupinami) nie sú ingrediencie. */
+const usableMarks = (marks: readonly IngredientMark[]): IngredientMark[] =>
+  marks.filter((m) => m.kind === 'group' || m.text === undefined || cleanText(m.text) !== '')
+
+const ZERO_QUANTITY = /^0(?:[.,]0+)?\s/
+
+function build(
+  node: Obj,
+  sources: ImportSources,
+  crumbs: readonly string[],
+  requireContent: boolean,
+): ImportedRecipe | null {
+  const title = clip(cleanRecipeTitle(cleanText(node['name']) || cleanText(sources.meta['og:title'])), 200)
   if (!title) return null
 
-  const lines = asList(node['recipeIngredient'] ?? node['ingredients']).flatMap((line) =>
-    typeof line === 'string' ? [line] : [],
-  )
-  const groups = assignIngredientGroups(lines.length, sources.ingredientMarks ?? [])
+  const marks = usableMarks(sources.ingredientMarks ?? [])
+  const rowTexts = marks.flatMap((m) => (m.kind === 'row' ? [cleanText(m.text)] : []))
+  const htmlRows = rowTexts.length >= 2 && rowTexts.every(Boolean)
+  let lines = ingredientLines(node['recipeIngredient'] ?? node['ingredients'])
+  if (htmlRows && lines.length !== rowTexts.length) {
+    // JSON-LD ingrediencie sú zlepené alebo neúplné: riadky z HTML sú spoľahlivejšie.
+    lines = rowTexts
+  } else if (htmlRows) {
+    // Web zaokrúhlil množstvo v JSON-LD na nulu („0 kocky“), v HTML je presné („0.5 kocky“).
+    lines = lines.map((line, i) =>
+      ZERO_QUANTITY.test(line) && /^\d/.test(rowTexts[i]!) ? rowTexts[i]! : line,
+    )
+  }
+  const groups = assignIngredientGroups(lines.length, marks)
   const ingredients = lines
     .map((line, index) => ({ parsed: parseIngredientLine(line), group: groups?.[index] ?? null }))
     .filter(({ parsed }) => parsed.name)
@@ -502,9 +627,9 @@ function build(node: Obj, sources: ImportSources, requireContent: boolean): Impo
       isOptional: false,
       ...(group ? { groupName: group } : {}),
     }))
-  const steps = splitLongStep(flattenInstructions(node['recipeInstructions'])).map((text) => ({
-    text: clip(text, 5000),
-  }))
+  const steps = splitLongStep(flattenInstructions(node['recipeInstructions']).map(stripStepNumber)).map(
+    (text) => ({ text: clip(text, 5000) }),
+  )
   if (requireContent && ingredients.length === 0 && steps.length === 0) return null
 
   const yieldValue = parseYield(node['recipeYield'])
@@ -522,7 +647,11 @@ function build(node: Obj, sources: ImportSources, requireContent: boolean): Impo
     title,
     description: description || null,
     category:
-      matchCategory(node['recipeCategory']) ?? matchCategory(keywordList(node['keywords'])) ?? 'hlavne',
+      matchCategory(node['recipeCategory']) ??
+      matchCategory(keywordList(node['keywords'])) ??
+      matchCategory([...crumbs]) ??
+      matchTitleCategory(title) ??
+      'hlavne',
     servings: yieldValue ?? 4,
     prepMinutes: prep,
     cookMinutes: prep === null && cook === null ? total : cook,
@@ -559,16 +688,13 @@ function microdataNode(microdata: ImportSources['microdata']): Obj {
  * Ak sa recept nenájde (alebo microdata nemá ani ingrediencie, ani postup), vráti null.
  */
 export function extractRecipe(sources: ImportSources): ImportedRecipe | null {
-  for (const raw of sources.jsonLd) {
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(raw)
-    } catch {
-      continue
-    }
+  const blocks = sources.jsonLd.map(parseJsonLenient)
+  const crumbs = blocks.flatMap((block) => breadcrumbNames(block))
+  for (const parsed of blocks) {
+    if (!parsed) continue
     const node = findRecipe(parsed)
-    const result = node ? build(node, sources, false) : null
+    const result = node ? build(node, sources, crumbs, false) : null
     if (result) return result
   }
-  return build(microdataNode(sources.microdata), sources, true)
+  return build(microdataNode(sources.microdata), sources, crumbs, true)
 }
