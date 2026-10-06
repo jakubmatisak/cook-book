@@ -29,6 +29,7 @@ export default {
     homeIntro:
       'Označ, čo máš doma. Pri položke môžeš doplniť množstvo a trvanlivosť, nákupný zoznam potom odpočíta, čo už máš, a filter „Čo viem uvariť“ ukáže, na čo máš všetko.',
     search: 'Hľadať ingredienciu',
+    category: 'Kategória',
     onlyHome: 'Len čo mám doma',
     expiring: 'Končí trvanlivosť',
     otherCategory: 'Ostatné',

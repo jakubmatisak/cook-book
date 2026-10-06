@@ -28,6 +28,7 @@ export default {
     homeIntro:
       'Mark what you have at home. You can add a quantity and expiry date to an item; the shopping list then subtracts what you already have, and the “What can I cook” filter shows what you have everything for.',
     search: 'Search ingredients',
+    category: 'Category',
     onlyHome: 'Only what I have',
     expiring: 'Expiring soon',
     otherCategory: 'Other',

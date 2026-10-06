@@ -38,6 +38,12 @@ const tab = ref<'home' | 'staples'>('home')
 const search = ref('')
 const onlyHome = ref(false)
 const onlyExpiring = ref(false)
+// Filter podľa kategórie obchodu: id kategórie, `none` (ostatné, bez kategórie) alebo prázdne = všetky.
+const category = ref<string | null>(null)
+const categoryItems = computed(() => [
+  ...(categories.value ?? []).map((c) => ({ title: c.name, value: c.id })),
+  { title: t('pantry.page.otherCategory'), value: 'none' },
+])
 const inPantry = computed(() => new Set(pantry.value?.ingredientIds ?? []))
 const stock = computed(() => new Map((pantry.value?.items ?? []).map((i) => [i.ingredientId, i])))
 
@@ -54,6 +60,8 @@ const groups = computed(() => {
   const visible = (ingredients.value ?? []).filter(
     (i) =>
       (!needle || normalizeText(i.name).includes(needle)) &&
+      (!category.value ||
+        (category.value === 'none' ? !i.shopCategoryId : i.shopCategoryId === category.value)) &&
       (!onlyHome.value || inPantry.value.has(i.id)) &&
       (!onlyExpiring.value || isExpiring(stock.value.get(i.id))),
   )
@@ -151,6 +159,15 @@ function editStaple(staple: StapleDto | null) {
           hide-details
           class="flex-grow-1"
           style="min-width: 16rem"
+        />
+        <v-select
+          v-model="category"
+          :items="categoryItems"
+          :label="t('pantry.page.category')"
+          clearable
+          hide-details
+          data-test="pantry-category"
+          style="min-width: 12rem; max-width: 16rem"
         />
         <v-chip
           :color="onlyHome ? 'primary' : undefined"
