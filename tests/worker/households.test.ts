@@ -164,3 +164,12 @@ describe('výber aktívnej domácnosti (?h=)', () => {
     expect(memberships.map((m) => m.householdId).sort()).toEqual([first.householdId, otherId].sort())
   })
 })
+
+describe('správca aplikácie', () => {
+  it('/me hovorí, či je používateľ správca (e-mail zo ALLOWED_EMAILS), kvôli zakladaniu domácností', async () => {
+    const owner = await ensureUser(db(), ME)
+    await inviteMember(db(), owner.householdId, STRANGER, 'owner')
+    expect((await (await me(ME)).json<MeResponse>()).user.isAdmin).toBe(true)
+    expect((await (await me(STRANGER)).json<MeResponse>()).user.isAdmin).toBe(false)
+  })
+})

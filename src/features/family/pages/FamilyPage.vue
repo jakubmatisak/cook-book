@@ -5,13 +5,14 @@ import type { FamilyMemberDto } from '@shared/api'
 import { MEMBER_COLORS, MEMBER_KIND_LABELS } from '@shared/family'
 import { entryPortions } from '@shared/portions'
 import { PREFERENCE_CHIP_LABELS } from '@shared/preferences'
-import { useMe } from '@/api/me'
+import { useIsOwner, useMe } from '@/api/me'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { plural } from '@/lib/format'
 import MemberDialog from '../components/MemberDialog.vue'
 
 const { data: me, isPending, error } = useMe()
+const isOwner = useIsOwner()
 const members = computed(() => me.value?.members ?? [])
 
 const totalPortions = computed(() =>
@@ -45,7 +46,9 @@ const memberSubtitle = (m: FamilyMemberDto) =>
 
 <template>
   <PageHeader title="Rodina" :subtitle="subtitle">
-    <v-btn v-if="members.length" color="primary" :prepend-icon="mdiPlus" @click="openNew">Pridať</v-btn>
+    <v-btn v-if="members.length && isOwner" color="primary" :prepend-icon="mdiPlus" @click="openNew"
+      >Pridať</v-btn
+    >
   </PageHeader>
 
   <v-alert v-if="error" type="error" :text="error.message" />
@@ -55,12 +58,19 @@ const memberSubtitle = (m: FamilyMemberDto) =>
     v-else-if="!members.length"
     :icon="mdiAccountGroupOutline"
     title="Kto u vás je?"
-    text="Pridaj dospelých aj deti. Podľa veľkosti porcií sa potom prepočíta, koľko navariť a nakúpiť."
+    :text="
+      isOwner
+        ? 'Pridaj dospelých aj deti. Podľa veľkosti porcií sa potom prepočíta, koľko navariť a nakúpiť.'
+        : 'Rodinu pridáva vlastník domácnosti.'
+    "
   >
-    <v-btn color="primary" :prepend-icon="mdiPlus" @click="openNew">Pridať člena rodiny</v-btn>
+    <v-btn v-if="isOwner" color="primary" :prepend-icon="mdiPlus" @click="openNew">Pridať člena rodiny</v-btn>
   </EmptyState>
 
   <v-card v-else>
+    <v-alert v-if="!isOwner" type="info" density="compact" data-test="family-readonly">
+      Rodinu a jej preferencie môže meniť len vlastník domácnosti.
+    </v-alert>
     <v-list lines="two">
       <v-list-item
         v-for="member in members"
@@ -68,8 +78,9 @@ const memberSubtitle = (m: FamilyMemberDto) =>
         :title="member.name"
         :subtitle="memberSubtitle(member)"
         :class="{ 'opacity-60': !member.isActive }"
-        link
-        @click="openEdit(member)"
+        :link="isOwner"
+        :ripple="isOwner"
+        @click="isOwner && openEdit(member)"
       >
         <template v-if="member.preferences.length" #subtitle>
           <span class="d-block">{{ memberSubtitle(member) }}</span>

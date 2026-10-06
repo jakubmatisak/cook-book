@@ -4,6 +4,7 @@ import type { HouseholdSummaryDto, MeResponse } from '../../shared/api'
 import { familyMembers, households, mealSlots, settings } from '../db/schema'
 import type { AppEnv } from '../env'
 import { HttpError } from '../errors'
+import { isAllowedEmail } from '../services/accessList'
 import type { Membership } from '../services/memberships'
 import {
   groupPreferences,
@@ -44,7 +45,14 @@ export const meRoutes = new Hono<AppEnv>().get('/', async (c) => {
 
   const prefs = groupPreferences(prefRows)
   const body: MeResponse = {
-    user: { id: user.id, email: user.email, name: user.name, memberId: user.memberId, role: user.role },
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      memberId: user.memberId,
+      role: user.role,
+      isAdmin: isAllowedEmail(user.email, c.env.ALLOWED_EMAILS),
+    },
     household: { id: household.id, name: household.name },
     households: c.get('memberships').map(toHouseholdSummary),
     members: memberRows.map((m) => toMemberDto(m, prefs.get(m.id))),

@@ -22,6 +22,8 @@ export interface UserDto {
   memberId: string | null
   /** Rola v aktívnej domácnosti. */
   role: HouseholdRole
+  /** Správca aplikácie (e-mail v ALLOWED_EMAILS): smie zakladať ďalšie domácnosti. */
+  isAdmin: boolean
 }
 
 export interface HouseholdDto {

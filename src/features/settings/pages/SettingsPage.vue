@@ -3,13 +3,15 @@ import { mdiDownload, mdiFileDocumentOutline, mdiLogout } from '@mdi/js'
 import { ref, watch } from 'vue'
 import { useUpdateSettings, useUpdateSlot } from '@/api/family'
 import { ApiError, downloadFile } from '@/api/http'
-import { useMe } from '@/api/me'
+import { useIsOwner, useMe } from '@/api/me'
 import PageHeader from '@/components/PageHeader.vue'
+import HouseholdMembersCard from '@/features/households/components/HouseholdMembersCard.vue'
 import { useThemePreference } from '@/composables/useThemePreference'
 import { ACCESS_LOGOUT_PATH, canLogout } from '@/lib/auth'
 import { plural } from '@/lib/format'
 
 const { data: me, isPending, error } = useMe()
+const isOwner = useIsOwner()
 
 const { preference: themePreference, set: setTheme } = useThemePreference()
 
@@ -103,6 +105,7 @@ async function exportRecipes() {
       </v-card-text>
     </v-card>
 
+    <div class="text-overline">Moje nastavenia</div>
     <v-card title="Vzhľad">
       <v-card-text>
         <v-btn-toggle
@@ -121,6 +124,12 @@ async function exportRecipes() {
       </v-card-text>
     </v-card>
 
+    <div class="text-overline">Domácnosť</div>
+    <v-alert v-if="me && !isOwner" type="info" density="compact" data-test="owner-only-note">
+      Nastavenia domácnosti môže meniť len vlastník.
+    </v-alert>
+    <HouseholdMembersCard v-if="me" :is-owner="isOwner" />
+
     <v-card v-if="me" title="Jedálniček">
       <v-card-text class="d-flex flex-column ga-4">
         <div>
@@ -136,6 +145,7 @@ async function exportRecipes() {
             color="primary"
             density="compact"
             hide-details
+            :disabled="!isOwner"
             @update:model-value="toggleSlot(slot.id, $event)"
           />
         </div>
@@ -144,6 +154,7 @@ async function exportRecipes() {
           :items="WEEK_STARTS"
           label="Týždeň začína"
           hide-details
+          :disabled="!isOwner"
           @update:model-value="setWeekStart($event)"
         />
         <div>
@@ -158,6 +169,7 @@ async function exportRecipes() {
             :step="0.05"
             color="primary"
             hide-details
+            :disabled="!isOwner"
             @end="saveChildFactor"
           />
           <p class="text-caption text-medium-emphasis">Použije sa pri pridaní nového dieťaťa v Rodine.</p>
@@ -173,6 +185,7 @@ async function exportRecipes() {
           label="Pri „Čo viem uvariť“ ignorovať koreniny"
           hint="Koreniny sa nepočítajú ako chýbajúce, takže uvidíš aj recepty, ktoré viem uvariť bez nich."
           persistent-hint
+          :disabled="!isOwner"
           data-test="ignore-spices"
           @update:model-value="saveIgnoreSpices"
         />
@@ -191,7 +204,7 @@ async function exportRecipes() {
       </v-card-actions>
     </v-card>
 
-    <v-card title="Záloha a export">
+    <v-card v-if="isOwner" title="Záloha a export" data-test="export-card">
       <v-card-text class="text-body-2">
         Záloha stiahne všetky recepty, jedálničky a zoznamy ako JSON súbor, odporúčame ju raz za mesiac.
         Recepty vieš stiahnuť aj ako čitateľný textový súbor (Markdown). Tlač do PDF nájdeš pri recepte,
