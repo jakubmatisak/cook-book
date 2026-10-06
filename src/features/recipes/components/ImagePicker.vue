@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiCameraOutline, mdiDeleteOutline, mdiImageEditOutline } from '@mdi/js'
+import { mdiCameraOutline, mdiClose } from '@mdi/js'
 import { ref } from 'vue'
 import { uploadImage } from '@/api/recipes'
 import { resizeImage } from '@/lib/image'
@@ -36,33 +36,35 @@ function clear() {
 </script>
 
 <template>
-  <v-card>
+  <!-- Malá dlaždica: klik vyberie alebo zmení fotku, krížik ju odstráni. Vstup je mimo karty, aby jeho klik nespúšťal kartu znova. -->
+  <div>
     <input ref="input" type="file" accept="image/*" class="d-none" data-test="image-input" @change="onFile" />
-    <v-img v-if="imageUrl" :src="imageUrl" :aspect-ratio="16 / 9" cover>
-      <div v-if="uploading" class="d-flex align-center justify-center h-100">
+    <v-card
+      width="104"
+      height="104"
+      variant="outlined"
+      class="position-relative"
+      :aria-label="imageUrl ? 'Zmeniť fotku' : 'Pridať fotku'"
+      @click="input?.click()"
+    >
+      <v-img v-if="imageUrl" :src="imageUrl" cover height="104" />
+      <div v-else class="d-flex flex-column align-center justify-center h-100 text-primary">
+        <v-icon :icon="mdiCameraOutline" size="32" />
+        <span class="text-caption">Fotka</span>
+      </div>
+      <v-btn
+        v-if="imageUrl"
+        :icon="mdiClose"
+        size="x-small"
+        variant="flat"
+        class="position-absolute top-0 right-0 ma-1"
+        aria-label="Odstrániť fotku"
+        @click.stop="clear"
+      />
+      <v-overlay :model-value="uploading" contained persistent class="align-center justify-center">
         <v-progress-circular indeterminate color="primary" />
-      </div>
-    </v-img>
-    <v-responsive v-else :aspect-ratio="16 / 9" class="bg-surface-variant">
-      <div class="d-flex align-center justify-center h-100">
-        <v-btn
-          variant="text"
-          color="primary"
-          size="large"
-          :prepend-icon="mdiCameraOutline"
-          :loading="uploading"
-          @click="input?.click()"
-        >
-          Pridať fotku
-        </v-btn>
-      </div>
-    </v-responsive>
-    <v-card-actions v-if="imageUrl">
-      <v-btn variant="tonal" :prepend-icon="mdiImageEditOutline" :loading="uploading" @click="input?.click()">
-        Zmeniť fotku
-      </v-btn>
-      <v-btn variant="text" :prepend-icon="mdiDeleteOutline" @click="clear">Odstrániť</v-btn>
-    </v-card-actions>
-    <v-alert v-if="error" type="error" density="compact" :text="error" class="ma-3" />
-  </v-card>
+      </v-overlay>
+    </v-card>
+    <v-alert v-if="error" type="error" density="compact" :text="error" class="mt-2" />
+  </div>
 </template>

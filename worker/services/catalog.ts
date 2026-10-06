@@ -1,5 +1,7 @@
 import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
-import type { IngredientDto } from '../../shared/api'
+import type { IngredientDto, StarterIngredientsResult } from '../../shared/api'
+import { STARTER_INGREDIENTS } from '../../shared/data/starterIngredients'
+import { newId } from '../../shared/ids'
 import { normalizeText } from '../../shared/text'
 import type { UnitCode } from '../../shared/units'
 import type { Db } from '../db/client'
@@ -201,4 +203,51 @@ export async function resolveTags(db: Db, householdId: string, names: readonly s
     existing = await load()
   }
   return names.map((n) => existing.get(normalizeText(n))).filter((id): id is string => Boolean(id))
+}
+
+/**
+ * Pridá štartovací zoznam surovín jedným príkazom (JSON → `insert or ignore ... select`): existujúce
+ * suroviny sa podľa názvu bez diakritiky (aj zmazané) preskočia a nič sa neprepíše. Kategória sa nájde
+ * podľa názvu medzi kategóriami obchodu tej istej domácnosti.
+ */
+export async function addStarterIngredients(db: Db, householdId: string): Promise<StarterIngredientsResult> {
+  const payload = JSON.stringify(
+    STARTER_INGREDIENTS.map((i) => ({
+      id: newId(),
+      name: i.name,
+      norm: normalizeText(i.name),
+      unit: i.unit,
+      category: i.category,
+    })),
+  )
+  const now = new Date().toISOString()
+  await db.run(sql`
+    insert or ignore into ingredients
+      (id, household_id, name, name_normalized, default_unit, shop_category_id, aliases, created_at, updated_at)
+    select
+      json_extract(j.value, '$.id'),
+      ${householdId},
+      json_extract(j.value, '$.name'),
+      json_extract(j.value, '$.norm'),
+      json_extract(j.value, '$.unit'),
+      (select c.id from shop_categories c
+        where c.household_id = ${householdId} and c.name = json_extract(j.value, '$.category')),
+      '[]',
+      ${now},
+      ${now}
+    from json_each(${payload}) j`)
+  // Pridané sú práve tie riadky, ktorých id sme poslali (preskočené nemajú naše id).
+  const rows = await db.all<{
+    id: string
+    name: string
+    defaultUnit: UnitCode | null
+    shopCategoryId: string | null
+  }>(sql`
+    select i.id as id, i.name as name, i.default_unit as defaultUnit, i.shop_category_id as shopCategoryId
+    from ingredients i
+    join json_each(${payload}) j on i.id = json_extract(j.value, '$.id')
+    where i.household_id = ${householdId}
+    order by i.name_normalized`)
+  const items: IngredientDto[] = rows.map((r) => ({ ...r, usageCount: 0 }))
+  return { added: items.length, total: STARTER_INGREDIENTS.length, items }
 }

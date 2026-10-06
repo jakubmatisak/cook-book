@@ -192,6 +192,13 @@ export interface RecipeListDto {
   facets: RecipeFacets
 }
 
+/** Výsledok pridania štartovacieho zoznamu: len naozaj pridané suroviny, aby klient nemusel sťahovať celý zoznam. */
+export interface StarterIngredientsResult {
+  added: number
+  total: number
+  items: IngredientDto[]
+}
+
 export interface IngredientDto {
   id: string
   name: string

@@ -11,6 +11,7 @@ import type { SortDir, SortKey, TimeBucket } from '@shared/recipeFacets'
 import type { RecipeCategory } from '@shared/recipes'
 import type { RecipeInputRaw } from '@shared/schemas/recipe'
 import { apiFetch } from './http'
+import { addIngredientsToCache, ingredientsFromRecipe, markIngredientsStale } from './ingredientCache'
 
 export interface RecipeFilters {
   q?: string | undefined
@@ -78,7 +79,8 @@ export function useSaveRecipe(): UseMutationReturnType<RecipeDetailDto, Error, S
     onSuccess: (detail) => {
       client.setQueryData(recipeKeys.detail(detail.id), detail)
       void client.invalidateQueries({ queryKey: ['recipes', 'list'] })
-      void client.invalidateQueries({ queryKey: ['ingredients'] })
+      // Nové suroviny z receptu sa doplnia do pamäte z odpovede, zoznam sa nesťahuje znova.
+      addIngredientsToCache(client, ingredientsFromRecipe(detail))
       void client.invalidateQueries({ queryKey: ['tags'] })
     },
   })
@@ -91,6 +93,7 @@ export function useDeleteRecipe(): UseMutationReturnType<void, Error, string, un
     onSuccess: (_data, id) => {
       client.removeQueries({ queryKey: recipeKeys.detail(id) })
       void client.invalidateQueries({ queryKey: ['recipes', 'list'] })
+      markIngredientsStale(client)
     },
   })
 }

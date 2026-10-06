@@ -14,14 +14,14 @@ export function expiryStatus(expiresOn: string | null, today: string, soonDays =
   return left <= soonDays ? 'soon' : 'ok'
 }
 
-/** „Expiruje zajtra“, „Po trvanlivosti 3 dni“; bez dátumu prázdny text. */
+/** „Trvanlivosť končí zajtra“, „Po trvanlivosti 3 dni“; bez dátumu prázdny text. */
 export function describeExpiry(expiresOn: string | null, today: string): string {
   if (!expiresOn) return ''
   const left = daysBetween(today, expiresOn)
   if (left < 0) return `Po trvanlivosti ${days(-left)}`
-  if (left === 0) return 'Expiruje dnes'
-  if (left === 1) return 'Expiruje zajtra'
-  return `Expiruje o ${days(left)}`
+  if (left === 0) return 'Trvanlivosť končí dnes'
+  if (left === 1) return 'Trvanlivosť končí zajtra'
+  return `Trvanlivosť končí o ${days(left)}`
 }
 
 /** „Každý týždeň“, „Každé 2 týždne“, „Každých 6 týždňov“. */

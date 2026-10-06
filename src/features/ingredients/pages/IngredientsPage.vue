@@ -1,15 +1,20 @@
 <script setup lang="ts">
-import { mdiCheck, mdiFormatListChecks, mdiMagnify } from '@mdi/js'
+import { mdiCheck, mdiFormatListChecks, mdiMagnify, mdiPlaylistPlus } from '@mdi/js'
 import { computed, ref } from 'vue'
 import type { IngredientDto } from '@shared/api'
 import { normalizeText } from '@shared/text'
 import { UNITS, type UnitCode } from '@shared/units'
-import { useIngredients, useShopCategories, useUpdateIngredient } from '@/api/catalog'
+import {
+  useAddStarterIngredients,
+  useIngredients,
+  useShopCategories,
+  useUpdateIngredient,
+} from '@/api/catalog'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { plural } from '@/lib/format'
 
-const { data: ingredients, isPending, error } = useIngredients()
+const { data: ingredients, isPending, error } = useIngredients({ refreshCounts: true })
 const { data: categories } = useShopCategories()
 const update = useUpdateIngredient()
 
@@ -29,7 +34,27 @@ const uncategorizedCount = computed(() => ingredients.value?.filter((i) => !i.sh
 const categoryItems = computed(() => categories.value?.map((c) => ({ title: c.name, value: c.id })) ?? [])
 const unitItems = UNITS.map((u) => ({ title: u.code, value: u.code, subtitle: u.label }))
 
-const snackbar = ref({ show: false, text: '' })
+const snackbar = ref({ show: false, text: '', color: 'error' })
+
+const addStarter = useAddStarterIngredients()
+async function onAddStarter() {
+  try {
+    const { added } = await addStarter.mutateAsync()
+    snackbar.value = {
+      show: true,
+      color: 'success',
+      text: added
+        ? `Pridané: ${plural(added, 'ingrediencia', 'ingrediencie', 'ingrediencií')}.`
+        : 'Základné suroviny už máš všetky.',
+    }
+  } catch (e) {
+    snackbar.value = {
+      show: true,
+      color: 'error',
+      text: e instanceof Error ? e.message : 'Suroviny sa nepodarilo pridať.',
+    }
+  }
+}
 
 async function patch(
   item: IngredientDto,
@@ -38,7 +63,11 @@ async function patch(
   try {
     await update.mutateAsync({ id: item.id, patch: change })
   } catch (e) {
-    snackbar.value = { show: true, text: e instanceof Error ? e.message : 'Zmena sa neuložila.' }
+    snackbar.value = {
+      show: true,
+      color: 'error',
+      text: e instanceof Error ? e.message : 'Zmena sa neuložila.',
+    }
   }
 }
 
@@ -50,7 +79,17 @@ const usage = (item: IngredientDto) =>
   <PageHeader
     title="Ingrediencie"
     subtitle="Kategória obchodu určuje poradie v nákupnom zozname. Nové ingrediencie pribúdajú samy pri písaní receptov."
-  />
+  >
+    <v-btn
+      variant="tonal"
+      :prepend-icon="mdiPlaylistPlus"
+      :loading="addStarter.isPending.value"
+      data-test="add-starter"
+      @click="onAddStarter"
+    >
+      Pridať základné suroviny
+    </v-btn>
+  </PageHeader>
 
   <div class="d-flex flex-wrap align-center ga-3 mb-4">
     <v-text-field
@@ -78,8 +117,17 @@ const usage = (item: IngredientDto) =>
     v-else-if="!ingredients?.length"
     :icon="mdiFormatListChecks"
     title="Zatiaľ žiadne ingrediencie"
-    text="Pribudnú automaticky, keď uložíš prvý recept."
-  />
+    text="Pribudnú automaticky, keď uložíš prvý recept, alebo si môžeš naraz pridať základné suroviny."
+  >
+    <v-btn
+      color="primary"
+      :prepend-icon="mdiPlaylistPlus"
+      :loading="addStarter.isPending.value"
+      @click="onAddStarter"
+    >
+      Pridať základné suroviny
+    </v-btn>
+  </EmptyState>
   <p v-else-if="!filtered.length" class="text-body-2 text-medium-emphasis">Nič sa nenašlo.</p>
 
   <v-card v-else>
@@ -117,5 +165,5 @@ const usage = (item: IngredientDto) =>
     </template>
   </v-card>
 
-  <v-snackbar v-model="snackbar.show" color="error">{{ snackbar.text }}</v-snackbar>
+  <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">{{ snackbar.text }}</v-snackbar>
 </template>

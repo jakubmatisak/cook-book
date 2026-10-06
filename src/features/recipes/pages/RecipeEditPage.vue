@@ -139,7 +139,7 @@ function cancel() {
 </script>
 
 <template>
-  <div class="mx-auto" style="max-width: 48rem">
+  <div>
     <v-toolbar color="transparent" density="compact" class="mb-2 px-0">
       <v-btn :icon="mdiArrowLeft" variant="text" aria-label="Späť" @click="cancel" />
       <v-toolbar-title class="text-h5 font-weight-bold">{{
@@ -172,17 +172,18 @@ function cancel() {
         </template>
       </v-alert>
 
-      <ImagePicker v-model:image-id="form.coverImageId" v-model:image-url="form.coverImageUrl" />
-
       <v-card title="Základ">
         <v-card-text>
-          <v-text-field
-            v-model="form.title"
-            label="Názov receptu"
-            :rules="[required]"
-            autofocus
-            class="mb-3"
-          />
+          <div class="d-flex ga-3 mb-3">
+            <ImagePicker v-model:image-id="form.coverImageId" v-model:image-url="form.coverImageUrl" />
+            <v-text-field
+              v-model="form.title"
+              label="Názov receptu"
+              :rules="[required]"
+              autofocus
+              class="flex-grow-1"
+            />
+          </div>
           <v-row dense>
             <v-col cols="12" sm="6">
               <v-select v-model="form.category" :items="categoryItems" label="Kategória" hide-details />

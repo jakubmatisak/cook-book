@@ -130,7 +130,7 @@ function onGenerated(result: GenerateResult) {
 </script>
 
 <template>
-  <div class="mx-auto" style="max-width: 44rem">
+  <div>
     <PageHeader title="Nákupný zoznam" :subtitle="subtitle">
       <v-btn
         color="primary"

@@ -21,10 +21,10 @@ describe('expiryStatus', () => {
 describe('describeExpiry', () => {
   it('opíše trvanlivosť po slovensky so správnym skloňovaním', () => {
     expect(describeExpiry(null, TODAY)).toBe('')
-    expect(describeExpiry('2026-10-05', TODAY)).toBe('Expiruje dnes')
-    expect(describeExpiry('2026-10-06', TODAY)).toBe('Expiruje zajtra')
-    expect(describeExpiry('2026-10-08', TODAY)).toBe('Expiruje o 3 dni')
-    expect(describeExpiry('2026-10-15', TODAY)).toBe('Expiruje o 10 dní')
+    expect(describeExpiry('2026-10-05', TODAY)).toBe('Trvanlivosť končí dnes')
+    expect(describeExpiry('2026-10-06', TODAY)).toBe('Trvanlivosť končí zajtra')
+    expect(describeExpiry('2026-10-08', TODAY)).toBe('Trvanlivosť končí o 3 dni')
+    expect(describeExpiry('2026-10-15', TODAY)).toBe('Trvanlivosť končí o 10 dní')
     expect(describeExpiry('2026-10-04', TODAY)).toBe('Po trvanlivosti 1 deň')
     expect(describeExpiry('2026-10-01', TODAY)).toBe('Po trvanlivosti 4 dni')
     expect(describeExpiry('2026-09-20', TODAY)).toBe('Po trvanlivosti 15 dní')

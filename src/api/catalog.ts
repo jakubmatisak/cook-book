@@ -1,14 +1,33 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
-import type { IngredientDto, PantryDto, PantryItemDto, ShopCategoryDto, StapleDto, TagDto } from '@shared/api'
+import type {
+  IngredientDto,
+  PantryDto,
+  PantryItemDto,
+  ShopCategoryDto,
+  StapleDto,
+  StarterIngredientsResult,
+  TagDto,
+} from '@shared/api'
 import type { TagInput } from '@shared/schemas/recipe'
 import type { UnitCode } from '@shared/units'
 import { apiFetch } from './http'
+import { addIngredientsToCache, ingredientFromStaple, INGREDIENTS_KEY } from './ingredientCache'
 
-export const useIngredients = () =>
+/**
+ * Zoznam surovín: stiahne sa raz za beh aplikácie a ostáva v pamäti (žiadne obnovenie pri okne,
+ * zaostrení ani pripojení). Nové suroviny sa doplnia z odpovedí servera, pozri `ingredientCache`.
+ * `refreshCounts` (stránka Ingrediencie): po zmene v receptoch sa zoznam raz načíta znova,
+ * aby sedeli počty použití.
+ */
+export const useIngredients = (options: { refreshCounts?: boolean } = {}) =>
   useQuery({
-    queryKey: ['ingredients'],
+    queryKey: INGREDIENTS_KEY,
     queryFn: () => apiFetch<IngredientDto[]>('/ingredients'),
-    staleTime: 60_000,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: options.refreshCounts ?? false,
   })
 
 export const useTags = () =>
@@ -20,6 +39,20 @@ export const useShopCategories = () =>
     queryFn: () => apiFetch<ShopCategoryDto[]>('/shop-categories'),
     staleTime: 5 * 60_000,
   })
+
+/** Pridá základné suroviny; odpoveď nesie len pridané, takže sa zoznam nesťahuje znova. */
+export function useAddStarterIngredients(): UseMutationReturnType<
+  StarterIngredientsResult,
+  Error,
+  void,
+  unknown
+> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiFetch<StarterIngredientsResult>('/ingredients/starter', { method: 'POST' }),
+    onSuccess: (result) => addIngredientsToCache(client, result.items),
+  })
+}
 
 export interface IngredientPatch {
   name?: string
@@ -43,7 +76,7 @@ export function useUpdateIngredient(): UseMutationReturnType<
     mutationFn: ({ id, patch }: UpdateIngredientVars) =>
       apiFetch<IngredientDto>(`/ingredients/${id}`, { method: 'PUT', body: JSON.stringify(patch) }),
     onSuccess: (updated) => {
-      client.setQueryData<IngredientDto[]>(['ingredients'], (old) =>
+      client.setQueryData<IngredientDto[]>(INGREDIENTS_KEY, (old) =>
         old?.map((i) => (i.id === updated.id ? updated : i)),
       )
       void client.invalidateQueries({ queryKey: ['recipes'] })
@@ -168,10 +201,8 @@ export function useCreateStaple(): UseMutationReturnType<StapleDto, Error, Stapl
   return useMutation({
     mutationFn: (input: StapleInput) =>
       apiFetch<StapleDto>('/staples', { method: 'POST', body: JSON.stringify(input) }),
-    onSettled: () => {
-      void client.invalidateQueries({ queryKey: ['staples'] })
-      void client.invalidateQueries({ queryKey: ['ingredients'] })
-    },
+    onSuccess: (staple) => addIngredientsToCache(client, [ingredientFromStaple(staple)]),
+    onSettled: () => void client.invalidateQueries({ queryKey: ['staples'] }),
   })
 }
 

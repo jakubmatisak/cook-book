@@ -6,7 +6,12 @@ import { ingredientCreateSchema, ingredientUpdateSchema, tagInputSchema } from '
 import { shopCategories } from '../db/schema'
 import type { AppEnv } from '../env'
 import { parseBody } from '../http'
-import { createIngredient, listIngredients, updateIngredient } from '../services/catalog'
+import {
+  addStarterIngredients,
+  createIngredient,
+  listIngredients,
+  updateIngredient,
+} from '../services/catalog'
 import { createTag, deleteTag, listTags, updateTag } from '../services/tags'
 
 export const ingredientRoutes = new Hono<AppEnv>()
@@ -18,6 +23,7 @@ export const ingredientRoutes = new Hono<AppEnv>()
     const input = await parseBody(c, ingredientCreateSchema)
     return c.json(await createIngredient(c.get('db'), c.get('user').householdId, input), 201)
   })
+  .post('/starter', async (c) => c.json(await addStarterIngredients(c.get('db'), c.get('user').householdId)))
   .put('/:id', async (c) => {
     const input = await parseBody(c, ingredientUpdateSchema)
     return c.json(await updateIngredient(c.get('db'), c.get('user').householdId, c.req.param('id'), input))

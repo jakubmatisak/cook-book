@@ -161,7 +161,7 @@ function editStaple(staple: StapleDto | null) {
         data-test="expiring-chip"
         @click="onlyExpiring = !onlyExpiring"
       >
-        Expiruje čoskoro<template v-if="expiringCount">&nbsp;({{ expiringCount }})</template>
+        Končí trvanlivosť<template v-if="expiringCount">&nbsp;({{ expiringCount }})</template>
       </v-chip>
     </div>
 

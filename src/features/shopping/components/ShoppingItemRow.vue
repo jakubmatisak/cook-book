@@ -52,6 +52,7 @@ const origin = computed(() =>
         size="small"
         variant="text"
         :aria-label="`Upraviť ${item.name}`"
+        class="d-print-none"
         @click.stop="$emit('edit', item)"
       />
     </template>
