@@ -6,7 +6,6 @@ export default {
     remove: 'Zrušiť pobyt: {names}',
     saved: 'Návšteva je pridaná, jedlá v týchto dňoch s ňou počítajú.',
     removed: 'Pobyt návštevy je zrušený.',
-    entryHint: 'Podľa pobytu je pri jedle aj: {names}',
     dialog: {
       title: 'Návšteva u nás',
       text: 'Vyber, kto k vám príde a v ktoré dni. Jedlá v týchto dňoch s nimi budú počítať (porcie, nákup, alergie a averzie).',

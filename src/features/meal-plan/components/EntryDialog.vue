@@ -51,11 +51,15 @@ const stayGuestIds = computed(() => [
   ),
 ])
 const presentGuestIds = computed(() => [...new Set([...guestIds.value, ...stayGuestIds.value])])
-const stayGuestNames = computed(() =>
-  props.members
-    .filter((m) => stayGuestIds.value.includes(m.id) && !guestIds.value.includes(m.id))
-    .map((m) => m.name),
-)
+
+// Pole „Návšteva pri jedle“ ukazuje aj návštevy z pobytu (vybrané predvolene a bez možnosti odobrať), no ručný výber
+// ostáva zvlášť: návšteva z pobytu sa neukladá k jedlu, takže po zmazaní pobytu sa z jedla sama stratí.
+const guestModel = computed({
+  get: () => presentGuestIds.value,
+  set: (ids: string[]) => {
+    guestIds.value = ids.filter((id) => !stayGuestIds.value.includes(id))
+  },
+})
 
 // Upozornenie na alergie, averzie a diéty rodiny pri vybranom recepte (recept sa nezakazuje).
 const selectedRecipeId = computed(() => (mode.value === 'recipe' ? recipeId.value : null))
@@ -104,8 +108,8 @@ const recipeItems = computed(() => {
 // Návštevy z Rodiny (aktívne); pri jedle sa vyberajú ručne, inak sa nepočítajú do porcií ani upozornení.
 const guestItems = computed(() =>
   props.members
-    .filter((m) => m.kind === 'guest' && (m.isActive || guestIds.value.includes(m.id)))
-    .map((m) => ({ title: m.name, value: m.id })),
+    .filter((m) => m.kind === 'guest' && (m.isActive || presentGuestIds.value.includes(m.id)))
+    .map((m) => ({ title: m.name, value: m.id, props: { disabled: stayGuestIds.value.includes(m.id) } })),
 )
 
 const slotItems = computed(() => props.slots.map((s) => ({ title: displaySlotName(s.name), value: s.id })))
@@ -230,19 +234,19 @@ async function onDelete() {
 
         <v-select
           v-if="guestItems.length"
-          v-model="guestIds"
+          v-model="guestModel"
           :items="guestItems"
           :label="t('plan.entry.guests')"
           multiple
           chips
-          closable-chips
           clearable
           hide-details
           data-test="entry-guests"
-        />
-        <p v-if="stayGuestNames.length" class="text-caption text-medium-emphasis" data-test="entry-stay-hint">
-          {{ t('plan.stays.entryHint', { names: stayGuestNames.join(', ') }) }}
-        </p>
+        >
+          <template #chip="{ props: chip, item }">
+            <v-chip v-bind="chip" :closable="!stayGuestIds.includes(item.value)" />
+          </template>
+        </v-select>
 
         <v-row dense>
           <v-col cols="12" sm="6">

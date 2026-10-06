@@ -6,7 +6,6 @@ export default {
     remove: 'Cancel stay: {names}',
     saved: 'The visitors are added, meals on these days include them.',
     removed: 'The visit is cancelled.',
-    entryHint: 'By the visit, this meal also includes: {names}',
     dialog: {
       title: 'Visitors staying with us',
       text: 'Choose who is coming and on which days. Meals on those days will include them (servings, shopping, allergies and dislikes).',
