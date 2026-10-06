@@ -18,3 +18,6 @@ SELECT `u`.`id`, `u`.`household_id`,
   ) THEN 'owner' ELSE 'member' END,
   `u`.`created_at`
 FROM `users` `u`;
+--> statement-breakpoint
+-- Záznamy jedálnička naviazané na už zmazané recepty sa odstránia (ručné záznamy bez receptu ostanú).
+DELETE FROM `meal_plan_entries` WHERE `recipe_id` IN (SELECT `id` FROM `recipes` WHERE `deleted_at` IS NOT NULL);
