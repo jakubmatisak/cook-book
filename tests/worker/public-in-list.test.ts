@@ -75,14 +75,15 @@ describe('verejné recepty iných domácností v zozname receptov', () => {
     expect(titles(await list('?public=only'))).toEqual([])
   })
 
-  it('public=only ukáže všetky verejné (aj moje verejné), nie moje súkromné', async () => {
+  it('public=only ukáže len recepty iných domácností (aj moje verejné ostanú mimo)', async () => {
     const { add } = await setup()
     await add('Cudzí guláš', { visibility: 'public' })
     await mine('Môj súkromný')
     const res = await mine('Môj verejný')
     const id = ((await res.json()) as { id: string }).id
     await send(app, 'PUT', api(`/recipes/${id}/visibility`), { visibility: 'public' })
-    expect(titles(await list('?public=only'))).toEqual(['Cudzí guláš', 'Môj verejný'])
+    expect(titles(await list('?public=only'))).toEqual(['Cudzí guláš'])
+    expect(titles(await list('?public=include'))).toEqual(['Cudzí guláš', 'Môj súkromný', 'Môj verejný'])
   })
 
   it('hľadanie a typ jedla platia aj pre cudzie recepty', async () => {

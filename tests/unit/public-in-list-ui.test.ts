@@ -81,7 +81,7 @@ afterEach(() => {
 })
 
 describe('adresa a uložené filtre', () => {
-  it('verejne=1 je „s verejnými“, verejne=len „len verejné“, inak bez', () => {
+  it('verejne=1 je „moje aj cudzie“, verejne=len „len cudzie“, inak len moje', () => {
     expect(parseListQuery({}).public).toBe('hide')
     expect(parseListQuery({ verejne: '1' }).public).toBe('include')
     expect(parseListQuery({ verejne: 'len' }).public).toBe('only')
@@ -102,40 +102,40 @@ describe('Verejné recepty v zozname receptov', () => {
     expect(routes.some((r) => r.path === '/verejne/:id')).toBe(true)
   })
 
-  it('filter je predvolene „Bez verejných“ a nič neposiela', async () => {
+  it('filter je predvolene „Len moje“ a nič neposiela', async () => {
     const { wrapper } = await mountPage()
-    expect(wrapper.find('[data-test="public-select"]').text()).toContain('Bez verejných')
+    expect(wrapper.find('[data-test="public-select"]').text()).toContain('Len moje')
     expect(requested().every((u) => !u.includes('public='))).toBe(true)
   })
 
-  it('výber „S verejnými“ a „Len verejné“ pošle public= a uloží verejne do adresy', async () => {
+  it('výber „Moje aj cudzie“ a „Len cudzie“ pošle public= a uloží verejne do adresy', async () => {
     const { router, wrapper } = await mountPage()
-    await choose(wrapper, 'S verejnými')
+    await choose(wrapper, 'Moje aj cudzie')
     await vi.waitFor(() => expect(router.currentRoute.value.query.verejne).toBe('1'))
     await vi.waitFor(() => expect(requested().some((u) => u.includes('public=include'))).toBe(true))
-    await choose(wrapper, 'Len verejné')
+    await choose(wrapper, 'Len cudzie')
     await vi.waitFor(() => expect(router.currentRoute.value.query.verejne).toBe('len'))
     await vi.waitFor(() => expect(requested().some((u) => u.includes('public=only'))).toBe(true))
-    await choose(wrapper, 'Bez verejných')
+    await choose(wrapper, 'Len moje')
     await vi.waitFor(() => expect(router.currentRoute.value.query.verejne).toBeUndefined())
   })
 
   it('z adresy verejne=len sa filter zvolí hneď', async () => {
     const { wrapper } = await mountPage('/recepty?verejne=len')
     expect(requested().some((u) => u.includes('public=only'))).toBe(true)
-    expect(wrapper.find('[data-test="public-select"]').text()).toContain('Len verejné')
+    expect(wrapper.find('[data-test="public-select"]').text()).toContain('Len cudzie')
   })
 
-  it('cudzí recept má odznak s domácnosťou a vedie na verejný detail, môj verejný má odznak „Verejný“', async () => {
+  it('cudzí recept má odznak „Od: domácnosť“ a vedie na verejný detail, môj zdieľaný má odznak „Zdieľaný“', async () => {
     const { wrapper } = await mountPage('/recepty?verejne=1')
     const foreign = wrapper.find('[data-test="recipe-card-f1"]')
-    expect(foreign.text()).toContain('Verejný · Rodičia')
+    expect(foreign.text()).toContain('Od: Rodičia')
     expect(foreign.attributes('href')).toBe('/verejne/f1')
     const own = wrapper.find('[data-test="recipe-card-r2"]')
-    expect(own.text()).toContain('Verejný')
+    expect(own.text()).toContain('Zdieľaný')
     expect(own.text()).not.toContain('Rodičia')
     expect(own.attributes('href')).toBe('/recepty/r2')
-    expect(wrapper.find('[data-test="recipe-card-r1"]').text()).not.toContain('Verejný')
+    expect(wrapper.find('[data-test="recipe-card-r1"]').text()).not.toContain('Zdieľaný')
   })
 
   it('cudzí recept nemá tlačidlo obľúbených a nedá sa vybrať pre hromadné úpravy', async () => {
@@ -151,6 +151,6 @@ describe('Verejné recepty v zozname receptov', () => {
   it('v angličtine sú možnosti po anglicky', async () => {
     setLocale('en')
     const { wrapper } = await mountPage()
-    expect(wrapper.find('[data-test="public-select"]').text()).toContain('Without public')
+    expect(wrapper.find('[data-test="public-select"]').text()).toContain('Mine only')
   })
 })

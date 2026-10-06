@@ -106,7 +106,7 @@ export const recipeListQuerySchema = z.object({
     ),
   /**
    * Verejné recepty iných domácností v zozname: `hide` (predvolene) ich nezobrazí, `include` ich pridá k mojim,
-   * `only` ukáže len verejné (moje aj cudzie).
+   * `only` ukáže len cudzie.
    */
   public: z
     .enum(['hide', 'include', 'only'])

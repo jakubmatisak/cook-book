@@ -46,7 +46,7 @@ export interface RecipeListOptions extends FacetFilters {
   q?: string
   /** Pridať chýbajúce ingrediencie a (bez explicitného zoradenia) zoradiť podľa nich. */
   pantry?: boolean
-  /** Verejné recepty iných domácností: `include` ich pridá, `only` ukáže len verejné (aj moje). */
+  /** Recepty iných domácností (verejné): `include` ich pridá k mojim, `only` ukáže len cudzie. */
   publicMode?: 'include' | 'only'
   sort?: SortKey
   dir?: SortDir
@@ -421,23 +421,20 @@ export async function listRecipes(
       )
     : undefined
 
-  const rows = await db
-    .select({
-      recipe: recipes,
-      r2Key: images.r2Key,
-      isFavorite: isFavoriteSql(userId),
-      lastCookedAt: lastCookedSql,
-    })
-    .from(recipes)
-    .leftJoin(images, eq(images.id, recipes.coverImageId))
-    .where(
-      and(
-        eq(recipes.householdId, householdId),
-        isNull(recipes.deletedAt),
-        options.publicMode === 'only' ? eq(recipes.visibility, 'public') : undefined,
-        needleSql,
-      ),
-    )
+  // „Len cudzie“: moje recepty (aj tie, ktoré som zdieľal) sa preskočia.
+  const rows =
+    options.publicMode === 'only'
+      ? []
+      : await db
+          .select({
+            recipe: recipes,
+            r2Key: images.r2Key,
+            isFavorite: isFavoriteSql(userId),
+            lastCookedAt: lastCookedSql,
+          })
+          .from(recipes)
+          .leftJoin(images, eq(images.id, recipes.coverImageId))
+          .where(and(eq(recipes.householdId, householdId), isNull(recipes.deletedAt), needleSql))
 
   // Cudzie verejné recepty (nie pri „čo viem uvariť“, kde sa počíta moja špajza).
   const foreignRows =
