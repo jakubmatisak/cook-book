@@ -25,8 +25,22 @@ export const createAppVuetify = () =>
       VTextField: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'sm' },
       VTextarea: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'sm' },
       VSelect: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'sm' },
-      VAutocomplete: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'sm' },
-      VCombobox: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'sm' },
+      // autocomplete: 'suppress' – Vuetify vypne dopĺňanie prehliadača aj ponuku uložených hodnôt (inak sa pod poľom
+      // ukážu náhodné návrhy, napr. „All users“).
+      VAutocomplete: {
+        variant: 'outlined',
+        density: 'comfortable',
+        color: 'primary',
+        rounded: 'sm',
+        autocomplete: 'suppress',
+      },
+      VCombobox: {
+        variant: 'outlined',
+        density: 'comfortable',
+        color: 'primary',
+        rounded: 'sm',
+        autocomplete: 'suppress',
+      },
       VNumberInput: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'sm' },
       VChip: { rounded: 'sm' },
       VAlert: { rounded: 'md', variant: 'tonal' },
