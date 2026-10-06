@@ -28,6 +28,11 @@ export default {
     factorTimesAdult: '{factor} × dospelý',
     childPortionHint: 'Použije sa pri pridaní nového dieťaťa v Rodine.',
   },
+  kids: {
+    title: 'Detské recepty',
+    label: 'Zobrazovať detské recepty',
+    hint: 'Kaše, přesnídavky a príkrmy. Po vypnutí sa detské recepty skryjú v celej aplikácii (zoznam, plánovanie, návrhy) a kategória Detské sa nebude ponúkať.',
+  },
   pantry: {
     title: 'Špajza a recepty',
     ignoreSpices: 'Pri „Čo viem uvariť“ ignorovať koreniny',

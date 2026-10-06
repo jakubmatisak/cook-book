@@ -40,7 +40,7 @@ const slotId = ref('')
 const error = ref('')
 const confirmDelete = ref(false)
 
-const { data: recipeList } = useRecipes(() => ({ kids: true }))
+const { data: recipeList } = useRecipes(() => ({ kids: 'include' }))
 
 // Návštevy pri jedle: ručne vybrané aj tie, ktorých pobyt pokrýva zvolený deň.
 const stayGuestIds = computed(() => [

@@ -26,7 +26,12 @@ describe('kategória Detské', () => {
 
   it('detské recepty sa v zozname skrývajú, kým sa nezapne „aj detské“', () => {
     expect(ids({})).toEqual(['Guláš', 'Palacinky'])
-    expect(ids({ includeKids: true })).toEqual(['Guláš', 'Ovsená kaša', 'Palacinky'])
+    expect(ids({ kids: 'include' })).toEqual(['Guláš', 'Ovsená kaša', 'Palacinky'])
+  })
+
+  it('„len detské“ ukáže iba detské recepty, aj v počtoch', () => {
+    expect(ids({ kids: 'only' })).toEqual(['Ovsená kaša'])
+    expect(computeFacets(rows, { kids: 'only' }).category).toEqual({ detske: 1 })
   })
 
   it('výslovne zvolená kategória Detské ich ukáže aj bez prepínača', () => {
@@ -36,15 +41,16 @@ describe('kategória Detské', () => {
 
   it('počty pri filtroch zodpovedajú tomu, čo sa ukáže', () => {
     expect(computeFacets(rows, {}).category).toEqual({ hlavne: 1, dezert: 1 })
-    expect(computeFacets(rows, { includeKids: true }).category).toEqual({ hlavne: 1, detske: 1, dezert: 1 })
+    expect(computeFacets(rows, { kids: 'include' }).category).toEqual({ hlavne: 1, detske: 1, dezert: 1 })
   })
 })
 
 describe('prepínač „aj detské“ v adrese', () => {
   it('detske=1 zapne zobrazenie, bez neho je vypnuté', () => {
-    expect(parseListQuery({}).kids).toBe(false)
-    expect(parseListQuery({ detske: '1' }).kids).toBe(true)
-    expect(parseListQuery({ detske: '0' }).kids).toBe(false)
+    expect(parseListQuery({}).kids).toBe('hide')
+    expect(parseListQuery({ detske: '1' }).kids).toBe('include')
+    expect(parseListQuery({ detske: 'len' }).kids).toBe('only')
+    expect(parseListQuery({ detske: '0' }).kids).toBe('hide')
   })
 
   it('ukladá sa medzi predvolené filtre', () => {

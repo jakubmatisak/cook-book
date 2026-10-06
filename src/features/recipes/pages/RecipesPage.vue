@@ -3,7 +3,6 @@ import {
   mdiBookOpenPageVariantOutline,
   mdiCheck,
   mdiFilterVariant,
-  mdiBabyFaceOutline,
   mdiFridgeOutline,
   mdiHeart,
   mdiMagnify,
@@ -24,6 +23,7 @@ import type { TimeBucket } from '@shared/recipeFacets'
 import { useTags } from '@/api/catalog'
 import { useMe } from '@/api/me'
 import { useRecipes } from '@/api/recipes'
+import { useKidsEnabled } from '@/composables/useKidsEnabled'
 import { useSaveUserSettings } from '@/api/userSettings'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -45,6 +45,7 @@ import {
   tableSortToState,
   toggleValue,
   type FilterDimension,
+  type KidsMode,
   type RecipeView,
   type TableSort,
 } from '../listQuery'
@@ -77,7 +78,12 @@ watch(
 )
 onBeforeUnmount(() => clearTimeout(timer))
 
-const { data: list, isPending, error } = useRecipes(state)
+const kidsEnabled = useKidsEnabled()
+// Pri vypnutých detských jedlách (nastavenia) sa prepínač ani parameter `detske` neuplatnia.
+const listFilters = computed(() =>
+  kidsEnabled.value ? state.value : { ...state.value, kids: 'hide' as const },
+)
+const { data: list, isPending, error } = useRecipes(listFilters)
 const { data: tags } = useTags()
 const recipes = computed(() => list.value?.items)
 
@@ -166,10 +172,12 @@ const favorite = computed({
   get: () => state.value.favorite,
   set: (value: boolean) => setQuery({ oblubene: value ? '1' : undefined }),
 })
+const KIDS_PARAMS = { hide: undefined, include: '1', only: 'len' } as const
 const kids = computed({
   get: () => state.value.kids,
-  set: (value: boolean) => setQuery({ detske: value ? '1' : undefined }),
+  set: (value: KidsMode) => setQuery({ detske: KIDS_PARAMS[value] }),
 })
+const KIDS_MODES: readonly KidsMode[] = ['hide', 'include', 'only']
 const pantryMode = computed({
   get: () => state.value.pantry,
   set: (value: boolean) => setQuery({ doma: value ? '1' : undefined, chyba: undefined }),
@@ -340,16 +348,21 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         >
           {{ t('recipes.list.favorites') }}
         </v-btn>
-        <v-btn
-          :prepend-icon="kids ? mdiCheck : mdiBabyFaceOutline"
-          :color="kids ? 'primary' : undefined"
-          :variant="kids ? 'flat' : 'outlined'"
-          height="40"
+        <v-btn-toggle
+          v-if="kidsEnabled"
+          v-model="kids"
+          mandatory
+          density="comfortable"
+          selected-class="bg-primary"
+          variant="outlined"
+          divided
+          :aria-label="t('recipes.list.kids')"
           data-test="kids-toggle"
-          @click="kids = !kids"
         >
-          {{ t('recipes.list.kids') }}
-        </v-btn>
+          <v-btn v-for="mode in KIDS_MODES" :key="mode" :value="mode" height="40" :data-test="`kids-${mode}`">
+            {{ t(`recipes.list.kids_${mode}`) }}
+          </v-btn>
+        </v-btn-toggle>
         <v-btn
           :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
           :color="pantryMode ? 'primary' : undefined"

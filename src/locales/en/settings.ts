@@ -28,6 +28,11 @@ export default {
     factorTimesAdult: '{factor} × adult',
     childPortionHint: 'Used when you add a new child in Family.',
   },
+  kids: {
+    title: 'Baby food recipes',
+    label: 'Show baby food recipes',
+    hint: 'Porridges, purees and first foods. When off, baby food recipes are hidden across the whole app (list, planning, suggestions) and the Baby and toddler category is not offered.',
+  },
   pantry: {
     title: 'Pantry and recipes',
     ignoreSpices: 'Ignore spices in “What can I cook”',

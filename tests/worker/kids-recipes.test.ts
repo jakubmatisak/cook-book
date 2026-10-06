@@ -42,6 +42,11 @@ describe('detské recepty', () => {
     expect((await list('?category=detske')).items.map((r) => r.title)).toEqual(['Ovsená kaša nemliečna'])
   })
 
+  it('kids=only vráti len detské recepty', async () => {
+    await setup()
+    expect((await list('?kids=only')).items.map((r) => r.title)).toEqual(['Ovsená kaša nemliečna'])
+  })
+
   it('detské recepty sa nenavrhujú v „čo uvariť dnes“', async () => {
     await setup()
     const res = await send(app, 'GET', api('/recipes/suggestions?date=2026-10-06'))
@@ -55,5 +60,25 @@ describe('detské recepty', () => {
     const all = await list('?kids=1')
     const kids = all.items.find((r) => r.category === 'detske')!
     expect((await send(app, 'GET', api(`/recipes/${kids.id}`))).status).toBe(200)
+  })
+})
+
+describe('vypnuté detské recepty v nastaveniach', () => {
+  it('nezobrazia sa nikde, ani s kids=1, kids=only či kategóriou detske', async () => {
+    await setup()
+    const saved = await send(app, 'PUT', api('/me/settings'), { kidsEnabled: false })
+    expect(saved.status).toBe(200)
+    for (const query of ['', '?kids=1', '?kids=only', '?category=detske']) {
+      const titles = (await list(query)).items.map((r) => r.title)
+      expect(titles, query).not.toContain('Ovsená kaša nemliečna')
+    }
+    expect((await list('?kids=1')).facets.category).toEqual({ hlavne: 1 })
+  })
+
+  it('opätovné zapnutie (null) ich vráti', async () => {
+    await setup()
+    await send(app, 'PUT', api('/me/settings'), { kidsEnabled: false })
+    await send(app, 'PUT', api('/me/settings'), { kidsEnabled: null })
+    expect((await list('?kids=only')).items.map((r) => r.title)).toEqual(['Ovsená kaša nemliečna'])
   })
 })

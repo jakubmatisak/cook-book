@@ -27,8 +27,11 @@ export interface RecipeFilters {
   difficulty?: number[]
   time?: TimeBucket[]
   favorite?: boolean
-  /** Detské recepty (kategória `detske`) sa ukážu aj bez výslovne zvolenej kategórie. */
-  includeKids?: boolean
+  /**
+   * Detské recepty (kategória `detske`): predvolene skryté, `include` ich pridá, `only` ukáže len ich,
+   * `off` (detské jedlá vypnuté v nastaveniach) ich skryje vždy.
+   */
+  kids?: 'include' | 'only' | 'off'
   /** Najviac toľko chýbajúcich surovín (len pri „Čo viem uvariť“, kde recepty nesú `missing`). */
   missingMax?: number
 }
@@ -53,7 +56,14 @@ export function timeBucket(minutes: number | null): TimeBucket | null {
 
 const matches = (row: FacetRow, filters: RecipeFilters, skip?: Dimension): boolean => {
   // Detské jedlá (kaše, príkrmy) sa v bežnom zozname skrývajú, kým sa nezapnú alebo nezvolí kategória Detské.
-  if (row.category === 'detske' && !filters.includeKids && !filters.category?.includes('detske')) return false
+  const isKids = row.category === 'detske'
+  if (filters.kids === 'only') {
+    if (!isKids) return false
+  } else if (isKids) {
+    const shown =
+      filters.kids !== 'off' && (filters.kids === 'include' || filters.category?.includes('detske'))
+    if (!shown) return false
+  }
   if (filters.favorite && !row.isFavorite) return false
   if (skip !== 'category' && filters.category?.length && !filters.category.includes(row.category))
     return false

@@ -17,4 +17,6 @@ export interface UserSettingsDto {
   theme?: ThemePreference
   recipeView?: RecipeViewPreference
   recipeQuery?: Record<string, string>
+  /** Detské recepty (kaše, príkrmy) v aplikácii; `false` ich skryje všade. Predvolene zapnuté. */
+  kidsEnabled?: boolean
 }

@@ -3,7 +3,11 @@ import { slotName } from '@/i18n/defaults'
 import { mdiDownload, mdiFileDocumentOutline, mdiLogout } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
 import { I18nT, useI18n } from 'vue-i18n'
+import { useQueryClient } from '@tanstack/vue-query'
 import { useUpdateSettings, useUpdateSlot } from '@/api/family'
+import { recipeKeys } from '@/api/recipes'
+import { useSaveUserSettings } from '@/api/userSettings'
+import { useKidsEnabled } from '@/composables/useKidsEnabled'
 import { ApiError, downloadFile } from '@/api/http'
 import { useIsOwner, useMe } from '@/api/me'
 import PageHeader from '@/components/PageHeader.vue'
@@ -23,6 +27,20 @@ const { preference: themePreference, set: setTheme } = useThemePreference()
 const snackbar = ref({ show: false, text: '', color: 'error' })
 const updateSlot = useUpdateSlot()
 const updateSettings = useUpdateSettings()
+
+const client = useQueryClient()
+const kidsEnabled = useKidsEnabled()
+const saveUserSettings = useSaveUserSettings()
+// Zapnuté je predvolené, preto sa pri zapnutí nastavenie zmaže (null) a vypnutie sa uloží ako false.
+function saveKids(value: boolean | null) {
+  saveUserSettings.mutate(
+    { kidsEnabled: value ? null : false },
+    {
+      onSuccess: () => client.invalidateQueries({ queryKey: recipeKeys.all }),
+      onError: () => (snackbar.value = { show: true, text: t('settings.changeFailed'), color: 'error' }),
+    },
+  )
+}
 
 const WEEK_STARTS = computed<{ value: 0 | 1 | 6; title: string }[]>(() => [
   { value: 1, title: t('settings.plan.weekdays.monday') },
@@ -128,6 +146,20 @@ async function exportRecipes() {
           <v-btn value="light">{{ t('settings.appearance.light') }}</v-btn>
           <v-btn value="dark">{{ t('settings.appearance.dark') }}</v-btn>
         </v-btn-toggle>
+      </v-card-text>
+    </v-card>
+
+    <v-card v-if="me" :title="t('settings.kids.title')">
+      <v-card-text>
+        <v-switch
+          :model-value="kidsEnabled"
+          color="primary"
+          :label="t('settings.kids.label')"
+          :hint="t('settings.kids.hint')"
+          persistent-hint
+          data-test="kids-switch"
+          @update:model-value="saveKids"
+        />
       </v-card-text>
     </v-card>
 

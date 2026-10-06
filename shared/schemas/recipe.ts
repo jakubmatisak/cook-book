@@ -96,11 +96,13 @@ export const recipeListQuerySchema = z.object({
   tag: csv(z.string().max(40)),
   difficulty: csv(z.coerce.number().int().min(1).max(3)),
   time: csv(z.enum(TIME_BUCKETS)),
-  /** `kids=1`: zahrnúť aj detské recepty (inak sa skrývajú). */
+  /** `kids=1`: zahrnúť aj detské recepty (inak sa skrývajú); `kids=only`: len detské. */
   kids: z
-    .enum(['1', 'true'])
+    .enum(['1', 'true', 'only'])
     .optional()
-    .transform((v) => v !== undefined),
+    .transform((v) =>
+      v === undefined ? undefined : v === 'only' ? ('only' as const) : ('include' as const),
+    ),
   /** Najviac toľko chýbajúcich surovín (len s `pantry=1`). */
   missing: z.coerce.number().int().min(0).max(20).optional(),
   sort: z.enum(SORT_KEYS).optional(),

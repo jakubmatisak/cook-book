@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import type { VForm } from 'vuetify/components'
 import { RECIPE_CATEGORIES } from '@shared/recipes'
+import { useKidsEnabled } from '@/composables/useKidsEnabled'
 import { recipeInputSchema } from '@shared/schemas/recipe'
 import { useTags } from '@/api/catalog'
 import { ApiError } from '@/api/http'
@@ -98,8 +99,12 @@ function discardDraft() {
   draft.clear()
 }
 
+const kidsEnabled = useKidsEnabled()
+// Pri vypnutých detských jedlách sa kategória Detské neponúka (okrem receptu, ktorý ju už má).
 const categoryItems = computed(() =>
-  RECIPE_CATEGORIES.map((value) => ({ value, title: t(`common.category.${value}`) })),
+  RECIPE_CATEGORIES.filter(
+    (value) => kidsEnabled.value || value !== 'detske' || form.value.category === 'detske',
+  ).map((value) => ({ value, title: t(`common.category.${value}`) })),
 )
 const tagNames = computed(() => tags.value?.map((tag) => tag.name) ?? [])
 

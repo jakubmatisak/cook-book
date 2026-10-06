@@ -13,6 +13,7 @@ export const userSettingsUpdateSchema = z
     theme: z.enum(THEME_PREFERENCES).nullable().optional(),
     recipeView: z.enum(RECIPE_VIEWS).nullable().optional(),
     recipeQuery: recipeQuery.nullable().optional(),
+    kidsEnabled: z.boolean().nullable().optional(),
   })
   .strict()
 export type UserSettingsUpdate = z.output<typeof userSettingsUpdateSchema>

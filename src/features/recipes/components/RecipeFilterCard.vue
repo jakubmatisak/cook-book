@@ -5,9 +5,13 @@ import { useI18n } from 'vue-i18n'
 import type { TagDto } from '@shared/api'
 import { TIME_BUCKETS, type RecipeFacets } from '@shared/recipeFacets'
 import { RECIPE_CATEGORIES } from '@shared/recipes'
+import { useKidsEnabled } from '@/composables/useKidsEnabled'
 import { activeFilterCount, type FilterDimension, type RecipeListState } from '../listQuery'
 
 const { t } = useI18n()
+const kidsEnabled = useKidsEnabled()
+// Pri vypnutých detských jedlách sa kategória Detské v ponuke nezobrazí.
+const categories = computed(() => RECIPE_CATEGORIES.filter((c) => kidsEnabled.value || c !== 'detske'))
 const props = defineProps<{
   state: RecipeListState
   facets: RecipeFacets
@@ -57,7 +61,7 @@ const sections = computed<Section[]>(() => {
       'category',
       t('recipes.filters.category'),
       state.category,
-      RECIPE_CATEGORIES.map((c) => ({
+      categories.value.map((c) => ({
         value: c,
         label: t(`common.category.${c}`),
         count: facets.category[c],

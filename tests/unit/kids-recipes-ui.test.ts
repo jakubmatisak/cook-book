@@ -10,8 +10,12 @@ import { me, mountPlugins, stubApi } from './helpers/apiStub'
 const emptyList = { items: [], facets: { category: {}, tag: {}, difficulty: {}, time: {}, missing: {} } }
 const Blank = defineComponent({ render: () => h('div') })
 
-async function mountPage(url = '/recepty') {
-  stubApi({ '/me': me('owner'), '/recipes': emptyList, '/tags': [] })
+async function mountPage(url = '/recepty', kidsEnabled?: boolean) {
+  stubApi({
+    '/me': { ...me('owner'), userSettings: kidsEnabled === undefined ? {} : { kidsEnabled } },
+    '/recipes': emptyList,
+    '/tags': [],
+  })
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: '/recepty', component: Blank }],
@@ -37,30 +41,43 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('prepínač „Aj detské“', () => {
-  it('je vypnutý, kým ho nezapneš, a zapnutie pošle kids=1 aj uloží detske=1 do adresy', async () => {
+describe('prepínač detských receptov', () => {
+  it('predvolene sú detské skryté; „Aj detské“ pošle kids=1 a „Len detské“ kids=only', async () => {
     const { router, wrapper } = await mountPage()
-    expect(requested().every((u) => !u.includes('kids=1'))).toBe(true)
+    expect(requested().every((u) => !u.includes('kids='))).toBe(true)
 
-    await wrapper.find('[data-test="kids-toggle"]').trigger('click')
-    await flushPromises()
+    await wrapper.find('[data-test="kids-include"]').trigger('click')
     await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBe('1'))
     await vi.waitFor(() => expect(requested().some((u) => u.includes('kids=1'))).toBe(true))
 
-    await wrapper.find('[data-test="kids-toggle"]').trigger('click')
+    await wrapper.find('[data-test="kids-only"]').trigger('click')
+    await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBe('len'))
+    await vi.waitFor(() => expect(requested().some((u) => u.includes('kids=only'))).toBe(true))
+
+    await wrapper.find('[data-test="kids-hide"]').trigger('click')
     await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBeUndefined())
   })
 
-  it('z adresy detske=1 sa zapne hneď', async () => {
-    const { wrapper } = await mountPage('/recepty?detske=1')
-    expect(requested().some((u) => u.includes('kids=1'))).toBe(true)
-    expect(wrapper.find('[data-test="kids-toggle"]').classes()).toContain('bg-primary')
+  it('z adresy sa zvolí príslušná možnosť', async () => {
+    const { wrapper } = await mountPage('/recepty?detske=len')
+    expect(requested().some((u) => u.includes('kids=only'))).toBe(true)
+    expect(wrapper.find('[data-test="kids-only"]').classes()).toContain('bg-primary')
   })
 
-  it('v angličtine má popis po anglicky', async () => {
+  it('v angličtine majú možnosti anglické popisy', async () => {
     setLocale('en')
     const { wrapper } = await mountPage()
-    expect(wrapper.find('[data-test="kids-toggle"]').text()).toBe('Include baby food')
+    expect(wrapper.find('[data-test="kids-hide"]').text()).toBe('No baby food')
+    expect(wrapper.find('[data-test="kids-include"]').text()).toBe('With baby food')
+    expect(wrapper.find('[data-test="kids-only"]').text()).toBe('Baby food only')
+  })
+})
+
+describe('vypnuté detské jedlá v nastaveniach', () => {
+  it('prepínač sa nezobrazí a kids sa neposiela, ani keď je v adrese', async () => {
+    const { wrapper } = await mountPage('/recepty?detske=1', false)
+    expect(wrapper.find('[data-test="kids-toggle"]').exists()).toBe(false)
+    expect(requested().every((u) => !u.includes('kids='))).toBe(true)
   })
 })
 

@@ -3,6 +3,7 @@ import { mdiEarth, mdiMagnify } from '@mdi/js'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RECIPE_CATEGORIES, type RecipeCategory } from '@shared/recipes'
+import { useKidsEnabled } from '@/composables/useKidsEnabled'
 import { usePublicRecipes } from '@/api/publicRecipes'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -26,7 +27,8 @@ const filters = computed(() => ({ q: query.value || undefined, category: categor
 const { data: recipes, isPending, error } = usePublicRecipes(filters)
 
 const hasFilters = computed(() => Boolean(query.value) || categories.value.length > 0)
-const categoryItems = RECIPE_CATEGORIES.map((value) => value)
+const kidsEnabled = useKidsEnabled()
+const categoryItems = computed(() => RECIPE_CATEGORIES.filter((c) => kidsEnabled.value || c !== 'detske'))
 </script>
 
 <template>
