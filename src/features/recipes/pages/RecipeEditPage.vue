@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import type { VForm } from 'vuetify/components'
-import { RECIPE_CATEGORIES } from '@shared/recipes'
+import { RECIPE_CATEGORIES, type RecipeCategory } from '@shared/recipes'
 import { useKidsEnabled } from '@/composables/useKidsEnabled'
 import { recipeInputSchema } from '@shared/schemas/recipe'
 import { useTags } from '@/api/catalog'
@@ -106,6 +106,19 @@ const categoryItems = computed(() =>
     (value) => kidsEnabled.value || value !== 'detske' || form.value.category === 'detske',
   ).map((value) => ({ value, title: t(`common.category.${value}`) })),
 )
+// Zaškrtávacie pole „Detský recept“ je skratka pre typ jedla Detské: zaškrtnutím sa typ nastaví a odškrtnutím sa vráti
+// predošlý (alebo Hlavné jedlo, ak recept bol detský už pri otvorení).
+const showKidsFlag = computed(() => kidsEnabled.value || form.value.category === 'detske')
+const categoryBeforeKids = ref<RecipeCategory>('hlavne')
+const kidsFlag = computed({
+  get: () => form.value.category === 'detske',
+  set: (checked: boolean) => {
+    if (checked) {
+      if (form.value.category !== 'detske') categoryBeforeKids.value = form.value.category
+      form.value.category = 'detske'
+    } else form.value.category = categoryBeforeKids.value === 'detske' ? 'hlavne' : categoryBeforeKids.value
+  },
+})
 const tagNames = computed(() => tags.value?.map((tag) => tag.name) ?? [])
 
 const formRef = ref<VForm>()
@@ -199,6 +212,14 @@ function cancel() {
               class="flex-grow-1"
             />
           </div>
+          <v-checkbox
+            v-if="showKidsFlag"
+            v-model="kidsFlag"
+            :label="t('recipes.editor.kidsFlag')"
+            hide-details
+            density="comfortable"
+            data-test="kids-flag"
+          />
           <v-row dense>
             <v-col cols="12" sm="6">
               <v-select
@@ -206,6 +227,7 @@ function cancel() {
                 :items="categoryItems"
                 :label="t('recipes.editor.category')"
                 hide-details
+                data-test="recipe-category"
               />
             </v-col>
             <v-col cols="12" sm="6">

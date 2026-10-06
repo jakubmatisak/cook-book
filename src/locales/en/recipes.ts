@@ -160,6 +160,7 @@ export default {
   },
   editor: {
     newTitle: 'New recipe',
+    kidsFlag: 'Baby food recipe (porridge, puree – up to 18 months)',
     editTitle: 'Edit recipe',
     errorsTitle: 'The recipe cannot be saved',
     checkFields: 'Check the highlighted fields.',

@@ -155,6 +155,7 @@ export default {
   },
   editor: {
     newTitle: 'Nový recept',
+    kidsFlag: 'Detský recept (kaša, príkrm – do 18 mesiacov)',
     editTitle: 'Upraviť recept',
     errorsTitle: 'Recept sa nedá uložiť',
     checkFields: 'Skontroluj zvýraznené polia.',
