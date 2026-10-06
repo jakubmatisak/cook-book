@@ -89,6 +89,7 @@ describe('formulár receptu', () => {
       coverImageId: 'x',
       tags: [{ id: 't1', name: 'Klasika', color: null }],
       isFavorite: true,
+      visibility: 'private',
       updatedAt: 'x',
       createdAt: 'x',
       lastCookedAt: null,

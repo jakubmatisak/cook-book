@@ -5,6 +5,7 @@ import { images } from '../db/schema'
 import type { AppEnv } from '../env'
 import { HttpError } from '../errors'
 import { storeImage } from '../services/images'
+import { isPublicImage } from '../services/publicRecipes'
 
 const dimension = (value: unknown) => {
   const n = typeof value === 'string' ? Number.parseInt(value, 10) : NaN
@@ -38,8 +39,9 @@ export const imageUploadRoutes = new Hono<AppEnv>().post('/', async (c) => {
 /** GET /img/:householdId/:file – fotka z R2, len pre vlastnú domácnosť. */
 export const imageServeRoutes = new Hono<AppEnv>().get('/:householdId/:file', async (c) => {
   const { householdId, file } = c.req.param()
-  // Fotky nenesú `?h=`, o prístupe rozhoduje členstvo v domácnosti z adresy.
-  if (!c.get('memberships').some((m) => m.householdId === householdId)) {
+  // Fotky nenesú `?h=`, o prístupe rozhoduje členstvo v domácnosti z adresy; fotky verejných receptov vidí každý.
+  const isMember = c.get('memberships').some((m) => m.householdId === householdId)
+  if (!isMember && !(await isPublicImage(c.get('db'), `${householdId}/${file}`))) {
     throw new HttpError(404, 'not_found', 'Fotka neexistuje.')
   }
 

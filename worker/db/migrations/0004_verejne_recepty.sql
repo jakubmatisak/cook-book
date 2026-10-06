@@ -1,0 +1,1 @@
+ALTER TABLE `recipes` ADD `visibility` text DEFAULT 'private' NOT NULL;

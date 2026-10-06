@@ -1,7 +1,7 @@
 import { z } from './zod'
 import { isIsoDate } from '../dates'
 import { SORT_KEYS, TIME_BUCKETS } from '../recipeFacets'
-import { RECIPE_CATEGORIES } from '../recipes'
+import { RECIPE_CATEGORIES, RECIPE_VISIBILITIES } from '../recipes'
 import { normalizeText } from '../text'
 import { UNIT_CODES } from '../units'
 
@@ -109,6 +109,14 @@ export const recipeListQuerySchema = z.object({
     .enum(['1', 'true'])
     .optional()
     .transform((v) => v !== undefined),
+})
+
+export const recipeVisibilitySchema = z.object({ visibility: z.enum(RECIPE_VISIBILITIES) })
+
+/** Zoznam verejných receptov: hľadanie podľa názvu a typ jedla (zoznam oddelený čiarkou). */
+export const publicRecipeListQuerySchema = z.object({
+  q: z.string().trim().max(100).optional(),
+  category: csv(z.enum(RECIPE_CATEGORIES)),
 })
 
 export const recipeImportSchema = z.object({

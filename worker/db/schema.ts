@@ -14,7 +14,7 @@ import {
 } from 'drizzle-orm/sqlite-core'
 import { newId } from '../../shared/ids'
 import { UNIT_CODES } from '../../shared/units'
-import { RECIPE_CATEGORIES } from '../../shared/recipes'
+import { RECIPE_CATEGORIES, RECIPE_VISIBILITIES } from '../../shared/recipes'
 import { HOUSEHOLD_ROLES, MEMBER_KINDS, PLAN_AUDIENCES } from '../../shared/family'
 
 const nowIso = () => new Date().toISOString()
@@ -180,6 +180,8 @@ export const recipes = sqliteTable(
     difficulty: integer('difficulty').notNull().default(1),
     sourceUrl: text('source_url'),
     sourceText: text('source_text'),
+    /** `public` = vidia ho všetci prihlásení z každej domácnosti (nie len členovia domácnosti). */
+    visibility: text('visibility', { enum: RECIPE_VISIBILITIES }).notNull().default('private'),
     coverImageId: text('cover_image_id').references(() => images.id, { onDelete: 'set null' }),
     parentRecipeId: text('parent_recipe_id').references((): AnySQLiteColumn => recipes.id, {
       onDelete: 'set null',

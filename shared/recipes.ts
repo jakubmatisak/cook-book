@@ -12,6 +12,10 @@ export const RECIPE_CATEGORIES = [
 
 export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number]
 
+/** Súkromný recept vidí len domácnosť, verejný vidia všetci prihlásení v ktorejkoľvek domácnosti. */
+export const RECIPE_VISIBILITIES = ['private', 'public'] as const
+export type RecipeVisibility = (typeof RECIPE_VISIBILITIES)[number]
+
 export const RECIPE_CATEGORY_LABELS: Record<RecipeCategory, string> = {
   polievka: 'Polievka',
   hlavne: 'Hlavné jedlo',

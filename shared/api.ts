@@ -2,7 +2,7 @@ import type { HouseholdRole, MemberKind, PlanAudience } from './family'
 import type { MemberPreference, PreferenceWarning } from './preferences'
 import type { Suggestion } from './suggest'
 import type { RecipeFacets } from './recipeFacets'
-import type { RecipeCategory } from './recipes'
+import type { RecipeCategory, RecipeVisibility } from './recipes'
 import type { RecipeInputRaw } from './schemas/recipe'
 import type { UnitCode } from './units'
 import type { UserSettingsDto } from './userSettings'
@@ -172,6 +172,8 @@ export interface RecipeSummaryDto {
   coverImageUrl: string | null
   tags: TagDto[]
   isFavorite: boolean
+  /** Súkromný (len domácnosť) alebo verejný (vidia ho všetci prihlásení). */
+  visibility: RecipeVisibility
   createdAt: string
   updatedAt: string
   /** Dátum posledného varenia (z jedálnička), alebo null, keď ešte nebolo uvarené. */
@@ -207,6 +209,17 @@ export interface RecipeDetailDto extends RecipeSummaryDto {
   coverImageId: string | null
   ingredients: RecipeIngredientDto[]
   steps: RecipeStepDto[]
+}
+
+/** Verejný recept v zozname Verejných receptov: autor je názov domácnosti, `ownedByMe` = patrí mojej domácnosti. */
+export interface PublicRecipeSummaryDto extends RecipeSummaryDto {
+  householdName: string
+  ownedByMe: boolean
+}
+
+export interface PublicRecipeDetailDto extends RecipeDetailDto {
+  householdName: string
+  ownedByMe: boolean
 }
 
 /** Výsledok importu z webu: predvyplnený recept na kontrolu, fotka je už uložená v domácnosti. */

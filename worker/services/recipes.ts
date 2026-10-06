@@ -10,6 +10,7 @@ import {
   type SortDir,
   type SortKey,
 } from '../../shared/recipeFacets'
+import type { RecipeVisibility } from '../../shared/recipes'
 import type { RecipeInput } from '../../shared/schemas/recipe'
 import { normalizeText, slugify } from '../../shared/text'
 import { newId } from '../../shared/ids'
@@ -169,6 +170,21 @@ export async function saveRecipe(db: Db, user: UserRow, input: RecipeInput, id?:
   }
 }
 
+/** Zmení viditeľnosť receptu domácnosti (súkromný ↔ verejný). */
+export async function setRecipeVisibility(
+  db: Db,
+  householdId: string,
+  id: string,
+  visibility: RecipeVisibility,
+): Promise<void> {
+  const changed = await db
+    .update(recipes)
+    .set({ visibility })
+    .where(liveRecipe(householdId, id))
+    .returning({ id: recipes.id })
+  if (changed.length === 0) throw notFound()
+}
+
 /** Zmaže recept aj jeho záznamy v jedálničku (ručné záznamy bez receptu ostanú). */
 export async function deleteRecipe(db: Db, householdId: string, id: string): Promise<void> {
   const [deleted] = await db.batch([
@@ -209,7 +225,7 @@ export const isFavoriteSql = (userId: string) =>
     (v) => Boolean(Number(v)),
   )
 
-function toSummary(
+export function toSummary(
   row: RecipeRow,
   r2Key: string | null,
   isFavorite: boolean,
@@ -228,6 +244,7 @@ function toSummary(
     coverImageUrl: r2Key ? imageUrl(r2Key) : null,
     tags: tagList,
     isFavorite,
+    visibility: row.visibility,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     lastCookedAt,

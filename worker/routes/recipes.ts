@@ -5,6 +5,7 @@ import {
   recipeImportSchema,
   recipeInputSchema,
   recipeListQuerySchema,
+  recipeVisibilitySchema,
   suggestionsQuerySchema,
 } from '../../shared/schemas/recipe'
 import type { AppEnv } from '../env'
@@ -13,7 +14,15 @@ import { todayInZone } from '../../shared/dates'
 import { backfillCookLog } from '../services/cookLog'
 import { importRecipe } from '../services/importRecipe'
 import { suggestRecipes } from '../services/suggestions'
-import { deleteRecipe, getRecipeDetail, listRecipes, saveRecipe, setFavorite } from '../services/recipes'
+import { requireOwner } from '../middleware/owner'
+import {
+  deleteRecipe,
+  getRecipeDetail,
+  listRecipes,
+  saveRecipe,
+  setFavorite,
+  setRecipeVisibility,
+} from '../services/recipes'
 
 const HOUSEHOLD_TIME_ZONE = 'Europe/Bratislava'
 
@@ -46,6 +55,13 @@ export const recipeRoutes = new Hono<AppEnv>()
     const user = c.get('user')
     const id = await saveRecipe(c.get('db'), user, input)
     return c.json(await getRecipeDetail(c.get('db'), user.householdId, user.id, id), 201)
+  })
+  // Zverejnenie a skrytie receptu smie len vlastník domácnosti.
+  .put('/:id/visibility', requireOwner, async (c) => {
+    const { visibility } = await parseBody(c, recipeVisibilitySchema)
+    const user = c.get('user')
+    await setRecipeVisibility(c.get('db'), user.householdId, c.req.param('id'), visibility)
+    return c.json(await getRecipeDetail(c.get('db'), user.householdId, user.id, c.req.param('id')))
   })
   .get('/:id/export.md', async (c) => {
     const { porcie } = markdownQuerySchema.parse(c.req.query())
