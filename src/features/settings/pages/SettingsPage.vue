@@ -99,7 +99,7 @@ async function exportRecipes() {
           <div class="text-body-2 text-medium-emphasis">{{ me.user.email }}</div>
           <div class="text-body-2 mt-3">
             Domácnosť: <strong>{{ me.household.name }}</strong> ·
-            {{ plural(me.members.length, 'člen', 'členovia', 'členov') }}
+            {{ plural(me.members.length, 'osoba', 'osoby', 'osôb') }} v rodine
           </div>
         </template>
       </v-card-text>

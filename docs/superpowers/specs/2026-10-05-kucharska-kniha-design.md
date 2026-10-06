@@ -86,6 +86,17 @@ Všetko beží bez novej migrácie (tabuľky `cook_log`, `staple_items`, `week_t
 - **Tmavý režim, prepočet porcií a režim varenia** (obrazovka zostane zapnutá, časovače, odškrtávanie krokov).
 - **Technické poznámky:** na bezplatnom pláne Workers je limit 50 dotazov na jedno volanie a D1 dovolí 100 viazaných parametrov na príkaz, preto sa používa `db.batch` a dávkovanie. V `db.batch` D1 vracia riadky podľa názvu stĺpca, takže joinované stĺpce s rovnakým názvom (`name`) treba pomenovať aliasom.
 
+## 0g. Domácnosti, vlastníci a členovia (6. 10. 2026)
+
+Plán a rozhodnutia: `docs/superpowers/plans/2026-10-06-faza-5-domacnosti.md` (v kóde ide o vetvu `faza-5`, nie o „Fázu 5 – Voliteľné“ nižšie).
+
+- **Viac domácností na človeka.** Tabuľka `household_members(user_id, household_id, role, last_login_at, created_at)`; rola `owner` | `member` je na členstve. `users.household_id` ostáva len ako starý stĺpec, kód ho nečíta. Migrácia `0002_domacnosti` založí členstvá (najstarší účet = vlastník) a odstráni záznamy jedálnička naviazané na zmazané recepty.
+- **Aktívna domácnosť** sa posiela ako `?h=<id>` (v adrese, nie v hlavičke, lebo service worker kešuje podľa adresy). Bez `h` sa použije jediná domácnosť používateľa, pri viacerých je to 400 `household_required`. `GET /households` funguje aj bez `h`. Fotky `/img/<household>/<file>` overujú členstvo podľa adresy.
+- **Prístup:** e-mail zo zoznamu správcov (`ALLOWED_EMAILS`) alebo e-mail s členstvom. Správca sa nedá odobrať v aplikácii (`locked`) a len správca zakladá ďalšie domácnosti (`POST /households`, inak 403 `admin_required`). Access sa dá nastaviť na „Everyone“ s One-time PIN; o vstupe rozhoduje aplikácia.
+- **Oprávnenia:** vlastník mení nastavenia, sloty, rodinu, členov a export (`requireOwner`, 403 `owner_required`); člen robí všetko okolo varenia a rodinu len číta. Poistka posledného vlastníka (409 `last_owner`).
+- **Endpointy:** `GET/POST /households`, `PUT /household` (názov), `GET/POST /household/members`, `PUT/DELETE /household/members/:userId`; `GET /me` vracia aj `households`, `user.role` a `user.isAdmin`.
+- **Klient:** `HouseholdGate` pustí obsah až po zvolení domácnosti (jedna sa zvolí sama, pri viacerých je výber); voľba je v `sessionStorage` (dve karty = dve domácnosti), naposledy použitá v `localStorage`. Prepnutie načíta aplikáciu odznova, aby v pamäti nezostali dáta predošlej domácnosti. Fronta odškrtávania nákupu má kľúč podľa domácnosti.
+
 ## 1. Fázy – čo, kedy a prečo
 
 Pravidlo: každá fáza končí niečím, čo reálne používate. Nič sa nebuduje „na neskôr“, len dátový model je od začiatku kompletný, aby sa neskôr nemuselo migrovať s bolesťou.
@@ -236,11 +247,12 @@ Pravidlo hraníc: `src/` nikdy nesiahne na `worker/` a naopak; obe siahajú len 
 
 ### 2.4 Dátový model (kompletný, pre všetky fázy)
 
-Všetko je viazané na `household` (domácnosť). Dnes je jedna, ale model to nestojí nič navyše a nikdy nebude treba prerábať. Všetky tabuľky majú `id` (text, ULID), `created_at`, `updated_at`; tie, kde dáva zmysel mazanie s návratom, majú `deleted_at`.
+Všetko je viazané na `household` (domácnosť); človek môže byť členom viacerých (viď 0g). Všetky tabuľky majú `id` (text, ULID), `created_at`, `updated_at`; tie, kde dáva zmysel mazanie s návratom, majú `deleted_at`.
 
 **Ľudia**
 - `households` – id, name
-- `users` – id, household_id, email (unikátny, z Access), name, created_at. Prihlásený človek.
+- `users` – id, household_id (starý stĺpec, nepoužíva sa), email (unikátny, z Access), name, created_at. Prihlasovací účet.
+- `household_members` – user_id, household_id, role (`owner`|`member`), last_login_at, created_at. Členstvo s rolou.
 - `family_members` – id, household_id, name, kind (`adult`|`child`), birth_date?, portion_factor (real, default 1.0 dospelý / 0.5 dieťa), color, is_active, sort_order. Kto je, pre koho sa varí. Používateľ môže byť zároveň členom (`users.member_id`).
 - `member_preferences` (F5) – id, member_id, kind (`dislike`|`allergy`|`diet`), ingredient_id?, tag_id?, note
 
@@ -284,7 +296,8 @@ REST JSON pod `/api/v1`, jeden Hono router na doménu, zod validácia vstupov zo
 
 | Doména | Endpointy (výber) |
 |---|---|
-| me | `GET /me` (user + household + members + settings) |
+| me | `GET /me?h` (user s rolou + household + households + members + settings) |
+| households | `GET/POST /households`, `PUT /household`, `GET/POST /household/members`, `PUT/DELETE /household/members/:userId` |
 | recipes | `GET /recipes?q&tag&category&favorite`, `GET /recipes/:id`, `POST /recipes`, `PUT /recipes/:id`, `DELETE /recipes/:id` (soft), `POST /recipes/:id/favorite`, `POST /recipes/import` (F4, z URL) |
 | ingredients | `GET /ingredients?q`, `POST /ingredients`, `PUT /ingredients/:id`, `POST /ingredients/merge` (zlúčenie duplicít) |
 | tags, shop-categories | CRUD |

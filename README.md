@@ -21,6 +21,11 @@ sign-in is handled by Cloudflare Access.
 - **Cooking:** portion scaling, a cooking mode with step checklist, timers and the screen kept awake, dark mode.
 - **Ingredient catalogue:** a built-in starter list of about 200 common Slovak ingredients with units and store
   categories (added automatically once), rename and delete.
+- **Households, owners and members:** one person can belong to several households (for example their own and their
+  parents'). Each household has its own recipes, meal plan, shopping list, pantry and family. Someone who belongs
+  to a single household goes straight in, otherwise they pick one (and can switch from the header). Owners
+  (there can be several) invite people by e-mail, change roles and manage household settings, the family and
+  backups. Members do everything around cooking.
 - **Family:** adults and children with portion factors; allergies, dislikes and diets produce warnings when
   planning meals.
 - **Weekly meal plan:** meal slots, drag and drop, copy a week, week templates, and "what to cook today"
@@ -99,8 +104,10 @@ for one, stop and check that the Free plan is selected.
    - Dashboard → Workers & Pages → `cook-book` → Settings → Domains & Routes → turn on **Cloudflare Access** for
      `workers.dev` (and for Preview URLs).
    - The dialog shows `POLICY_AUD` and `TEAM_DOMAIN`. Copy both.
-   - Zero Trust → Access controls → Applications → open the application → Policies: keep a single **Allow** rule
-     with the e-mail addresses of the people who may use the app.
+   - Zero Trust → Access controls → Applications → open the application → Policies: keep a single **Allow** rule.
+     Either include **Everyone** (recommended: Access only checks that the person owns the e-mail address, the app
+     decides who gets in, so you add people inside the app) or list the e-mail addresses (then add each invited
+     person here too).
    - **Enable One-time PIN** so people without a Cloudflare account can sign in with an e-mailed code: Zero Trust →
      Integrations → Identity providers → Add new identity provider → One-time PIN, then allow it for the
      application under Authentication. New Zero Trust organizations use the Cloudflare identity provider by
@@ -117,7 +124,12 @@ for one, stop and check that the Free plan is selected.
 
    `ACCESS_TEAM_DOMAIN` is the `TEAM_DOMAIN` (for example `your-team.cloudflareaccess.com`), `ACCESS_AUD` is the
    `POLICY_AUD`, `ALLOWED_EMAILS` is a comma-separated list of addresses. The app verifies the Access token
-   signature and checks the address list itself, so protection still holds if Access is switched off by mistake.
+   signature itself, so protection still holds if Access is switched off by mistake.
+
+   `ALLOWED_EMAILS` lists the **administrators** of the installation: they can always sign in (the first one
+   becomes the owner of the first household) and only they can create additional households. Everybody else
+   gets in through an invitation from an owner (Settings → Household and members); an address without an
+   invitation gets a 403 and sees no data.
 
 6. **Install on a phone**
    - Android (Chrome): menu → Install app.
@@ -127,7 +139,7 @@ for one, stop and check that the Free plan is selected.
 
 Dashboard → Workers & Pages → `cook-book` → Settings → Builds → connect the GitHub repository. Build command
 `npm run build`, deploy command `npx wrangler deploy`. Run `npm run db:migrate:remote` by hand before pushing
-when the schema changes.
+when the schema changes (always before deploying a version that adds a migration).
 
 ### Signing out
 
@@ -185,6 +197,10 @@ Cloudflare Access. Verzia **0.1.0 beta**.
 - **Varenie:** prepočet porcií, režim varenia s odškrtávaním krokov, časovačmi a zapnutou obrazovkou, tmavý režim.
 - **Katalóg ingrediencií:** štartovací zoznam asi 200 bežných slovenských surovín s jednotkou a kategóriou obchodu
   (pridá sa sám raz), premenovanie a mazanie.
+- **Domácnosti, vlastníci a členovia:** jeden človek môže byť členom viacerých domácností (napríklad vlastnej a
+  rodičov). Každá má vlastné recepty, jedálniček, nákupný zoznam, špajzu a rodinu. Kto je členom jednej
+  domácnosti, vojde rovno, inak si vyberie (a prepína v hlavičke). Vlastníci (môže ich byť viac) pozývajú ľudí
+  e-mailom, menia roly a spravujú nastavenia domácnosti, rodinu a zálohy. Členovia robia všetko okolo varenia.
 - **Rodina:** dospelí a deti s veľkosťou porcie; alergie, averzie a diéty členov upozornia pri plánovaní jedla.
 - **Týždenný jedálniček:** jedlá dňa, presun ťahaním, kopírovanie týždňa, šablóny týždňov a návrhy „Čo uvariť
   dnes“ podľa špajze a toho, kedy sa varilo naposledy.
@@ -234,7 +250,9 @@ niektorý krok pýtal, zastav sa a over, že máš vybraný Free plán.
    - Dashboard → Workers & Pages → `cook-book` → Settings → Domains & Routes → pri `workers.dev` zapni
      **Cloudflare Access** (aj pre Preview URLs). Okno ukáže `POLICY_AUD` a `TEAM_DOMAIN`, obe si skopíruj.
    - Zero Trust → Access controls → Applications → otvor aplikáciu → Policies: ponechaj jedno pravidlo
-     **Allow** s e-mailami ľudí, ktorí smú aplikáciu používať.
+     **Allow**. Buď s **Everyone** (odporúčané: Access len overí, že človek vlastní e-mail, o vstupe rozhoduje
+     aplikácia, takže ľudí pridávaš priamo v aplikácii), alebo so zoznamom e-mailov (potom každého pozvaného
+     pridaj aj tu).
    - **Zapni One-time PIN**, aby sa dalo prihlásiť aj bez Cloudflare účtu (kód príde e-mailom): Zero Trust →
      Integrations → Identity providers → Add new identity provider → One-time PIN, potom ho v aplikácii povoľ v
      záložke Authentication. Nové organizácie majú predvolene prihlásenie cez Cloudflare účet, ktoré pustí len
@@ -243,13 +261,18 @@ niektorý krok pýtal, zastav sa a over, že máš vybraný Free plán.
 5. **Tajomstvá Workera** (prežijú ďalšie deploye): `npx wrangler secret put ACCESS_TEAM_DOMAIN`,
    `ACCESS_AUD` a `ALLOWED_EMAILS`. `ACCESS_TEAM_DOMAIN` je `TEAM_DOMAIN` (napr. `tvoj-tim.cloudflareaccess.com`),
    `ACCESS_AUD` je `POLICY_AUD`, `ALLOWED_EMAILS` sú e-maily oddelené čiarkou. Aplikácia overuje podpis Access
-   tokenu aj zoznam e-mailov, takže ochrana platí aj keby Access niekto omylom vypol.
+   tokenu sama, takže ochrana platí aj keby Access niekto omylom vypol.
+
+   `ALLOWED_EMAILS` je zoznam **správcov** inštalácie: môžu sa vždy prihlásiť (prvý sa stane vlastníkom prvej
+   domácnosti) a len oni môžu zakladať ďalšie domácnosti. Ostatní vstupujú cez pozvánku od vlastníka (Nastavenia
+   → Domácnosť a členovia); e-mail bez pozvánky dostane 403 a nevidí žiadne dáta.
+
 6. **Inštalácia na mobil:** Android (Chrome): menu → Inštalovať aplikáciu. iPhone (Safari): Zdieľať → Pridať na
    plochu.
 
 **Automatický deploy z GitHubu (voliteľné):** Dashboard → Workers & Pages → `cook-book` → Settings → Builds →
 pripoj GitHub repozitár. Build command `npm run build`, deploy command `npx wrangler deploy`. Migrácie pri zmene
-schémy spúšťaj ručne `npm run db:migrate:remote` pred pushom.
+schémy spúšťaj ručne `npm run db:migrate:remote` pred pushom (vždy pred nasadením verzie, ktorá pridáva migráciu).
 
 **Odhlásenie:** v ponuke účtu v pravom hornom rohu je **Odhlásiť sa** (cez Cloudflare Access). Ukazuje sa len na
 nasadenej stránke, lokálne nie.
