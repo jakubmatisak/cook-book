@@ -8,6 +8,8 @@ import {
   mdiDeleteOutline,
   mdiContentCopy,
   mdiDotsVertical,
+  mdiEarth,
+  mdiEarthOff,
   mdiFileDownloadOutline,
   mdiLinkVariant,
   mdiPencilOutline,
@@ -26,7 +28,7 @@ import { addDays } from '@shared/dates'
 import { formatScaled } from '@/i18n/quantity'
 import { markdownFilename, recipeToMarkdown } from '@shared/markdown'
 import { ApiError, downloadFile } from '@/api/http'
-import { useMe } from '@/api/me'
+import { useIsOwner, useMe } from '@/api/me'
 import { useDeleteRecipe, useRecipe } from '@/api/recipes'
 import { canShare, copyText, shareText } from '@/composables/useShare'
 import { useToday } from '@/composables/useToday'
@@ -36,6 +38,7 @@ import { printPage } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
 import { formatMinutes, tc } from '@/i18n/format'
 import FavoriteButton from '../components/FavoriteButton.vue'
+import VisibilityDialog from '../components/VisibilityDialog.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -88,12 +91,17 @@ const chips = computed<Chip[]>(() => {
     })
   list.push({ icon: mdiSilverwareForkKnife, text: tc('common.plural.portions', r.servings) })
   list.push({ icon: mdiChefHat, text: t(`common.difficulty.${r.difficulty}`) })
+  if (r.visibility === 'public') list.push({ icon: mdiEarth, text: t('publicRecipes.visibility.chip') })
   return list
 })
 
 const { data: me } = useMe()
 const today = useToday()
 const planOpen = ref(false)
+
+// Zverejnenie receptu (len vlastník domácnosti): verejný recept vidia a kopírujú všetci prihlásení.
+const isOwner = useIsOwner()
+const visibilityOpen = ref(false)
 const planDates = computed(() => Array.from({ length: 14 }, (_, i) => addDays(today.value, i)))
 const defaultSlotId = computed(
   () =>
@@ -227,6 +235,17 @@ function goBack() {
             :title="t('recipes.detail.downloadMd')"
             data-test="download-md"
             @click="downloadMarkdown"
+          />
+          <v-list-item
+            v-if="isOwner"
+            :prepend-icon="recipe.visibility === 'public' ? mdiEarthOff : mdiEarth"
+            :title="
+              recipe.visibility === 'public'
+                ? t('publicRecipes.visibility.hide')
+                : t('publicRecipes.visibility.publish')
+            "
+            data-test="visibility"
+            @click="visibilityOpen = true"
           />
           <v-divider />
           <v-list-item
@@ -404,6 +423,15 @@ function goBack() {
     :slots="me.slots"
     :dates="planDates"
     :members="me.members"
+  />
+
+  <VisibilityDialog
+    v-if="recipe"
+    v-model="visibilityOpen"
+    :recipe-id="recipe.id"
+    :visibility="recipe.visibility"
+    @done="notify"
+    @failed="notify($event, 'error')"
   />
 
   <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">{{ snackbar.text }}</v-snackbar>

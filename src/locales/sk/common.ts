@@ -32,6 +32,7 @@ export default {
     ingredients: 'Ingrediencie',
     tags: 'Tagy',
     pantry: 'Špajza',
+    publicRecipes: 'Verejné recepty',
     settings: 'Nastavenia',
     menu: 'Menu',
   },

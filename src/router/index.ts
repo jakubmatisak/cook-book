@@ -36,6 +36,18 @@ export const routes: RouteRecordRaw[] = [
     meta: { titleKey: 'common.pageTitle.recipe' },
   },
   {
+    path: '/verejne',
+    name: 'public-recipes',
+    component: () => import('@/features/recipes/pages/PublicRecipesPage.vue'),
+    meta: { titleKey: 'common.nav.publicRecipes' },
+  },
+  {
+    path: '/verejne/:id',
+    name: 'public-recipe',
+    component: () => import('@/features/recipes/pages/PublicRecipePage.vue'),
+    meta: { titleKey: 'common.nav.publicRecipes' },
+  },
+  {
     path: '/plan',
     name: 'meal-plan',
     component: () => import('@/features/meal-plan/pages/MealPlanPage.vue'),

@@ -33,6 +33,7 @@ export default {
     ingredients: 'Ingredients',
     tags: 'Tags',
     pantry: 'Pantry',
+    publicRecipes: 'Public recipes',
     settings: 'Settings',
     menu: 'Menu',
   },

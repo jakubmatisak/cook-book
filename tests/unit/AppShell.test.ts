@@ -8,7 +8,17 @@ import { NAV_ITEMS } from '@/components/navigation'
 import { setActiveHousehold } from '@/lib/household'
 import { createAppVuetify } from '@/plugins/vuetify'
 
-const ALL_TITLES = ['Recepty', 'Plán', 'Nákup', 'Rodina', 'Ingrediencie', 'Tagy', 'Špajza', 'Nastavenia']
+const ALL_TITLES = [
+  'Recepty',
+  'Plán',
+  'Nákup',
+  'Rodina',
+  'Ingrediencie',
+  'Tagy',
+  'Špajza',
+  'Verejné recepty',
+  'Nastavenia',
+]
 
 function setViewport(width: number) {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
