@@ -222,6 +222,7 @@ async function onDelete() {
           >
         </template>
         <v-spacer />
+        <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
         <v-btn v-if="entry" variant="tonal" :loading="save.isPending.value" @click="submit(true)"
           >Uložiť ako kópiu</v-btn
         >

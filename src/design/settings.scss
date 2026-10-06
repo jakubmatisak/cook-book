@@ -1,4 +1,5 @@
-// Vuetify SASS premenné. Hranatejší vzhľad: menšie zaoblenie na celej škále.
+// Vuetify SASS premenné. Ostré hrany všade: nulové zaoblenie na celej škále vrátane pilulky a kruhu
+// (čipy, avatary, ikonové tlačidlá, prepínač, posuvník).
 @use 'vuetify/settings' with (
   $body-font-family: (
     'Nunito Variable',
@@ -7,11 +8,24 @@
     'Segoe UI',
     sans-serif,
   ),
-  $border-radius-root: 4px,
+  $border-radius-root: 0,
   $rounded: (
-    'sm': 2px,
-    'md': 4px,
-    'lg': 6px,
-    'xl': 8px,
-  )
+    'sm': 0,
+    'md': 0,
+    'lg': 0,
+    'xl': 0,
+    'pill': 0,
+    'circle': 0,
+    'shaped': 0,
+  ),
+  // Prepínač a posuvník majú vlastné zaoblenie, ktoré sa neriadi škálou.
+  $switch-track-radius: 0,
+  $switch-thumb-radius: 0,
+  $switch-inset-track-border-radius: 0,
+  $switch-inset-square-track-radius: 0,
+  $switch-inset-square-thumb-radius: 0,
+  $slider-thumb-border-radius: 0,
+  $slider-track-border-radius: 0,
+  $slider-thumb-label-border-radius: 0,
+  $slider-tick-border-radius: 0
 );

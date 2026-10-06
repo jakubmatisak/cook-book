@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers'
 import { describe, expect, it } from 'vitest'
-import type { IngredientDto, ShopCategoryDto, StarterIngredientsResult } from '@shared/api'
+import type { IngredientDto, MeResponse, ShopCategoryDto, StarterIngredientsResult } from '@shared/api'
 import { STARTER_INGREDIENTS } from '@shared/data/starterIngredients'
 import { createApp } from '../../worker/app'
 import { DEFAULT_SHOP_CATEGORIES } from '../../worker/services/household'
@@ -95,5 +95,28 @@ describe('POST /ingredients/starter', () => {
     expect(other?.n).toBe(1)
     // moja domácnosť dostala všetky, aj Zemiaky, hoci ich má cudzia domácnosť
     expect((await ingredients()).some((i) => i.name === 'Zemiaky')).toBe(true)
+  })
+})
+
+describe('príznak pridania štartovacieho zoznamu', () => {
+  const flag = async () =>
+    (
+      (await (await send(app, 'GET', api('/me'))).json<MeResponse>()).settings as {
+        starterIngredientsAdded: boolean
+      }
+    ).starterIngredientsAdded
+
+  it('je spočiatku false a po pridaní zoznamu true, aj keď nič nové nepribudlo', async () => {
+    expect(await flag()).toBe(false)
+    await addStarter()
+    expect(await flag()).toBe(true)
+    await addStarter()
+    expect(await flag()).toBe(true)
+  })
+
+  it('klient ho cez nastavenia nemôže zmeniť', async () => {
+    const res = await send(app, 'PUT', api('/settings'), { starterIngredientsAdded: true })
+    expect(res.status).toBe(400)
+    expect(await flag()).toBe(false)
   })
 })

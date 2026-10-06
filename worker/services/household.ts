@@ -28,7 +28,12 @@ export const DEFAULT_SHOP_CATEGORIES = [
   'Iné',
 ] as const
 
-export const DEFAULT_SETTINGS = { weekStartsOn: 1, childPortionFactor: 0.5 } as const
+/** `starterIngredientsAdded`: štartovací zoznam surovín sa už domácnosti raz pridal (klient to nastavuje len cez službu). */
+export const DEFAULT_SETTINGS = {
+  weekStartsOn: 1,
+  childPortionFactor: 0.5,
+  starterIngredientsAdded: false,
+} as const
 
 /**
  * Zabezpečí existenciu domácnosti s predvolenými slotmi, kategóriami, zoznamom a nastaveniami.

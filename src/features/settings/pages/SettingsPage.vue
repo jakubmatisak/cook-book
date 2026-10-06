@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { mdiDownload, mdiFileDocumentOutline } from '@mdi/js'
+import { mdiDownload, mdiFileDocumentOutline, mdiLogout } from '@mdi/js'
 import { ref, watch } from 'vue'
 import { useUpdateSettings, useUpdateSlot } from '@/api/family'
 import { ApiError, downloadFile } from '@/api/http'
 import { useMe } from '@/api/me'
 import PageHeader from '@/components/PageHeader.vue'
 import { useThemePreference } from '@/composables/useThemePreference'
+import { ACCESS_LOGOUT_PATH, canLogout } from '@/lib/auth'
 import { plural } from '@/lib/format'
 
 const { data: me, isPending, error } = useMe()
@@ -51,6 +52,7 @@ const saveChildFactor = (value: number) =>
   run(() => updateSettings.mutateAsync({ childPortionFactor: value }))
 const formatFactor = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',')
 
+const showLogout = canLogout(location.hostname)
 const exporting = ref(false)
 const exportingRecipes = ref(false)
 
@@ -159,6 +161,18 @@ async function exportRecipes() {
           <p class="text-caption text-medium-emphasis">Použije sa pri pridaní nového dieťaťa v Rodine.</p>
         </div>
       </v-card-text>
+    </v-card>
+
+    <v-card v-if="me" title="Účet">
+      <v-card-text class="text-body-2">
+        Prihlásený ako <strong>{{ me.user.email }}</strong
+        >. Odhlásením sa tento prehliadač zabudne a pri ďalšom otvorení sa treba prihlásiť znova.
+      </v-card-text>
+      <v-card-actions v-if="showLogout">
+        <v-btn :href="ACCESS_LOGOUT_PATH" :prepend-icon="mdiLogout" data-test="logout-settings">
+          Odhlásiť sa
+        </v-btn>
+      </v-card-actions>
     </v-card>
 
     <v-card title="Záloha a export">

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {
+  mdiAccountCircleOutline,
   mdiCloudOffOutline,
+  mdiLogout,
   mdiMenu,
   mdiThemeLightDark,
   mdiWeatherNight,
@@ -11,11 +13,13 @@ import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useOnline } from '@/composables/useOnline'
 import { usePrintMode } from '@/composables/usePrintMode'
+import { ACCESS_LOGOUT_PATH, canLogout } from '@/lib/auth'
 import { APP_VERSION_LABEL } from '@/lib/version'
 import { useApplyTheme, useThemePreference, type ThemePreference } from '@/composables/useThemePreference'
 import { PRIMARY_NAV, SECONDARY_NAV } from './navigation'
 
 const { mdAndUp } = useDisplay()
+const showLogout = typeof location !== 'undefined' && canLogout(location.hostname)
 const online = useOnline()
 const route = useRoute()
 
@@ -66,14 +70,42 @@ const mobileMenu = ref(false)
   <v-app>
     <v-app-bar v-if="showChrome" density="comfortable" border="b" class="d-print-none">
       <template #prepend>
-        <!-- Logo v rohu: ponuka s názvom a verziou aplikácie. -->
+        <!-- Logo v ľavom rohu: odkaz na úvod. -->
+        <v-btn icon variant="text" to="/" aria-label="Kuchárska kniha, úvod" data-test="logo">
+          <v-avatar size="32" rounded="sm"><v-img src="/favicon.svg" alt="" /></v-avatar>
+        </v-btn>
+        <v-app-bar-nav-icon
+          v-if="mdAndUp"
+          :icon="mdiMenu"
+          :aria-label="rail ? 'Rozbaliť menu' : 'Zbaliť menu'"
+          data-test="menu-toggle"
+          @click="rail = !rail"
+        />
+      </template>
+      <v-app-bar-title class="font-weight-bold">Kuchárska kniha</v-app-bar-title>
+      <template #append>
+        <!-- Pravý roh: odhlásenie (len pri Cloudflare Access) a pod ním názov a verzia aplikácie. -->
         <v-menu>
           <template #activator="{ props }">
-            <v-btn v-bind="props" icon variant="text" aria-label="O aplikácii" data-test="logo">
-              <v-avatar size="32" rounded="sm"><v-img src="/favicon.svg" alt="" /></v-avatar>
-            </v-btn>
+            <v-btn
+              v-bind="props"
+              :icon="mdiAccountCircleOutline"
+              variant="text"
+              aria-label="Účet a verzia"
+              data-test="account"
+            />
           </template>
-          <v-list min-width="220" data-test="logo-menu">
+          <v-list min-width="240" data-test="account-menu">
+            <template v-if="showLogout">
+              <!-- Celá stránka (nie router): odhlásenie rieši Cloudflare Access. -->
+              <v-list-item
+                :href="ACCESS_LOGOUT_PATH"
+                title="Odhlásiť sa"
+                :prepend-icon="mdiLogout"
+                data-test="logout"
+              />
+              <v-divider />
+            </template>
             <v-list-item
               title="Kuchárska kniha"
               :subtitle="`Verzia ${APP_VERSION_LABEL}`"
@@ -85,16 +117,6 @@ const mobileMenu = ref(false)
             </v-list-item>
           </v-list>
         </v-menu>
-        <v-app-bar-nav-icon
-          v-if="mdAndUp"
-          :icon="mdiMenu"
-          :aria-label="rail ? 'Rozbaliť menu' : 'Zbaliť menu'"
-          data-test="menu-toggle"
-          @click="rail = !rail"
-        />
-      </template>
-      <v-app-bar-title class="font-weight-bold">Kuchárska kniha</v-app-bar-title>
-      <template #append>
         <v-btn
           :icon="THEME_ICONS[preference]"
           variant="text"

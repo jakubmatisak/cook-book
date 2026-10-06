@@ -18,6 +18,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { useToday } from '@/composables/useToday'
 import { plural } from '@/lib/format'
+import IngredientEditDialog from '@/features/ingredients/components/IngredientEditDialog.vue'
 import PantryItemDialog from '../components/PantryItemDialog.vue'
 import StapleDialog from '../components/StapleDialog.vue'
 import { describeCadence, describeExpiry, expiryStatus } from '../format'
@@ -87,6 +88,7 @@ const expiryColor = (item: PantryItemDto) => {
 }
 
 // ─── Úprava zásoby ───────────────────────────────────────────────────────────
+const ingredientEditOpen = ref(false)
 const itemOpen = ref(false)
 const itemTarget = ref<IngredientDto | null>(null)
 function editItem(ingredient: IngredientDto) {
@@ -286,7 +288,9 @@ function editStaple(staple: StapleDto | null) {
     v-model="itemOpen"
     :ingredient="itemTarget"
     :item="itemTarget ? stock.get(itemTarget.id) : undefined"
+    @edit-ingredient="((itemOpen = false), (ingredientEditOpen = true))"
   />
+  <IngredientEditDialog v-model="ingredientEditOpen" :ingredient="itemTarget" />
   <StapleDialog v-model="stapleOpen" :staple="stapleTarget" />
 
   <v-snackbar v-model="snackbar.show" color="error">{{ snackbar.text }}</v-snackbar>

@@ -11,12 +11,12 @@ import {
 } from '@mdi/js'
 import { computed, nextTick, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useDisplay } from 'vuetify'
 import type { PlanEntryDto, TemplateApplyResult, WeekTemplateDto } from '@shared/api'
 import { addDays, formatWeekRange, weekDates } from '@shared/dates'
 import { useMe } from '@/api/me'
 import { useCopyPlan, useDeleteEntry, usePlan, useSaveEntry } from '@/api/plan'
 import PageHeader from '@/components/PageHeader.vue'
+import { useElementWidth } from '@/composables/useElementWidth'
 import { useToday } from '@/composables/useToday'
 import { printPage } from '@/composables/usePrintMode'
 import { plural } from '@/lib/format'
@@ -30,6 +30,7 @@ import {
   entryToInput,
   groupEntries,
   moveTarget,
+  gridFits,
   pickSlotForNow,
   resolveWeekStart,
   visibleSlots,
@@ -37,7 +38,10 @@ import {
 
 const route = useRoute()
 const router = useRouter()
-const { mdAndUp } = useDisplay()
+// Mriežka len keď sa zmestí do šírky obsahu, inak zoznam po dňoch (vodorovný posuvník je nepríjemný).
+const area = ref<HTMLElement>()
+const areaWidth = useElementWidth(area, typeof window === 'undefined' ? 0 : window.innerWidth)
+const canGrid = computed(() => gridFits(areaWidth.value))
 const { data: me } = useMe()
 
 const today = useToday()
@@ -63,7 +67,7 @@ const goToWeek = (startIso: string | undefined) =>
 async function goToday() {
   await goToWeek(undefined)
   await nextTick()
-  if (!mdAndUp.value) {
+  if (!canGrid.value) {
     document.getElementById(`den-${today.value}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 }
@@ -247,7 +251,7 @@ async function copyToNextWeek() {
 
   <v-alert v-if="error" type="error" :text="error.message" />
   <v-skeleton-loader v-else-if="isPending" type="table" />
-  <template v-else>
+  <div v-else ref="area">
     <v-alert v-if="!members.length" type="info" density="compact" class="mb-4 d-print-none">
       Pridaj členov rodiny v sekcii
       <router-link to="/rodina" class="text-primary font-weight-bold">Rodina</router-link>
@@ -255,7 +259,7 @@ async function copyToNextWeek() {
     </v-alert>
     <SuggestionsCard v-if="isCurrentWeek" class="d-print-none" :date="today" @plan="onPlanSuggestion" />
     <WeekGrid
-      v-if="mdAndUp"
+      v-if="canGrid"
       :dates="dates"
       :slots="slots"
       :groups="groups"
@@ -275,7 +279,7 @@ async function copyToNextWeek() {
       @add="onAdd"
       @edit="onEdit"
     />
-  </template>
+  </div>
 
   <EntryDialog
     v-model="dialogOpen"

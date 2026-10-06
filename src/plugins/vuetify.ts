@@ -30,7 +30,10 @@ export const createAppVuetify = () =>
       VNumberInput: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'sm' },
       VChip: { rounded: 'sm' },
       VAlert: { rounded: 'md', variant: 'tonal' },
-      VDialog: { scrollable: true },
+      // Horné odsadenie obsahu: bez neho Vuetify po nadpise karty odsadenie nuluje a plávajúci popis poľa sa orezá.
+      // Okno sa zatvára len tlačidlom (Zrušiť, Uložiť, krížik), nie kliknutím vedľa: inak sa pri nechcenom
+      // kliknutí zmaže všetko rozpísané.
+      VDialog: { scrollable: true, persistent: true, VCardText: { class: 'pt-3' } },
       VAppBar: { flat: true, color: 'background' },
       VBottomNavigation: { grow: true, color: 'primary', bgColor: 'surface' },
       VNavigationDrawer: { color: 'surface' },

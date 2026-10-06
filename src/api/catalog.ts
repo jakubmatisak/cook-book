@@ -79,7 +79,24 @@ export function useUpdateIngredient(): UseMutationReturnType<
       client.setQueryData<IngredientDto[]>(INGREDIENTS_KEY, (old) =>
         old?.map((i) => (i.id === updated.id ? updated : i)),
       )
+      // Názov je aj v receptoch, špajzi a stálych položkách.
       void client.invalidateQueries({ queryKey: ['recipes'] })
+      void client.invalidateQueries({ queryKey: ['pantry'] })
+      void client.invalidateQueries({ queryKey: ['staples'] })
+    },
+  })
+}
+
+/** Zmaže ingredienciu zo zoznamu (aj zo špajze a stálych položiek); použitú v receptoch server odmietne. */
+export function useDeleteIngredient(): UseMutationReturnType<void, Error, string, unknown> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/ingredients/${id}`, { method: 'DELETE' }),
+    onSuccess: (_data, id) => {
+      client.setQueryData<IngredientDto[]>(INGREDIENTS_KEY, (old) => old?.filter((i) => i.id !== id))
+      void client.invalidateQueries({ queryKey: ['pantry'] })
+      void client.invalidateQueries({ queryKey: ['staples'] })
+      void client.invalidateQueries({ queryKey: ['me'] })
     },
   })
 }

@@ -15,6 +15,7 @@ import {
 } from '@mdi/js'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import {
   defaultSortDir,
   SORT_KEYS,
@@ -48,6 +49,7 @@ import {
 
 const route = useRoute()
 const router = useRouter()
+const { smAndDown, mdAndUp } = useDisplay()
 
 /** Filtre a zoradenie žijú v URL, aby prežili návrat z detailu a dali sa zdieľať. */
 const state = computed(() => parseListQuery(route.query))
@@ -217,65 +219,70 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
     class="mb-3"
   />
 
-  <div class="d-flex flex-wrap align-center ga-2 mb-3">
-    <v-btn
-      :prepend-icon="mdiFilterVariant"
-      :color="filterCount ? 'primary' : undefined"
-      variant="tonal"
-      data-test="filters-button"
-      @click="filtersOpen = true"
-    >
-      Filtre<template v-if="filterCount">&nbsp;({{ filterCount }})</template>
-    </v-btn>
-    <v-chip
-      :prepend-icon="favorite ? mdiCheck : mdiHeart"
-      :color="favorite ? 'primary' : undefined"
-      :variant="favorite ? 'flat' : 'outlined'"
-      @click="favorite = !favorite"
-    >
-      Obľúbené
-    </v-chip>
-    <v-chip
-      :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
-      :color="pantryMode ? 'primary' : undefined"
-      :variant="pantryMode ? 'flat' : 'outlined'"
-      @click="pantryMode = !pantryMode"
-    >
-      Čo viem uvariť
-    </v-chip>
+  <div class="d-flex flex-column flex-md-row align-md-center ga-2 mb-3">
+    <div class="d-flex flex-nowrap align-center ga-2">
+      <v-btn
+        :prepend-icon="mdiFilterVariant"
+        :color="filterCount ? 'primary' : undefined"
+        variant="tonal"
+        data-test="filters-button"
+        @click="filtersOpen = true"
+      >
+        Filtre<template v-if="filterCount">&nbsp;({{ filterCount }})</template>
+      </v-btn>
+      <v-chip
+        :size="smAndDown ? 'small' : 'default'"
+        :prepend-icon="favorite ? mdiCheck : mdiHeart"
+        :color="favorite ? 'primary' : undefined"
+        :variant="favorite ? 'flat' : 'outlined'"
+        @click="favorite = !favorite"
+      >
+        Obľúbené
+      </v-chip>
+      <v-chip
+        :size="smAndDown ? 'small' : 'default'"
+        :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
+        :color="pantryMode ? 'primary' : undefined"
+        :variant="pantryMode ? 'flat' : 'outlined'"
+        @click="pantryMode = !pantryMode"
+      >
+        Čo viem uvariť
+      </v-chip>
+    </div>
 
-    <v-spacer />
-
-    <v-select
-      :model-value="sortKey"
-      :items="sortItems"
-      label="Zoradiť"
-      hide-details
-      density="compact"
-      style="max-width: 14rem"
-      data-test="sort-select"
-      @update:model-value="setSort"
-    />
-    <v-btn
-      :icon="sortDir === 'asc' ? mdiSortAscending : mdiSortDescending"
-      variant="tonal"
-      :aria-label="
-        sortDir === 'asc'
-          ? 'Zoradené vzostupne, zmeniť na zostupne'
-          : 'Zoradené zostupne, zmeniť na vzostupne'
-      "
-      @click="flipSortDir"
-    />
-    <v-btn-toggle
-      v-model="view"
-      mandatory
-      density="comfortable"
-      selected-class="bg-primary"
-      data-test="view-toggle"
-    >
-      <v-btn :icon="mdiViewGridOutline" value="grid" aria-label="Zobraziť ako mriežku" />
-      <v-btn :icon="mdiTable" value="table" aria-label="Zobraziť ako tabuľku" />
-    </v-btn-toggle>
+    <div class="d-flex flex-nowrap align-center ga-2 ms-md-auto">
+      <v-select
+        :model-value="sortKey"
+        :items="sortItems"
+        label="Zoradiť"
+        hide-details
+        density="compact"
+        class="flex-grow-1"
+        :style="{ minWidth: 0, maxWidth: mdAndUp ? '14rem' : undefined }"
+        data-test="sort-select"
+        @update:model-value="setSort"
+      />
+      <v-btn
+        :icon="sortDir === 'asc' ? mdiSortAscending : mdiSortDescending"
+        variant="tonal"
+        :aria-label="
+          sortDir === 'asc'
+            ? 'Zoradené vzostupne, zmeniť na zostupne'
+            : 'Zoradené zostupne, zmeniť na vzostupne'
+        "
+        @click="flipSortDir"
+      />
+      <v-btn-toggle
+        v-model="view"
+        mandatory
+        density="comfortable"
+        selected-class="bg-primary"
+        data-test="view-toggle"
+      >
+        <v-btn :icon="mdiViewGridOutline" value="grid" aria-label="Zobraziť ako mriežku" />
+        <v-btn :icon="mdiTable" value="table" aria-label="Zobraziť ako tabuľku" />
+      </v-btn-toggle>
+    </div>
   </div>
 
   <div v-if="activeChips.length" class="d-flex flex-wrap align-center ga-2 mb-3" data-test="active-filters">

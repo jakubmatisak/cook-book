@@ -60,6 +60,8 @@ export interface HouseholdSettings {
   weekStartsOn: number
   /** Predvolený koeficient porcie pre nového člena typu dieťa. */
   childPortionFactor: number
+  /** Štartovací zoznam surovín sa už pridal (aplikácia ho pri prvom načítaní pridá sama raz). */
+  starterIngredientsAdded?: boolean
   [key: string]: unknown
 }
 

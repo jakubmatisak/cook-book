@@ -70,12 +70,22 @@ describe('AppShell', () => {
     expect(wrapper.find('[data-test="content"]').text()).toBe('obsah stránky')
   })
 
-  it('logo v rohu otvorí ponuku s verziou aplikácie, na desktope aj na mobile', async () => {
+  it('logo v ľavom rohu vedie na úvod a bez ponuky', async () => {
+    const wrapper = await mountShell(1440)
+    const logo = wrapper.find('[data-test="logo"]')
+    expect(logo.exists()).toBe(true)
+    expect(logo.attributes('href')).toBe('/')
+    wrapper.unmount()
+  })
+
+  it('ponuka účtu v pravom rohu ukazuje verziu aplikácie, na desktope aj na mobile', async () => {
     for (const width of [1440, 375]) {
       const wrapper = await mountShell(width)
-      await wrapper.find('[data-test="logo"]').trigger('click')
+      await wrapper.find('[data-test="account"]').trigger('click')
       await flushPromises()
       expect(document.body.textContent).toContain('Verzia 0.1.0 beta')
+      // lokálne (bez Cloudflare Access) sa odhlásenie neponúka
+      expect(document.querySelector('[data-test="logout"]')).toBeNull()
       wrapper.unmount()
       document.body.innerHTML = ''
     }

@@ -9,6 +9,7 @@ import { parseBody } from '../http'
 import {
   addStarterIngredients,
   createIngredient,
+  deleteIngredient,
   listIngredients,
   updateIngredient,
 } from '../services/catalog'
@@ -27,6 +28,10 @@ export const ingredientRoutes = new Hono<AppEnv>()
   .put('/:id', async (c) => {
     const input = await parseBody(c, ingredientUpdateSchema)
     return c.json(await updateIngredient(c.get('db'), c.get('user').householdId, c.req.param('id'), input))
+  })
+  .delete('/:id', async (c) => {
+    await deleteIngredient(c.get('db'), c.get('user').householdId, c.req.param('id'))
+    return c.body(null, 204)
   })
 
 export const tagRoutes = new Hono<AppEnv>()

@@ -61,3 +61,9 @@ export function pickSlotForNow(slots: readonly MealSlotDto[], nowMinutes: number
   if (timed.length === 0) return enabled[0]
   return timed.find((s) => toMinutes(s.defaultTime!) >= nowMinutes) ?? enabled[enabled.length - 1]
 }
+
+/** Najmenšia šírka týždennej mriežky bez vodorovného posuvníka: popisy riadkov 7 rem + 7 dní po 8 rem. */
+export const GRID_MIN_WIDTH = (7 + 7 * 8) * 16
+
+/** Mriežka sa ukáže, len keď sa zmestí; užšie plochy dostanú zoznam po dňoch (bez posuvníka). */
+export const gridFits = (width: number): boolean => width >= GRID_MIN_WIDTH

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { mdiPotSteamOutline } from '@mdi/js'
 import { useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import type { RecipeSummaryDto } from '@shared/api'
 import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS } from '@shared/recipes'
 import { formatDate, formatMinutes, totalMinutes } from '@/lib/format'
@@ -10,6 +11,8 @@ import FavoriteButton from './FavoriteButton.vue'
 const sortBy = defineModel<TableSort[]>('sortBy', { required: true })
 defineProps<{ items: RecipeSummaryDto[] }>()
 const router = useRouter()
+// Na malom displeji tabuľka prejde do zobrazenia po riadkoch (každý záznam ako blok); zoradenie je hore.
+const { smAndDown } = useDisplay()
 
 const headers = [
   { title: '', key: 'coverImageUrl', sortable: false, width: 72 },
@@ -41,6 +44,8 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) =>
       hover
       hide-default-footer
       must-sort
+      :mobile="smAndDown"
+      :hide-default-header="smAndDown"
       @click:row="openRecipe"
     >
       <template #item.coverImageUrl="{ item }">

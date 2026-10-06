@@ -2,10 +2,19 @@ import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { IngredientDto, StarterIngredientsResult } from '../../shared/api'
 import { STARTER_INGREDIENTS } from '../../shared/data/starterIngredients'
 import { newId } from '../../shared/ids'
+import { plural } from '../../shared/format'
 import { normalizeText } from '../../shared/text'
 import type { UnitCode } from '../../shared/units'
 import type { Db } from '../db/client'
-import { ingredients, shopCategories, tags } from '../db/schema'
+import {
+  ingredients,
+  memberPreferences,
+  pantryItems,
+  settings,
+  shopCategories,
+  stapleItems,
+  tags,
+} from '../db/schema'
 import { HttpError } from '../errors'
 import { chunk } from '../http'
 
@@ -135,6 +144,28 @@ export async function updateIngredient(
 }
 
 /**
+ * Zmaže ingredienciu zo zoznamu (označí ju za zmazanú, takže ju neskôr obnoví rovnaký názov) aj jej
+ * zásobu, stále položky a alergie či averzie. Ingredienciu použitú v receptoch nezmaže: tú treba
+ * najprv odstrániť z receptov, alebo ju stačí premenovať.
+ */
+export async function deleteIngredient(db: Db, householdId: string, id: string): Promise<void> {
+  const found = await getIngredientDto(db, householdId, id)
+  if (found.usageCount > 0) {
+    throw new HttpError(
+      409,
+      'in_use',
+      `Ingrediencia „${found.name}“ sa používa v ${plural(found.usageCount, 'recepte', 'receptoch', 'receptoch')}. Najprv ju odstráň z receptov, alebo ju premenuj.`,
+    )
+  }
+  await db.batch([
+    db.delete(pantryItems).where(eq(pantryItems.ingredientId, id)),
+    db.delete(stapleItems).where(eq(stapleItems.ingredientId, id)),
+    db.delete(memberPreferences).where(eq(memberPreferences.ingredientId, id)),
+    db.update(ingredients).set({ deletedAt: new Date().toISOString() }).where(eq(ingredients.id, id)),
+  ])
+}
+
+/**
  * Nájde alebo založí ingrediencie podľa mena (bez ohľadu na diakritiku a veľkosť písmen).
  * Zmazané obnoví. Nové dostanú ako predvolenú jednotku prvú použitú.
  * Vracia mapu normalizovaný názov → id.
@@ -248,6 +279,11 @@ export async function addStarterIngredients(db: Db, householdId: string): Promis
     join json_each(${payload}) j on i.id = json_extract(j.value, '$.id')
     where i.household_id = ${householdId}
     order by i.name_normalized`)
+  // Príznak, že sa zoznam pridal; aplikácia ho potom pri ďalšom načítaní už nepridáva sama.
+  await db
+    .insert(settings)
+    .values({ householdId, key: 'starterIngredientsAdded', value: true })
+    .onConflictDoUpdate({ target: [settings.householdId, settings.key], set: { value: true } })
   const items: IngredientDto[] = rows.map((r) => ({ ...r, usageCount: 0 }))
   return { added: items.length, total: STARTER_INGREDIENTS.length, items }
 }

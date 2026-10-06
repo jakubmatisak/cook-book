@@ -105,13 +105,21 @@ describe('nastavenia', () => {
   it('zmení začiatok týždňa a ostatné ponechá', async () => {
     const res = await send(app, 'PUT', api('/settings'), { weekStartsOn: 0 })
     expect(res.status).toBe(200)
-    expect((await me()).settings).toEqual({ weekStartsOn: 0, childPortionFactor: 0.5 })
+    expect((await me()).settings).toEqual({
+      weekStartsOn: 0,
+      childPortionFactor: 0.5,
+      starterIngredientsAdded: false,
+    })
   })
 
   it('/me doplní predvolené nastavenia, aj keď v databáze chýbajú', async () => {
     await me()
     await env.DB.prepare('delete from settings').run()
-    expect((await me()).settings).toEqual({ weekStartsOn: 1, childPortionFactor: 0.5 })
+    expect((await me()).settings).toEqual({
+      weekStartsOn: 1,
+      childPortionFactor: 0.5,
+      starterIngredientsAdded: false,
+    })
   })
 
   it('neznámy kľúč alebo zlá hodnota je 400', async () => {

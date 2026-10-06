@@ -6,6 +6,7 @@ import { useSavePantryItem, useTogglePantry } from '@/api/catalog'
 import { parseQuantity } from '@/features/recipes/form'
 
 const open = defineModel<boolean>({ required: true })
+const emit = defineEmits<{ editIngredient: [] }>()
 const props = defineProps<{
   ingredient: { id: string; name: string } | null
   /** Aktuálna zásoba; chýba, keď ingrediencia ešte nie je doma. */
@@ -115,6 +116,9 @@ async function onRemove() {
       <v-card-actions class="px-4 pb-4">
         <v-btn v-if="item" color="error" variant="text" :loading="toggle.isPending.value" @click="onRemove">
           Odstrániť zo špajze
+        </v-btn>
+        <v-btn variant="text" data-test="edit-ingredient-name" @click="emit('editIngredient')">
+          Názov alebo zmazanie
         </v-btn>
         <v-spacer />
         <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
