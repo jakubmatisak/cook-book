@@ -13,8 +13,8 @@ export default {
       from: 'Od',
       to: 'Do',
       wholeWeek: 'Celý zobrazený týždeň',
-      noGuests: 'Najprv pridaj návštevu v Rodine (osoby s alergiami a averziami).',
-      openFamily: 'Otvoriť Rodinu',
+      noGuests: 'Najprv pridaj návštevu v sekcii Pri stole (osoby s alergiami a averziami).',
+      openFamily: 'Otvoriť Pri stole',
       pickGuests: 'Vyber aspoň jednu osobu z návštevy.',
       invalidDates: 'Zadaj dni od – do.',
       order: 'Pobyt sa nesmie končiť pred začiatkom.',
@@ -41,7 +41,7 @@ export default {
   },
   noMembers: {
     text: 'Pridaj členov rodiny v sekcii {link} a porcie sa budú počítať automaticky.',
-    link: 'Rodina',
+    link: 'Pri stole',
   },
   entry: {
     editTitle: 'Upraviť jedlo',

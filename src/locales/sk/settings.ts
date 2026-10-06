@@ -26,7 +26,7 @@ export default {
     weekdays: { monday: 'Pondelok', sunday: 'Nedeľa', saturday: 'Sobota' },
     childPortion: 'Predvolená porcia dieťaťa',
     factorTimesAdult: '{factor} × dospelý',
-    childPortionHint: 'Použije sa pri pridaní nového dieťaťa v Rodine.',
+    childPortionHint: 'Použije sa pri pridaní nového dieťaťa v sekcii Pri stole.',
   },
   capture: {
     title: 'Pridať recept z internetu jedným klikom',

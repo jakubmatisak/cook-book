@@ -26,7 +26,7 @@ export default {
     weekdays: { monday: 'Monday', sunday: 'Sunday', saturday: 'Saturday' },
     childPortion: 'Default child portion',
     factorTimesAdult: '{factor} × adult',
-    childPortionHint: 'Used when you add a new child in Family.',
+    childPortionHint: 'Used when you add a new child in the "At the table" section.',
   },
   capture: {
     title: 'Add a recipe from the web with one click',

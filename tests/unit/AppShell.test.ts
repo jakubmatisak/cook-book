@@ -13,7 +13,7 @@ const ALL_TITLES = [
   'Recepty',
   'Plán',
   'Nákup',
-  'Rodina',
+  'Pri stole',
   'Ingrediencie',
   'Tagy',
   'Špajza',

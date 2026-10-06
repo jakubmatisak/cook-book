@@ -13,8 +13,8 @@ export default {
       from: 'From',
       to: 'To',
       wholeWeek: 'Whole displayed week',
-      noGuests: 'First add a guest in Family (people with their allergies and dislikes).',
-      openFamily: 'Open Family',
+      noGuests: 'First add a guest in the "At the table" section (people with their allergies and dislikes).',
+      openFamily: 'Open At the table',
       pickGuests: 'Choose at least one person.',
       invalidDates: 'Enter the days from – to.',
       order: 'The stay cannot end before it starts.',
@@ -40,8 +40,8 @@ export default {
     applyTemplate: 'Apply template to this week',
   },
   noMembers: {
-    text: 'Add family members in the {link} section and portions will be calculated automatically.',
-    link: 'Family',
+    text: 'Add family members under {link} and portions will be calculated automatically.',
+    link: 'At the table',
   },
   entry: {
     editTitle: 'Edit meal',

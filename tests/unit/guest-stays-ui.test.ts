@@ -154,7 +154,7 @@ describe('GuestStayDialog', () => {
   it('bez návštev v Rodine vysvetlí, čo urobiť, a uloženie je zakázané', async () => {
     await mountDialog([mama])
     expect(document.body.querySelector('[data-test="stay-no-guests"]')?.textContent).toContain(
-      'Najprv pridaj návštevu v Rodine',
+      'Najprv pridaj návštevu v sekcii Pri stole',
     )
     expect(document.body.querySelector('[data-test="stay-save"]')?.hasAttribute('disabled')).toBe(true)
   })

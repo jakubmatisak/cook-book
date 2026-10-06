@@ -98,7 +98,7 @@ describe('Family in English', () => {
     const wrapper = await mountFamily('owner')
     expect(wrapper.find('[data-test="guests-heading"]').text()).toBe('Guests')
     const text = wrapper.text()
-    expect(text).toContain('Family')
+    expect(text).toContain('At the table')
     expect(text).toContain('For one meal for the whole family: 1 serving')
     expect(text).toContain('Adult · portion 1')
     expect(text).toContain('Guest · portion 0.5')

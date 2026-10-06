@@ -31,7 +31,7 @@ export default {
     recipes: 'Recipes',
     plan: 'Plan',
     shopping: 'Shopping',
-    family: 'Family',
+    family: 'At the table',
     ingredients: 'Ingredients',
     tags: 'Tags',
     pantry: 'Pantry',

@@ -35,7 +35,7 @@ sign-in is handled by Cloudflare Access.
 - **Languages and personal settings:** the whole app is available in Slovak and English. Language, appearance, the
   list view and the last-used recipe filters are saved per user (with a button to reset all filters), so they
   follow you across devices and households.
-- **Family:** adults and children with portion factors; allergies, dislikes and diets produce warnings when
+- **At the table (Family):** adults and children with portion factors; allergies, dislikes and diets produce warnings when
   planning meals.
 - **Weekly meal plan:** meal slots, drag and drop, copy a week, week templates, and "what to cook today"
   suggestions based on the pantry and what you cooked recently.
@@ -236,7 +236,7 @@ Cloudflare Access. Verzia **1.0.0**.
 - **Jazyky a osobné nastavenia:** celá aplikácia je po slovensky aj anglicky. Jazyk, vzhľad, pohľad zoznamu a
   naposledy použité filtre receptov sa ukladajú na človeka (s tlačidlom na úplný reset filtrov), takže ho
   nasledujú na všetkých zariadeniach aj domácnostiach.
-- **Rodina:** dospelí a deti s veľkosťou porcie; alergie, averzie a diéty členov upozornia pri plánovaní jedla.
+- **Pri stole (Rodina):** dospelí a deti s veľkosťou porcie; alergie, averzie a diéty členov upozornia pri plánovaní jedla.
 - **Týždenný jedálniček:** jedlá dňa, presun ťahaním, kopírovanie týždňa, šablóny týždňov a návrhy „Čo uvariť
   dnes“ podľa špajze a toho, kedy sa varilo naposledy.
 - **Nákupný zoznam:** vygenerovaný z jedálnička podľa porcií rodiny (sčítané ingrediencie, prevody jednotiek,

@@ -1,4 +1,4 @@
-/** Rodina: zoznam členov a okno na úpravu člena. */
+/** Pri stole (Rodina): zoznam členov a okno na úpravu člena. */
 export default {
   page: {
     guests: 'Návštevy',

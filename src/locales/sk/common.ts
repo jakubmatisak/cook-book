@@ -30,7 +30,7 @@ export default {
     recipes: 'Recepty',
     plan: 'Plán',
     shopping: 'Nákup',
-    family: 'Rodina',
+    family: 'Pri stole',
     ingredients: 'Ingrediencie',
     tags: 'Tagy',
     pantry: 'Špajza',
