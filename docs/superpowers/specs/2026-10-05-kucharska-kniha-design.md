@@ -97,6 +97,15 @@ Plán a rozhodnutia: `docs/superpowers/plans/2026-10-06-faza-5-domacnosti.md` (v
 - **Endpointy:** `GET/POST /households`, `PUT /household` (názov), `GET/POST /household/members`, `PUT/DELETE /household/members/:userId`; `GET /me` vracia aj `households`, `user.role` a `user.isAdmin`.
 - **Klient:** `HouseholdGate` pustí obsah až po zvolení domácnosti (jedna sa zvolí sama, pri viacerých je výber); voľba je v `sessionStorage` (dve karty = dve domácnosti), naposledy použitá v `localStorage`. Prepnutie načíta aplikáciu odznova, aby v pamäti nezostali dáta predošlej domácnosti. Fronta odškrtávania nákupu má kľúč podľa domácnosti.
 
+## 0h. Návštevy, osobné nastavenia, jazyky a verejné recepty (6. 10. 2026)
+
+Plán a rozhodnutia: `docs/superpowers/plans/2026-10-06-dalsie-poziadavky.md`.
+
+- **Návštevy:** typ osoby `guest` v `family_members.kind` (bez migrácie). Do porcií, upozornení a nákupu sa počítajú len pri jedle, kde sú vybrané (`meal_plan_entry_members`, `PlanEntryDto.guestIds`); `entryPortions`, `preferenceConflicts` a `planShopping` berú `guestIds`. Kópia týždňa a šablóny návštevy neprenášajú.
+- **Nastavenia na používateľa:** tabuľka `user_settings(user_id, key, value)` (migrácia 0003), kľúče `locale`, `theme`, `recipeView`, `recipeQuery`; `PUT /me/settings` (strict zod, `null` kľúč vymaže), `GET /me` ich vracia. Platia vo všetkých domácnostiach. Klient ich zosúlaďuje cez `useSyncUserSettings`; filtre receptov sa ukladajú po pauze a pri otvorení Receptov bez filtrov sa vrátia, `Zrušiť všetky filtre` vymaže aj uložené.
+- **i18n:** `vue-i18n` (sk predvolený, en); texty v `src/locales/<jazyk>/<oblasť>.ts` s rovnakou štruktúrou (test parity kľúčov a zástupných znakov), formátovanie čísel, dátumov a množstiev podľa jazyka (`src/i18n/format.ts`, `quantity.ts`), chyby API podľa `code` (`errorText`), hlášky overenia (`validationText`), predvolené názvy jedál dňa a kategórií obchodu (`defaults.ts`). Test `no-hardcoded-text` stráži, aby v `src/` nezostal pevný slovenský text. Server a markdown export ostávajú po slovensky.
+- **Verejné recepty:** `recipes.visibility` `private` | `public` (migrácia 0004). `PUT /recipes/:id/visibility` (len vlastník), `GET /public/recipes` (hľadanie, typ jedla), `GET /public/recipes/:id` (bez údajov o cudzej špajzi), `POST /public/recipes/:id/copy` (nezávislá súkromná kópia aj s fotkou, `parent_recipe_id` ukazuje na pôvod). Fotky verejných receptov servíruje `/img` aj nečlenom.
+
 ## 1. Fázy – čo, kedy a prečo
 
 Pravidlo: každá fáza končí niečím, čo reálne používate. Nič sa nebuduje „na neskôr“, len dátový model je od začiatku kompletný, aby sa neskôr nemuselo migrovať s bolesťou.

@@ -26,6 +26,15 @@ sign-in is handled by Cloudflare Access.
   to a single household goes straight in, otherwise they pick one (and can switch from the header). Owners
   (there can be several) invite people by e-mail, change roles and manage household settings, the family and
   backups. Members do everything around cooking.
+- **Guests:** add visitors to the family with their allergies, dislikes and diets. A guest does not count towards
+  portions until you pick them for a particular meal in the plan; then portions, the shopping list and warnings
+  include them.
+- **Public recipes:** a household owner can publish a recipe; every signed-in user (in any household) can browse
+  public recipes, filter them by meal type and add a copy (with photo) to their own recipes. Copies are independent
+  and private.
+- **Languages and personal settings:** the whole app is available in Slovak and English. Language, appearance, the
+  list view and the last-used recipe filters are saved per user (with a button to reset all filters), so they
+  follow you across devices and households.
 - **Family:** adults and children with portion factors; allergies, dislikes and diets produce warnings when
   planning meals.
 - **Weekly meal plan:** meal slots, drag and drop, copy a week, week templates, and "what to cook today"
@@ -201,6 +210,14 @@ Cloudflare Access. Verzia **0.1.0 beta**.
   rodičov). Každá má vlastné recepty, jedálniček, nákupný zoznam, špajzu a rodinu. Kto je členom jednej
   domácnosti, vojde rovno, inak si vyberie (a prepína v hlavičke). Vlastníci (môže ich byť viac) pozývajú ľudí
   e-mailom, menia roly a spravujú nastavenia domácnosti, rodinu a zálohy. Členovia robia všetko okolo varenia.
+- **Návštevy:** pridaj do rodiny návštevu s alergiami, averziami a diétami. Návšteva sa nepočíta do porcií, kým ju
+  v jedálničku nevyberieš pri konkrétnom jedle; vtedy ju zohľadní počet porcií, nákupný zoznam aj upozornenia.
+- **Verejné recepty:** vlastník domácnosti môže recept zverejniť; každý prihlásený (v ktorejkoľvek domácnosti) si
+  verejné recepty prehliada, filtruje podľa typu jedla a pridá si kópiu (aj s fotkou) do svojich receptov. Kópie sú
+  nezávislé a súkromné.
+- **Jazyky a osobné nastavenia:** celá aplikácia je po slovensky aj anglicky. Jazyk, vzhľad, pohľad zoznamu a
+  naposledy použité filtre receptov sa ukladajú na človeka (s tlačidlom na úplný reset filtrov), takže ho
+  nasledujú na všetkých zariadeniach aj domácnostiach.
 - **Rodina:** dospelí a deti s veľkosťou porcie; alergie, averzie a diéty členov upozornia pri plánovaní jedla.
 - **Týždenný jedálniček:** jedlá dňa, presun ťahaním, kopírovanie týždňa, šablóny týždňov a návrhy „Čo uvariť
   dnes“ podľa špajze a toho, kedy sa varilo naposledy.
