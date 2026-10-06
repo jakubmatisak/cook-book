@@ -1,9 +1,11 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { h } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import { afterEach, describe, expect, it } from 'vitest'
+import { VueQueryPlugin } from '@tanstack/vue-query'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppShell from '@/components/AppShell.vue'
 import { NAV_ITEMS } from '@/components/navigation'
+import { setActiveHousehold } from '@/lib/household'
 import { createAppVuetify } from '@/plugins/vuetify'
 
 const ALL_TITLES = ['Recepty', 'Plán', 'Nákup', 'Rodina', 'Ingrediencie', 'Tagy', 'Špajza', 'Nastavenia']
@@ -12,6 +14,23 @@ function setViewport(width: number) {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
 }
+
+/** Falošné odpovede API: zoznam domácností. */
+function stubHouseholds(households: { id: string; name: string; role: 'owner' | 'member' }[]) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(households), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    ),
+  )
+}
+
+beforeEach(() => stubHouseholds([{ id: 'a', name: 'Doma', role: 'owner' }]))
 
 async function mountShell(width: number) {
   setViewport(width)
@@ -22,7 +41,7 @@ async function mountShell(width: number) {
   await router.push('/recepty')
   await router.isReady()
   const wrapper = mount(AppShell, {
-    global: { plugins: [createAppVuetify(), router] },
+    global: { plugins: [createAppVuetify(), router, VueQueryPlugin] },
     slots: { default: () => h('div', { 'data-test': 'content' }, 'obsah stránky') },
     attachTo: document.body,
   })
@@ -31,6 +50,8 @@ async function mountShell(width: number) {
 }
 
 afterEach(() => {
+  vi.unstubAllGlobals()
+  sessionStorage.clear()
   document.body.innerHTML = ''
   localStorage.clear()
 })
@@ -89,5 +110,29 @@ describe('AppShell', () => {
       wrapper.unmount()
       document.body.innerHTML = ''
     }
+  })
+})
+
+describe('prepínač domácností', () => {
+  it('člen jedinej domácnosti prepínač nevidí', async () => {
+    const wrapper = await mountShell(1440)
+    expect(wrapper.find('[data-test="household-switcher"]').exists()).toBe(false)
+  })
+
+  it('člen viacerých domácností vidí prepínač s názvom aktívnej domácnosti a zoznamom všetkých', async () => {
+    stubHouseholds([
+      { id: 'a', name: 'Doma', role: 'owner' },
+      { id: 'b', name: 'Rodičia', role: 'member' },
+    ])
+    setActiveHousehold('b')
+    const wrapper = await mountShell(1440)
+    const switcher = wrapper.find('[data-test="household-switcher"]')
+    expect(switcher.exists()).toBe(true)
+    expect(switcher.text()).toContain('Rodičia')
+
+    await switcher.trigger('click')
+    await flushPromises()
+    const items = [...document.body.querySelectorAll('[data-test="household-switch-item"]')]
+    expect(items.map((i) => i.textContent?.trim())).toEqual(['Doma', 'Rodičia'])
   })
 })

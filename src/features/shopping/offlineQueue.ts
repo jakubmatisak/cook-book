@@ -1,4 +1,5 @@
 import { get, set } from 'idb-keyval'
+import { activeHouseholdId } from '@/lib/household'
 
 export interface QueuedChange {
   id: string
@@ -14,9 +15,13 @@ export interface QueueStorage {
 
 const KEY = 'kniha:shopping-queue'
 
+/** Každá domácnosť má vlastnú frontu, aby sa odškrtnutie nikdy neodoslalo do inej domácnosti. */
+export const queueKey = (householdId: string | null): string => (householdId ? `${KEY}:${householdId}` : KEY)
+
+/** Fronta v IndexedDB pre aktuálne zvolenú domácnosť (kľúč sa určuje pri každej operácii). */
 export const idbQueueStorage: QueueStorage = {
-  get: async () => (await get<QueuedChange[]>(KEY)) ?? [],
-  set: (changes) => set(KEY, changes),
+  get: async () => (await get<QueuedChange[]>(queueKey(activeHouseholdId()))) ?? [],
+  set: (changes) => set(queueKey(activeHouseholdId()), changes),
 }
 
 /** Fronta odškrtnutí urobených bez signálu; odošle sa hromadne po pripojení. */

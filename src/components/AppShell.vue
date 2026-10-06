@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import {
   mdiAccountCircleOutline,
+  mdiCheck,
   mdiCloudOffOutline,
+  mdiHomeOutline,
   mdiLogout,
   mdiMenu,
   mdiThemeLightDark,
@@ -11,9 +13,11 @@ import {
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
+import { useHouseholds } from '@/api/households'
 import { useOnline } from '@/composables/useOnline'
 import { usePrintMode } from '@/composables/usePrintMode'
 import { ACCESS_LOGOUT_PATH, canLogout } from '@/lib/auth'
+import { activeHousehold, setActiveHousehold } from '@/lib/household'
 import { APP_VERSION_LABEL } from '@/lib/version'
 import { useApplyTheme, useThemePreference, type ThemePreference } from '@/composables/useThemePreference'
 import { PRIMARY_NAV, SECONDARY_NAV } from './navigation'
@@ -41,6 +45,16 @@ const THEME_LABELS: Record<ThemePreference, string> = {
   system: 'Vzhľad podľa zariadenia',
   light: 'Svetlý vzhľad',
   dark: 'Tmavý vzhľad',
+}
+
+// Prepínač domácností: len pre človeka, ktorý je členom viacerých. Prepnutie načíta aplikáciu odznova,
+// aby v pamäti nezostali dáta predošlej domácnosti.
+const { data: households } = useHouseholds()
+const activeName = computed(() => households.value?.find((h) => h.id === activeHousehold.value)?.name ?? '')
+function switchHousehold(id: string) {
+  if (id === activeHousehold.value) return
+  setActiveHousehold(id)
+  window.location.assign('/')
 }
 
 const RAIL_KEY = 'kniha:menu-rail'
@@ -84,6 +98,30 @@ const mobileMenu = ref(false)
       </template>
       <v-app-bar-title class="font-weight-bold">Kuchárska kniha</v-app-bar-title>
       <template #append>
+        <v-menu v-if="households && households.length > 1">
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              :icon="mdAndUp ? undefined : mdiHomeOutline"
+              :prepend-icon="mdAndUp ? mdiHomeOutline : undefined"
+              :text="mdAndUp ? activeName : undefined"
+              variant="text"
+              class="text-none"
+              :aria-label="`Domácnosť: ${activeName}. Zmeniť`"
+              data-test="household-switcher"
+            />
+          </template>
+          <v-list min-width="220" data-test="household-menu">
+            <v-list-item
+              v-for="h in households"
+              :key="h.id"
+              :title="h.name"
+              :append-icon="h.id === activeHousehold ? mdiCheck : undefined"
+              data-test="household-switch-item"
+              @click="switchHousehold(h.id)"
+            />
+          </v-list>
+        </v-menu>
         <v-btn
           :icon="THEME_ICONS[preference]"
           variant="text"

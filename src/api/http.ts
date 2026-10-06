@@ -1,4 +1,5 @@
 import type { ApiErrorBody } from '@shared/api'
+import { activeHouseholdId } from '@/lib/household'
 
 export const API_BASE = '/api/v1'
 
@@ -79,12 +80,25 @@ async function readJson(res: Response): Promise<unknown> {
   }
 }
 
+/**
+ * Adresa s aktívnou domácnosťou (`?h=`). Je v adrese, nie v hlavičke, lebo service worker kešuje odpovede
+ * podľa adresy a dáta dvoch domácností sa nesmú zmiešať. Zoznam domácností sa volá bez nej.
+ */
+export function withHousehold(path: string, householdId: string | null = activeHouseholdId()): string {
+  if (!householdId || path.startsWith('/households')) return path
+  return `${path}${path.includes('?') ? '&' : '?'}h=${encodeURIComponent(householdId)}`
+}
+
 async function send(path: string, init: RequestInit | undefined, opts: ApiFetchOptions): Promise<Response> {
   const fetchFn = opts.fetchFn ?? fetch
   let res: Response
   try {
     // redirect: 'manual' – presmerovanie Access na prihlásenie (iná doména) by inak fetch zhodil ako výpadok siete.
-    res = await fetchFn(`${API_BASE}${path}`, { credentials: 'same-origin', redirect: 'manual', ...init })
+    res = await fetchFn(`${API_BASE}${withHousehold(path)}`, {
+      credentials: 'same-origin',
+      redirect: 'manual',
+      ...init,
+    })
   } catch {
     throw new ApiError(0, 'network_error', NETWORK_ERROR_MESSAGE)
   }
