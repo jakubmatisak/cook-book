@@ -27,7 +27,9 @@ export default {
   },
   item: {
     staple: 'Stála položka',
-    editAria: 'Upraviť {name}',
+    menuAria: 'Možnosti položky {name}',
+    edit: 'Upraviť',
+    remove: 'Odstrániť zo zoznamu',
   },
   generate: {
     title: 'Vygenerovať z jedálnička',
@@ -64,6 +66,7 @@ export default {
   snackbar: {
     addFailed: 'Položku sa nepodarilo pridať.',
     toggleFailed: 'Zmena sa neuložila.',
+    removeFailed: 'Položku sa nepodarilo odstrániť.',
     cleared: 'Odstránené z košíka: {items}.',
   },
 }

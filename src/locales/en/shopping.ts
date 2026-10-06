@@ -27,7 +27,9 @@ export default {
   },
   item: {
     staple: 'Staple item',
-    editAria: 'Edit {name}',
+    menuAria: 'Options for {name}',
+    edit: 'Edit',
+    remove: 'Remove from list',
   },
   generate: {
     title: 'Generate from meal plan',
@@ -64,6 +66,7 @@ export default {
   snackbar: {
     addFailed: 'The item could not be added.',
     toggleFailed: 'The change was not saved.',
+    removeFailed: 'Could not remove the item.',
     cleared: 'Removed from cart: {items}.',
   },
 }

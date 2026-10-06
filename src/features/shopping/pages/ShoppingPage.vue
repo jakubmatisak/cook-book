@@ -23,12 +23,14 @@ import {
   shoppingKeys,
   useAddItem,
   useClearChecked,
+  useDeleteItem,
   useShoppingItems,
   useShoppingLists,
   useToggleItem,
 } from '@/api/shopping'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import StickyHeader from '@/components/StickyHeader.vue'
 import { useOnline } from '@/composables/useOnline'
 import { useToday } from '@/composables/useToday'
 import { printPage } from '@/composables/usePrintMode'
@@ -115,6 +117,15 @@ async function onToggle(item: ShoppingItemDto) {
   }
 }
 
+const removeItem = useDeleteItem()
+async function onRemove(item: ShoppingItemDto) {
+  try {
+    await removeItem.mutateAsync(item)
+  } catch (e) {
+    notify(errorText(e, 'shopping.snackbar.removeFailed'), 'error')
+  }
+}
+
 const clear = useClearChecked()
 async function onClearChecked() {
   if (!listId.value) return
@@ -139,69 +150,71 @@ function onGenerated(result: GenerateResult) {
 
 <template>
   <div>
-    <PageHeader :title="t('shopping.title')" :subtitle="subtitle">
-      <v-btn
-        color="primary"
-        variant="tonal"
-        :prepend-icon="mdiPlaylistPlus"
-        :disabled="!listId"
-        @click="generateOpen = true"
-      >
-        {{ t('shopping.fromPlan') }}
-      </v-btn>
-      <v-menu>
-        <template #activator="{ props }">
-          <v-btn
-            v-bind="props"
-            :icon="mdiDotsVertical"
-            variant="text"
-            :aria-label="t('shopping.moreActions')"
-          />
-        </template>
-        <v-list>
-          <v-list-item :prepend-icon="mdiPrinterOutline" :title="t('shopping.print')" @click="printList" />
-          <v-list-item
-            :prepend-icon="mdiDeleteSweepOutline"
-            :title="t('shopping.clearChecked')"
-            :disabled="!inCart.length"
-            @click="onClearChecked"
-          />
-        </v-list>
-      </v-menu>
-    </PageHeader>
+    <StickyHeader>
+      <PageHeader :title="t('shopping.title')" :subtitle="subtitle">
+        <v-btn
+          color="primary"
+          variant="tonal"
+          :prepend-icon="mdiPlaylistPlus"
+          :disabled="!listId"
+          @click="generateOpen = true"
+        >
+          {{ t('shopping.fromPlan') }}
+        </v-btn>
+        <v-menu>
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              :icon="mdiDotsVertical"
+              variant="text"
+              :aria-label="t('shopping.moreActions')"
+            />
+          </template>
+          <v-list>
+            <v-list-item :prepend-icon="mdiPrinterOutline" :title="t('shopping.print')" @click="printList" />
+            <v-list-item
+              :prepend-icon="mdiDeleteSweepOutline"
+              :title="t('shopping.clearChecked')"
+              :disabled="!inCart.length"
+              @click="onClearChecked"
+            />
+          </v-list>
+        </v-menu>
+      </PageHeader>
 
-    <v-alert
-      v-if="!online || queued"
-      type="warning"
-      density="compact"
-      :icon="mdiCloudOffOutline"
-      class="mb-4 d-print-none"
-      :text="
-        online
-          ? t('shopping.offline.queued', { changes: tc('shopping.plural.changes', queued) })
-          : t('shopping.offline.noSignal')
-      "
-    />
+      <v-alert
+        v-if="!online || queued"
+        type="warning"
+        density="compact"
+        :icon="mdiCloudOffOutline"
+        class="mb-4 d-print-none"
+        :text="
+          online
+            ? t('shopping.offline.queued', { changes: tc('shopping.plural.changes', queued) })
+            : t('shopping.offline.noSignal')
+        "
+      />
 
-    <v-form class="d-flex ga-2 mb-4 d-print-none" @submit.prevent="onAdd">
-      <v-text-field
-        v-model="newItem"
-        :label="t('shopping.add.label')"
-        hide-details
-        autocomplete="off"
-        enterkeyhint="done"
-        :disabled="!listId"
-      />
-      <v-btn
-        type="submit"
-        color="primary"
-        :icon="mdiPlus"
-        size="large"
-        :loading="add.isPending.value"
-        :disabled="!newItem?.trim()"
-        :aria-label="t('shopping.add.aria')"
-      />
-    </v-form>
+      <v-form class="d-flex ga-2 mb-4 d-print-none" @submit.prevent="onAdd">
+        <v-text-field
+          v-model="newItem"
+          :label="t('shopping.add.label')"
+          hide-details
+          autocomplete="off"
+          enterkeyhint="done"
+          :disabled="!listId"
+        />
+        <v-btn
+          type="submit"
+          color="primary"
+          :icon="mdiPlus"
+          size="large"
+          :loading="add.isPending.value"
+          :disabled="!newItem?.trim()"
+          :aria-label="t('shopping.add.aria')"
+        />
+      </v-form>
+    </StickyHeader>
 
     <v-alert v-if="error" type="error" :text="errorText(error)" />
     <v-skeleton-loader v-else-if="isPending" type="list-item@6" />
@@ -242,6 +255,7 @@ function onGenerated(result: GenerateResult) {
               :item="item"
               @toggle="onToggle"
               @edit="onEdit"
+              @remove="onRemove"
             />
           </template>
         </v-list>
@@ -265,6 +279,7 @@ function onGenerated(result: GenerateResult) {
                 :item="item"
                 @toggle="onToggle"
                 @edit="onEdit"
+                @remove="onRemove"
               />
             </v-list>
             <v-card-actions>

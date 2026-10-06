@@ -63,3 +63,13 @@ describe('prepínač „Aj detské“', () => {
     expect(wrapper.find('[data-test="kids-toggle"]').text()).toBe('Include baby food')
   })
 })
+
+describe('hlavička zoznamu receptov', () => {
+  it('nadpis, hľadanie a filtre sú v lepkavej hlavičke, posúva sa len zoznam', async () => {
+    const { wrapper } = await mountPage()
+    const sticky = wrapper.find('[data-test="sticky-header"]')
+    expect(sticky.exists()).toBe(true)
+    expect(sticky.find('input').exists()).toBe(true)
+    expect(sticky.find('[data-test="filters-button"]').exists()).toBe(true)
+  })
+})

@@ -17,6 +17,7 @@ import { formatQuantity } from '@/i18n/quantity'
 import { useIngredients, usePantry, useShopCategories, useStaples, useTogglePantry } from '@/api/catalog'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import StickyHeader from '@/components/StickyHeader.vue'
 import { useToday } from '@/composables/useToday'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
@@ -112,38 +113,34 @@ function editStaple(staple: StapleDto | null) {
 </script>
 
 <template>
-  <PageHeader :title="t('common.nav.pantry')" :subtitle="subtitle">
-    <v-btn
-      v-if="tab === 'staples'"
-      color="primary"
-      :prepend-icon="mdiPlus"
-      data-test="add-staple"
-      @click="editStaple(null)"
-    >
-      {{ t('pantry.page.addStaple') }}
-    </v-btn>
-    <v-btn
-      v-else
-      color="primary"
-      variant="tonal"
-      :prepend-icon="mdiPotSteamOutline"
-      :to="{ path: '/recepty', query: { doma: '1' } }"
-    >
-      {{ t('pantry.page.cookable') }}
-    </v-btn>
-  </PageHeader>
+  <StickyHeader>
+    <PageHeader :title="t('common.nav.pantry')" :subtitle="subtitle">
+      <v-btn
+        v-if="tab === 'staples'"
+        color="primary"
+        :prepend-icon="mdiPlus"
+        data-test="add-staple"
+        @click="editStaple(null)"
+      >
+        {{ t('pantry.page.addStaple') }}
+      </v-btn>
+      <v-btn
+        v-else
+        color="primary"
+        variant="tonal"
+        :prepend-icon="mdiPotSteamOutline"
+        :to="{ path: '/recepty', query: { doma: '1' } }"
+      >
+        {{ t('pantry.page.cookable') }}
+      </v-btn>
+    </PageHeader>
 
-  <v-tabs v-model="tab" color="primary" class="mb-4">
-    <v-tab value="home" data-test="tab-home">{{ t('pantry.page.tabHome') }}</v-tab>
-    <v-tab value="staples" data-test="tab-staples">{{ t('pantry.page.tabStaples') }}</v-tab>
-  </v-tabs>
+    <v-tabs v-model="tab" color="primary" class="mb-4">
+      <v-tab value="home" data-test="tab-home">{{ t('pantry.page.tabHome') }}</v-tab>
+      <v-tab value="staples" data-test="tab-staples">{{ t('pantry.page.tabStaples') }}</v-tab>
+    </v-tabs>
 
-  <template v-if="tab === 'home'">
-    <p class="text-body-2 text-medium-emphasis mb-4">
-      {{ t('pantry.page.homeIntro') }}
-    </p>
-
-    <div class="d-flex flex-wrap align-center ga-3 mb-4">
+    <div v-if="tab === 'home'" class="d-flex flex-wrap align-center ga-3 mb-2">
       <v-text-field
         v-model="search"
         autocomplete="off"
@@ -172,6 +169,12 @@ function editStaple(staple: StapleDto | null) {
         {{ t('pantry.page.expiring') }}<template v-if="expiringCount">&nbsp;({{ expiringCount }})</template>
       </v-chip>
     </div>
+  </StickyHeader>
+
+  <template v-if="tab === 'home'">
+    <p class="text-body-2 text-medium-emphasis mb-4">
+      {{ t('pantry.page.homeIntro') }}
+    </p>
 
     <v-alert v-if="error" type="error" :text="errorText(error)" />
     <v-skeleton-loader v-else-if="isPending" type="list-item@6" />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiPencilOutline } from '@mdi/js'
+import { mdiDeleteOutline, mdiDotsVertical, mdiPencilOutline } from '@mdi/js'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ShoppingItemDto } from '@shared/api'
@@ -8,7 +8,11 @@ import { formatDayLabel } from '@/i18n/format'
 
 const { t } = useI18n()
 const props = defineProps<{ item: ShoppingItemDto }>()
-defineEmits<{ toggle: [item: ShoppingItemDto]; edit: [item: ShoppingItemDto] }>()
+defineEmits<{
+  toggle: [item: ShoppingItemDto]
+  edit: [item: ShoppingItemDto]
+  remove: [item: ShoppingItemDto]
+}>()
 
 const quantity = computed(() => formatQuantity(props.item.quantity, props.item.unit))
 const photo = computed(() => props.item.sources.find((s) => s.coverImageUrl)?.coverImageUrl ?? null)
@@ -49,14 +53,35 @@ const origin = computed(() =>
     </template>
     <template #append>
       <span v-if="quantity" class="text-body-2 font-weight-bold me-2">{{ quantity }}</span>
-      <v-btn
-        :icon="mdiPencilOutline"
-        size="small"
-        variant="text"
-        :aria-label="t('shopping.item.editAria', { name: item.name })"
-        class="d-print-none"
-        @click.stop="$emit('edit', item)"
-      />
+      <v-menu>
+        <template #activator="{ props: activator }">
+          <v-btn
+            v-bind="activator"
+            :icon="mdiDotsVertical"
+            size="small"
+            variant="text"
+            :aria-label="t('shopping.item.menuAria', { name: item.name })"
+            :data-test="`item-menu-${item.id}`"
+            class="d-print-none"
+            @click.stop
+          />
+        </template>
+        <v-list density="compact">
+          <v-list-item
+            :prepend-icon="mdiPencilOutline"
+            :title="t('shopping.item.edit')"
+            data-test="item-edit"
+            @click="$emit('edit', item)"
+          />
+          <v-list-item
+            :prepend-icon="mdiDeleteOutline"
+            :title="t('shopping.item.remove')"
+            base-color="error"
+            data-test="item-remove"
+            @click="$emit('remove', item)"
+          />
+        </v-list>
+      </v-menu>
     </template>
   </v-list-item>
 </template>

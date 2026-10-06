@@ -27,6 +27,7 @@ import { useRecipes } from '@/api/recipes'
 import { useSaveUserSettings } from '@/api/userSettings'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import StickyHeader from '@/components/StickyHeader.vue'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
 import ImportRecipeDialog from '../components/ImportRecipeDialog.vue'
@@ -269,143 +270,151 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
 </script>
 
 <template>
-  <PageHeader
-    :title="t('recipes.list.title')"
-    :subtitle="recipes ? tc('common.plural.recipes', recipes.length) : undefined"
-  >
-    <v-btn variant="tonal" :prepend-icon="mdiWeb" data-test="import-button" @click="importOpen = true">
-      {{ t('recipes.list.importFromWeb') }}
-    </v-btn>
-    <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">{{
-      t('recipes.list.newRecipe')
-    }}</v-btn>
-  </PageHeader>
-
-  <v-alert v-if="pantryMode" type="info" density="compact" class="mb-3" :icon="mdiFridgeOutline">
-    <I18nT keypath="recipes.list.pantryHint" scope="global" tag="span">
-      <template #pantry>
-        <router-link to="/spajza" class="text-primary font-weight-bold">{{
-          t('recipes.list.pantryLink')
-        }}</router-link>
-      </template>
-    </I18nT>
-  </v-alert>
-
-  <v-btn-toggle
-    v-if="pantryMode"
-    :model-value="state.missing ?? 'all'"
-    mandatory
-    grow
-    density="comfortable"
-    selected-class="bg-primary"
-    class="mb-3 w-100"
-    data-test="missing-toggle"
-    @update:model-value="setMissing"
-  >
-    <v-btn value="all">{{ t('recipes.list.missingAll') }}</v-btn>
-    <v-btn :value="0">{{ t('recipes.list.missingCanCook', { n: canCook }) }}</v-btn>
-    <v-btn :value="1">{{ t('recipes.list.missingMaxOne', { n: missingOne }) }}</v-btn>
-  </v-btn-toggle>
-
-  <v-text-field
-    v-model="search"
-    :prepend-inner-icon="mdiMagnify"
-    :label="t('recipes.list.search')"
-    clearable
-    hide-details
-    autocomplete="off"
-    class="mb-3"
-  />
-
-  <div class="d-flex flex-column flex-md-row align-md-center ga-2 mb-3">
-    <div class="d-flex flex-wrap align-center ga-2">
-      <v-btn
-        :prepend-icon="mdiFilterVariant"
-        :color="filterCount ? 'primary' : undefined"
-        variant="tonal"
-        height="40"
-        data-test="filters-button"
-        @click="filtersOpen = true"
-      >
-        {{ t('recipes.list.filters') }}<template v-if="filterCount">&nbsp;({{ filterCount }})</template>
-      </v-btn>
-      <v-btn
-        :prepend-icon="favorite ? mdiCheck : mdiHeart"
-        :color="favorite ? 'primary' : undefined"
-        :variant="favorite ? 'flat' : 'outlined'"
-        height="40"
-        @click="favorite = !favorite"
-      >
-        {{ t('recipes.list.favorites') }}
-      </v-btn>
-      <v-btn
-        :prepend-icon="kids ? mdiCheck : mdiBabyFaceOutline"
-        :color="kids ? 'primary' : undefined"
-        :variant="kids ? 'flat' : 'outlined'"
-        height="40"
-        data-test="kids-toggle"
-        @click="kids = !kids"
-      >
-        {{ t('recipes.list.kids') }}
-      </v-btn>
-      <v-btn
-        :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
-        :color="pantryMode ? 'primary' : undefined"
-        :variant="pantryMode ? 'flat' : 'outlined'"
-        height="40"
-        @click="pantryMode = !pantryMode"
-      >
-        {{ t('recipes.list.canCook') }}
-      </v-btn>
-    </div>
-
-    <div class="d-flex flex-nowrap align-center ga-2 ms-md-auto">
-      <v-select
-        :model-value="sortKey"
-        :items="sortItems"
-        :label="t('recipes.list.sort')"
-        hide-details
-        density="compact"
-        class="flex-grow-1"
-        :style="{ minWidth: 0, maxWidth: mdAndUp ? '14rem' : undefined }"
-        data-test="sort-select"
-        @update:model-value="setSort"
-      />
-      <v-btn
-        :icon="sortDir === 'asc' ? mdiSortAscending : mdiSortDescending"
-        variant="tonal"
-        height="40"
-        width="40"
-        :aria-label="sortDir === 'asc' ? t('recipes.list.sortAsc') : t('recipes.list.sortDesc')"
-        @click="flipSortDir"
-      />
-      <v-btn-toggle v-model="view" mandatory height="40" selected-class="bg-primary" data-test="view-toggle">
-        <v-btn :icon="mdiViewGridOutline" value="grid" :aria-label="t('recipes.list.viewGrid')" />
-        <v-btn :icon="mdiViewHeadline" value="table" :aria-label="t('recipes.list.viewTable')" />
-      </v-btn-toggle>
-    </div>
-  </div>
-
-  <div
-    v-if="activeChips.length || hasSavedState"
-    class="d-flex flex-wrap align-center ga-2 mb-3"
-    data-test="active-filters"
-  >
-    <v-chip
-      v-for="chip in activeChips"
-      :key="chip.key"
-      closable
-      size="small"
-      color="primary"
-      variant="tonal"
-      @click:close="toggleFilter(chip.dimension as FilterDimension, chip.value)"
+  <StickyHeader>
+    <PageHeader
+      :title="t('recipes.list.title')"
+      :subtitle="recipes && mdAndUp ? tc('common.plural.recipes', recipes.length) : undefined"
     >
-      {{ chip.label }}
-    </v-chip>
-    <v-btn size="small" variant="text" data-test="reset-filters" @click="resetAll">{{
-      t('recipes.list.resetFilters')
-    }}</v-btn>
-  </div>
+      <v-btn variant="tonal" :prepend-icon="mdiWeb" data-test="import-button" @click="importOpen = true">
+        {{ t('recipes.list.importFromWeb') }}
+      </v-btn>
+      <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">{{
+        t('recipes.list.newRecipe')
+      }}</v-btn>
+    </PageHeader>
+
+    <v-alert v-if="pantryMode" type="info" density="compact" class="mb-3" :icon="mdiFridgeOutline">
+      <I18nT keypath="recipes.list.pantryHint" scope="global" tag="span">
+        <template #pantry>
+          <router-link to="/spajza" class="text-primary font-weight-bold">{{
+            t('recipes.list.pantryLink')
+          }}</router-link>
+        </template>
+      </I18nT>
+    </v-alert>
+
+    <v-btn-toggle
+      v-if="pantryMode"
+      :model-value="state.missing ?? 'all'"
+      mandatory
+      grow
+      density="comfortable"
+      selected-class="bg-primary"
+      class="mb-3 w-100"
+      data-test="missing-toggle"
+      @update:model-value="setMissing"
+    >
+      <v-btn value="all">{{ t('recipes.list.missingAll') }}</v-btn>
+      <v-btn :value="0">{{ t('recipes.list.missingCanCook', { n: canCook }) }}</v-btn>
+      <v-btn :value="1">{{ t('recipes.list.missingMaxOne', { n: missingOne }) }}</v-btn>
+    </v-btn-toggle>
+
+    <v-text-field
+      v-model="search"
+      :prepend-inner-icon="mdiMagnify"
+      :label="t('recipes.list.search')"
+      clearable
+      hide-details
+      autocomplete="off"
+      class="mb-3"
+    />
+
+    <div class="d-flex flex-column flex-md-row align-md-center ga-2 mb-3">
+      <div class="d-flex flex-wrap align-center ga-2">
+        <v-btn
+          :prepend-icon="mdiFilterVariant"
+          :color="filterCount ? 'primary' : undefined"
+          variant="tonal"
+          height="40"
+          data-test="filters-button"
+          @click="filtersOpen = true"
+        >
+          {{ t('recipes.list.filters') }}<template v-if="filterCount">&nbsp;({{ filterCount }})</template>
+        </v-btn>
+        <v-btn
+          :prepend-icon="favorite ? mdiCheck : mdiHeart"
+          :color="favorite ? 'primary' : undefined"
+          :variant="favorite ? 'flat' : 'outlined'"
+          height="40"
+          @click="favorite = !favorite"
+        >
+          {{ t('recipes.list.favorites') }}
+        </v-btn>
+        <v-btn
+          :prepend-icon="kids ? mdiCheck : mdiBabyFaceOutline"
+          :color="kids ? 'primary' : undefined"
+          :variant="kids ? 'flat' : 'outlined'"
+          height="40"
+          data-test="kids-toggle"
+          @click="kids = !kids"
+        >
+          {{ t('recipes.list.kids') }}
+        </v-btn>
+        <v-btn
+          :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
+          :color="pantryMode ? 'primary' : undefined"
+          :variant="pantryMode ? 'flat' : 'outlined'"
+          height="40"
+          @click="pantryMode = !pantryMode"
+        >
+          {{ t('recipes.list.canCook') }}
+        </v-btn>
+      </div>
+
+      <div class="d-flex flex-nowrap align-center ga-2 ms-md-auto">
+        <v-select
+          :model-value="sortKey"
+          :items="sortItems"
+          :label="t('recipes.list.sort')"
+          hide-details
+          density="compact"
+          class="flex-grow-1"
+          :style="{ minWidth: 0, maxWidth: mdAndUp ? '14rem' : undefined }"
+          data-test="sort-select"
+          @update:model-value="setSort"
+        />
+        <v-btn
+          :icon="sortDir === 'asc' ? mdiSortAscending : mdiSortDescending"
+          variant="tonal"
+          height="40"
+          width="40"
+          :aria-label="sortDir === 'asc' ? t('recipes.list.sortAsc') : t('recipes.list.sortDesc')"
+          @click="flipSortDir"
+        />
+        <v-btn-toggle
+          v-model="view"
+          mandatory
+          height="40"
+          selected-class="bg-primary"
+          data-test="view-toggle"
+        >
+          <v-btn :icon="mdiViewGridOutline" value="grid" :aria-label="t('recipes.list.viewGrid')" />
+          <v-btn :icon="mdiViewHeadline" value="table" :aria-label="t('recipes.list.viewTable')" />
+        </v-btn-toggle>
+      </div>
+    </div>
+
+    <div
+      v-if="activeChips.length || hasSavedState"
+      class="d-flex flex-wrap align-center ga-2 mb-3"
+      data-test="active-filters"
+    >
+      <v-chip
+        v-for="chip in activeChips"
+        :key="chip.key"
+        closable
+        size="small"
+        color="primary"
+        variant="tonal"
+        @click:close="toggleFilter(chip.dimension as FilterDimension, chip.value)"
+      >
+        {{ chip.label }}
+      </v-chip>
+      <v-btn size="small" variant="text" data-test="reset-filters" @click="resetAll">{{
+        t('recipes.list.resetFilters')
+      }}</v-btn>
+    </div>
+  </StickyHeader>
 
   <v-alert v-if="error" type="error" :text="errorText(error)" />
 

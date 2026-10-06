@@ -15,6 +15,7 @@ import {
 } from '@/api/catalog'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import StickyHeader from '@/components/StickyHeader.vue'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
 import IngredientEditDialog from '../components/IngredientEditDialog.vue'
@@ -93,14 +94,7 @@ const usage = (item: IngredientDto) =>
 </script>
 
 <template>
-  <!-- Lepkavá hlavička: odsadená o výšku hornej lišty (--v-layout-top), na mobile bez dlhého podtitulu. -->
-  <v-sheet
-    position="sticky"
-    color="background"
-    class="pb-1"
-    :style="{ top: 'var(--v-layout-top)', zIndex: 2 }"
-    data-test="sticky-header"
-  >
+  <StickyHeader>
     <PageHeader
       :title="t('common.nav.ingredients')"
       :subtitle="mdAndUp ? t('ingredients.page.subtitle') : undefined"
@@ -136,7 +130,7 @@ const usage = (item: IngredientDto) =>
         {{ t('ingredients.page.uncategorized', { count: uncategorizedCount }) }}
       </v-chip>
     </div>
-  </v-sheet>
+  </StickyHeader>
 
   <v-alert v-if="error" type="error" :text="errorText(error)" />
   <v-skeleton-loader v-else-if="isPending" type="list-item-two-line@6" />
