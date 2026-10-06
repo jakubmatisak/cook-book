@@ -1,3 +1,4 @@
+import { SAMPLE_SET_NAMES } from '../data/sampleSets'
 import { z } from './zod'
 import { isIsoDate } from '../dates'
 import { SORT_KEYS, TIME_BUCKETS } from '../recipeFacets'
@@ -134,6 +135,9 @@ export const markdownQuerySchema = z.object({
   /** Prepočítať množstvá na tento počet porcií. */
   porcie: z.coerce.number().int().min(1).max(50).optional(),
 })
+
+/** Ktorú sadu ukážkových receptov pridať (predvolene základnú). */
+export const sampleSetQuerySchema = z.object({ set: z.enum(SAMPLE_SET_NAMES).default('basic') })
 
 export const suggestionsQuerySchema = z.object({
   date: z.string().refine(isIsoDate, 'Neplatný dátum.'),

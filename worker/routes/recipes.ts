@@ -6,6 +6,7 @@ import {
   recipeInputSchema,
   recipeListQuerySchema,
   recipeVisibilitySchema,
+  sampleSetQuerySchema,
   suggestionsQuerySchema,
 } from '../../shared/schemas/recipe'
 import type { AppEnv } from '../env'
@@ -17,6 +18,7 @@ import { suggestRecipes } from '../services/suggestions'
 import { getUserSettings } from '../services/userSettings'
 import { requireOwner } from '../middleware/owner'
 import {
+  addSampleRecipes,
   deleteRecipe,
   getRecipeDetail,
   listRecipes,
@@ -62,6 +64,11 @@ export const recipeRoutes = new Hono<AppEnv>()
     const user = c.get('user')
     const id = await saveRecipe(c.get('db'), user, input)
     return c.json(await getRecipeDetail(c.get('db'), user.householdId, user.id, id), 201)
+  })
+  // Ukážkové recepty pridáva vlastník domácnosti po dávkach (opakuje sa, kým `remaining` nie je 0).
+  .post('/samples', requireOwner, async (c) => {
+    const { set } = sampleSetQuerySchema.parse(c.req.query())
+    return c.json(await addSampleRecipes(c.get('db'), c.get('user'), set))
   })
   // Zverejnenie a skrytie receptu smie len vlastník domácnosti.
   .put('/:id/visibility', requireOwner, async (c) => {

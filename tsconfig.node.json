@@ -11,6 +11,7 @@
     "drizzle.config.ts",
     "pwa.config.ts",
     "pwa-assets.config.ts",
+    "siteUrl.config.ts",
     "eslint.config.js",
     "tests/config/**/*.ts"
   ]

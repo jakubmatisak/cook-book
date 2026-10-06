@@ -150,6 +150,13 @@ Dashboard → Workers & Pages → `cook-book` → Settings → Builds → connec
 `npm run build`, deploy command `npx wrangler deploy`. Run `npm run db:migrate:remote` by hand before pushing
 when the schema changes (always before deploying a version that adds a migration).
 
+### Link preview (Open Graph)
+
+`index.html` has Open Graph and Twitter tags and the default preview image `public/og-image.png` (a pot). The image
+needs a full address: build with `SITE_URL=https://your-app.example.com npm run build` (or put `VITE_SITE_URL` in
+`.env.local`). Note that Cloudflare Access protects the whole site, so chat apps cannot read the preview of a private
+link; to allow it, add an Access **Bypass** policy for the path `/og-image.png` (and for any page you want previewed).
+
 ### Signing out
 
 The app menu (the account icon in the top right corner) has **Sign out**, which uses Cloudflare Access
@@ -302,6 +309,12 @@ niektorý krok pýtal, zastav sa a over, že máš vybraný Free plán.
 **Automatický deploy z GitHubu (voliteľné):** Dashboard → Workers & Pages → `cook-book` → Settings → Builds →
 pripoj GitHub repozitár. Build command `npm run build`, deploy command `npx wrangler deploy`. Migrácie pri zmene
 schémy spúšťaj ručne `npm run db:migrate:remote` pred pushom (vždy pred nasadením verzie, ktorá pridáva migráciu).
+
+**Náhľad odkazu (Open Graph):** `index.html` má značky Open Graph a Twitter a predvolený obrázok náhľadu
+`public/og-image.png` (hrniec). Obrázok potrebuje úplnú adresu: zostav s
+`SITE_URL=https://tvoja-aplikacia.example.com npm run build` (alebo daj `VITE_SITE_URL` do `.env.local`). Pozor:
+Cloudflare Access chráni celú stránku, takže chatové aplikácie náhľad súkromného odkazu nevidia; povoliť sa dá
+pravidlom Access **Bypass** pre cestu `/og-image.png` (a pre stránky, ktoré chceš zdieľať s náhľadom).
 
 **Odhlásenie:** v ponuke účtu v pravom hornom rohu je **Odhlásiť sa** (cez Cloudflare Access). Ukazuje sa len na
 nasadenej stránke, lokálne nie.
