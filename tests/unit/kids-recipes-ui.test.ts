@@ -41,42 +41,57 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('prepínač detských receptov', () => {
+/** Rozbaľovacie pole: otvorí ponuku a vyberie možnosť podľa textu. */
+async function chooseKids(wrapper: Awaited<ReturnType<typeof mountPage>>['wrapper'], text: string) {
+  await wrapper.find('[data-test="kids-select"] .v-field').trigger('mousedown')
+  await flushPromises()
+  const option = [...document.body.querySelectorAll<HTMLElement>('.v-list-item')].find((el) =>
+    el.textContent?.includes(text),
+  )
+  expect(option, text).toBeDefined()
+  option!.click()
+  await flushPromises()
+}
+
+describe('výber detských receptov v rozbaľovacom poli', () => {
   it('predvolene sú detské skryté; „Aj detské“ pošle kids=1 a „Len detské“ kids=only', async () => {
     const { router, wrapper } = await mountPage()
     expect(requested().every((u) => !u.includes('kids='))).toBe(true)
+    expect(wrapper.find('[data-test="kids-select"]').text()).toContain('Bez detských')
 
-    await wrapper.find('[data-test="kids-include"]').trigger('click')
+    await chooseKids(wrapper, 'Aj detské')
     await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBe('1'))
     await vi.waitFor(() => expect(requested().some((u) => u.includes('kids=1'))).toBe(true))
 
-    await wrapper.find('[data-test="kids-only"]').trigger('click')
+    await chooseKids(wrapper, 'Len detské')
     await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBe('len'))
     await vi.waitFor(() => expect(requested().some((u) => u.includes('kids=only'))).toBe(true))
 
-    await wrapper.find('[data-test="kids-hide"]').trigger('click')
+    await chooseKids(wrapper, 'Bez detských')
     await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBeUndefined())
   })
 
   it('z adresy sa zvolí príslušná možnosť', async () => {
     const { wrapper } = await mountPage('/recepty?detske=len')
     expect(requested().some((u) => u.includes('kids=only'))).toBe(true)
-    expect(wrapper.find('[data-test="kids-only"]').classes()).toContain('bg-primary')
+    expect(wrapper.find('[data-test="kids-select"]').text()).toContain('Len detské')
   })
 
   it('v angličtine majú možnosti anglické popisy', async () => {
     setLocale('en')
     const { wrapper } = await mountPage()
-    expect(wrapper.find('[data-test="kids-hide"]').text()).toBe('No baby food')
-    expect(wrapper.find('[data-test="kids-include"]').text()).toBe('With baby food')
-    expect(wrapper.find('[data-test="kids-only"]').text()).toBe('Baby food only')
+    expect(wrapper.find('[data-test="kids-select"]').text()).toContain('No baby food')
+    await wrapper.find('[data-test="kids-select"] .v-field').trigger('mousedown')
+    await flushPromises()
+    const titles = [...document.body.querySelectorAll('.v-list-item')].map((el) => el.textContent?.trim())
+    expect(titles).toEqual(expect.arrayContaining(['No baby food', 'With baby food', 'Baby food only']))
   })
 })
 
 describe('vypnuté detské jedlá v nastaveniach', () => {
   it('prepínač sa nezobrazí a kids sa neposiela, ani keď je v adrese', async () => {
     const { wrapper } = await mountPage('/recepty?detske=1', false)
-    expect(wrapper.find('[data-test="kids-toggle"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="kids-select"]').exists()).toBe(false)
     expect(requested().every((u) => !u.includes('kids='))).toBe(true)
   })
 })

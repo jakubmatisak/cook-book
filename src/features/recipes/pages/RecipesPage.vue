@@ -184,6 +184,9 @@ const kids = computed({
   set: (value: KidsMode) => setQuery({ detske: KIDS_PARAMS[value] }),
 })
 const KIDS_MODES: readonly KidsMode[] = ['hide', 'include', 'only']
+const kidsItems = computed(() =>
+  KIDS_MODES.map((mode) => ({ value: mode, title: t(`recipes.list.kids_${mode}`) })),
+)
 const pantryMode = computed({
   get: () => state.value.pantry,
   set: (value: boolean) => setQuery({ doma: value ? '1' : undefined, chyba: undefined }),
@@ -380,27 +383,17 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
           >
             {{ t('recipes.list.favorites') }}
           </v-btn>
-          <v-btn-toggle
+          <v-select
             v-if="kidsEnabled"
             v-model="kids"
-            mandatory
-            density="comfortable"
-            selected-class="bg-primary"
-            variant="outlined"
-            divided
-            :aria-label="t('recipes.list.kids')"
-            data-test="kids-toggle"
-          >
-            <v-btn
-              v-for="mode in KIDS_MODES"
-              :key="mode"
-              :value="mode"
-              height="40"
-              :data-test="`kids-${mode}`"
-            >
-              {{ t(`recipes.list.kids_${mode}`) }}
-            </v-btn>
-          </v-btn-toggle>
+            :items="kidsItems"
+            :label="t('recipes.list.kids')"
+            density="compact"
+            hide-details
+            class="flex-grow-0"
+            style="min-width: 11rem"
+            data-test="kids-select"
+          />
           <v-btn
             :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
             :color="pantryMode ? 'primary' : undefined"
