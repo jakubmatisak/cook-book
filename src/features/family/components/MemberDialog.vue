@@ -102,7 +102,14 @@ async function onDelete() {
   <v-dialog v-model="open" max-width="460">
     <v-card :title="member ? 'Upraviť člena rodiny' : 'Nový člen rodiny'">
       <v-card-text class="d-flex flex-column ga-4">
-        <v-text-field v-model="name" label="Meno" autofocus hide-details="auto" @keydown.enter="onSave" />
+        <v-text-field
+          v-model="name"
+          autocomplete="off"
+          label="Meno"
+          autofocus
+          hide-details="auto"
+          @keydown.enter="onSave"
+        />
 
         <div>
           <div class="text-caption text-medium-emphasis mb-1">Kto to je</div>

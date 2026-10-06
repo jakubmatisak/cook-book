@@ -37,6 +37,7 @@ function move(index: number, delta: number) {
         <div class="d-flex align-center ga-2 mt-2">
           <v-text-field
             v-model="row.timerMinutes"
+            autocomplete="off"
             label="Časovač (min)"
             inputmode="decimal"
             :rules="[timerRule]"

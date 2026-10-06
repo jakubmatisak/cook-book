@@ -80,7 +80,13 @@ async function onDelete() {
         />
         <v-row dense>
           <v-col cols="6">
-            <v-text-field v-model="quantity" label="Množstvo" inputmode="decimal" hide-details />
+            <v-text-field
+              v-model="quantity"
+              autocomplete="off"
+              label="Množstvo"
+              inputmode="decimal"
+              hide-details
+            />
           </v-col>
           <v-col cols="6">
             <v-select

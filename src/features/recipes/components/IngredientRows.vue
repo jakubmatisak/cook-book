@@ -58,6 +58,7 @@ function move(index: number, delta: number) {
         <v-col cols="6" sm="3">
           <v-text-field
             v-model="row.quantity"
+            autocomplete="off"
             label="Množstvo"
             inputmode="decimal"
             :rules="[quantityRule]"
@@ -77,11 +78,18 @@ function move(index: number, delta: number) {
           />
         </v-col>
         <v-col cols="12" sm="6">
-          <v-text-field v-model="row.note" label="Poznámka (napr. nadrobno)" hide-details density="compact" />
+          <v-text-field
+            v-model="row.note"
+            autocomplete="off"
+            label="Poznámka (napr. nadrobno)"
+            hide-details
+            density="compact"
+          />
         </v-col>
         <v-col cols="12" sm="6">
           <v-text-field
             v-model="row.groupName"
+            autocomplete="off"
             label="Skupina (napr. Na cesto)"
             hide-details
             density="compact"

@@ -2,7 +2,12 @@ import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import vuetify from 'vite-plugin-vuetify'
 import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-plugin'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
+
+const appVersion = (
+  JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
+).version
 
 const alias = {
   '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -14,6 +19,7 @@ export default defineConfig({
     projects: [
       {
         plugins: [vue(), vuetify({ autoImport: true })],
+        define: { __APP_VERSION__: JSON.stringify(appVersion) },
         resolve: { alias },
         test: {
           name: 'unit',

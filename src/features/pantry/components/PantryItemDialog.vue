@@ -76,6 +76,7 @@ async function onRemove() {
           <v-col cols="6">
             <v-text-field
               v-model="quantity"
+              autocomplete="off"
               label="Množstvo"
               inputmode="decimal"
               hide-details
@@ -95,8 +96,20 @@ async function onRemove() {
             />
           </v-col>
         </v-row>
-        <v-text-field v-model="expiresOn" label="Trvanlivosť do" type="date" clearable hide-details />
-        <v-text-field v-model="location" label="Kde to je (napr. chladnička)" hide-details />
+        <v-text-field
+          v-model="expiresOn"
+          autocomplete="off"
+          label="Trvanlivosť do"
+          type="date"
+          clearable
+          hide-details
+        />
+        <v-text-field
+          v-model="location"
+          autocomplete="off"
+          label="Kde to je (napr. chladnička)"
+          hide-details
+        />
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
       <v-card-actions class="px-4 pb-4">

@@ -139,6 +139,7 @@ function editStaple(staple: StapleDto | null) {
     <div class="d-flex flex-wrap align-center ga-3 mb-4">
       <v-text-field
         v-model="search"
+        autocomplete="off"
         :prepend-inner-icon="mdiMagnify"
         label="Hľadať ingredienciu"
         clearable

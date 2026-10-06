@@ -69,4 +69,15 @@ describe('AppShell', () => {
     const wrapper = await mountShell(375)
     expect(wrapper.find('[data-test="content"]').text()).toBe('obsah stránky')
   })
+
+  it('logo v rohu otvorí ponuku s verziou aplikácie, na desktope aj na mobile', async () => {
+    for (const width of [1440, 375]) {
+      const wrapper = await mountShell(width)
+      await wrapper.find('[data-test="logo"]').trigger('click')
+      await flushPromises()
+      expect(document.body.textContent).toContain('Verzia 0.1.0 beta')
+      wrapper.unmount()
+      document.body.innerHTML = ''
+    }
+  })
 })

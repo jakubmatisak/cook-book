@@ -64,10 +64,23 @@ async function onDelete() {
   <v-dialog v-model="open" max-width="440">
     <v-card title="Upraviť položku">
       <v-card-text class="d-flex flex-column ga-3">
-        <v-text-field v-model="name" label="Názov" hide-details autofocus @keydown.enter="onSave" />
+        <v-text-field
+          v-model="name"
+          autocomplete="off"
+          label="Názov"
+          hide-details
+          autofocus
+          @keydown.enter="onSave"
+        />
         <v-row dense>
           <v-col cols="6">
-            <v-text-field v-model="quantity" label="Množstvo" inputmode="decimal" hide-details />
+            <v-text-field
+              v-model="quantity"
+              autocomplete="off"
+              label="Množstvo"
+              inputmode="decimal"
+              hide-details
+            />
           </v-col>
           <v-col cols="6">
             <v-select v-model="unit" :items="unitItems" item-props label="Jednotka" clearable hide-details />

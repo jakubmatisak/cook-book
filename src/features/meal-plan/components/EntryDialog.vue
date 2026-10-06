@@ -164,6 +164,7 @@ async function onDelete() {
         <v-text-field
           v-else
           v-model="freeText"
+          autocomplete="off"
           label="Čo sa bude jesť"
           placeholder="napr. zvyšky, ideme von, chlieb s maslom"
           autofocus
@@ -199,7 +200,7 @@ async function onDelete() {
             />
           </v-col>
           <v-col cols="12" sm="6">
-            <v-text-field v-model="note" label="Poznámka" hide-details />
+            <v-text-field v-model="note" autocomplete="off" label="Poznámka" hide-details />
           </v-col>
           <v-col cols="12" sm="6">
             <v-select v-model="date" :items="dateItems" label="Deň" hide-details />

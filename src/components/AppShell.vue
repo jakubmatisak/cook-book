@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {
-  mdiChefHat,
   mdiCloudOffOutline,
   mdiMenu,
   mdiThemeLightDark,
@@ -12,6 +11,7 @@ import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useOnline } from '@/composables/useOnline'
 import { usePrintMode } from '@/composables/usePrintMode'
+import { APP_VERSION_LABEL } from '@/lib/version'
 import { useApplyTheme, useThemePreference, type ThemePreference } from '@/composables/useThemePreference'
 import { PRIMARY_NAV, SECONDARY_NAV } from './navigation'
 
@@ -66,6 +66,25 @@ const mobileMenu = ref(false)
   <v-app>
     <v-app-bar v-if="showChrome" density="comfortable" border="b" class="d-print-none">
       <template #prepend>
+        <!-- Logo v rohu: ponuka s názvom a verziou aplikácie. -->
+        <v-menu>
+          <template #activator="{ props }">
+            <v-btn v-bind="props" icon variant="text" aria-label="O aplikácii" data-test="logo">
+              <v-avatar size="32" rounded="sm"><v-img src="/favicon.svg" alt="" /></v-avatar>
+            </v-btn>
+          </template>
+          <v-list min-width="220" data-test="logo-menu">
+            <v-list-item
+              title="Kuchárska kniha"
+              :subtitle="`Verzia ${APP_VERSION_LABEL}`"
+              data-test="app-version"
+            >
+              <template #prepend>
+                <v-avatar size="40" rounded="sm" class="me-3"><v-img src="/favicon.svg" alt="" /></v-avatar>
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-menu>
         <v-app-bar-nav-icon
           v-if="mdAndUp"
           :icon="mdiMenu"
@@ -73,7 +92,6 @@ const mobileMenu = ref(false)
           data-test="menu-toggle"
           @click="rail = !rail"
         />
-        <v-icon v-else :icon="mdiChefHat" color="primary" class="ml-2" />
       </template>
       <v-app-bar-title class="font-weight-bold">Kuchárska kniha</v-app-bar-title>
       <template #append>

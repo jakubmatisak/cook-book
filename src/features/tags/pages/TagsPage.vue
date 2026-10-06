@@ -108,7 +108,14 @@ const usage = (tag: TagDto) =>
   <v-dialog v-model="dialogOpen" max-width="420">
     <v-card :title="editing ? 'Upraviť tag' : 'Nový tag'">
       <v-card-text class="d-flex flex-column ga-4">
-        <v-text-field v-model="name" label="Názov" autofocus hide-details="auto" @keydown.enter="onSave" />
+        <v-text-field
+          v-model="name"
+          autocomplete="off"
+          label="Názov"
+          autofocus
+          hide-details="auto"
+          @keydown.enter="onSave"
+        />
         <div>
           <div class="text-caption text-medium-emphasis mb-1">Farba (voliteľná)</div>
           <v-chip-group v-model="color" column selected-class="elevation-6">

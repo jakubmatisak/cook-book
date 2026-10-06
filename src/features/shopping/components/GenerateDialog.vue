@@ -99,8 +99,12 @@ async function onGenerate() {
           </v-radio>
         </v-radio-group>
         <v-row v-if="preset === 'custom'" dense>
-          <v-col cols="6"><v-text-field v-model="customFrom" type="date" label="Od" hide-details /></v-col>
-          <v-col cols="6"><v-text-field v-model="customTo" type="date" label="Do" hide-details /></v-col>
+          <v-col cols="6"
+            ><v-text-field v-model="customFrom" autocomplete="off" type="date" label="Od" hide-details
+          /></v-col>
+          <v-col cols="6"
+            ><v-text-field v-model="customTo" autocomplete="off" type="date" label="Do" hide-details
+          /></v-col>
         </v-row>
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>

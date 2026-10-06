@@ -42,6 +42,7 @@ async function onSave() {
         </p>
         <v-text-field
           v-model="name"
+          autocomplete="off"
           label="Názov šablóny"
           placeholder="napr. Bežný týždeň"
           maxlength="60"

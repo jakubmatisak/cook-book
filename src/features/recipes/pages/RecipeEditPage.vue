@@ -178,6 +178,7 @@ function cancel() {
             <ImagePicker v-model:image-id="form.coverImageId" v-model:image-url="form.coverImageUrl" />
             <v-text-field
               v-model="form.title"
+              autocomplete="off"
               label="Názov receptu"
               :rules="[required]"
               autofocus
@@ -201,6 +202,7 @@ function cancel() {
             <v-col cols="6">
               <v-text-field
                 v-model="form.prepMinutes"
+                autocomplete="off"
                 label="Príprava (min)"
                 inputmode="numeric"
                 :rules="[minutesRule]"
@@ -210,6 +212,7 @@ function cancel() {
             <v-col cols="6">
               <v-text-field
                 v-model="form.cookMinutes"
+                autocomplete="off"
                 label="Varenie (min)"
                 inputmode="numeric"
                 :rules="[minutesRule]"
@@ -260,8 +263,19 @@ function cancel() {
             closable-chips
             hide-details
           />
-          <v-text-field v-model="form.sourceUrl" label="Odkaz na pôvodný recept" type="url" hide-details />
-          <v-text-field v-model="form.sourceText" label="Zdroj (napr. babka, kniha)" hide-details />
+          <v-text-field
+            v-model="form.sourceUrl"
+            autocomplete="off"
+            label="Odkaz na pôvodný recept"
+            type="url"
+            hide-details
+          />
+          <v-text-field
+            v-model="form.sourceText"
+            autocomplete="off"
+            label="Zdroj (napr. babka, kniha)"
+            hide-details
+          />
         </v-card-text>
       </v-card>
 
