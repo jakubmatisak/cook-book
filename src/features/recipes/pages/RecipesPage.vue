@@ -9,8 +9,8 @@ import {
   mdiPlus,
   mdiSortAscending,
   mdiSortDescending,
-  mdiTable,
   mdiViewGridOutline,
+  mdiViewHeadline,
   mdiWeb,
 } from '@mdi/js'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
@@ -49,7 +49,7 @@ import {
 
 const route = useRoute()
 const router = useRouter()
-const { smAndDown, mdAndUp } = useDisplay()
+const { mdAndUp } = useDisplay()
 
 /** Filtre a zoradenie žijú v URL, aby prežili návrat z detailu a dali sa zdieľať. */
 const state = computed(() => parseListQuery(route.query))
@@ -298,7 +298,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       />
       <v-btn-toggle v-model="view" mandatory height="40" selected-class="bg-primary" data-test="view-toggle">
         <v-btn :icon="mdiViewGridOutline" value="grid" aria-label="Zobraziť ako mriežku" />
-        <v-btn :icon="mdiTable" value="table" aria-label="Zobraziť ako tabuľku" />
+        <v-btn :icon="mdiViewHeadline" value="table" aria-label="Zobraziť ako tabuľku" />
       </v-btn-toggle>
     </div>
   </div>
@@ -341,16 +341,18 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       title="Vitaj v kuchárskej knihe"
       text="Začni receptami, potom pridaj rodinu a naplánuj týždeň. Nákupný zoznam sa vygeneruje sám."
     >
-      <v-list lines="two" class="text-start mb-4" max-width="26rem">
-        <v-list-item
-          v-for="(step, i) in onboarding"
-          :key="step.to"
-          :to="step.to"
-          :title="`${i + 1}. ${step.title}`"
-          :subtitle="step.text"
-        />
-      </v-list>
-      <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">Pridať prvý recept</v-btn>
+      <div class="d-flex flex-column align-center w-100">
+        <v-list lines="two" class="text-start mb-4 w-100" max-width="26rem">
+          <v-list-item
+            v-for="(step, i) in onboarding"
+            :key="step.to"
+            :to="step.to"
+            :title="`${i + 1}. ${step.title}`"
+            :subtitle="step.text"
+          />
+        </v-list>
+        <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">Pridať prvý recept</v-btn>
+      </div>
     </EmptyState>
   </template>
 
