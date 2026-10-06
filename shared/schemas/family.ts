@@ -48,6 +48,7 @@ export const settingsUpdateSchema = z
   .object({
     weekStartsOn: z.union([z.literal(0), z.literal(1), z.literal(6)]).optional(),
     childPortionFactor: z.number().min(0.1).max(3).optional(),
+    ignoreSpicesInPantry: z.boolean().optional(),
   })
   .strict()
 export type SettingsUpdate = z.output<typeof settingsUpdateSchema>

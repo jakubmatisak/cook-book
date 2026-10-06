@@ -1,7 +1,7 @@
 # Online kuchárska kniha – nápady a prieskum free hostingu
 
 Dátum: 5. 10. 2026
-Pre koho: ty a manželka (2 používatelia), mobil + desktop, nulové náklady.
+Pre koho: dvaja dospelí používatelia, mobil + desktop, nulové náklady.
 
 ---
 

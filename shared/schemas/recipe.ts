@@ -96,6 +96,8 @@ export const recipeListQuerySchema = z.object({
   tag: csv(z.string().max(40)),
   difficulty: csv(z.coerce.number().int().min(1).max(3)),
   time: csv(z.enum(TIME_BUCKETS)),
+  /** Najviac toľko chýbajúcich surovín (len s `pantry=1`). */
+  missing: z.coerce.number().int().min(0).max(20).optional(),
   sort: z.enum(SORT_KEYS).optional(),
   dir: z.enum(['asc', 'desc']).optional(),
   favorite: z

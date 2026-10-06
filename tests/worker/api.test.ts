@@ -55,7 +55,7 @@ describe('/export', () => {
     expect(body.tables.mealSlots).toHaveLength(5)
     expect(body.tables.shopCategories).toHaveLength(11)
     expect(body.tables.shoppingLists).toHaveLength(1)
-    expect(body.tables.settings).toHaveLength(3)
+    expect(body.tables.settings).toHaveLength(4)
   })
 
   it('neexportuje dáta inej domácnosti', async () => {

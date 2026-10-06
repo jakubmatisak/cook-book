@@ -1,10 +1,14 @@
 import type { ImportRecipeResultDto } from '../../shared/api'
 import { extractRecipe, type ImportSources } from '../../shared/import/schemaOrg'
 import { MAX_IMAGE_BYTES } from '../../shared/recipes'
+import { normalizeText } from '../../shared/text'
 import type { Db } from '../db/client'
 import type { UserRow } from '../env'
 import { HttpError } from '../errors'
 import { storeImage } from './images'
+
+/** Každý importovaný recept dostane tento tag, aby sa dali recepty z webu nájsť na jednom mieste. */
+export const IMPORT_TAG = 'Z internetu'
 
 const MAX_PAGE_BYTES = 2 * 1024 * 1024
 const MAX_REDIRECTS = 4
@@ -268,7 +272,14 @@ export async function importRecipe(ctx: ImportContext, rawUrl: string): Promise<
   }
 
   return {
-    recipe: { ...extracted.recipe, coverImageId: cover?.id ?? null },
+    recipe: {
+      ...extracted.recipe,
+      coverImageId: cover?.id ?? null,
+      tags: [
+        IMPORT_TAG,
+        ...(extracted.recipe.tags ?? []).filter((t) => normalizeText(t) !== normalizeText(IMPORT_TAG)),
+      ],
+    },
     coverImageUrl: cover?.url ?? null,
     warnings,
   }

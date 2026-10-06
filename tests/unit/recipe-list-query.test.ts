@@ -19,6 +19,7 @@ describe('parseListQuery', () => {
       time: [],
       favorite: false,
       pantry: false,
+      missing: undefined,
       sort: undefined,
       dir: undefined,
     })
@@ -55,6 +56,20 @@ describe('parseListQuery', () => {
       dir: undefined,
     })
     expect(parseListQuery({ kategoria: ['dezert', 'hlavne'] })).toMatchObject({ category: ['dezert'] })
+  })
+})
+
+describe('parseListQuery – chýbajúce suroviny', () => {
+  it('chyba=0 a chyba=1 sa prečítajú, iné hodnoty sa ignorujú', () => {
+    expect(parseListQuery({ doma: '1', chyba: '0' }).missing).toBe(0)
+    expect(parseListQuery({ doma: '1', chyba: '1' }).missing).toBe(1)
+    expect(parseListQuery({ doma: '1', chyba: '2' }).missing).toBeUndefined()
+    expect(parseListQuery({ doma: '1', chyba: 'x' }).missing).toBeUndefined()
+    expect(parseListQuery({ doma: '1' }).missing).toBeUndefined()
+  })
+
+  it('bez „Čo viem uvariť“ sa chyba ignoruje', () => {
+    expect(parseListQuery({ chyba: '1' }).missing).toBeUndefined()
   })
 })
 

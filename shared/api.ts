@@ -62,6 +62,8 @@ export interface HouseholdSettings {
   childPortionFactor: number
   /** Štartovací zoznam surovín sa už pridal (aplikácia ho pri prvom načítaní pridá sama raz). */
   starterIngredientsAdded?: boolean
+  /** Koreniny sa pri hodnotení receptov podľa špajze ignorujú (nepočítajú sa ako chýbajúce). */
+  ignoreSpicesInPantry?: boolean
   [key: string]: unknown
 }
 

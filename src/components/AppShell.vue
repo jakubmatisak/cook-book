@@ -84,6 +84,14 @@ const mobileMenu = ref(false)
       </template>
       <v-app-bar-title class="font-weight-bold">Kuchárska kniha</v-app-bar-title>
       <template #append>
+        <v-btn
+          :icon="THEME_ICONS[preference]"
+          variant="text"
+          :aria-label="THEME_LABELS[preference] + ' – prepnúť'"
+          :title="THEME_LABELS[preference]"
+          data-test="theme-toggle"
+          @click="cycle"
+        />
         <!-- Pravý roh: odhlásenie (len pri Cloudflare Access) a pod ním názov a verzia aplikácie. -->
         <v-menu>
           <template #activator="{ props }">
@@ -110,21 +118,9 @@ const mobileMenu = ref(false)
               title="Kuchárska kniha"
               :subtitle="`Verzia ${APP_VERSION_LABEL}`"
               data-test="app-version"
-            >
-              <template #prepend>
-                <v-avatar size="40" rounded="sm" class="me-3"><v-img src="/favicon.svg" alt="" /></v-avatar>
-              </template>
-            </v-list-item>
+            />
           </v-list>
         </v-menu>
-        <v-btn
-          :icon="THEME_ICONS[preference]"
-          variant="text"
-          :aria-label="THEME_LABELS[preference] + ' – prepnúť'"
-          :title="THEME_LABELS[preference]"
-          data-test="theme-toggle"
-          @click="cycle"
-        />
       </template>
     </v-app-bar>
 
@@ -150,6 +146,17 @@ const mobileMenu = ref(false)
           data-test="nav-item"
         />
       </v-list>
+      <template v-if="showLogout" #append>
+        <v-list nav density="comfortable">
+          <v-list-item
+            :href="ACCESS_LOGOUT_PATH"
+            title="Odhlásiť sa"
+            :prepend-icon="mdiLogout"
+            rounded="sm"
+            data-test="nav-logout"
+          />
+        </v-list>
+      </template>
     </v-navigation-drawer>
 
     <v-navigation-drawer
@@ -160,8 +167,9 @@ const mobileMenu = ref(false)
       data-test="mobile-nav"
     >
       <v-list nav density="comfortable" class="py-3">
+        <!-- Hlavné stránky sú v spodných kartách, menu ponúka len ostatné. -->
         <v-list-item
-          v-for="item in [...PRIMARY_NAV, ...SECONDARY_NAV]"
+          v-for="item in SECONDARY_NAV"
           :key="item.to"
           :to="item.to"
           :prepend-icon="item.icon"
@@ -170,6 +178,16 @@ const mobileMenu = ref(false)
           data-test="nav-item"
           @click="mobileMenu = false"
         />
+        <template v-if="showLogout">
+          <v-divider class="my-2" />
+          <v-list-item
+            :href="ACCESS_LOGOUT_PATH"
+            title="Odhlásiť sa"
+            :prepend-icon="mdiLogout"
+            rounded="sm"
+            data-test="nav-logout"
+          />
+        </template>
       </v-list>
     </v-navigation-drawer>
 

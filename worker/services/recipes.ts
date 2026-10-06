@@ -28,7 +28,7 @@ import type { UserRow } from '../env'
 import { HttpError, isUniqueViolation } from '../errors'
 import { chunk } from '../http'
 import { resolveIngredients, resolveTags } from './catalog'
-import { pantryIngredientIds } from './pantry'
+import { ignoredPantryCategoryIds, pantryIngredientIds } from './pantry'
 
 type RecipeRow = typeof recipes.$inferSelect
 
@@ -285,14 +285,19 @@ export async function getRecipeDetail(
 
 const emptyList = (): RecipeListDto => ({
   items: [],
-  facets: { category: {}, tag: {}, difficulty: {}, time: {} },
+  facets: { category: {}, tag: {}, difficulty: {}, time: {}, missing: {} },
 })
 
 const totalMinutes = (r: Pick<RecipeSummaryDto, 'prepMinutes' | 'cookMinutes'>): number | null =>
   r.prepMinutes === null && r.cookMinutes === null ? null : (r.prepMinutes ?? 0) + (r.cookMinutes ?? 0)
 
 /** Chýbajúce povinné ingrediencie (to, čo nie je v špajzi) po receptoch. */
-async function missingByRecipe(db: Db, householdId: string, ids: string[]): Promise<Map<string, string[]>> {
+async function missingByRecipe(
+  db: Db,
+  householdId: string,
+  ids: string[],
+  ignoredCategories: ReadonlySet<string>,
+): Promise<Map<string, string[]>> {
   const pantry = await pantryIngredientIds(db, householdId)
   const missing = new Map<string, string[]>()
   for (const part of chunk(ids, 90)) {
@@ -301,6 +306,7 @@ async function missingByRecipe(db: Db, householdId: string, ids: string[]): Prom
         recipeId: recipeIngredients.recipeId,
         ingredientId: recipeIngredients.ingredientId,
         name: ingredients.name,
+        shopCategoryId: ingredients.shopCategoryId,
       })
       .from(recipeIngredients)
       .innerJoin(ingredients, eq(ingredients.id, recipeIngredients.ingredientId))
@@ -308,6 +314,7 @@ async function missingByRecipe(db: Db, householdId: string, ids: string[]): Prom
       .orderBy(asc(recipeIngredients.sortOrder))
     for (const row of ingRows) {
       if (pantry.has(row.ingredientId)) continue
+      if (row.shopCategoryId && ignoredCategories.has(row.shopCategoryId)) continue
       const list = missing.get(row.recipeId) ?? []
       if (!list.includes(row.name)) list.push(row.name)
       missing.set(row.recipeId, list)
@@ -387,7 +394,8 @@ export async function listRecipes(
     tagsByRecipe.set(t.recipeId, list)
   }
 
-  const missing = options.pantry ? await missingByRecipe(db, householdId, ids) : null
+  const ignored = options.pantry ? await ignoredPantryCategoryIds(db, householdId) : new Set<string>()
+  const missing = options.pantry ? await missingByRecipe(db, householdId, ids, ignored) : null
   const candidates = rows.map((r) => {
     const tagList = tagsByRecipe.get(r.recipe.id) ?? []
     const summary: RecipeSummaryDto = {
@@ -404,12 +412,16 @@ export async function listRecipes(
       isFavorite: summary.isFavorite,
       createdAt: summary.createdAt,
       lastCookedAt: summary.lastCookedAt,
+      missing: summary.missing,
       summary,
     }
     return facetRow
   })
 
-  const filtered = applyRecipeFilters(candidates, options)
+  // Filter „chýba najviac N“ dáva zmysel len pri „Čo viem uvariť“, kde recepty nesú chýbajúce suroviny.
+  const { missingMax, ...rest } = options
+  const filters = options.pantry && missingMax !== undefined ? { ...rest, missingMax } : rest
+  const filtered = applyRecipeFilters(candidates, filters)
   // „Čo viem uvariť“ bez vlastného zoradenia: najmenej chýbajúceho ako prvé.
   const ordered =
     missing && !options.sort
@@ -418,5 +430,5 @@ export async function listRecipes(
         )
       : sortRecipes(filtered, options.sort ?? 'name', options.dir)
 
-  return { items: ordered.map((c) => c.summary), facets: computeFacets(candidates, options) }
+  return { items: ordered.map((c) => c.summary), facets: computeFacets(candidates, filters) }
 }

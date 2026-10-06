@@ -11,7 +11,7 @@ Rozhodnuté (z diskusie):
 - Hosting celý na Cloudflare, free plán, žiadna karta.
 - Frontend Vue 3 + Vuetify 4, vlastný vizuál cez Vuetify theme/defaults, Tailwind len na utility.
 - Architektúra sa navrhuje pre celú aplikáciu naraz, funkcie sa dopĺňajú po fázach.
-- Používatelia: 2 dospelí (ty a manželka), rodina s deťmi ako „členovia“ bez prihlásenia.
+- Používatelia: 2 dospelí (dvaja používatelia), rodina s deťmi ako „členovia“ bez prihlásenia.
 
 Predpoklady (ak nesedia, oprav ich pred implementáciou):
 - P1: Deti vs. dospelí znamená **oboje**: menšie porcie toho istého jedla (koeficient na člena) aj možnosť iného jedla pre deti v tom istom slote. Model to pokrýva, UI pre „iné jedlo“ ide až do fázy 4.
@@ -61,7 +61,7 @@ Predpoklady (ak nesedia, oprav ich pred implementáciou):
 - **Offline odškrtávanie:** fronta v IndexedDB, hromadné odoslanie po pripojení; server použije len zmenu novšiu ako posledná úprava položky (posledná vyhráva).
 - **Synchronizácia medzi vami:** obnova zoznamu každých 5 s, kým je stránka viditeľná (bez Durable Objects).
 - **Ručná položka** z jedného riadku („2 kg zemiaky“) prevezme kategóriu obchodu známej ingrediencie.
-- **Nasadenie:** Worker sa volá `cook-book` (prepojený s GitHub repom jakubmatisak/cook-book), beží na cook-book.jakub-matisak.workers.dev za Cloudflare Access.
+- **Nasadenie:** Worker sa volá `cook-book` (prepojený s GitHub repozitárom), beží na `cook-book.<subdoména>.workers.dev` za Cloudflare Access.
 
 ## 0e. Doplnky na želanie používateľa (5. 10. 2026)
 
@@ -373,7 +373,7 @@ Toto sú konkrétne kroky, ktoré vykonám (alebo ty, kde je potrebný tvoj úč
 ### 3.1 Čo potrebujem od teba (účty)
 1. Cloudflare účet (zadarmo) – [dash.cloudflare.com](https://dash.cloudflare.com). Po registrácii zapnúť **Zero Trust** (free plán, pýta si vybrať plán „Free“, kartu nevyžaduje pri 0 € – ak by si pýtal kartu, povieme a ideme záložnou auth).
 2. GitHub účet a prázdne repo `kucharska-kniha` (súkromné).
-3. Dva e-maily (tvoj a manželkin), ktoré budú povolené v Access.
+3. Dva e-maily (obaja dospelí používatelia), ktoré budú povolené v Access.
 
 ### 3.2 Založenie projektu
 ```bash

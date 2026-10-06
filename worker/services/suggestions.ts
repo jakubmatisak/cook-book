@@ -13,6 +13,7 @@ import {
 } from '../db/schema'
 import { chunk } from '../http'
 import { listMembers } from './family'
+import { ignoredPantryCategoryIds } from './pantry'
 import { imageUrl, isFavoriteSql, lastCookedSql } from './recipes'
 
 /** Koľko dní okolo zvoleného dňa sa už naplánovaný recept nenavrhuje. */
@@ -41,6 +42,8 @@ export async function suggestRecipes(
     .orderBy(asc(recipes.titleNormalized))
   if (rows.length === 0) return []
 
+  // Koreniny (ak je to zapnuté v nastaveniach) sa nepočítajú ako chýbajúce.
+  const ignored = await ignoredPantryCategoryIds(db, householdId)
   const required = new Map<string, { id: string; name: string }[]>()
   const allIngredients = new Map<string, string[]>()
   const tagsOf = new Map<string, string[]>()
@@ -55,6 +58,7 @@ export async function suggestRecipes(
           ingredientId: recipeIngredients.ingredientId,
           name: ingredients.name,
           isOptional: recipeIngredients.isOptional,
+          shopCategoryId: ingredients.shopCategoryId,
         })
         .from(recipeIngredients)
         .innerJoin(ingredients, eq(ingredients.id, recipeIngredients.ingredientId))
@@ -67,7 +71,7 @@ export async function suggestRecipes(
     ])
     for (const r of ingredientRows) {
       allIngredients.set(r.recipeId, [...(allIngredients.get(r.recipeId) ?? []), r.ingredientId])
-      if (!r.isOptional) {
+      if (!r.isOptional && !(r.shopCategoryId && ignored.has(r.shopCategoryId))) {
         const list = required.get(r.recipeId) ?? []
         if (!list.some((i) => i.id === r.ingredientId)) list.push({ id: r.ingredientId, name: r.name })
         required.set(r.recipeId, list)

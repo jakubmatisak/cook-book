@@ -21,6 +21,8 @@ export interface RecipeFilters {
   time?: TimeBucket[] | undefined
   sort?: SortKey | undefined
   dir?: SortDir | undefined
+  /** Najviac toľko chýbajúcich surovín (len s `pantry`). */
+  missing?: number | undefined
   favorite?: boolean | undefined
   /** „Čo viem uvariť“: zoradiť podľa toho, čo je doma, s chýbajúcimi ingredienciami. */
   pantry?: boolean | undefined
@@ -43,6 +45,7 @@ function toQuery(filters: RecipeFilters): string {
   if (filters.dir) params.set('dir', filters.dir)
   if (filters.favorite) params.set('favorite', '1')
   if (filters.pantry) params.set('pantry', '1')
+  if (filters.pantry && filters.missing !== undefined) params.set('missing', String(filters.missing))
   const query = params.toString()
   return query ? `?${query}` : ''
 }

@@ -27,6 +27,8 @@ export interface RecipeFilters {
   difficulty?: number[]
   time?: TimeBucket[]
   favorite?: boolean
+  /** Najviac toľko chýbajúcich surovín (len pri „Čo viem uvariť“, kde recepty nesú `missing`). */
+  missingMax?: number
 }
 
 export interface RecipeFacets {
@@ -34,9 +36,11 @@ export interface RecipeFacets {
   tag: Record<string, number>
   difficulty: Record<number, number>
   time: Partial<Record<TimeBucket, number>>
+  /** Podľa počtu chýbajúcich surovín: 0, 1, 2 (dve a viac). Prázdne mimo „Čo viem uvariť“. */
+  missing: Partial<Record<0 | 1 | 2, number>>
 }
 
-type Dimension = 'category' | 'tag' | 'difficulty' | 'time'
+type Dimension = 'category' | 'tag' | 'difficulty' | 'time' | 'missing'
 
 export function timeBucket(minutes: number | null): TimeBucket | null {
   if (minutes === null) return null
@@ -57,6 +61,9 @@ const matches = (row: FacetRow, filters: RecipeFilters, skip?: Dimension): boole
     const bucket = timeBucket(row.totalMinutes)
     if (!bucket || !filters.time.includes(bucket)) return false
   }
+  if (skip !== 'missing' && filters.missingMax !== undefined) {
+    if (!row.missing || row.missing.length > filters.missingMax) return false
+  }
   return true
 }
 
@@ -73,7 +80,7 @@ const bump = <K extends string | number>(into: Record<K, number>, key: K) => {
  * všetky OSTATNÉ rozmery. Vlastný rozmer sa nezužuje, aby šlo pridať ďalšiu možnosť.
  */
 export function computeFacets(rows: readonly FacetRow[], filters: RecipeFilters): RecipeFacets {
-  const facets: RecipeFacets = { category: {}, tag: {}, difficulty: {}, time: {} }
+  const facets: RecipeFacets = { category: {}, tag: {}, difficulty: {}, time: {}, missing: {} }
   for (const row of rows) {
     if (matches(row, filters, 'category')) bump(facets.category, row.category)
     if (matches(row, filters, 'tag')) for (const t of row.tagIds) bump(facets.tag, t)
@@ -81,6 +88,9 @@ export function computeFacets(rows: readonly FacetRow[], filters: RecipeFilters)
     if (matches(row, filters, 'time')) {
       const bucket = timeBucket(row.totalMinutes)
       if (bucket) bump(facets.time as Record<TimeBucket, number>, bucket)
+    }
+    if (row.missing && matches(row, filters, 'missing')) {
+      bump(facets.missing as Record<0 | 1 | 2, number>, Math.min(row.missing.length, 2) as 0 | 1 | 2)
     }
   }
   return facets

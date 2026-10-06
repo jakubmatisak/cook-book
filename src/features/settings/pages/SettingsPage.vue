@@ -48,6 +48,8 @@ const toggleSlot = (id: string, isEnabled: boolean | null) =>
   run(() => updateSlot.mutateAsync({ id, patch: { isEnabled: Boolean(isEnabled) } }))
 const setWeekStart = (value: number) =>
   run(() => updateSettings.mutateAsync({ weekStartsOn: value as 0 | 1 | 6 }))
+const saveIgnoreSpices = (value: boolean | null) =>
+  run(() => updateSettings.mutateAsync({ ignoreSpicesInPantry: value === true }))
 const saveChildFactor = (value: number) =>
   run(() => updateSettings.mutateAsync({ childPortionFactor: value }))
 const formatFactor = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',')
@@ -160,6 +162,20 @@ async function exportRecipes() {
           />
           <p class="text-caption text-medium-emphasis">Použije sa pri pridaní nového dieťaťa v Rodine.</p>
         </div>
+      </v-card-text>
+    </v-card>
+
+    <v-card v-if="me" title="Špajza a recepty">
+      <v-card-text>
+        <v-switch
+          :model-value="me.settings.ignoreSpicesInPantry === true"
+          color="primary"
+          label="Pri „Čo viem uvariť“ ignorovať koreniny"
+          hint="Koreniny sa nepočítajú ako chýbajúce, takže uvidíš aj recepty, ktoré viem uvariť bez nich."
+          persistent-hint
+          data-test="ignore-spices"
+          @update:model-value="saveIgnoreSpices"
+        />
       </v-card-text>
     </v-card>
 

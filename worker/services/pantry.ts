@@ -2,8 +2,10 @@ import { and, asc, eq, isNull } from 'drizzle-orm'
 import type { PantryDto, PantryItemDto } from '../../shared/api'
 import type { PantryItemInput } from '../../shared/schemas/pantry'
 import type { Db } from '../db/client'
-import { ingredients, pantryItems } from '../db/schema'
+import { ingredients, pantryItems, shopCategories } from '../db/schema'
 import { HttpError } from '../errors'
+import { normalizeText } from '../../shared/text'
+import { getSettings } from './family'
 
 type PantryRow = typeof pantryItems.$inferSelect
 
@@ -24,6 +26,20 @@ export async function pantryIngredientIds(db: Db, householdId: string): Promise<
     .from(pantryItems)
     .where(eq(pantryItems.householdId, householdId))
   return new Set(rows.map((r) => r.ingredientId))
+}
+
+/**
+ * Kategórie obchodu, ktorých suroviny sa pri hodnotení receptov podľa špajze nepočítajú ako chýbajúce.
+ * Po zapnutí nastavenia „ignorovať koreniny“ ide o kategóriu, ktorej názov obsahuje „korenin“
+ * (predvolene Koreniny a dochucovadlá); ak ju domácnosť premenovala, nič sa neignoruje.
+ */
+export async function ignoredPantryCategoryIds(db: Db, householdId: string): Promise<Set<string>> {
+  if ((await getSettings(db, householdId)).ignoreSpicesInPantry !== true) return new Set()
+  const rows = await db
+    .select({ id: shopCategories.id, name: shopCategories.name })
+    .from(shopCategories)
+    .where(eq(shopCategories.householdId, householdId))
+  return new Set(rows.filter((r) => normalizeText(r.name).includes('korenin')).map((r) => r.id))
 }
 
 /** Zásoby s názvami ingrediencií, zoradené podľa názvu. */

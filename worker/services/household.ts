@@ -33,6 +33,8 @@ export const DEFAULT_SETTINGS = {
   weekStartsOn: 1,
   childPortionFactor: 0.5,
   starterIngredientsAdded: false,
+  /** Pri „Čo viem uvariť“ a návrhoch sa koreniny nepočítajú ako chýbajúce. */
+  ignoreSpicesInPantry: false,
 } as const
 
 /**

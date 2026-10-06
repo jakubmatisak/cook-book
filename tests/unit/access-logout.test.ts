@@ -10,6 +10,6 @@ describe('odhlásenie z Cloudflare Access', () => {
     expect(canLogout('localhost')).toBe(false)
     expect(canLogout('127.0.0.1')).toBe(false)
     expect(canLogout('[::1]')).toBe(false)
-    expect(canLogout('cook-book.jakub-matisak.workers.dev')).toBe(true)
+    expect(canLogout('cook-book.example.workers.dev')).toBe(true)
   })
 })

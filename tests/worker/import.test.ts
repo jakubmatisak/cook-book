@@ -114,6 +114,23 @@ describe('POST /recipes/import', () => {
     expect((await env.BUCKET.list()).objects).toHaveLength(1)
   })
 
+  it('importovaný recept dostane automaticky tag „Z internetu“ pred tagmi z webu', async () => {
+    const { fn } = fakeFetch({
+      'https://example.com/t': html(
+        jsonLdPage({ ...recipeLd, image: undefined, keywords: 'rýchle, Z Internetu, detské' }),
+      ),
+    })
+    const body = await (await importUrl(fn, 'https://example.com/t')).json<ImportRecipeResultDto>()
+    // jeden tag aj keď ho web uvádza tiež (bez ohľadu na veľkosť písmen a diakritiku)
+    expect(body.recipe.tags).toEqual(['Z internetu', 'rýchle', 'detské'])
+  })
+
+  it('tag „Z internetu“ dostane aj recept, ktorý web nijako netaguje', async () => {
+    const { fn } = fakeFetch({ 'https://example.com/n': html(jsonLdPage({ ...recipeLd, image: undefined })) })
+    const body = await (await importUrl(fn, 'https://example.com/n')).json<ImportRecipeResultDto>()
+    expect(body.recipe.tags).toEqual(['Z internetu'])
+  })
+
   it('recept bez fotky vráti bez fotky', async () => {
     const { fn } = fakeFetch({
       'https://example.com/r': html(jsonLdPage({ ...recipeLd, image: undefined })),

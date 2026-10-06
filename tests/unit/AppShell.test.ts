@@ -55,14 +55,14 @@ describe('AppShell', () => {
     expect(localStorage.getItem('kniha:menu-rail')).toBe('1')
   })
 
-  it('na mobile má spodnú navigáciu s hlavnými stránkami a tlačidlo menu otvorí všetky', async () => {
+  it('na mobile má spodnú navigáciu s hlavnými stránkami a tlačidlo menu otvorí len ostatné (bez duplicít s kartami)', async () => {
     const wrapper = await mountShell(375)
     expect(wrapper.find('[data-test="side-nav"]').exists()).toBe(false)
     expect(navTitles(wrapper, 'bottom-nav')).toEqual(['Recepty', 'Plán', 'Nákup', 'Menu'])
 
     await wrapper.find('[data-test="bottom-nav"] [data-menu="open"]').trigger('click')
     await flushPromises()
-    expect(navTitles(wrapper, 'mobile-nav')).toEqual(ALL_TITLES)
+    expect(navTitles(wrapper, 'mobile-nav')).toEqual(ALL_TITLES.slice(3))
   })
 
   it('vyrenderuje obsah stránky', async () => {

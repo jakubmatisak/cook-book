@@ -99,6 +99,11 @@ watch(view, (value) => {
 // ─── Filtre ───────────────────────────────────────────────────────────────────
 const filtersOpen = ref(false)
 const importOpen = ref(false)
+/** „Čo viem uvariť“: všetky recepty / len tie, čo viem uvariť / aj tie, kde chýba jedna surovina. */
+const setMissing = (value: string | number) =>
+  setQuery({ chyba: value === 'all' ? undefined : String(value) })
+const canCook = computed(() => list.value?.facets.missing[0] ?? 0)
+const missingOne = computed(() => canCook.value + (list.value?.facets.missing[1] ?? 0))
 const filterCount = computed(() => activeFilterCount(state.value))
 
 function toggleFilter(dimension: FilterDimension, value: string | number) {
@@ -120,7 +125,7 @@ const favorite = computed({
 })
 const pantryMode = computed({
   get: () => state.value.pantry,
-  set: (value: boolean) => setQuery({ doma: value ? '1' : undefined }),
+  set: (value: boolean) => setQuery({ doma: value ? '1' : undefined, chyba: undefined }),
 })
 
 function clearFilters() {
@@ -209,6 +214,22 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
     ti ešte chýba.
   </v-alert>
 
+  <v-btn-toggle
+    v-if="pantryMode"
+    :model-value="state.missing ?? 'all'"
+    mandatory
+    grow
+    density="comfortable"
+    selected-class="bg-primary"
+    class="mb-3 w-100"
+    data-test="missing-toggle"
+    @update:model-value="setMissing"
+  >
+    <v-btn value="all">Všetky</v-btn>
+    <v-btn :value="0">Viem uvariť ({{ canCook }})</v-btn>
+    <v-btn :value="1">Chýba max. 1 ({{ missingOne }})</v-btn>
+  </v-btn-toggle>
+
   <v-text-field
     v-model="search"
     :prepend-inner-icon="mdiMagnify"
@@ -220,34 +241,35 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
   />
 
   <div class="d-flex flex-column flex-md-row align-md-center ga-2 mb-3">
-    <div class="d-flex flex-nowrap align-center ga-2">
+    <div class="d-flex flex-wrap align-center ga-2">
       <v-btn
         :prepend-icon="mdiFilterVariant"
         :color="filterCount ? 'primary' : undefined"
         variant="tonal"
+        height="40"
         data-test="filters-button"
         @click="filtersOpen = true"
       >
         Filtre<template v-if="filterCount">&nbsp;({{ filterCount }})</template>
       </v-btn>
-      <v-chip
-        :size="smAndDown ? 'small' : 'default'"
+      <v-btn
         :prepend-icon="favorite ? mdiCheck : mdiHeart"
         :color="favorite ? 'primary' : undefined"
         :variant="favorite ? 'flat' : 'outlined'"
+        height="40"
         @click="favorite = !favorite"
       >
         Obľúbené
-      </v-chip>
-      <v-chip
-        :size="smAndDown ? 'small' : 'default'"
+      </v-btn>
+      <v-btn
         :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
         :color="pantryMode ? 'primary' : undefined"
         :variant="pantryMode ? 'flat' : 'outlined'"
+        height="40"
         @click="pantryMode = !pantryMode"
       >
         Čo viem uvariť
-      </v-chip>
+      </v-btn>
     </div>
 
     <div class="d-flex flex-nowrap align-center ga-2 ms-md-auto">
@@ -265,6 +287,8 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       <v-btn
         :icon="sortDir === 'asc' ? mdiSortAscending : mdiSortDescending"
         variant="tonal"
+        height="40"
+        width="40"
         :aria-label="
           sortDir === 'asc'
             ? 'Zoradené vzostupne, zmeniť na zostupne'
@@ -272,13 +296,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         "
         @click="flipSortDir"
       />
-      <v-btn-toggle
-        v-model="view"
-        mandatory
-        density="comfortable"
-        selected-class="bg-primary"
-        data-test="view-toggle"
-      >
+      <v-btn-toggle v-model="view" mandatory height="40" selected-class="bg-primary" data-test="view-toggle">
         <v-btn :icon="mdiViewGridOutline" value="grid" aria-label="Zobraziť ako mriežku" />
         <v-btn :icon="mdiTable" value="table" aria-label="Zobraziť ako tabuľku" />
       </v-btn-toggle>

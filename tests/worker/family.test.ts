@@ -109,6 +109,7 @@ describe('nastavenia', () => {
       weekStartsOn: 0,
       childPortionFactor: 0.5,
       starterIngredientsAdded: false,
+      ignoreSpicesInPantry: false,
     })
   })
 
@@ -119,6 +120,7 @@ describe('nastavenia', () => {
       weekStartsOn: 1,
       childPortionFactor: 0.5,
       starterIngredientsAdded: false,
+      ignoreSpicesInPantry: false,
     })
   })
 

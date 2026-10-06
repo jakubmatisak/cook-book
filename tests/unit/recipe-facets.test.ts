@@ -165,3 +165,40 @@ describe('sortRecipes', () => {
     expect(result.map((r) => r.title)).toEqual(['Avokádo', 'Zebra'])
   })
 })
+
+describe('chýbajúce suroviny (Čo viem uvariť)', () => {
+  const withMissing = (id: string, missing: string[]): FacetRow => row(id, { missing })
+  const list = [
+    withMissing('a', []),
+    withMissing('b', ['múka']),
+    withMissing('c', ['múka', 'vajcia']),
+    withMissing('d', ['x', 'y', 'z']),
+  ]
+
+  it('filter missingMax nechá recepty, kde chýba najviac toľko surovín', () => {
+    expect(applyRecipeFilters(list, { missingMax: 0 }).map((r) => r.id)).toEqual(['a'])
+    expect(applyRecipeFilters(list, { missingMax: 1 }).map((r) => r.id)).toEqual(['a', 'b'])
+    expect(applyRecipeFilters(list, {}).map((r) => r.id)).toEqual(['a', 'b', 'c', 'd'])
+  })
+
+  it('recepty bez údaja o chýbajúcich surovinách filter missingMax vylúči', () => {
+    expect(applyRecipeFilters([row('x')], { missingMax: 5 })).toEqual([])
+  })
+
+  it('počty podľa počtu chýbajúcich: 0, 1 a 2 a viac', () => {
+    expect(computeFacets(list, {}).missing).toEqual({ 0: 1, 1: 1, 2: 2 })
+  })
+
+  it('počty pri chýbajúcich nezužuje vlastný filter, ale ostatné áno', () => {
+    expect(computeFacets(list, { missingMax: 0 }).missing).toEqual({ 0: 1, 1: 1, 2: 2 })
+    const mixed = [
+      row('p', { category: 'dezert', missing: [] }),
+      row('q', { category: 'hlavne', missing: ['x'] }),
+    ]
+    expect(computeFacets(mixed, { category: ['hlavne'] }).missing).toEqual({ 1: 1 })
+  })
+
+  it('bez údaja o chýbajúcich sa nič nepočíta', () => {
+    expect(computeFacets([row('x')], {}).missing).toEqual({})
+  })
+})

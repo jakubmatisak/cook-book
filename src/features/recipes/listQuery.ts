@@ -17,6 +17,8 @@ export interface RecipeListState {
   time: TimeBucket[]
   favorite: boolean
   pantry: boolean
+  /** Najviac toľko chýbajúcich surovín (0 = viem uvariť, 1 = chýba jedna); len pri „Čo viem uvariť“. */
+  missing: 0 | 1 | undefined
   sort: SortKey | undefined
   dir: SortDir | undefined
 }
@@ -38,6 +40,8 @@ const many = (v: unknown): string[] =>
 const pick = <T extends string>(values: string[], allowed: readonly T[]): T[] =>
   values.filter((v): v is T => (allowed as readonly string[]).includes(v))
 
+const MISSING_VALUES: Readonly<Record<string, 0 | 1>> = { '0': 0, '1': 1 }
+
 export function parseListQuery(query: Query): RecipeListState {
   const sort = one(query.zoradit)
   const dir = one(query.smer)
@@ -51,6 +55,7 @@ export function parseListQuery(query: Query): RecipeListState {
     time: pick(many(query.cas), TIME_BUCKETS),
     favorite: one(query.oblubene) === '1',
     pantry: one(query.doma) === '1',
+    missing: one(query.doma) === '1' ? MISSING_VALUES[one(query.chyba) ?? ''] : undefined,
     sort: pick(sort ? [sort] : [], SORT_KEYS)[0],
     dir: dir === 'asc' || dir === 'desc' ? dir : undefined,
   }

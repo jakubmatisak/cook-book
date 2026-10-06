@@ -1,8 +1,8 @@
 # Skopíruj na .dev.vars (nie je v gite) a uprav.
 # Lokálne prihlásenie bez Cloudflare Access – funguje len na localhoste.
-DEV_USER_EMAIL=ja@example.com
+DEV_USER_EMAIL=you@example.com
 # Čiarkou oddelené e-maily, ktoré majú prístup.
-ALLOWED_EMAILS=ja@example.com,manzelka@example.com
+ALLOWED_EMAILS=you@example.com,partner@example.com
 # Produkčné hodnoty z Cloudflare Zero Trust (lokálne nechaj prázdne).
 ACCESS_TEAM_DOMAIN=
 ACCESS_AUD=
