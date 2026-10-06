@@ -104,7 +104,6 @@ async function exportRecipes() {
         <v-btn-toggle
           :model-value="themePreference"
           mandatory
-          color="primary"
           selected-class="bg-primary"
           variant="outlined"
           divided

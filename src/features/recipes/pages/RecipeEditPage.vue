@@ -220,7 +220,6 @@ function cancel() {
           <v-btn-toggle
             v-model="form.difficulty"
             mandatory
-            color="primary"
             selected-class="bg-primary"
             variant="outlined"
             divided

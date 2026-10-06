@@ -109,7 +109,6 @@ async function onDelete() {
           <v-btn-toggle
             :model-value="kind"
             mandatory
-            color="primary"
             selected-class="bg-primary"
             variant="outlined"
             divided

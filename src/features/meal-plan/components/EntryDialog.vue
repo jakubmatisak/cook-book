@@ -142,7 +142,6 @@ async function onDelete() {
         <v-btn-toggle
           v-model="mode"
           mandatory
-          color="primary"
           selected-class="bg-primary"
           variant="outlined"
           divided
