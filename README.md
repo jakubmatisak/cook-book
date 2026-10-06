@@ -160,6 +160,10 @@ All data is private to one household and protected by Cloudflare Access plus an 
 The repository contains no secrets or personal addresses: they live in Worker secrets and in the git-ignored
 `.dev.vars`.
 
+## License
+
+[MIT](LICENSE)
+
 ---
 
 <a id="slovenská-verzia"></a>
@@ -266,3 +270,7 @@ worker/   backend (Hono na Workers): routes, services, middleware, db (schéma +
 shared/   typy a čisté funkcie zdieľané frontendom aj backendom
 tests/    unit/ (jsdom) a worker/ (Workers runtime + D1)
 ```
+
+## Licencia
+
+[MIT](LICENSE)
