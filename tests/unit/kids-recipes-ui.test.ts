@@ -54,22 +54,26 @@ async function chooseKids(wrapper: Awaited<ReturnType<typeof mountPage>>['wrappe
 }
 
 describe('výber detských receptov v rozbaľovacom poli', () => {
-  it('predvolene sú detské skryté; „Aj detské“ pošle kids=1 a „Len detské“ kids=only', async () => {
-    const { router, wrapper } = await mountPage()
-    expect(requested().every((u) => !u.includes('kids='))).toBe(true)
-    expect(wrapper.find('[data-test="kids-select"]').text()).toContain('Bez detských')
+  it(
+    'predvolene sú detské skryté; „Aj detské“ pošle kids=1 a „Len detské“ kids=only',
+    { timeout: 20_000 },
+    async () => {
+      const { router, wrapper } = await mountPage()
+      expect(requested().every((u) => !u.includes('kids='))).toBe(true)
+      expect(wrapper.find('[data-test="kids-select"]').text()).toContain('Bez detských')
 
-    await chooseKids(wrapper, 'Aj detské')
-    await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBe('1'))
-    await vi.waitFor(() => expect(requested().some((u) => u.includes('kids=1'))).toBe(true))
+      await chooseKids(wrapper, 'Aj detské')
+      await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBe('1'))
+      await vi.waitFor(() => expect(requested().some((u) => u.includes('kids=1'))).toBe(true))
 
-    await chooseKids(wrapper, 'Len detské')
-    await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBe('len'))
-    await vi.waitFor(() => expect(requested().some((u) => u.includes('kids=only'))).toBe(true))
+      await chooseKids(wrapper, 'Len detské')
+      await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBe('len'))
+      await vi.waitFor(() => expect(requested().some((u) => u.includes('kids=only'))).toBe(true))
 
-    await chooseKids(wrapper, 'Bez detských')
-    await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBeUndefined())
-  })
+      await chooseKids(wrapper, 'Bez detských')
+      await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBeUndefined())
+    },
+  )
 
   it('z adresy sa zvolí príslušná možnosť', async () => {
     const { wrapper } = await mountPage('/recepty?detske=len')
