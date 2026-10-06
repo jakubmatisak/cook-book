@@ -32,6 +32,12 @@ export const planEntryInputSchema = z
       .nullish()
       .transform((v) => v ?? null),
     note: optionalText(500),
+    /** Návštevy pri tomto jedle (osoby typu guest z Rodiny). */
+    guestIds: z
+      .array(z.string().min(1).max(40))
+      .max(20)
+      .default([])
+      .transform((ids) => [...new Set(ids)]),
   })
   .refine((e) => e.recipeId !== null || e.freeText !== null, {
     message: 'Vyber recept alebo napíš, čo sa bude jesť.',

@@ -119,11 +119,12 @@ async function onDelete() {
             selected-class="bg-primary"
             variant="outlined"
             divided
-            aria-label="Dospelý alebo dieťa"
+            aria-label="Dospelý, dieťa alebo návšteva"
             @update:model-value="onKindChange"
           >
             <v-btn value="adult">{{ MEMBER_KIND_LABELS.adult }}</v-btn>
             <v-btn value="child">{{ MEMBER_KIND_LABELS.child }}</v-btn>
+            <v-btn value="guest" data-test="kind-guest">{{ MEMBER_KIND_LABELS.guest }}</v-btn>
           </v-btn-toggle>
         </div>
 

@@ -13,6 +13,7 @@ const entry: PlanEntryDto = {
   note: 'bez soli',
   sortOrder: 2,
   audience: 'all',
+  guestIds: [],
   warnings: [],
 }
 
@@ -25,7 +26,12 @@ describe('entryToInput', () => {
       freeText: null,
       servingsOverride: 6,
       note: 'bez soli',
+      guestIds: [],
     })
+  })
+
+  it('presun a kópia zachovajú návštevy pri jedle', () => {
+    expect(entryToInput({ ...entry, guestIds: ['g1'] }, '2026-10-07', 'vecera').guestIds).toEqual(['g1'])
   })
 
   it('voľný text a poznámku zachová, zmazaný recept ponechá', () => {

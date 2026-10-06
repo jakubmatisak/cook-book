@@ -1,7 +1,12 @@
-export const MEMBER_KINDS = ['adult', 'child'] as const
+/** `guest` = návšteva: nepočíta sa do porcií ani upozornení, kým nie je pri jedle vybraná. */
+export const MEMBER_KINDS = ['adult', 'child', 'guest'] as const
 export type MemberKind = (typeof MEMBER_KINDS)[number]
 
-export const MEMBER_KIND_LABELS: Record<MemberKind, string> = { adult: 'Dospelý', child: 'Dieťa' }
+export const MEMBER_KIND_LABELS: Record<MemberKind, string> = {
+  adult: 'Dospelý',
+  child: 'Dieťa',
+  guest: 'Návšteva',
+}
 
 export const PLAN_AUDIENCES = ['all', 'adults', 'children', 'custom'] as const
 export type PlanAudience = (typeof PLAN_AUDIENCES)[number]

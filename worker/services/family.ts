@@ -135,7 +135,7 @@ async function findMember(db: Db, householdId: string, id: string): Promise<Memb
 }
 
 async function defaultFactor(db: Db, householdId: string, kind: MemberInput['kind']): Promise<number> {
-  if (kind === 'adult') return 1
+  if (kind !== 'child') return 1
   return (await getSettings(db, householdId)).childPortionFactor
 }
 

@@ -20,10 +20,14 @@ const title = computed(() => props.entry.recipe?.title ?? props.entry.freeText ?
 const portions = computed(
   () => entryPortions(props.entry, props.members) ?? props.entry.recipe?.servings ?? null,
 )
+const guestNames = computed(() =>
+  props.members.filter((m) => props.entry.guestIds.includes(m.id)).map((m) => m.name),
+)
 const subtitle = computed(() => {
   const parts: string[] = []
   if (props.entry.recipe?.deleted) parts.push('zmazaný recept')
   if (portions.value !== null) parts.push(`${String(portions.value).replace('.', ',')} porc.`)
+  if (guestNames.value.length) parts.push(`Návšteva: ${guestNames.value.join(', ')}`)
   if (props.entry.note && !props.dense) parts.push(props.entry.note)
   return parts.join(' · ')
 })

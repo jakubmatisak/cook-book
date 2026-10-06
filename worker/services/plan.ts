@@ -9,7 +9,9 @@ import type { Db } from '../db/client'
 import {
   cookLog,
   images,
+  familyMembers,
   mealPlanEntries,
+  mealPlanEntryMembers,
   mealSlots,
   recipeIngredients,
   recipes,
@@ -67,6 +69,57 @@ function toEntryDto(row: JoinedRow): EntryBase {
     note: e.note,
     sortOrder: e.sortOrder,
     audience: e.audience,
+    guestIds: [],
+  }
+}
+
+/** Návštevy vybrané pri jedlách: ID návštev podľa ID záznamu. */
+async function loadGuestIds(db: Db, entryIds: string[]): Promise<Map<string, string[]>> {
+  const guests = new Map<string, string[]>()
+  for (const ids of chunk(entryIds, 90)) {
+    const rows = await db
+      .select({ entryId: mealPlanEntryMembers.entryId, memberId: mealPlanEntryMembers.memberId })
+      .from(mealPlanEntryMembers)
+      .where(inArray(mealPlanEntryMembers.entryId, ids))
+    for (const r of rows) guests.set(r.entryId, [...(guests.get(r.entryId) ?? []), r.memberId])
+  }
+  return guests
+}
+
+const withGuests = async (db: Db, entries: EntryBase[]): Promise<EntryBase[]> => {
+  const guests = await loadGuestIds(
+    db,
+    entries.map((e) => e.id),
+  )
+  return entries.map((e) => ({ ...e, guestIds: guests.get(e.id) ?? [] }))
+}
+
+/** Vybrať sa dajú len návštevy (typ guest) z vlastnej domácnosti. */
+async function assertGuests(db: Db, householdId: string, guestIds: string[]) {
+  if (guestIds.length === 0) return
+  const rows = await db
+    .select({ id: familyMembers.id })
+    .from(familyMembers)
+    .where(
+      and(
+        eq(familyMembers.householdId, householdId),
+        eq(familyMembers.kind, 'guest'),
+        inArray(familyMembers.id, guestIds),
+      ),
+    )
+  if (rows.length !== guestIds.length) {
+    throw new HttpError(400, 'invalid_guest', 'Vybraná návšteva neexistuje.')
+  }
+}
+
+/** Nahradí návštevy pri jedle vybraným zoznamom. */
+async function setGuests(db: Db, entryId: string, guestIds: string[]) {
+  await db.delete(mealPlanEntryMembers).where(eq(mealPlanEntryMembers.entryId, entryId))
+  if (guestIds.length > 0) {
+    await db
+      .insert(mealPlanEntryMembers)
+      .values(guestIds.map((memberId) => ({ entryId, memberId })))
+      .onConflictDoNothing()
   }
 }
 
@@ -105,6 +158,7 @@ async function attachWarnings(db: Db, householdId: string, entries: EntryBase[])
             { ingredientIds: ingredientsOf.get(e.recipeId!) ?? [], tagIds: tagsOf.get(e.recipeId!) ?? [] },
             members,
             e.audience,
+            e.guestIds,
           )
         : [],
   }))
@@ -131,7 +185,7 @@ export async function listPlan(
       asc(mealPlanEntries.sortOrder),
       asc(mealPlanEntries.createdAt),
     )
-  return attachWarnings(db, householdId, rows.map(toEntryDto))
+  return attachWarnings(db, householdId, await withGuests(db, rows.map(toEntryDto)))
 }
 
 async function getEntryDto(db: Db, householdId: string, id: string): Promise<PlanEntryDto> {
@@ -139,7 +193,7 @@ async function getEntryDto(db: Db, householdId: string, id: string): Promise<Pla
     .where(and(eq(mealPlanEntries.id, id), eq(mealPlanEntries.householdId, householdId)))
     .get()
   if (!row) throw new HttpError(404, 'not_found', 'Jedlo v pláne neexistuje.')
-  const [entry] = await attachWarnings(db, householdId, [toEntryDto(row)])
+  const [entry] = await attachWarnings(db, householdId, await withGuests(db, [toEntryDto(row)]))
   return entry!
 }
 
@@ -190,6 +244,7 @@ async function nextSortOrder(db: Db, householdId: string, date: string, slotId: 
 export async function createEntry(db: Db, householdId: string, input: PlanEntryInput): Promise<PlanEntryDto> {
   await assertSlot(db, householdId, input.slotId)
   await assertRecipe(db, householdId, input.recipeId)
+  await assertGuests(db, householdId, input.guestIds)
   const id = newId()
   await db.insert(mealPlanEntries).values({
     id,
@@ -202,6 +257,7 @@ export async function createEntry(db: Db, householdId: string, input: PlanEntryI
     note: input.note,
     sortOrder: await nextSortOrder(db, householdId, input.date, input.slotId),
   })
+  await setGuests(db, id, input.guestIds)
   return getEntryDto(db, householdId, id)
 }
 
@@ -215,6 +271,7 @@ export async function updateEntry(
   await assertSlot(db, householdId, input.slotId)
   // Ponechaný (aj medzičasom zmazaný) recept je v poriadku, nový musí existovať.
   if (input.recipeId !== current.recipeId) await assertRecipe(db, householdId, input.recipeId)
+  await assertGuests(db, householdId, input.guestIds)
   const moved = input.date !== current.date || input.slotId !== current.slotId
   // Iný deň alebo iný recept znamená, že pôvodné varenie sa nekonalo: záznam sa doplní znova z nového stavu.
   if (input.date !== current.date || input.recipeId !== current.recipeId) {
@@ -232,6 +289,7 @@ export async function updateEntry(
       sortOrder: moved ? await nextSortOrder(db, householdId, input.date, input.slotId) : current.sortOrder,
     })
     .where(eq(mealPlanEntries.id, id))
+  await setGuests(db, id, input.guestIds)
   return getEntryDto(db, householdId, id)
 }
 

@@ -46,6 +46,7 @@ export function entryToInput(entry: PlanEntryDto, date: string, slotId: string):
     freeText: entry.freeText,
     servingsOverride: entry.servingsOverride,
     note: entry.note,
+    guestIds: entry.guestIds,
   }
 }
 

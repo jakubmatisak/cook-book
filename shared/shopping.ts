@@ -19,6 +19,8 @@ export interface ShoppingInputEntry {
   date: string
   servingsOverride: number | null
   audience: PlanAudience
+  /** Návštevy vybrané pri tomto jedle. */
+  guestIds?: readonly string[]
   recipe: { id: string; title: string; servings: number; ingredients: ShoppingInputIngredient[] } | null
 }
 

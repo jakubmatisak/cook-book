@@ -33,9 +33,16 @@ const ORDER: Record<PreferenceKind, number> = { allergy: 0, dislike: 1, diet: 2 
  * Kto sa jedla týka: aktívni členovia podľa cieľovej skupiny záznamu. Ručný výber členov
  * (`custom`) sa zatiaľ nepoužíva, preto sa berie ako celá rodina.
  */
-const eats = (member: PreferenceMember, audience: PlanAudience) =>
-  member.isActive &&
-  (audience === 'adults' ? member.kind === 'adult' : audience === 'children' ? member.kind === 'child' : true)
+const eats = (member: PreferenceMember, audience: PlanAudience, guestIds: readonly string[]) => {
+  if (!member.isActive) return false
+  // Návšteva je pri jedle len vtedy, keď je vybraná.
+  if (member.kind === 'guest') return guestIds.includes(member.id)
+  return audience === 'adults'
+    ? member.kind === 'adult'
+    : audience === 'children'
+      ? member.kind === 'child'
+      : true
+}
 
 /**
  * Upozornenia pre recept a členov, ktorí ho budú jesť: alergia a averzia na ingredienciu v recepte,
@@ -45,12 +52,13 @@ export function preferenceConflicts(
   recipe: { ingredientIds: readonly string[]; tagIds: readonly string[] },
   members: readonly PreferenceMember[],
   audience: PlanAudience,
+  guestIds: readonly string[] = [],
 ): PreferenceWarning[] {
   const ingredients = new Set(recipe.ingredientIds)
   const tags = new Set(recipe.tagIds)
   const warnings: PreferenceWarning[] = []
   for (const member of members) {
-    if (!eats(member, audience)) continue
+    if (!eats(member, audience, guestIds)) continue
     const seen = new Set<string>()
     for (const pref of member.preferences) {
       const hit =

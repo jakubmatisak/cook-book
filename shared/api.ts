@@ -265,6 +265,8 @@ export interface PlanEntryDto {
   note: string | null
   sortOrder: number
   audience: PlanAudience
+  /** Návštevy (osoby typu guest) vybrané pri tomto jedle. */
+  guestIds: string[]
   /** Čo v tomto jedle nesedí rodine (alergia, averzia, diéta); recept sa neskrýva. */
   warnings: PreferenceWarning[]
 }

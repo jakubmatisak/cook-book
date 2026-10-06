@@ -27,6 +27,7 @@ const mode = ref<'recipe' | 'text'>('recipe')
 const recipeId = ref<string | null>(null)
 const freeText = ref('')
 const servings = ref<number | null>(null)
+const guestIds = ref<string[]>([])
 const note = ref('')
 const date = ref('')
 const slotId = ref('')
@@ -45,6 +46,7 @@ const warnings = computed(() => {
     { ingredientIds: recipe.ingredients.map((i) => i.ingredientId), tagIds: recipe.tags.map((t) => t.id) },
     props.members,
     props.entry?.audience ?? 'all',
+    guestIds.value,
   )
 })
 const recipes = computed(() => recipeList.value?.items)
@@ -58,6 +60,7 @@ watch(open, (isOpen) => {
   recipeId.value = e ? e.recipeId : (props.initialRecipeId ?? null)
   freeText.value = e?.freeText ?? ''
   servings.value = e?.servingsOverride ?? null
+  guestIds.value = e ? [...e.guestIds] : []
   note.value = e?.note ?? ''
   date.value = e?.date ?? props.initialDate
   slotId.value = e?.slotId ?? props.initialSlotId
@@ -74,6 +77,13 @@ const recipeItems = computed(() => {
   return items
 })
 
+// Návštevy z Rodiny (aktívne); pri jedle sa vyberajú ručne, inak sa nepočítajú do porcií ani upozornení.
+const guestItems = computed(() =>
+  props.members
+    .filter((m) => m.kind === 'guest' && (m.isActive || guestIds.value.includes(m.id)))
+    .map((m) => ({ title: m.name, value: m.id })),
+)
+
 const slotItems = computed(() => props.slots.map((s) => ({ title: s.name, value: s.id })))
 const dateItems = computed(() =>
   props.dates.map((d) => {
@@ -83,7 +93,10 @@ const dateItems = computed(() =>
 )
 
 const defaultPortions = computed(() => {
-  const fromMembers = entryPortions({ servingsOverride: null, audience: 'all' }, props.members)
+  const fromMembers = entryPortions(
+    { servingsOverride: null, audience: 'all', guestIds: guestIds.value },
+    props.members,
+  )
   if (fromMembers !== null) return `${String(fromMembers).replace('.', ',')} podľa rodiny`
   const recipe = recipes.value?.find((r) => r.id === recipeId.value)
   return recipe ? `${recipe.servings} podľa receptu` : 'podľa receptu'
@@ -100,6 +113,7 @@ function buildInput() {
     freeText: mode.value === 'text' ? freeText.value : null,
     servingsOverride: servings.value || null,
     note: note.value,
+    guestIds: guestIds.value,
   }
 }
 
@@ -182,6 +196,19 @@ async function onDelete() {
             <li v-for="w in warnings" :key="w.memberId + w.kind + w.label">{{ describeWarning(w) }}</li>
           </ul>
         </v-alert>
+
+        <v-select
+          v-if="guestItems.length"
+          v-model="guestIds"
+          :items="guestItems"
+          label="Návšteva pri jedle"
+          multiple
+          chips
+          closable-chips
+          clearable
+          hide-details
+          data-test="entry-guests"
+        />
 
         <v-row dense>
           <v-col cols="12" sm="6">

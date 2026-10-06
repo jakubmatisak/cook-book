@@ -15,6 +15,15 @@ const { data: me, isPending, error } = useMe()
 const isOwner = useIsOwner()
 const members = computed(() => me.value?.members ?? [])
 
+// Domáci a návštevy zvlášť: návšteva sa nepočíta do porcií, kým nie je vybraná pri konkrétnom jedle.
+const groups = computed(() =>
+  [
+    { key: 'family', title: null, members: members.value.filter((m) => m.kind !== 'guest') },
+    { key: 'guests', title: 'Návštevy', members: members.value.filter((m) => m.kind === 'guest') },
+  ].filter((g) => g.members.length > 0),
+)
+const hasGuests = computed(() => members.value.some((m) => m.kind === 'guest'))
+
 const totalPortions = computed(() =>
   entryPortions({ servingsOverride: null, audience: 'all' }, members.value),
 )
@@ -60,7 +69,7 @@ const memberSubtitle = (m: FamilyMemberDto) =>
     title="Kto u vás je?"
     :text="
       isOwner
-        ? 'Pridaj dospelých aj deti. Podľa veľkosti porcií sa potom prepočíta, koľko navariť a nakúpiť.'
+        ? 'Pridaj dospelých aj deti. Podľa veľkosti porcií sa potom prepočíta, koľko navariť a nakúpiť. Návštevy s alergiami a averziami pridáš tiež.'
         : 'Rodinu pridáva vlastník domácnosti.'
     "
   >
@@ -72,37 +81,43 @@ const memberSubtitle = (m: FamilyMemberDto) =>
       Rodinu a jej preferencie môže meniť len vlastník domácnosti.
     </v-alert>
     <v-list lines="two">
-      <v-list-item
-        v-for="member in members"
-        :key="member.id"
-        :title="member.name"
-        :subtitle="memberSubtitle(member)"
-        :class="{ 'opacity-60': !member.isActive }"
-        :link="isOwner"
-        :ripple="isOwner"
-        @click="isOwner && openEdit(member)"
-      >
-        <template v-if="member.preferences.length" #subtitle>
-          <span class="d-block">{{ memberSubtitle(member) }}</span>
-          <span class="d-flex flex-wrap ga-1 mt-1">
-            <v-chip
-              v-for="p in member.preferences"
-              :key="p.kind + (p.ingredientId ?? p.tagId)"
-              size="x-small"
-              variant="tonal"
-              :color="p.kind === 'allergy' ? 'error' : p.kind === 'dislike' ? 'warning' : 'secondary'"
-            >
-              {{ PREFERENCE_CHIP_LABELS[p.kind] }}: {{ p.label }}
-            </v-chip>
-          </span>
-        </template>
-        <template #prepend>
-          <v-avatar :color="member.color ?? 'primary'" class="font-weight-bold">
-            {{ member.name.slice(0, 1).toUpperCase() }}
-          </v-avatar>
-        </template>
-      </v-list-item>
+      <template v-for="group in groups" :key="group.key">
+        <v-list-subheader v-if="group.title" data-test="guests-heading">{{ group.title }}</v-list-subheader>
+        <v-list-item
+          v-for="member in group.members"
+          :key="member.id"
+          :title="member.name"
+          :subtitle="memberSubtitle(member)"
+          :class="{ 'opacity-60': !member.isActive }"
+          :link="isOwner"
+          :ripple="isOwner"
+          @click="isOwner && openEdit(member)"
+        >
+          <template v-if="member.preferences.length" #subtitle>
+            <span class="d-block">{{ memberSubtitle(member) }}</span>
+            <span class="d-flex flex-wrap ga-1 mt-1">
+              <v-chip
+                v-for="p in member.preferences"
+                :key="p.kind + (p.ingredientId ?? p.tagId)"
+                size="x-small"
+                variant="tonal"
+                :color="p.kind === 'allergy' ? 'error' : p.kind === 'dislike' ? 'warning' : 'secondary'"
+              >
+                {{ PREFERENCE_CHIP_LABELS[p.kind] }}: {{ p.label }}
+              </v-chip>
+            </span>
+          </template>
+          <template #prepend>
+            <v-avatar :color="member.color ?? 'primary'" class="font-weight-bold">
+              {{ member.name.slice(0, 1).toUpperCase() }}
+            </v-avatar>
+          </template>
+        </v-list-item>
+      </template>
     </v-list>
+    <p v-if="hasGuests" class="text-caption text-medium-emphasis px-4 pb-3">
+      Návšteva sa do porcií a upozornení počíta, až keď ju pri jedle v jedálničku vyberieš.
+    </p>
   </v-card>
 
   <MemberDialog

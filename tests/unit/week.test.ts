@@ -27,6 +27,7 @@ const entry = (id: string, date: string, slotId: string): PlanEntryDto => ({
   note: null,
   sortOrder: 0,
   audience: 'all',
+  guestIds: [],
   warnings: [],
 })
 

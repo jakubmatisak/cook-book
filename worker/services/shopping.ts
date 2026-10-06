@@ -15,6 +15,7 @@ import {
   images,
   ingredients,
   mealPlanEntries,
+  mealPlanEntryMembers,
   pantryItems,
   recipeIngredients,
   recipes,
@@ -137,6 +138,19 @@ export async function listItems(db: Db, householdId: string, listId: string): Pr
     .map((r) => toItemDto(r.item, sources.get(r.item.id) ?? []))
 }
 
+/** Návštevy vybrané pri jedlách (kvôli porciám). */
+async function loadEntryGuests(db: Db, entryIds: string[]): Promise<Map<string, string[]>> {
+  const guests = new Map<string, string[]>()
+  for (const ids of chunk(entryIds, 90)) {
+    const rows = await db
+      .select({ entryId: mealPlanEntryMembers.entryId, memberId: mealPlanEntryMembers.memberId })
+      .from(mealPlanEntryMembers)
+      .where(inArray(mealPlanEntryMembers.entryId, ids))
+    for (const r of rows) guests.set(r.entryId, [...(guests.get(r.entryId) ?? []), r.memberId])
+  }
+  return guests
+}
+
 async function loadPlanForShopping(
   db: Db,
   householdId: string,
@@ -180,11 +194,17 @@ async function loadPlanForShopping(
     for (const { recipeId, ...ing } of rows) byRecipe.set(recipeId, [...(byRecipe.get(recipeId) ?? []), ing])
   }
 
+  const guests = await loadEntryGuests(
+    db,
+    entries.map((e) => e.id),
+  )
+
   return entries.map((e) => ({
     id: e.id,
     date: e.date,
     servingsOverride: e.servingsOverride,
     audience: e.audience,
+    guestIds: guests.get(e.id) ?? [],
     recipe: e.recipeId
       ? {
           id: e.recipeId,
