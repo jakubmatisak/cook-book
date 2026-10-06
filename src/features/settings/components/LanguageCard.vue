@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { LOCALES, type Locale } from '@shared/userSettings'
-import { setLocale } from '@/i18n'
+import { LOCALES } from '@shared/userSettings'
+import { parseLocale, setLocale } from '@/i18n'
 
 const { t, locale } = useI18n()
-const onChange = (value: Locale) => setLocale(value)
+const onChange = (value: unknown) => setLocale(parseLocale(typeof value === 'string' ? value : null))
 </script>
 
 <template>

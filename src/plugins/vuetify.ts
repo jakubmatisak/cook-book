@@ -11,7 +11,9 @@ import { i18n as appI18n } from '@/i18n'
  * Komponenty v aplikácii používajú len Vuetify komponenty a utility triedy.
  * Zaoblenie je hranatejšie (škála v src/design/settings.scss: sm 2 px, md 4 px, lg 6 px).
  */
-export const createAppVuetify = (i18n: typeof appI18n = appI18n) =>
+type AdapterI18n = Parameters<typeof createVueI18nAdapter>[0]['i18n']
+
+export const createAppVuetify = (i18n: AdapterI18n = appI18n as unknown as AdapterI18n) =>
   createVuetify({
     theme: {
       defaultTheme: 'light',
