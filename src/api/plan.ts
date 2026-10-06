@@ -6,8 +6,14 @@ import {
   type UseMutationReturnType,
 } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import type { PlanCopyResult, PlanEntryDto, TemplateApplyResult, WeekTemplateDto } from '@shared/api'
-import type { PlanEntryInputRaw } from '@shared/schemas/plan'
+import type {
+  GuestStayDto,
+  PlanCopyResult,
+  PlanEntryDto,
+  TemplateApplyResult,
+  WeekTemplateDto,
+} from '@shared/api'
+import type { GuestStayInput, PlanEntryInputRaw } from '@shared/schemas/plan'
 import { apiFetch } from './http'
 
 export const planKeys = {
@@ -66,6 +72,43 @@ export function useCopyPlan(): UseMutationReturnType<PlanCopyResult, Error, Copy
   return useMutation({
     mutationFn: (vars: CopyPlanVars) => apiFetch<PlanCopyResult>('/plan/copy', json('POST', vars)),
     onSuccess: () => invalidatePlan(client),
+  })
+}
+
+// ─── Pobyty návštev ──────────────────────────────────────────────────────────
+
+export const staysKey = (from: string, to: string) => ['plan', 'stays', from, to] as const
+
+/** Pobyty návštev, ktoré sa prekrývajú so zobrazeným rozsahom dní. */
+export function usePlanStays(from: MaybeRefOrGetter<string>, to: MaybeRefOrGetter<string>) {
+  return useQuery({
+    queryKey: computed(() => staysKey(toValue(from), toValue(to))),
+    queryFn: () => apiFetch<GuestStayDto[]>(`/plan/stays?from=${toValue(from)}&to=${toValue(to)}`),
+    placeholderData: (previous) => previous,
+  })
+}
+
+/** Návšteva (jedna alebo viac osôb) na dni od – do; jedlá v týchto dňoch s ňou počítajú. */
+export function useCreateStays(): UseMutationReturnType<
+  GuestStayDto[],
+  Error,
+  Pick<GuestStayInput, 'memberIds' | 'fromDate' | 'toDate'>,
+  unknown
+> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (input) => apiFetch<GuestStayDto[]>('/plan/stays', json('POST', input)),
+    onSuccess: () => invalidatePlan(client),
+  })
+}
+
+export function useDeleteStays(): UseMutationReturnType<void, Error, string[], unknown> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      for (const id of ids) await apiFetch<void>(`/plan/stays/${id}`, { method: 'DELETE' })
+    },
+    onSettled: () => invalidatePlan(client),
   })
 }
 

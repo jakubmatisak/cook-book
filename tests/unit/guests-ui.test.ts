@@ -57,6 +57,7 @@ describe('karta jedla s návštevou', () => {
     sortOrder: 0,
     audience: 'all',
     guestIds,
+    presentGuestIds: guestIds,
     warnings: [],
   })
 

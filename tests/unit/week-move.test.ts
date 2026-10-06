@@ -14,6 +14,7 @@ const entry: PlanEntryDto = {
   sortOrder: 2,
   audience: 'all',
   guestIds: [],
+  presentGuestIds: [],
   warnings: [],
 }
 

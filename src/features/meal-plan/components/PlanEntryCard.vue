@@ -24,10 +24,13 @@ const warningText = computed(() =>
 const hasAllergy = computed(() => props.entry.warnings.some((w) => w.kind === 'allergy'))
 const title = computed(() => props.entry.recipe?.title ?? props.entry.freeText ?? '')
 const portions = computed(
-  () => entryPortions(props.entry, props.members) ?? props.entry.recipe?.servings ?? null,
+  () =>
+    entryPortions({ ...props.entry, guestIds: props.entry.presentGuestIds }, props.members) ??
+    props.entry.recipe?.servings ??
+    null,
 )
 const guestNames = computed(() =>
-  props.members.filter((m) => props.entry.guestIds.includes(m.id)).map((m) => m.name),
+  props.members.filter((m) => props.entry.presentGuestIds.includes(m.id)).map((m) => m.name),
 )
 const subtitle = computed(() => {
   const parts: string[] = []

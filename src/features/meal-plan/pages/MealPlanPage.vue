@@ -15,8 +15,8 @@ import { useRoute, useRouter } from 'vue-router'
 import type { PlanEntryDto, TemplateApplyResult, WeekTemplateDto } from '@shared/api'
 import { RECIPE_CATEGORIES, type RecipeCategory } from '@shared/recipes'
 import { addDays, weekDates } from '@shared/dates'
-import { useMe } from '@/api/me'
-import { useCopyPlan, useDeleteEntry, usePlan, useSaveEntry } from '@/api/plan'
+import { useIsOwner, useMe } from '@/api/me'
+import { useCopyPlan, useDeleteEntry, useDeleteStays, usePlan, usePlanStays, useSaveEntry } from '@/api/plan'
 import PageHeader from '@/components/PageHeader.vue'
 import { useElementWidth } from '@/composables/useElementWidth'
 import { useToday } from '@/composables/useToday'
@@ -25,6 +25,8 @@ import { errorText } from '@/i18n/errors'
 import { formatWeekRange, tc } from '@/i18n/format'
 import ApplyTemplateDialog from '../components/ApplyTemplateDialog.vue'
 import EntryDialog from '../components/EntryDialog.vue'
+import GuestStayDialog from '../components/GuestStayDialog.vue'
+import GuestStaysBar from '../components/GuestStaysBar.vue'
 import SaveTemplateDialog from '../components/SaveTemplateDialog.vue'
 import SuggestionsCard from '../components/SuggestionsCard.vue'
 import WeekGrid from '../components/WeekGrid.vue'
@@ -48,6 +50,7 @@ const area = ref<HTMLElement>()
 const areaWidth = useElementWidth(area, typeof window === 'undefined' ? 0 : window.innerWidth)
 const canGrid = computed(() => gridFits(areaWidth.value))
 const { data: me } = useMe()
+const isOwner = useIsOwner()
 
 const today = useToday()
 const weekStartsOn = computed(() => me.value?.settings.weekStartsOn ?? 1)
@@ -74,6 +77,19 @@ const categoryOptions = computed(() => {
 })
 const shownEntries = computed(() => filterEntriesByCategory(entries.value ?? [], selectedCategories.value))
 const groups = computed(() => groupEntries(shownEntries.value))
+
+// Pobyty návštev v zobrazenom týždni: jedlá v ich dňoch s návštevou počítajú automaticky.
+const { data: stays } = usePlanStays(start, () => addDays(start.value, 6))
+const stayOpen = ref(false)
+const deleteStays = useDeleteStays()
+async function removeStay(ids: string[]) {
+  try {
+    await deleteStays.mutateAsync(ids)
+    notify(t('plan.stays.removed'))
+  } catch (e) {
+    notify(errorText(e), 'error')
+  }
+}
 const slots = computed(() => visibleSlots(me.value?.slots ?? [], entries.value ?? []))
 const members = computed(() => me.value?.members ?? [])
 
@@ -202,6 +218,7 @@ const copy = useCopyPlan()
 const copyOpen = ref(false)
 const copyReplace = ref(false)
 const snackbar = ref({ show: false, text: '', color: 'success' })
+const notify = (text: string, color = 'success') => (snackbar.value = { show: true, text, color })
 const nextWeek = computed(() => addDays(start.value, 7))
 
 async function copyToNextWeek() {
@@ -313,6 +330,7 @@ async function copyToNextWeek() {
         {{ option.title }}
       </v-chip>
     </v-chip-group>
+    <GuestStaysBar :stays="stays ?? []" :members="members" @add="stayOpen = true" @remove="removeStay" />
     <SuggestionsCard v-if="isCurrentWeek" class="d-print-none" :date="today" @plan="onPlanSuggestion" />
     <WeekGrid
       v-if="canGrid"
@@ -346,6 +364,16 @@ async function copyToNextWeek() {
     :slots="me?.slots ?? []"
     :dates="dates"
     :members="members"
+    :stays="stays ?? []"
+  />
+
+  <GuestStayDialog
+    v-model="stayOpen"
+    :members="members"
+    :week-from="start"
+    :week-to="addDays(start, 6)"
+    :can-add-guests="isOwner"
+    @saved="notify(t('plan.stays.saved'))"
   />
 
   <v-dialog v-model="copyOpen" max-width="440">

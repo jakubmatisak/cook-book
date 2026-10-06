@@ -1,5 +1,26 @@
 /** Jedálniček: týždeň, dialóg jedla, návrhy, šablóny, kopírovanie týždňa. */
 export default {
+  stays: {
+    add: 'Pridať návštevu',
+    chip: '{names} · {range}',
+    remove: 'Zrušiť pobyt: {names}',
+    saved: 'Návšteva je pridaná, jedlá v týchto dňoch s ňou počítajú.',
+    removed: 'Pobyt návštevy je zrušený.',
+    entryHint: 'Podľa pobytu je pri jedle aj: {names}',
+    dialog: {
+      title: 'Návšteva u nás',
+      text: 'Vyber, kto k vám príde a v ktoré dni. Jedlá v týchto dňoch s nimi budú počítať (porcie, nákup, alergie a averzie).',
+      guests: 'Kto príde',
+      from: 'Od',
+      to: 'Do',
+      wholeWeek: 'Celý zobrazený týždeň',
+      noGuests: 'Najprv pridaj návštevu v Rodine (osoby s alergiami a averziami).',
+      openFamily: 'Otvoriť Rodinu',
+      pickGuests: 'Vyber aspoň jednu osobu z návštevy.',
+      invalidDates: 'Zadaj dni od – do.',
+      order: 'Pobyt sa nesmie končiť pred začiatkom.',
+    },
+  },
   title: 'Jedálniček',
   undo: 'Späť',
   replaceExisting: 'Nahradiť jedlá, ktoré tam už sú',

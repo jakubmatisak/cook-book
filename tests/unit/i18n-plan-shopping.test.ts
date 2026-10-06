@@ -156,6 +156,7 @@ describe('plán a nákup v angličtine', () => {
       sortOrder: 0,
       audience: 'all',
       guestIds: ['g1'],
+      presentGuestIds: ['g1'],
       warnings: [{ kind: 'allergy', memberId: 'm1', memberName: 'Anna', label: 'peanuts' }],
     }
     const wrapper = mount(PlanEntryCard, {

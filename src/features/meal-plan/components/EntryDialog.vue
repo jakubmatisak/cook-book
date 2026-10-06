@@ -2,7 +2,7 @@
 import { slotName as displaySlotName } from '@/i18n/defaults'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { FamilyMemberDto, MealSlotDto, PlanEntryDto } from '@shared/api'
+import type { FamilyMemberDto, GuestStayDto, MealSlotDto, PlanEntryDto } from '@shared/api'
 import { entryPortions } from '@shared/portions'
 import { planEntryInputSchema } from '@shared/schemas/plan'
 import { useDeleteEntry, useSaveEntry } from '@/api/plan'
@@ -25,6 +25,8 @@ const props = defineProps<{
   slots: MealSlotDto[]
   dates: string[]
   members: FamilyMemberDto[]
+  /** Pobyty návštev v zobrazenom týždni (návšteva podľa pobytu sa počíta automaticky). */
+  stays?: GuestStayDto[]
 }>()
 
 const mode = ref<'recipe' | 'text'>('recipe')
@@ -40,6 +42,21 @@ const confirmDelete = ref(false)
 
 const { data: recipeList } = useRecipes(() => ({}))
 
+// Návštevy pri jedle: ručne vybrané aj tie, ktorých pobyt pokrýva zvolený deň.
+const stayGuestIds = computed(() => [
+  ...new Set(
+    (props.stays ?? [])
+      .filter((s) => s.fromDate <= date.value && date.value <= s.toDate)
+      .map((s) => s.memberId),
+  ),
+])
+const presentGuestIds = computed(() => [...new Set([...guestIds.value, ...stayGuestIds.value])])
+const stayGuestNames = computed(() =>
+  props.members
+    .filter((m) => stayGuestIds.value.includes(m.id) && !guestIds.value.includes(m.id))
+    .map((m) => m.name),
+)
+
 // Upozornenie na alergie, averzie a diéty rodiny pri vybranom recepte (recept sa nezakazuje).
 const selectedRecipeId = computed(() => (mode.value === 'recipe' ? recipeId.value : null))
 const { data: selectedRecipe } = useRecipe(() => selectedRecipeId.value ?? undefined)
@@ -53,7 +70,7 @@ const warnings = computed(() => {
     },
     props.members,
     props.entry?.audience ?? 'all',
-    guestIds.value,
+    presentGuestIds.value,
   )
 })
 const recipes = computed(() => recipeList.value?.items)
@@ -101,7 +118,7 @@ const dateItems = computed(() =>
 
 const defaultPortions = computed(() => {
   const fromMembers = entryPortions(
-    { servingsOverride: null, audience: 'all', guestIds: guestIds.value },
+    { servingsOverride: null, audience: 'all', guestIds: presentGuestIds.value },
     props.members,
   )
   if (fromMembers !== null) return t('plan.entry.portionsFromFamily', { n: formatNumber(fromMembers) })
@@ -223,6 +240,9 @@ async function onDelete() {
           hide-details
           data-test="entry-guests"
         />
+        <p v-if="stayGuestNames.length" class="text-caption text-medium-emphasis" data-test="entry-stay-hint">
+          {{ t('plan.stays.entryHint', { names: stayGuestNames.join(', ') }) }}
+        </p>
 
         <v-row dense>
           <v-col cols="12" sm="6">

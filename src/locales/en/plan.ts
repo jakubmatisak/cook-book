@@ -1,5 +1,26 @@
 /** Meal plan: week, meal dialog, suggestions, templates, copying a week. */
 export default {
+  stays: {
+    add: 'Add visitors',
+    chip: '{names} · {range}',
+    remove: 'Cancel stay: {names}',
+    saved: 'The visitors are added, meals on these days include them.',
+    removed: 'The visit is cancelled.',
+    entryHint: 'By the visit, this meal also includes: {names}',
+    dialog: {
+      title: 'Visitors staying with us',
+      text: 'Choose who is coming and on which days. Meals on those days will include them (servings, shopping, allergies and dislikes).',
+      guests: 'Who is coming',
+      from: 'From',
+      to: 'To',
+      wholeWeek: 'Whole displayed week',
+      noGuests: 'First add a guest in Family (people with their allergies and dislikes).',
+      openFamily: 'Open Family',
+      pickGuests: 'Choose at least one person.',
+      invalidDates: 'Enter the days from – to.',
+      order: 'The stay cannot end before it starts.',
+    },
+  },
   title: 'Meal plan',
   undo: 'Undo',
   replaceExisting: 'Replace meals that are already there',
