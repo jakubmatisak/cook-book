@@ -19,11 +19,11 @@ import {
   mdiTimerOutline,
 } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { RecipeIngredientDto } from '@shared/api'
 import { addDays } from '@shared/dates'
-import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS } from '@shared/recipes'
-import { formatScaled } from '@shared/scaling'
+import { formatScaled } from '@/i18n/quantity'
 import { markdownFilename, recipeToMarkdown } from '@shared/markdown'
 import { ApiError, downloadFile } from '@/api/http'
 import { useMe } from '@/api/me'
@@ -33,9 +33,11 @@ import { useToday } from '@/composables/useToday'
 import EntryDialog from '@/features/meal-plan/components/EntryDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { printPage } from '@/composables/usePrintMode'
-import { formatMinutes, plural } from '@/lib/format'
+import { errorText } from '@/i18n/errors'
+import { formatMinutes, tc } from '@/i18n/format'
 import FavoriteButton from '../components/FavoriteButton.vue'
 
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => String(route.params.id))
@@ -54,12 +56,12 @@ const groups = computed(() => {
 })
 
 const ingredientSuffix = (item: RecipeIngredientDto) =>
-  (item.note ? `, ${item.note}` : '') + (item.isOptional ? ' (voliteľné)' : '')
+  (item.note ? `, ${item.note}` : '') + (item.isOptional ? ` (${t('recipes.detail.optional')})` : '')
 
 watch(
-  recipe,
-  (r) => {
-    if (r) document.title = `${r.title} · Kuchárska kniha`
+  [recipe, locale],
+  ([r]) => {
+    if (r) document.title = `${r.title} · ${t('common.app.name')}`
   },
   { immediate: true },
 )
@@ -73,13 +75,19 @@ interface Chip {
 const chips = computed<Chip[]>(() => {
   const r = recipe.value
   if (!r) return []
-  const list: Chip[] = [{ text: RECIPE_CATEGORY_LABELS[r.category], color: 'primary' }]
+  const list: Chip[] = [{ text: t(`common.category.${r.category}`), color: 'primary' }]
   if (r.prepMinutes !== null)
-    list.push({ icon: mdiClockOutline, text: `Príprava ${formatMinutes(r.prepMinutes)}` })
+    list.push({
+      icon: mdiClockOutline,
+      text: t('recipes.detail.prep', { time: formatMinutes(r.prepMinutes) }),
+    })
   if (r.cookMinutes !== null)
-    list.push({ icon: mdiPotSteamOutline, text: `Varenie ${formatMinutes(r.cookMinutes)}` })
-  list.push({ icon: mdiSilverwareForkKnife, text: plural(r.servings, 'porcia', 'porcie', 'porcií') })
-  list.push({ icon: mdiChefHat, text: DIFFICULTY_LABELS[r.difficulty as 1 | 2 | 3] })
+    list.push({
+      icon: mdiPotSteamOutline,
+      text: t('recipes.detail.cook', { time: formatMinutes(r.cookMinutes) }),
+    })
+  list.push({ icon: mdiSilverwareForkKnife, text: tc('common.plural.portions', r.servings) })
+  list.push({ icon: mdiChefHat, text: t(`common.difficulty.${r.difficulty}`) })
   return list
 })
 
@@ -125,7 +133,7 @@ const printRecipe = () => printPage()
 
 async function copyRecipe() {
   const copied = await copyText(markdown.value)
-  notify(copied ? 'Recept je skopírovaný.' : 'Kopírovanie sa nepodarilo.', copied ? 'success' : 'error')
+  notify(copied ? t('recipes.detail.copied') : t('recipes.detail.copyFailed'), copied ? 'success' : 'error')
 }
 
 async function shareRecipe() {
@@ -133,7 +141,7 @@ async function shareRecipe() {
   try {
     await shareText({ title: recipe.value.title, text: markdown.value })
   } catch (e) {
-    notify(e instanceof Error ? e.message : 'Zdieľanie sa nepodarilo.', 'error')
+    notify(errorText(e, 'recipes.detail.shareFailed'), 'error')
   }
 }
 
@@ -143,7 +151,7 @@ async function downloadMarkdown() {
   try {
     await downloadFile(`/recipes/${id.value}/export.md${query}`, markdownFilename(recipe.value.title))
   } catch (e) {
-    notify(e instanceof ApiError ? e.message : 'Stiahnutie sa nepodarilo.', 'error')
+    notify(errorText(e, 'recipes.detail.downloadFailed'), 'error')
   }
 }
 
@@ -157,7 +165,7 @@ async function onDelete() {
     confirmDelete.value = false
     await router.replace('/recepty')
   } catch (e) {
-    deleteError.value = e instanceof Error ? e.message : 'Recept sa nepodarilo zmazať.'
+    deleteError.value = errorText(e, 'recipes.detail.deleteFailed')
   }
 }
 
@@ -169,7 +177,7 @@ function goBack() {
 
 <template>
   <v-toolbar color="transparent" density="compact" class="mb-2 px-0 d-print-none">
-    <v-btn :icon="mdiArrowLeft" variant="text" aria-label="Späť" @click="goBack" />
+    <v-btn :icon="mdiArrowLeft" variant="text" :aria-label="t('common.actions.back')" @click="goBack" />
     <v-spacer />
     <template v-if="recipe">
       <FavoriteButton :recipe-id="recipe.id" :is-favorite="recipe.isFavorite" size="default" />
@@ -177,41 +185,55 @@ function goBack() {
         :icon="mdiPencilOutline"
         variant="text"
         :to="`/recepty/${recipe.id}/upravit`"
-        aria-label="Upraviť"
+        :aria-label="t('common.actions.edit')"
       />
-      <v-btn :icon="mdiCalendarPlus" variant="text" aria-label="Naplánovať" @click="planOpen = true" />
+      <v-btn
+        :icon="mdiCalendarPlus"
+        variant="text"
+        :aria-label="t('recipes.detail.plan')"
+        @click="planOpen = true"
+      />
       <v-menu>
         <template #activator="{ props }">
-          <v-btn v-bind="props" :icon="mdiDotsVertical" variant="text" aria-label="Ďalšie akcie" />
+          <v-btn
+            v-bind="props"
+            :icon="mdiDotsVertical"
+            variant="text"
+            :aria-label="t('recipes.detail.more')"
+          />
         </template>
         <v-list>
           <v-list-item
             :prepend-icon="mdiPrinterOutline"
-            title="Tlačiť"
+            :title="t('common.actions.print')"
             data-test="print"
             @click="printRecipe"
           />
           <v-list-item
             :prepend-icon="mdiContentCopy"
-            title="Kopírovať ako text"
+            :title="t('recipes.detail.copyText')"
             data-test="copy"
             @click="copyRecipe"
           />
           <v-list-item
             v-if="supportsShare"
             :prepend-icon="mdiShareVariantOutline"
-            title="Zdieľať"
+            :title="t('recipes.detail.share')"
             data-test="share"
             @click="shareRecipe"
           />
           <v-list-item
             :prepend-icon="mdiFileDownloadOutline"
-            title="Stiahnuť ako Markdown"
+            :title="t('recipes.detail.downloadMd')"
             data-test="download-md"
             @click="downloadMarkdown"
           />
           <v-divider />
-          <v-list-item :prepend-icon="mdiDeleteOutline" title="Zmazať recept" @click="confirmDelete = true" />
+          <v-list-item
+            :prepend-icon="mdiDeleteOutline"
+            :title="t('recipes.detail.deleteRecipe')"
+            @click="confirmDelete = true"
+          />
         </v-list>
       </v-menu>
     </template>
@@ -222,13 +244,13 @@ function goBack() {
   <EmptyState
     v-else-if="notFound"
     :icon="mdiPotSteamOutline"
-    title="Recept neexistuje"
-    text="Možno bol zmazaný."
+    :title="t('recipes.detail.notFoundTitle')"
+    :text="t('recipes.detail.notFoundText')"
   >
-    <v-btn color="primary" to="/recepty">Späť na recepty</v-btn>
+    <v-btn color="primary" to="/recepty">{{ t('recipes.detail.backToRecipes') }}</v-btn>
   </EmptyState>
 
-  <v-alert v-else-if="error" type="error" :text="error.message" />
+  <v-alert v-else-if="error" type="error" :text="errorText(error)" />
 
   <template v-else-if="recipe">
     <v-img
@@ -261,7 +283,7 @@ function goBack() {
       :to="cookingLink"
       class="mb-3 d-print-none"
     >
-      Režim varenia
+      {{ t('recipes.detail.cookingMode') }}
     </v-btn>
     <p v-if="recipe.description" class="text-body-1 mb-3 text-pre-line">
       {{ recipe.description }}
@@ -281,14 +303,14 @@ function goBack() {
 
     <v-row>
       <v-col cols="12" md="5" lg="4">
-        <v-card title="Ingrediencie">
+        <v-card :title="t('recipes.detail.ingredients')">
           <v-card-text class="d-none d-print-block pb-0">
-            Pre {{ plural(servings, 'porciu', 'porcie', 'porcií') }}
+            {{ t('recipes.detail.forPortions', { portions: tc('recipes.portionsAcc', servings) }) }}
           </v-card-text>
           <v-card-text class="d-flex align-center ga-3 pb-0 d-print-none">
             <v-number-input
               v-model="servings"
-              label="Porcie"
+              :label="t('recipes.detail.servings')"
               :min="1"
               :max="50"
               control-variant="split"
@@ -297,12 +319,12 @@ function goBack() {
               style="max-width: 11rem"
             />
             <v-chip v-if="factor !== 1" size="small" variant="tonal" color="warning">
-              pôvodne {{ recipe.servings }}
+              {{ t('recipes.detail.originally', { n: recipe.servings }) }}
             </v-chip>
           </v-card-text>
-          <v-card-text v-if="!recipe.ingredients.length" class="text-medium-emphasis"
-            >Bez ingrediencií.</v-card-text
-          >
+          <v-card-text v-if="!recipe.ingredients.length" class="text-medium-emphasis">{{
+            t('recipes.detail.noIngredients')
+          }}</v-card-text>
           <v-list density="compact" class="py-0 pb-2">
             <template v-for="group in groups" :key="group.name">
               <v-list-subheader v-if="group.name" class="text-primary font-weight-bold">
@@ -322,7 +344,7 @@ function goBack() {
                     size="14"
                     color="success"
                     class="ms-1"
-                    title="Máš doma"
+                    :title="t('recipes.detail.inPantry')"
                   />
                 </v-list-item-title>
               </v-list-item>
@@ -332,10 +354,10 @@ function goBack() {
       </v-col>
 
       <v-col cols="12" md="7" lg="8">
-        <v-card title="Postup">
-          <v-card-text v-if="!recipe.steps.length" class="text-medium-emphasis"
-            >Postup zatiaľ nie je zapísaný.</v-card-text
-          >
+        <v-card :title="t('recipes.detail.steps')">
+          <v-card-text v-if="!recipe.steps.length" class="text-medium-emphasis">{{
+            t('recipes.detail.noSteps')
+          }}</v-card-text>
           <v-list v-else lines="three" class="py-0 pb-2">
             <v-list-item v-for="step in recipe.steps" :key="step.id" class="py-3">
               <template #prepend>
@@ -356,7 +378,7 @@ function goBack() {
         </v-card>
 
         <div v-if="recipe.sourceUrl || recipe.sourceText" class="text-body-2 text-medium-emphasis mt-4">
-          Zdroj:
+          {{ t('recipes.detail.source') }}
           <a
             v-if="recipe.sourceUrl"
             :href="recipe.sourceUrl"
@@ -387,15 +409,17 @@ function goBack() {
   <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">{{ snackbar.text }}</v-snackbar>
 
   <v-dialog v-model="confirmDelete" max-width="420">
-    <v-card title="Zmazať recept?">
+    <v-card :title="t('recipes.detail.deleteTitle')">
       <v-card-text>
-        Recept „{{ recipe?.title }}“ zmizne zo zoznamu. Jedálničky, ktoré ho používajú, ostanú.
+        {{ t('recipes.detail.deleteText', { title: recipe?.title ?? '' }) }}
         <v-alert v-if="deleteError" type="error" class="mt-3" :text="deleteError" />
       </v-card-text>
       <v-card-actions class="flex-wrap ga-1">
         <v-spacer />
-        <v-btn variant="text" @click="confirmDelete = false">Zrušiť</v-btn>
-        <v-btn color="error" :loading="remove.isPending.value" @click="onDelete">Zmazať</v-btn>
+        <v-btn variant="text" @click="confirmDelete = false">{{ t('common.actions.cancel') }}</v-btn>
+        <v-btn color="error" :loading="remove.isPending.value" @click="onDelete">{{
+          t('common.actions.delete')
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

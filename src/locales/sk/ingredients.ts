@@ -1,0 +1,34 @@
+/** Ingrediencie: zoznam s kategóriami obchodu a okno na úpravu. */
+export default {
+  count: '{n} ingrediencia | {n} ingrediencie | {n} ingrediencií',
+  usedIn: 'v {n} recepte | v {n} receptoch | v {n} receptoch',
+  page: {
+    subtitle:
+      'Kategória obchodu určuje poradie v nákupnom zozname. Nové ingrediencie pribúdajú samy pri písaní receptov.',
+    addStarters: 'Pridať základné suroviny',
+    added: 'Pridané: {items}.',
+    allStarters: 'Základné suroviny už máš všetky.',
+    addFailed: 'Suroviny sa nepodarilo pridať.',
+    changeFailed: 'Zmena sa neuložila.',
+    search: 'Hľadať ingredienciu',
+    uncategorized: 'Bez kategórie ({count})',
+    unused: 'nepoužitá',
+    nothingFound: 'Nič sa nenašlo.',
+    editAria: 'Upraviť alebo zmazať ingredienciu {name}',
+    shopCategory: 'Kategória obchodu',
+    unit: 'Jednotka',
+    empty: {
+      title: 'Zatiaľ žiadne ingrediencie',
+      text: 'Pribudnú automaticky, keď uložíš prvý recept, alebo si môžeš naraz pridať základné suroviny.',
+    },
+  },
+  edit: {
+    title: 'Upraviť ingredienciu',
+    name: 'Názov',
+    nameRequired: 'Zadaj názov.',
+    renameHint: 'Premenovanie sa prejaví vo všetkých receptoch, v špajzi aj v nákupnom zozname.',
+    reallyDelete: 'Naozaj zmazať',
+    renameFailed: 'Premenovanie zlyhalo.',
+    deleteFailed: 'Zmazanie zlyhalo.',
+  },
+}

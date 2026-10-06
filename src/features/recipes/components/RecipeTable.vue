@@ -1,29 +1,32 @@
 <script setup lang="ts">
 import { mdiPotSteamOutline } from '@mdi/js'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import type { RecipeSummaryDto } from '@shared/api'
-import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS } from '@shared/recipes'
-import { formatDate, formatMinutes, totalMinutes } from '@/lib/format'
+import { formatDate, formatMinutes } from '@/i18n/format'
+import { totalMinutes } from '@/lib/format'
 import type { TableSort } from '../listQuery'
 import FavoriteButton from './FavoriteButton.vue'
 
+const { t } = useI18n()
 const sortBy = defineModel<TableSort[]>('sortBy', { required: true })
 defineProps<{ items: RecipeSummaryDto[] }>()
 const router = useRouter()
 // Na malom displeji tabuľka prejde do zobrazenia po riadkoch (každý záznam ako blok); zoradenie je hore.
 const { smAndDown } = useDisplay()
 
-const headers = [
+const headers = computed(() => [
   { title: '', key: 'coverImageUrl', sortable: false, width: 72 },
-  { title: 'Názov', key: 'title' },
-  { title: 'Kategória', key: 'category', sortable: false },
-  { title: 'Čas', key: 'totalMinutes' },
-  { title: 'Náročnosť', key: 'difficulty' },
-  { title: 'Naposledy varené', key: 'lastCookedAt' },
-  { title: 'Pridané', key: 'createdAt' },
+  { title: t('recipes.table.name'), key: 'title' },
+  { title: t('recipes.table.category'), key: 'category', sortable: false },
+  { title: t('recipes.table.time'), key: 'totalMinutes' },
+  { title: t('recipes.table.difficulty'), key: 'difficulty' },
+  { title: t('recipes.table.lastCooked'), key: 'lastCookedAt' },
+  { title: t('recipes.table.added'), key: 'createdAt' },
   { title: '', key: 'isFavorite', sortable: false, align: 'end' as const, width: 64 },
-]
+])
 
 const minutes = (r: RecipeSummaryDto) => totalMinutes(r.prepMinutes, r.cookMinutes)
 const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) =>
@@ -57,20 +60,24 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) =>
       <template #item.title="{ item }">
         <div class="font-weight-bold">{{ item.title }}</div>
         <div v-if="item.missing" class="text-caption text-medium-emphasis">
-          {{ item.missing.length === 0 ? 'Máš všetko' : `Chýba: ${item.missing.join(', ')}` }}
+          {{
+            item.missing.length === 0
+              ? t('recipes.missing.haveAll')
+              : t('recipes.missing.some', { items: item.missing.join(', ') })
+          }}
         </div>
       </template>
-      <template #item.category="{ item }">{{ RECIPE_CATEGORY_LABELS[item.category] }}</template>
+      <template #item.category="{ item }">{{ t(`common.category.${item.category}`) }}</template>
       <template #item.totalMinutes="{ item }">
         <template v-if="minutes(item) !== null">{{ formatMinutes(minutes(item)!) }}</template>
         <span v-else class="text-medium-emphasis">–</span>
       </template>
       <template #item.difficulty="{ item }">
-        {{ DIFFICULTY_LABELS[item.difficulty as 1 | 2 | 3] }}
+        {{ t(`common.difficulty.${item.difficulty}`) }}
       </template>
       <template #item.lastCookedAt="{ item }">
         <template v-if="item.lastCookedAt">{{ formatDate(item.lastCookedAt) }}</template>
-        <span v-else class="text-medium-emphasis">nikdy</span>
+        <span v-else class="text-medium-emphasis">{{ t('recipes.table.never') }}</span>
       </template>
       <template #item.createdAt="{ item }">{{ formatDate(item.createdAt) }}</template>
       <template #item.isFavorite="{ item }">

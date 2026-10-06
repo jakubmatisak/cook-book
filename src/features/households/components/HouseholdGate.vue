@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useHouseholds } from '@/api/households'
 import EmptyState from '@/components/EmptyState.vue'
+import { errorText } from '@/i18n/errors'
 import {
   activeHouseholdId,
   clearActiveHousehold,
@@ -17,6 +19,7 @@ import HouseholdPicker from './HouseholdPicker.vue'
  * Pustí obsah až po zvolení domácnosti: jediná domácnosť sa zvolí sama, pri viacerých sa ukáže výber.
  * Všetky ďalšie volania API tak už nesú `?h=` aktívnej domácnosti.
  */
+const { t } = useI18n()
 const { data: households, isPending, error, refetch } = useHouseholds()
 
 const choice = computed(() =>
@@ -58,10 +61,10 @@ function pick(id: string) {
   <EmptyState
     v-else-if="error"
     :icon="mdiAlertCircleOutline"
-    title="Nepodarilo sa načítať domácnosti"
-    :text="error.message"
+    :title="t('households.gate.loadFailed')"
+    :text="errorText(error)"
   >
-    <v-btn color="primary" @click="refetch()">Skúsiť znova</v-btn>
+    <v-btn color="primary" @click="refetch()">{{ t('common.actions.retry') }}</v-btn>
   </EmptyState>
   <HouseholdPicker
     v-else-if="choice?.kind === 'pick' && households"
@@ -72,7 +75,7 @@ function pick(id: string) {
   <EmptyState
     v-else
     :icon="mdiHomeOutline"
-    title="Nie si členom žiadnej domácnosti"
-    text="Požiadaj vlastníka domácnosti, nech ťa pozve."
+    :title="t('households.gate.noneTitle')"
+    :text="t('households.gate.noneText')"
   />
 </template>

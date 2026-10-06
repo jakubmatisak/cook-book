@@ -1,3 +1,4 @@
+import { t } from '@/i18n'
 export const MAX_IMAGE_SIDE = 1600
 const QUALITY = 0.82
 
@@ -31,12 +32,12 @@ export async function resizeImage(file: Blob): Promise<ResizedImage> {
   canvas.width = width
   canvas.height = height
   const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Prehliadač nevie spracovať obrázok.')
+  if (!ctx) throw new Error(t('common.image.unsupported'))
   ctx.drawImage(bitmap, 0, 0, width, height)
   bitmap.close()
 
   let blob = await canvasToBlob(canvas, 'image/webp')
   if (!blob || blob.type !== 'image/webp') blob = await canvasToBlob(canvas, 'image/jpeg')
-  if (!blob) throw new Error('Obrázok sa nepodarilo zmenšiť.')
+  if (!blob) throw new Error(t('common.image.resizeFailed'))
   return { blob, width, height }
 }

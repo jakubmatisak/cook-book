@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { mdiCheck, mdiPencilOutline, mdiPlus, mdiTagMultipleOutline } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { TagDto } from '@shared/api'
 import { MEMBER_COLORS } from '@shared/family'
 import { useDeleteTag, useSaveTag, useTags } from '@/api/catalog'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
-import { plural } from '@/lib/format'
+import { errorText } from '@/i18n/errors'
+import { tc } from '@/i18n/format'
 
+const { t } = useI18n()
 const { data: tags, isPending, error } = useTags()
 const save = useSaveTag()
 const remove = useDeleteTag()
@@ -38,12 +41,12 @@ function openEdit(tag: TagDto) {
 }
 
 async function onSave() {
-  if (!name.value.trim()) return void (formError.value = 'Zadaj názov tagu.')
+  if (!name.value.trim()) return void (formError.value = t('tags.nameRequired'))
   try {
     await save.mutateAsync({ id: editing.value?.id, input: { name: name.value, color: color.value } })
     dialogOpen.value = false
   } catch (e) {
-    formError.value = e instanceof Error ? e.message : 'Uloženie zlyhalo.'
+    formError.value = errorText(e, 'tags.saveFailed')
   }
 }
 
@@ -53,31 +56,29 @@ async function onDelete() {
     await remove.mutateAsync(editing.value.id)
     dialogOpen.value = false
   } catch (e) {
-    formError.value = e instanceof Error ? e.message : 'Zmazanie zlyhalo.'
+    formError.value = errorText(e, 'tags.deleteFailed')
   }
 }
 
-const subtitle = computed(() =>
-  tags.value?.length ? plural(tags.value.length, 'tag', 'tagy', 'tagov') : undefined,
-)
+const subtitle = computed(() => (tags.value?.length ? tc('tags.count', tags.value.length) : undefined))
 const usage = (tag: TagDto) =>
-  tag.recipeCount ? plural(tag.recipeCount, 'recept', 'recepty', 'receptov') : 'nepoužitý'
+  tag.recipeCount ? tc('common.plural.recipes', tag.recipeCount) : t('tags.unused')
 </script>
 
 <template>
-  <PageHeader title="Tagy" :subtitle="subtitle">
-    <v-btn color="primary" :prepend-icon="mdiPlus" @click="openNew">Nový tag</v-btn>
+  <PageHeader :title="t('common.nav.tags')" :subtitle="subtitle">
+    <v-btn color="primary" :prepend-icon="mdiPlus" @click="openNew">{{ t('tags.new') }}</v-btn>
   </PageHeader>
 
-  <v-alert v-if="error" type="error" :text="error.message" />
+  <v-alert v-if="error" type="error" :text="errorText(error)" />
   <v-skeleton-loader v-else-if="isPending" type="list-item@4" />
   <EmptyState
     v-else-if="!tags?.length"
     :icon="mdiTagMultipleOutline"
-    title="Zatiaľ žiadne tagy"
-    text="Tagy pomáhajú triediť recepty: rýchle, detské, na víkend… Pridávajú sa aj priamo v recepte."
+    :title="t('tags.empty.title')"
+    :text="t('tags.empty.text')"
   >
-    <v-btn color="primary" :prepend-icon="mdiPlus" @click="openNew">Pridať tag</v-btn>
+    <v-btn color="primary" :prepend-icon="mdiPlus" @click="openNew">{{ t('tags.add') }}</v-btn>
   </EmptyState>
 
   <v-card v-else>
@@ -97,7 +98,7 @@ const usage = (tag: TagDto) =>
             :icon="mdiPencilOutline"
             variant="text"
             size="small"
-            :aria-label="`Upraviť ${tag.name}`"
+            :aria-label="t('tags.editAria', { name: tag.name })"
             @click.prevent="openEdit(tag)"
           />
         </template>
@@ -106,18 +107,18 @@ const usage = (tag: TagDto) =>
   </v-card>
 
   <v-dialog v-model="dialogOpen" max-width="420">
-    <v-card :title="editing ? 'Upraviť tag' : 'Nový tag'">
+    <v-card :title="editing ? t('tags.editTitle') : t('tags.new')">
       <v-card-text class="d-flex flex-column ga-4">
         <v-text-field
           v-model="name"
           autocomplete="off"
-          label="Názov"
+          :label="t('tags.name')"
           autofocus
           hide-details="auto"
           @keydown.enter="onSave"
         />
         <div>
-          <div class="text-caption text-medium-emphasis mb-1">Farba (voliteľná)</div>
+          <div class="text-caption text-medium-emphasis mb-1">{{ t('tags.color') }}</div>
           <v-chip-group v-model="color" column selected-class="elevation-6">
             <v-chip
               v-for="c in MEMBER_COLORS"
@@ -127,7 +128,7 @@ const usage = (tag: TagDto) =>
               :base-color="c"
               variant="flat"
               size="large"
-              :aria-label="`Farba ${c}`"
+              :aria-label="t('tags.colorAria', { color: c })"
               class="px-3"
             >
               <v-icon :icon="mdiCheck" :style="{ visibility: color === c ? 'visible' : 'hidden' }" />
@@ -138,16 +139,18 @@ const usage = (tag: TagDto) =>
       </v-card-text>
       <v-card-actions class="flex-wrap ga-1">
         <template v-if="editing">
-          <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true"
-            >Zmazať</v-btn
-          >
-          <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete"
-            >Naozaj zmazať</v-btn
-          >
+          <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true">{{
+            t('common.actions.delete')
+          }}</v-btn>
+          <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete">{{
+            t('tags.reallyDelete')
+          }}</v-btn>
         </template>
         <v-spacer />
-        <v-btn variant="text" @click="dialogOpen = false">Zrušiť</v-btn>
-        <v-btn color="primary" :loading="save.isPending.value" @click="onSave">Uložiť</v-btn>
+        <v-btn variant="text" @click="dialogOpen = false">{{ t('common.actions.cancel') }}</v-btn>
+        <v-btn color="primary" :loading="save.isPending.value" @click="onSave">{{
+          t('common.actions.save')
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

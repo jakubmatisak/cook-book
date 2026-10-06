@@ -1,15 +1,19 @@
 <script setup lang="ts">
+import { slotName as displaySlotName } from '@/i18n/defaults'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FamilyMemberDto, MealSlotDto, PlanEntryDto } from '@shared/api'
-import { formatDayLabel } from '@shared/dates'
 import { entryPortions } from '@shared/portions'
 import { planEntryInputSchema } from '@shared/schemas/plan'
 import { useDeleteEntry, useSaveEntry } from '@/api/plan'
 import { useRecipe, useRecipes } from '@/api/recipes'
-import { describeWarning, preferenceConflicts } from '@shared/preferences'
+import { preferenceConflicts } from '@shared/preferences'
 import { describeIssues } from '@/features/recipes/form'
+import { errorText } from '@/i18n/errors'
+import { formatDayLabel, formatNumber } from '@/i18n/format'
 import { matchesSearch } from '@/lib/search'
 
+const { t } = useI18n()
 const open = defineModel<boolean>({ required: true })
 const props = defineProps<{
   /** Upravovaný záznam; null = nový. */
@@ -43,7 +47,10 @@ const warnings = computed(() => {
   const recipe = selectedRecipe.value
   if (!recipe || recipe.id !== selectedRecipeId.value) return []
   return preferenceConflicts(
-    { ingredientIds: recipe.ingredients.map((i) => i.ingredientId), tagIds: recipe.tags.map((t) => t.id) },
+    {
+      ingredientIds: recipe.ingredients.map((i) => i.ingredientId),
+      tagIds: recipe.tags.map((tag) => tag.id),
+    },
     props.members,
     props.entry?.audience ?? 'all',
     guestIds.value,
@@ -72,7 +79,7 @@ const recipeItems = computed(() => {
   const items = (recipes.value ?? []).map((r) => ({ title: r.title, value: r.id }))
   const current = props.entry?.recipe
   if (current && !items.some((i) => i.value === current.id)) {
-    items.unshift({ title: `${current.title} (zmazaný)`, value: current.id })
+    items.unshift({ title: t('plan.entry.deletedRecipe', { title: current.title }), value: current.id })
   }
   return items
 })
@@ -84,7 +91,7 @@ const guestItems = computed(() =>
     .map((m) => ({ title: m.name, value: m.id })),
 )
 
-const slotItems = computed(() => props.slots.map((s) => ({ title: s.name, value: s.id })))
+const slotItems = computed(() => props.slots.map((s) => ({ title: displaySlotName(s.name), value: s.id })))
 const dateItems = computed(() =>
   props.dates.map((d) => {
     const label = formatDayLabel(d)
@@ -97,12 +104,17 @@ const defaultPortions = computed(() => {
     { servingsOverride: null, audience: 'all', guestIds: guestIds.value },
     props.members,
   )
-  if (fromMembers !== null) return `${String(fromMembers).replace('.', ',')} podľa rodiny`
+  if (fromMembers !== null) return t('plan.entry.portionsFromFamily', { n: formatNumber(fromMembers) })
   const recipe = recipes.value?.find((r) => r.id === recipeId.value)
-  return recipe ? `${recipe.servings} podľa receptu` : 'podľa receptu'
+  return recipe
+    ? t('plan.entry.portionsFromRecipe', { n: formatNumber(recipe.servings) })
+    : t('plan.entry.portionsByRecipe')
 })
 
-const slotName = computed(() => props.slots.find((s) => s.id === slotId.value)?.name ?? '')
+const slotName = computed(() => {
+  const name = props.slots.find((s) => s.id === slotId.value)?.name
+  return name ? displaySlotName(name) : ''
+})
 const dayLabel = computed(() => (date.value ? formatDayLabel(date.value) : null))
 
 function buildInput() {
@@ -131,7 +143,7 @@ async function submit(asCopy = false) {
     await save.mutateAsync({ id: asCopy ? undefined : props.entry?.id, input })
     open.value = false
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Uloženie zlyhalo.'
+    error.value = errorText(e, 'plan.entry.errors.saveFailed')
   }
 }
 
@@ -141,7 +153,7 @@ async function onDelete() {
     await remove.mutateAsync(props.entry.id)
     open.value = false
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Zmazanie zlyhalo.'
+    error.value = errorText(e, 'plan.entry.errors.deleteFailed')
   }
 }
 </script>
@@ -149,7 +161,7 @@ async function onDelete() {
 <template>
   <v-dialog v-model="open" max-width="520">
     <v-card
-      :title="entry ? 'Upraviť jedlo' : 'Pridať jedlo'"
+      :title="entry ? t('plan.entry.editTitle') : t('plan.entry.addTitle')"
       :subtitle="dayLabel ? `${slotName} · ${dayLabel.long} ${dayLabel.date}` : ''"
     >
       <v-card-text class="d-flex flex-column ga-4">
@@ -161,8 +173,8 @@ async function onDelete() {
           divided
           density="comfortable"
         >
-          <v-btn value="recipe">Recept</v-btn>
-          <v-btn value="text">Vlastný text</v-btn>
+          <v-btn value="recipe">{{ t('plan.entry.modeRecipe') }}</v-btn>
+          <v-btn value="text">{{ t('plan.entry.modeText') }}</v-btn>
         </v-btn-toggle>
 
         <v-autocomplete
@@ -170,8 +182,8 @@ async function onDelete() {
           v-model="recipeId"
           :items="recipeItems"
           :custom-filter="(value: string, query: string) => matchesSearch(value, query)"
-          label="Recept"
-          no-data-text="Žiadny recept sa nenašiel"
+          :label="t('plan.entry.recipe')"
+          :no-data-text="t('plan.entry.noRecipe')"
           autofocus
           hide-details
         />
@@ -179,8 +191,8 @@ async function onDelete() {
           v-else
           v-model="freeText"
           autocomplete="off"
-          label="Čo sa bude jesť"
-          placeholder="napr. zvyšky, ideme von, chlieb s maslom"
+          :label="t('plan.entry.freeText')"
+          :placeholder="t('plan.entry.freeTextPlaceholder')"
           autofocus
           hide-details
         />
@@ -189,11 +201,13 @@ async function onDelete() {
           v-if="warnings.length"
           :type="warnings.some((w) => w.kind === 'allergy') ? 'error' : 'warning'"
           density="compact"
-          title="Pozor pri tomto jedle"
+          :title="t('plan.entry.warningsTitle')"
           data-test="entry-warnings"
         >
           <ul class="ps-4">
-            <li v-for="w in warnings" :key="w.memberId + w.kind + w.label">{{ describeWarning(w) }}</li>
+            <li v-for="w in warnings" :key="w.memberId + w.kind + w.label">
+              {{ t(`common.preference.warning.${w.kind}`, { name: w.memberName, label: w.label }) }}
+            </li>
           </ul>
         </v-alert>
 
@@ -201,7 +215,7 @@ async function onDelete() {
           v-if="guestItems.length"
           v-model="guestIds"
           :items="guestItems"
-          label="Návšteva pri jedle"
+          :label="t('plan.entry.guests')"
           multiple
           chips
           closable-chips
@@ -214,7 +228,7 @@ async function onDelete() {
           <v-col cols="12" sm="6">
             <v-number-input
               v-model="servings"
-              label="Porcie"
+              :label="t('plan.entry.portions')"
               :placeholder="defaultPortions"
               persistent-placeholder
               :min="0.5"
@@ -227,13 +241,13 @@ async function onDelete() {
             />
           </v-col>
           <v-col cols="12" sm="6">
-            <v-text-field v-model="note" autocomplete="off" label="Poznámka" hide-details />
+            <v-text-field v-model="note" autocomplete="off" :label="t('plan.entry.note')" hide-details />
           </v-col>
           <v-col cols="12" sm="6">
-            <v-select v-model="date" :items="dateItems" label="Deň" hide-details />
+            <v-select v-model="date" :items="dateItems" :label="t('plan.entry.day')" hide-details />
           </v-col>
           <v-col cols="12" sm="6">
-            <v-select v-model="slotId" :items="slotItems" label="Jedlo" hide-details />
+            <v-select v-model="slotId" :items="slotItems" :label="t('plan.entry.meal')" hide-details />
           </v-col>
         </v-row>
 
@@ -241,20 +255,20 @@ async function onDelete() {
       </v-card-text>
       <v-card-actions class="flex-wrap">
         <template v-if="entry">
-          <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true"
-            >Zmazať</v-btn
-          >
-          <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete"
-            >Naozaj zmazať</v-btn
-          >
+          <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true">{{
+            t('common.actions.delete')
+          }}</v-btn>
+          <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete">{{
+            t('plan.confirmDelete')
+          }}</v-btn>
         </template>
         <v-spacer />
-        <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
-        <v-btn v-if="entry" variant="tonal" :loading="save.isPending.value" @click="submit(true)"
-          >Uložiť ako kópiu</v-btn
-        >
+        <v-btn variant="text" @click="open = false">{{ t('common.actions.cancel') }}</v-btn>
+        <v-btn v-if="entry" variant="tonal" :loading="save.isPending.value" @click="submit(true)">{{
+          t('plan.entry.saveAsCopy')
+        }}</v-btn>
         <v-btn color="primary" :loading="save.isPending.value" @click="submit()">{{
-          entry ? 'Uložiť' : 'Pridať'
+          entry ? t('common.actions.save') : t('common.actions.add')
         }}</v-btn>
       </v-card-actions>
     </v-card>

@@ -8,10 +8,13 @@ import {
   mdiPotSteamOutline,
 } from '@mdi/js'
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { SuggestionDto } from '@shared/api'
 import { useSuggestions } from '@/api/recipes'
-import { formatMinutes } from '@/lib/format'
+import { formatMinutes } from '@/i18n/format'
+import { describeReason } from '../reasons'
 
+const { t } = useI18n()
 const props = defineProps<{ date: string }>()
 defineEmits<{ plan: [recipeId: string] }>()
 
@@ -35,10 +38,7 @@ watch(open, (value) => {
   }
 })
 
-const reasonColor = (reason: string): string | undefined =>
-  reason === 'Máš všetko doma' ? 'success' : reason.startsWith('Chýba') ? 'warning' : undefined
-
-const visibleReasons = (s: SuggestionDto) => s.reasons.slice(0, 3)
+const visibleReasons = (s: SuggestionDto) => s.reasons.slice(0, 3).map(describeReason)
 </script>
 
 <template>
@@ -47,13 +47,13 @@ const visibleReasons = (s: SuggestionDto) => s.reasons.slice(0, 3)
       <template #prepend>
         <v-icon :icon="mdiLightbulbOnOutline" color="primary" />
       </template>
-      <v-card-title class="font-weight-bold">Čo uvariť dnes</v-card-title>
-      <v-card-subtitle>Podľa špajze a posledného varenia</v-card-subtitle>
+      <v-card-title class="font-weight-bold">{{ t('plan.suggestions.title') }}</v-card-title>
+      <v-card-subtitle>{{ t('plan.suggestions.subtitle') }}</v-card-subtitle>
       <template #append>
         <v-btn
           :icon="open ? mdiChevronUp : mdiChevronDown"
           variant="text"
-          :aria-label="open ? 'Zbaliť návrhy' : 'Rozbaliť návrhy'"
+          :aria-label="open ? t('plan.suggestions.collapse') : t('plan.suggestions.expand')"
           :aria-expanded="open"
           @click="open = !open"
         />
@@ -89,12 +89,12 @@ const visibleReasons = (s: SuggestionDto) => s.reasons.slice(0, 3)
                 <v-card-text class="pt-0 flex-grow-1 d-flex flex-wrap ga-1 align-start">
                   <v-chip
                     v-for="reason in visibleReasons(s)"
-                    :key="reason"
+                    :key="reason.text"
                     size="x-small"
                     variant="tonal"
-                    :color="reasonColor(reason)"
+                    :color="reason.color"
                   >
-                    {{ reason }}
+                    {{ reason.text }}
                   </v-chip>
                 </v-card-text>
                 <v-card-actions class="px-4 pb-3">
@@ -105,7 +105,7 @@ const visibleReasons = (s: SuggestionDto) => s.reasons.slice(0, 3)
                     :prepend-icon="mdiCalendarPlus"
                     @click="$emit('plan', s.recipeId)"
                   >
-                    Naplánovať
+                    {{ t('plan.suggestions.plan') }}
                   </v-btn>
                 </v-card-actions>
               </v-card>

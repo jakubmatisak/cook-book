@@ -13,6 +13,7 @@ import {
 } from '@mdi/js'
 import { useQueryClient } from '@tanstack/vue-query'
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { GenerateResult, ShoppingItemDto } from '@shared/api'
 import { parseItemText } from '@shared/shopping'
 import { useShopCategories } from '@/api/catalog'
@@ -31,12 +32,14 @@ import PageHeader from '@/components/PageHeader.vue'
 import { useOnline } from '@/composables/useOnline'
 import { useToday } from '@/composables/useToday'
 import { printPage } from '@/composables/usePrintMode'
-import { plural } from '@/lib/format'
+import { errorText } from '@/i18n/errors'
+import { tc } from '@/i18n/format'
 import GenerateDialog from '../components/GenerateDialog.vue'
 import ItemEditDialog from '../components/ItemEditDialog.vue'
 import { summarizeGenerate } from '@/features/pantry/format'
 import ShoppingItemRow from '../components/ShoppingItemRow.vue'
 
+const { t } = useI18n()
 const client = useQueryClient()
 const today = useToday()
 const { data: me } = useMe()
@@ -63,7 +66,8 @@ async function flushQueue() {
 const online = useOnline(flushQueue)
 onMounted(flushQueue)
 
-const categoryName = (id: string | null) => categories.value?.find((c) => c.id === id)?.name ?? 'Ostatné'
+const categoryName = (id: string | null) =>
+  categories.value?.find((c) => c.id === id)?.name ?? t('shopping.categoryOther')
 const toBuy = computed(() => items.value?.filter((i) => !i.isChecked) ?? [])
 const inCart = computed(() => items.value?.filter((i) => i.isChecked) ?? [])
 const groups = computed(() => {
@@ -80,7 +84,10 @@ const showCart = ref(false)
 
 const subtitle = computed(() => {
   if (!items.value?.length) return undefined
-  return `${plural(toBuy.value.length, 'položka', 'položky', 'položiek')} na kúpenie · ${inCart.value.length} v košíku`
+  return t('shopping.subtitle', {
+    toBuy: tc('common.plural.items', toBuy.value.length),
+    inCart: inCart.value.length,
+  })
 })
 
 // Pridanie jedným riadkom: „2 kg zemiaky“
@@ -93,7 +100,7 @@ async function onAdd() {
     await add.mutateAsync({ listId: listId.value, input: { ...parsed, shopCategoryId: null } })
     newItem.value = ''
   } catch (e) {
-    notify(e instanceof Error ? e.message : 'Položku sa nepodarilo pridať.', 'error')
+    notify(errorText(e, 'shopping.snackbar.addFailed'), 'error')
   }
 }
 
@@ -103,7 +110,7 @@ async function onToggle(item: ShoppingItemDto) {
     const result = await toggle.mutateAsync({ item, isChecked: !item.isChecked })
     if (result === 'queued') queued.value = await offlineQueue.size()
   } catch (e) {
-    notify(e instanceof Error ? e.message : 'Zmena sa neuložila.', 'error')
+    notify(errorText(e, 'shopping.snackbar.toggleFailed'), 'error')
   }
 }
 
@@ -111,7 +118,7 @@ const clear = useClearChecked()
 async function onClearChecked() {
   if (!listId.value) return
   const { removed } = await clear.mutateAsync(listId.value)
-  notify(`Odstránené z košíka: ${plural(removed, 'položka', 'položky', 'položiek')}.`)
+  notify(t('shopping.snackbar.cleared', { items: tc('common.plural.items', removed) }))
 }
 
 const editOpen = ref(false)
@@ -131,7 +138,7 @@ function onGenerated(result: GenerateResult) {
 
 <template>
   <div>
-    <PageHeader title="Nákupný zoznam" :subtitle="subtitle">
+    <PageHeader :title="t('shopping.title')" :subtitle="subtitle">
       <v-btn
         color="primary"
         variant="tonal"
@@ -139,17 +146,22 @@ function onGenerated(result: GenerateResult) {
         :disabled="!listId"
         @click="generateOpen = true"
       >
-        Z jedálnička
+        {{ t('shopping.fromPlan') }}
       </v-btn>
       <v-menu>
         <template #activator="{ props }">
-          <v-btn v-bind="props" :icon="mdiDotsVertical" variant="text" aria-label="Ďalšie akcie" />
+          <v-btn
+            v-bind="props"
+            :icon="mdiDotsVertical"
+            variant="text"
+            :aria-label="t('shopping.moreActions')"
+          />
         </template>
         <v-list>
-          <v-list-item :prepend-icon="mdiPrinterOutline" title="Tlačiť nákup" @click="printList" />
+          <v-list-item :prepend-icon="mdiPrinterOutline" :title="t('shopping.print')" @click="printList" />
           <v-list-item
             :prepend-icon="mdiDeleteSweepOutline"
-            title="Vymazať kúpené"
+            :title="t('shopping.clearChecked')"
             :disabled="!inCart.length"
             @click="onClearChecked"
           />
@@ -165,15 +177,15 @@ function onGenerated(result: GenerateResult) {
       class="mb-4 d-print-none"
       :text="
         online
-          ? `Čaká na odoslanie: ${plural(queued, 'zmena', 'zmeny', 'zmien')} z času bez signálu.`
-          : 'Bez signálu. Odškrtávať môžeš ďalej, zmeny sa odošlú po pripojení.'
+          ? t('shopping.offline.queued', { changes: tc('shopping.plural.changes', queued) })
+          : t('shopping.offline.noSignal')
       "
     />
 
     <v-form class="d-flex ga-2 mb-4 d-print-none" @submit.prevent="onAdd">
       <v-text-field
         v-model="newItem"
-        label="Pridať položku, napr. 2 kg zemiaky"
+        :label="t('shopping.add.label')"
         hide-details
         autocomplete="off"
         enterkeyhint="done"
@@ -186,22 +198,22 @@ function onGenerated(result: GenerateResult) {
         size="large"
         :loading="add.isPending.value"
         :disabled="!newItem?.trim()"
-        aria-label="Pridať položku"
+        :aria-label="t('shopping.add.aria')"
       />
     </v-form>
 
-    <v-alert v-if="error" type="error" :text="error.message" />
+    <v-alert v-if="error" type="error" :text="errorText(error)" />
     <v-skeleton-loader v-else-if="isPending" type="list-item@6" />
 
     <EmptyState
       v-else-if="!items?.length"
       :icon="mdiCartOutline"
-      title="Zoznam je prázdny"
-      text="Vygeneruj ho z jedálnička alebo pridaj položky ručne."
+      :title="t('shopping.empty.title')"
+      :text="t('shopping.empty.text')"
     >
-      <v-btn color="primary" :prepend-icon="mdiPlaylistPlus" @click="generateOpen = true"
-        >Vygenerovať z jedálnička</v-btn
-      >
+      <v-btn color="primary" :prepend-icon="mdiPlaylistPlus" @click="generateOpen = true">{{
+        t('shopping.empty.generate')
+      }}</v-btn>
     </EmptyState>
 
     <template v-else>
@@ -209,7 +221,7 @@ function onGenerated(result: GenerateResult) {
         v-if="!toBuy.length"
         type="success"
         :icon="mdiCheckAll"
-        text="Všetko je v košíku."
+        :text="t('shopping.allInCart')"
         class="mb-4"
       />
 
@@ -238,7 +250,7 @@ function onGenerated(result: GenerateResult) {
           class="mb-2"
           @click="showCart = !showCart"
         >
-          V košíku ({{ inCart.length }})
+          {{ t('shopping.inCart', { n: inCart.length }) }}
         </v-btn>
         <v-expand-transition>
           <v-card v-if="showCart">
@@ -259,7 +271,7 @@ function onGenerated(result: GenerateResult) {
                 :loading="clear.isPending.value"
                 @click="onClearChecked"
               >
-                Vymazať kúpené
+                {{ t('shopping.clearChecked') }}
               </v-btn>
             </v-card-actions>
           </v-card>

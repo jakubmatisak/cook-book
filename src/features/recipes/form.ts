@@ -2,6 +2,7 @@ import type { ImportRecipeResultDto, RecipeDetailDto } from '@shared/api'
 import type { RecipeCategory } from '@shared/recipes'
 import type { RecipeInputRaw } from '@shared/schemas/recipe'
 import type { UnitCode } from '@shared/units'
+import { currentLocale, t, te } from '@/i18n'
 
 /** Stav formulára: čísla sú stringy (tak, ako ich píše používateľ), riadky majú kľúč pre v-for. */
 export interface IngredientRow {
@@ -98,7 +99,11 @@ const intOrNull = (value: string) => {
 
 const textOrNull = (value: string) => (value.trim() ? value.trim() : null)
 
-const formatNumber = (n: number | null) => (n === null ? '' : String(n).replace('.', ','))
+/** Číslo do políčka formulára: desatinná čiarka podľa jazyka, bez oddeľovania tisícov (aby sa dalo načítať späť). */
+const formatNumber = (n: number | null) =>
+  n === null
+    ? ''
+    : new Intl.NumberFormat(currentLocale(), { useGrouping: false, maximumFractionDigits: 10 }).format(n)
 
 export function recipeToForm(detail: RecipeDetailDto): RecipeForm {
   return {
@@ -170,37 +175,27 @@ export function formToInput(form: RecipeForm): RecipeInputRaw {
   }
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  title: 'Názov',
-  description: 'Popis',
-  category: 'Kategória',
-  servings: 'Porcie',
-  prepMinutes: 'Príprava',
-  cookMinutes: 'Varenie',
-  difficulty: 'Náročnosť',
-  sourceUrl: 'Zdroj (adresa)',
-  sourceText: 'Zdroj',
-  tags: 'Tagy',
-  name: 'názov',
-  quantity: 'množstvo',
-  unit: 'jednotka',
-  note: 'poznámka',
-  groupName: 'skupina',
-  text: 'text',
-  timerSeconds: 'časovač',
-}
+/** Preložený názov poľa (`recipes.fields.*` / `recipes.subFields.*`); neznáme pole sa ukáže pod svojím názvom. */
+const label = (group: 'fields' | 'subFields', field: string): string =>
+  te(`recipes.${group}.${field}`) ? t(`recipes.${group}.${field}`) : field
 
-/** Chyby zod schémy ako vety pre používateľa, napr. „Ingrediencia 2 – množstvo: …“. */
+/**
+ * Chyby zod schémy ako vety pre používateľa, napr. „Ingrediencia 2 – množstvo: …“. Názvy polí sa prekladajú,
+ * samotné hlášky schémy ostávajú také, aké prišli (po slovensky zo `shared/`).
+ */
 export function describeIssues(issues: readonly { path: PropertyKey[]; message: string }[]): string[] {
   return issues.map((issue) => {
     const [field, index, sub] = issue.path
     if ((field === 'ingredients' || field === 'steps') && typeof index === 'number') {
-      const what = field === 'ingredients' ? 'Ingrediencia' : 'Krok'
-      const subLabel = typeof sub === 'string' ? (FIELD_LABELS[sub] ?? sub) : undefined
-      return `${what} ${index + 1}${subLabel ? ` – ${subLabel}` : ''}: ${issue.message}`
+      const what = t(field === 'ingredients' ? 'recipes.issue.ingredient' : 'recipes.issue.step')
+      const n = index + 1
+      if (typeof sub === 'string') {
+        return t('recipes.issue.itemField', { what, n, sub: label('subFields', sub), message: issue.message })
+      }
+      return t('recipes.issue.item', { what, n, message: issue.message })
     }
-    const label = typeof field === 'string' ? (FIELD_LABELS[field] ?? field) : 'Recept'
-    return `${label}: ${issue.message}`
+    const name = typeof field === 'string' ? label('fields', field) : t('recipes.issue.recipe')
+    return t('recipes.issue.field', { label: name, message: issue.message })
   })
 }
 

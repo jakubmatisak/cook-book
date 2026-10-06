@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { mdiPencilOutline } from '@mdi/js'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { ShoppingItemDto } from '@shared/api'
-import { formatDayLabel } from '@shared/dates'
-import { formatQuantity } from '@shared/units'
+import { formatQuantity } from '@/i18n/quantity'
+import { formatDayLabel } from '@/i18n/format'
 
+const { t } = useI18n()
 const props = defineProps<{ item: ShoppingItemDto }>()
 defineEmits<{ toggle: [item: ShoppingItemDto]; edit: [item: ShoppingItemDto] }>()
 
@@ -12,7 +14,7 @@ const quantity = computed(() => formatQuantity(props.item.quantity, props.item.u
 const photo = computed(() => props.item.sources.find((s) => s.coverImageUrl)?.coverImageUrl ?? null)
 const origin = computed(() =>
   props.item.source === 'staple'
-    ? 'Stála položka'
+    ? t('shopping.item.staple')
     : props.item.sources.map((s) => `${s.recipeTitle} · ${formatDayLabel(s.date).short}`).join(', '),
 )
 </script>
@@ -51,7 +53,7 @@ const origin = computed(() =>
         :icon="mdiPencilOutline"
         size="small"
         variant="text"
-        :aria-label="`Upraviť ${item.name}`"
+        :aria-label="t('shopping.item.editAria', { name: item.name })"
         class="d-print-none"
         @click.stop="$emit('edit', item)"
       />

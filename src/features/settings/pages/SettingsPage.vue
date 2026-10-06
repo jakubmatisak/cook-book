@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { slotName } from '@/i18n/defaults'
 import { mdiDownload, mdiFileDocumentOutline, mdiLogout } from '@mdi/js'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { I18nT, useI18n } from 'vue-i18n'
 import { useUpdateSettings, useUpdateSlot } from '@/api/family'
 import { ApiError, downloadFile } from '@/api/http'
 import { useIsOwner, useMe } from '@/api/me'
@@ -9,8 +11,10 @@ import HouseholdMembersCard from '@/features/households/components/HouseholdMemb
 import LanguageCard from '../components/LanguageCard.vue'
 import { useThemePreference } from '@/composables/useThemePreference'
 import { ACCESS_LOGOUT_PATH, canLogout } from '@/lib/auth'
-import { plural } from '@/lib/format'
+import { errorText } from '@/i18n/errors'
+import { formatNumber, tc } from '@/i18n/format'
 
+const { t } = useI18n()
 const { data: me, isPending, error } = useMe()
 const isOwner = useIsOwner()
 
@@ -20,11 +24,11 @@ const snackbar = ref({ show: false, text: '', color: 'error' })
 const updateSlot = useUpdateSlot()
 const updateSettings = useUpdateSettings()
 
-const WEEK_STARTS: { value: 0 | 1 | 6; title: string }[] = [
-  { value: 1, title: 'Pondelok' },
-  { value: 0, title: 'Nedeľa' },
-  { value: 6, title: 'Sobota' },
-]
+const WEEK_STARTS = computed<{ value: 0 | 1 | 6; title: string }[]>(() => [
+  { value: 1, title: t('settings.plan.weekdays.monday') },
+  { value: 0, title: t('settings.plan.weekdays.sunday') },
+  { value: 6, title: t('settings.plan.weekdays.saturday') },
+])
 
 const childFactor = ref(0.5)
 watch(
@@ -41,7 +45,7 @@ async function run(action: () => Promise<unknown>) {
   } catch (e) {
     snackbar.value = {
       show: true,
-      text: e instanceof Error ? e.message : 'Zmena sa neuložila.',
+      text: errorText(e, 'settings.changeFailed'),
       color: 'error',
     }
   }
@@ -55,7 +59,6 @@ const saveIgnoreSpices = (value: boolean | null) =>
   run(() => updateSettings.mutateAsync({ ignoreSpicesInPantry: value === true }))
 const saveChildFactor = (value: number) =>
   run(() => updateSettings.mutateAsync({ childPortionFactor: value }))
-const formatFactor = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',')
 
 const showLogout = canLogout(location.hostname)
 const exporting = ref(false)
@@ -65,9 +68,9 @@ async function exportData() {
   exporting.value = true
   try {
     await downloadFile('/export', 'kucharska-kniha-export.json')
-    snackbar.value = { show: true, text: 'Export stiahnutý.', color: 'success' }
+    snackbar.value = { show: true, text: t('settings.export.exported'), color: 'success' }
   } catch (e) {
-    const text = e instanceof ApiError ? e.message : 'Export sa nepodaril.'
+    const text = e instanceof ApiError ? errorText(e) : t('settings.export.failed')
     snackbar.value = { show: true, text, color: 'error' }
   } finally {
     exporting.value = false
@@ -77,9 +80,9 @@ async function exportRecipes() {
   exportingRecipes.value = true
   try {
     await downloadFile('/export/recipes.md', 'kucharska-kniha-recepty.md')
-    snackbar.value = { show: true, text: 'Recepty stiahnuté.', color: 'success' }
+    snackbar.value = { show: true, text: t('settings.export.recipesExported'), color: 'success' }
   } catch (e) {
-    const text = e instanceof ApiError ? e.message : 'Export receptov sa nepodaril.'
+    const text = e instanceof ApiError ? errorText(e) : t('settings.export.recipesFailed')
     snackbar.value = { show: true, text, color: 'error' }
   } finally {
     exportingRecipes.value = false
@@ -88,27 +91,29 @@ async function exportRecipes() {
 </script>
 
 <template>
-  <PageHeader title="Nastavenia" />
+  <PageHeader :title="t('common.nav.settings')" />
 
   <div class="d-flex flex-column ga-4">
-    <v-card title="Účet">
+    <v-card :title="t('settings.account.title')">
       <v-card-text>
         <v-skeleton-loader v-if="isPending" type="list-item-two-line" />
-        <v-alert v-else-if="error" type="error" :text="error.message" />
+        <v-alert v-else-if="error" type="error" :text="errorText(error)" />
         <template v-else-if="me">
           <div class="text-body-1 font-weight-bold">{{ me.user.name }}</div>
           <div class="text-body-2 text-medium-emphasis">{{ me.user.email }}</div>
-          <div class="text-body-2 mt-3">
-            Domácnosť: <strong>{{ me.household.name }}</strong> ·
-            {{ plural(me.members.length, 'osoba', 'osoby', 'osôb') }} v rodine
-          </div>
+          <I18nT keypath="settings.account.household" scope="global" tag="div" class="text-body-2 mt-3">
+            <template #name
+              ><strong>{{ me.household.name }}</strong></template
+            >
+            <template #people>{{ tc('common.plural.people', me.members.length) }}</template>
+          </I18nT>
         </template>
       </v-card-text>
     </v-card>
 
-    <div class="text-overline">Moje nastavenia</div>
+    <div class="text-overline">{{ t('settings.mine') }}</div>
     <LanguageCard />
-    <v-card title="Vzhľad">
+    <v-card :title="t('settings.appearance.title')">
       <v-card-text>
         <v-btn-toggle
           :model-value="themePreference"
@@ -116,34 +121,34 @@ async function exportRecipes() {
           selected-class="bg-primary"
           variant="outlined"
           divided
-          aria-label="Svetlý alebo tmavý vzhľad"
+          :aria-label="t('settings.appearance.aria')"
           @update:model-value="setTheme($event)"
         >
-          <v-btn value="system">Podľa zariadenia</v-btn>
-          <v-btn value="light">Svetlý</v-btn>
-          <v-btn value="dark">Tmavý</v-btn>
+          <v-btn value="system">{{ t('settings.appearance.system') }}</v-btn>
+          <v-btn value="light">{{ t('settings.appearance.light') }}</v-btn>
+          <v-btn value="dark">{{ t('settings.appearance.dark') }}</v-btn>
         </v-btn-toggle>
       </v-card-text>
     </v-card>
 
-    <div class="text-overline">Domácnosť</div>
+    <div class="text-overline">{{ t('settings.household') }}</div>
     <v-alert v-if="me && !isOwner" type="info" density="compact" data-test="owner-only-note">
-      Nastavenia domácnosti môže meniť len vlastník.
+      {{ t('settings.ownerOnly') }}
     </v-alert>
     <HouseholdMembersCard v-if="me" :is-owner="isOwner" />
 
-    <v-card v-if="me" title="Jedálniček">
+    <v-card v-if="me" :title="t('settings.plan.title')">
       <v-card-text class="d-flex flex-column ga-4">
         <div>
-          <div class="text-subtitle-2 mb-1">Jedlá dňa</div>
+          <div class="text-subtitle-2 mb-1">{{ t('settings.plan.slots') }}</div>
           <p class="text-caption text-medium-emphasis mb-1">
-            Vypnuté jedlá sa v pláne nezobrazujú, kým v nich nič nie je.
+            {{ t('settings.plan.slotsHint') }}
           </p>
           <v-switch
             v-for="slot in me.slots"
             :key="slot.id"
             :model-value="slot.isEnabled"
-            :label="slot.name"
+            :label="slotName(slot.name)"
             color="primary"
             density="compact"
             hide-details
@@ -154,15 +159,17 @@ async function exportRecipes() {
         <v-select
           :model-value="me.settings.weekStartsOn"
           :items="WEEK_STARTS"
-          label="Týždeň začína"
+          :label="t('settings.plan.weekStart')"
           hide-details
           :disabled="!isOwner"
           @update:model-value="setWeekStart($event)"
         />
         <div>
           <div class="d-flex align-baseline justify-space-between">
-            <span class="text-subtitle-2">Predvolená porcia dieťaťa</span>
-            <span class="text-body-2 font-weight-bold">{{ formatFactor(childFactor) }} × dospelý</span>
+            <span class="text-subtitle-2">{{ t('settings.plan.childPortion') }}</span>
+            <span class="text-body-2 font-weight-bold">{{
+              t('settings.plan.factorTimesAdult', { factor: formatNumber(childFactor) })
+            }}</span>
           </div>
           <v-slider
             v-model="childFactor"
@@ -174,18 +181,18 @@ async function exportRecipes() {
             :disabled="!isOwner"
             @end="saveChildFactor"
           />
-          <p class="text-caption text-medium-emphasis">Použije sa pri pridaní nového dieťaťa v Rodine.</p>
+          <p class="text-caption text-medium-emphasis">{{ t('settings.plan.childPortionHint') }}</p>
         </div>
       </v-card-text>
     </v-card>
 
-    <v-card v-if="me" title="Špajza a recepty">
+    <v-card v-if="me" :title="t('settings.pantry.title')">
       <v-card-text>
         <v-switch
           :model-value="me.settings.ignoreSpicesInPantry === true"
           color="primary"
-          label="Pri „Čo viem uvariť“ ignorovať koreniny"
-          hint="Koreniny sa nepočítajú ako chýbajúce, takže uvidíš aj recepty, ktoré viem uvariť bez nich."
+          :label="t('settings.pantry.ignoreSpices')"
+          :hint="t('settings.pantry.ignoreSpicesHint')"
           persistent-hint
           :disabled="!isOwner"
           data-test="ignore-spices"
@@ -194,27 +201,28 @@ async function exportRecipes() {
       </v-card-text>
     </v-card>
 
-    <v-card v-if="me" title="Účet">
+    <v-card v-if="me" :title="t('settings.account.title')">
       <v-card-text class="text-body-2">
-        Prihlásený ako <strong>{{ me.user.email }}</strong
-        >. Odhlásením sa tento prehliadač zabudne a pri ďalšom otvorení sa treba prihlásiť znova.
+        <I18nT keypath="settings.account.loggedIn" scope="global" tag="span">
+          <template #email
+            ><strong>{{ me.user.email }}</strong></template
+          >
+        </I18nT>
       </v-card-text>
       <v-card-actions v-if="showLogout">
         <v-btn :href="ACCESS_LOGOUT_PATH" :prepend-icon="mdiLogout" data-test="logout-settings">
-          Odhlásiť sa
+          {{ t('settings.account.logout') }}
         </v-btn>
       </v-card-actions>
     </v-card>
 
-    <v-card v-if="isOwner" title="Záloha a export" data-test="export-card">
+    <v-card v-if="isOwner" :title="t('settings.export.title')" data-test="export-card">
       <v-card-text class="text-body-2">
-        Záloha stiahne všetky recepty, jedálničky a zoznamy ako JSON súbor, odporúčame ju raz za mesiac.
-        Recepty vieš stiahnuť aj ako čitateľný textový súbor (Markdown). Tlač do PDF nájdeš pri recepte,
-        jedálničku a nákupe v menu Tlačiť, v okne tlače zvoľ Uložiť ako PDF.
+        {{ t('settings.export.intro') }}
       </v-card-text>
       <v-card-actions class="flex-wrap ga-2">
         <v-btn color="primary" :prepend-icon="mdiDownload" :loading="exporting" @click="exportData">
-          Exportovať dáta
+          {{ t('settings.export.exportData') }}
         </v-btn>
         <v-btn
           variant="tonal"
@@ -223,7 +231,7 @@ async function exportRecipes() {
           data-test="export-recipes"
           @click="exportRecipes"
         >
-          Recepty ako Markdown
+          {{ t('settings.export.recipesMarkdown') }}
         </v-btn>
       </v-card-actions>
     </v-card>

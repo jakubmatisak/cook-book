@@ -14,16 +14,11 @@ import {
   mdiWeb,
 } from '@mdi/js'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { I18nT, useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
-import {
-  defaultSortDir,
-  SORT_KEYS,
-  SORT_LABELS,
-  TIME_BUCKET_LABELS,
-  type SortKey,
-} from '@shared/recipeFacets'
-import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS, type RecipeCategory } from '@shared/recipes'
+import { defaultSortDir, SORT_KEYS, type SortKey } from '@shared/recipeFacets'
+import type { RecipeCategory } from '@shared/recipes'
 import type { TimeBucket } from '@shared/recipeFacets'
 import { useTags } from '@/api/catalog'
 import { useMe } from '@/api/me'
@@ -31,7 +26,8 @@ import { useRecipes } from '@/api/recipes'
 import { useSaveUserSettings } from '@/api/userSettings'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
-import { plural } from '@/lib/format'
+import { errorText } from '@/i18n/errors'
+import { tc } from '@/i18n/format'
 import ImportRecipeDialog from '../components/ImportRecipeDialog.vue'
 import RecipeCard from '../components/RecipeCard.vue'
 import RecipeFilterPanel from '../components/RecipeFilterPanel.vue'
@@ -51,6 +47,7 @@ import {
   type TableSort,
 } from '../listQuery'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { mdAndUp } = useDisplay()
@@ -207,7 +204,7 @@ function clearAll() {
 /** Zvolené filtre ako odstrániteľné čipy nad zoznamom, aby bolo vidno, čo je zapnuté. */
 const activeChips = computed(() => {
   const s = state.value
-  const tagName = (id: string) => tags.value?.find((t) => t.id === id)?.name ?? id
+  const tagName = (id: string) => tags.value?.find((tag) => tag.id === id)?.name ?? id
   const chips: {
     key: string
     label: string
@@ -215,18 +212,19 @@ const activeChips = computed(() => {
     value: string | number
   }[] = []
   for (const c of s.category)
-    chips.push({ key: `c${c}`, label: RECIPE_CATEGORY_LABELS[c], dimension: 'category', value: c })
-  for (const t of s.time)
-    chips.push({ key: `t${t}`, label: TIME_BUCKET_LABELS[t], dimension: 'time', value: t })
+    chips.push({ key: `c${c}`, label: t(`common.category.${c}`), dimension: 'category', value: c })
+  for (const tb of s.time)
+    chips.push({ key: `t${tb}`, label: t(`common.timeBucket.${tb}`), dimension: 'time', value: tb })
   for (const d of s.difficulty) {
-    chips.push({ key: `d${d}`, label: DIFFICULTY_LABELS[d as 1 | 2 | 3], dimension: 'difficulty', value: d })
+    chips.push({ key: `d${d}`, label: t(`common.difficulty.${d}`), dimension: 'difficulty', value: d })
   }
-  for (const t of s.tag) chips.push({ key: `g${t}`, label: `#${tagName(t)}`, dimension: 'tag', value: t })
+  for (const tag of s.tag)
+    chips.push({ key: `g${tag}`, label: `#${tagName(tag)}`, dimension: 'tag', value: tag })
   return chips
 })
 
 // ─── Zoradenie ────────────────────────────────────────────────────────────────
-const sortItems = SORT_KEYS.map((key) => ({ title: SORT_LABELS[key], value: key }))
+const sortItems = computed(() => SORT_KEYS.map((key) => ({ title: t(`common.sort.${key}`), value: key })))
 /** „Čo viem uvariť“ bez vlastného zoradenia radí podľa toho, čo chýba – vtedy nie je zvolený nič. */
 const sortKey = computed<SortKey | null>(() => state.value.sort ?? (state.value.pantry ? null : 'name'))
 const sortDir = computed(() => state.value.dir ?? defaultSortDir(sortKey.value ?? 'name'))
@@ -248,31 +246,43 @@ const tableSort = computed<TableSort[]>({
   },
 })
 
-const onboarding = [
-  { to: '/recepty/novy', title: 'Pridaj recepty', text: 'Napíš vlastné alebo ich neskôr importuj z webu.' },
-  { to: '/rodina', title: 'Pridaj rodinu', text: 'Dospelých a deti s veľkosťou porcie.' },
-  { to: '/plan', title: 'Naplánuj týždeň', text: 'Recepty do raňajok, obedov a večerí.' },
-  { to: '/nakup', title: 'Vygeneruj nákup', text: 'Zoznam z jedálnička podľa porcií rodiny.' },
-]
+const onboarding = computed(() =>
+  [
+    { to: '/recepty/novy', key: 'recipes' },
+    { to: '/rodina', key: 'family' },
+    { to: '/plan', key: 'plan' },
+    { to: '/nakup', key: 'shopping' },
+  ].map(({ to, key }) => ({
+    to,
+    title: t(`recipes.list.onboarding.${key}.title`),
+    text: t(`recipes.list.onboarding.${key}.text`),
+  })),
+)
 
 const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry || filterCount.value))
 </script>
 
 <template>
   <PageHeader
-    title="Recepty"
-    :subtitle="recipes ? plural(recipes.length, 'recept', 'recepty', 'receptov') : undefined"
+    :title="t('recipes.list.title')"
+    :subtitle="recipes ? tc('common.plural.recipes', recipes.length) : undefined"
   >
     <v-btn variant="tonal" :prepend-icon="mdiWeb" data-test="import-button" @click="importOpen = true">
-      Importovať z webu
+      {{ t('recipes.list.importFromWeb') }}
     </v-btn>
-    <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">Nový recept</v-btn>
+    <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">{{
+      t('recipes.list.newRecipe')
+    }}</v-btn>
   </PageHeader>
 
   <v-alert v-if="pantryMode" type="info" density="compact" class="mb-3" :icon="mdiFridgeOutline">
-    Recepty zoradené podľa toho, čo máš v
-    <router-link to="/spajza" class="text-primary font-weight-bold">špajzi</router-link>. Pri každom vidíš, čo
-    ti ešte chýba.
+    <I18nT keypath="recipes.list.pantryHint" scope="global" tag="span">
+      <template #pantry>
+        <router-link to="/spajza" class="text-primary font-weight-bold">{{
+          t('recipes.list.pantryLink')
+        }}</router-link>
+      </template>
+    </I18nT>
   </v-alert>
 
   <v-btn-toggle
@@ -286,15 +296,15 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
     data-test="missing-toggle"
     @update:model-value="setMissing"
   >
-    <v-btn value="all">Všetky</v-btn>
-    <v-btn :value="0">Viem uvariť ({{ canCook }})</v-btn>
-    <v-btn :value="1">Chýba max. 1 ({{ missingOne }})</v-btn>
+    <v-btn value="all">{{ t('recipes.list.missingAll') }}</v-btn>
+    <v-btn :value="0">{{ t('recipes.list.missingCanCook', { n: canCook }) }}</v-btn>
+    <v-btn :value="1">{{ t('recipes.list.missingMaxOne', { n: missingOne }) }}</v-btn>
   </v-btn-toggle>
 
   <v-text-field
     v-model="search"
     :prepend-inner-icon="mdiMagnify"
-    label="Hľadať podľa názvu alebo ingrediencie"
+    :label="t('recipes.list.search')"
     clearable
     hide-details
     autocomplete="off"
@@ -311,7 +321,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         data-test="filters-button"
         @click="filtersOpen = true"
       >
-        Filtre<template v-if="filterCount">&nbsp;({{ filterCount }})</template>
+        {{ t('recipes.list.filters') }}<template v-if="filterCount">&nbsp;({{ filterCount }})</template>
       </v-btn>
       <v-btn
         :prepend-icon="favorite ? mdiCheck : mdiHeart"
@@ -320,7 +330,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         height="40"
         @click="favorite = !favorite"
       >
-        Obľúbené
+        {{ t('recipes.list.favorites') }}
       </v-btn>
       <v-btn
         :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
@@ -329,7 +339,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         height="40"
         @click="pantryMode = !pantryMode"
       >
-        Čo viem uvariť
+        {{ t('recipes.list.canCook') }}
       </v-btn>
     </div>
 
@@ -337,7 +347,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       <v-select
         :model-value="sortKey"
         :items="sortItems"
-        label="Zoradiť"
+        :label="t('recipes.list.sort')"
         hide-details
         density="compact"
         class="flex-grow-1"
@@ -350,16 +360,12 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         variant="tonal"
         height="40"
         width="40"
-        :aria-label="
-          sortDir === 'asc'
-            ? 'Zoradené vzostupne, zmeniť na zostupne'
-            : 'Zoradené zostupne, zmeniť na vzostupne'
-        "
+        :aria-label="sortDir === 'asc' ? t('recipes.list.sortAsc') : t('recipes.list.sortDesc')"
         @click="flipSortDir"
       />
       <v-btn-toggle v-model="view" mandatory height="40" selected-class="bg-primary" data-test="view-toggle">
-        <v-btn :icon="mdiViewGridOutline" value="grid" aria-label="Zobraziť ako mriežku" />
-        <v-btn :icon="mdiViewHeadline" value="table" aria-label="Zobraziť ako tabuľku" />
+        <v-btn :icon="mdiViewGridOutline" value="grid" :aria-label="t('recipes.list.viewGrid')" />
+        <v-btn :icon="mdiViewHeadline" value="table" :aria-label="t('recipes.list.viewTable')" />
       </v-btn-toggle>
     </div>
   </div>
@@ -380,12 +386,12 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
     >
       {{ chip.label }}
     </v-chip>
-    <v-btn size="small" variant="text" data-test="reset-filters" @click="resetAll"
-      >Zrušiť všetky filtre</v-btn
-    >
+    <v-btn size="small" variant="text" data-test="reset-filters" @click="resetAll">{{
+      t('recipes.list.resetFilters')
+    }}</v-btn>
   </div>
 
-  <v-alert v-if="error" type="error" :text="error.message" />
+  <v-alert v-if="error" type="error" :text="errorText(error)" />
 
   <v-row v-else-if="isPending">
     <v-col v-for="n in 6" :key="n" cols="12" sm="6" lg="4">
@@ -397,16 +403,16 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
     <EmptyState
       v-if="hasFilters"
       :icon="mdiMagnify"
-      title="Nič sa nenašlo"
-      text="Skús iné slovo alebo zruš filtre."
+      :title="t('recipes.list.nothingFoundTitle')"
+      :text="t('recipes.list.nothingFoundText')"
     >
-      <v-btn variant="tonal" color="primary" @click="clearAll">Zrušiť filtre</v-btn>
+      <v-btn variant="tonal" color="primary" @click="clearAll">{{ t('recipes.list.clearFilters') }}</v-btn>
     </EmptyState>
     <EmptyState
       v-else
       :icon="mdiBookOpenPageVariantOutline"
-      title="Vitaj v kuchárskej knihe"
-      text="Začni receptami, potom pridaj rodinu a naplánuj týždeň. Nákupný zoznam sa vygeneruje sám."
+      :title="t('recipes.list.welcomeTitle')"
+      :text="t('recipes.list.welcomeText')"
     >
       <div class="d-flex flex-column align-center w-100">
         <v-list lines="two" class="text-start mb-4 w-100" max-width="26rem">
@@ -418,7 +424,9 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             :subtitle="step.text"
           />
         </v-list>
-        <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">Pridať prvý recept</v-btn>
+        <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">{{
+          t('recipes.list.addFirst')
+        }}</v-btn>
       </div>
     </EmptyState>
   </template>

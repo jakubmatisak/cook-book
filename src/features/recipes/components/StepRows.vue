@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { mdiArrowDown, mdiArrowUp, mdiClose, mdiPlus } from '@mdi/js'
+import { useI18n } from 'vue-i18n'
 import { emptyStepRow, parseQuantity, type StepRow } from '../form'
 
+const { t } = useI18n()
 const rows = defineModel<StepRow[]>({ required: true })
 
 const timerRule = (value: string) => {
   const parsed = parseQuantity(value ?? '')
-  return parsed === null || (Number.isFinite(parsed) && parsed > 0) || 'Počet minút'
+  return parsed === null || (Number.isFinite(parsed) && parsed > 0) || t('recipes.steps.timerRule')
 }
 
 function add() {
@@ -33,12 +35,18 @@ function move(index: number, delta: number) {
         index + 1
       }}</v-avatar>
       <div class="flex-grow-1">
-        <v-textarea v-model="row.text" :label="`Krok ${index + 1}`" rows="2" auto-grow hide-details />
+        <v-textarea
+          v-model="row.text"
+          :label="t('recipes.steps.label', { n: index + 1 })"
+          rows="2"
+          auto-grow
+          hide-details
+        />
         <div class="d-flex align-center ga-2 mt-2">
           <v-text-field
             v-model="row.timerMinutes"
             autocomplete="off"
-            label="Časovač (min)"
+            :label="t('recipes.steps.timer')"
             inputmode="decimal"
             :rules="[timerRule]"
             hide-details="auto"
@@ -50,28 +58,28 @@ function move(index: number, delta: number) {
             :icon="mdiArrowUp"
             size="small"
             variant="text"
-            aria-label="Posunúť vyššie"
+            :aria-label="t('recipes.rows.up')"
             @click="move(index, -1)"
           />
           <v-btn
             :icon="mdiArrowDown"
             size="small"
             variant="text"
-            aria-label="Posunúť nižšie"
+            :aria-label="t('recipes.rows.down')"
             @click="move(index, 1)"
           />
           <v-btn
             :icon="mdiClose"
             size="small"
             variant="text"
-            aria-label="Odstrániť krok"
+            :aria-label="t('recipes.steps.remove')"
             @click="remove(index)"
           />
         </div>
       </div>
     </div>
     <v-btn variant="tonal" color="primary" :prepend-icon="mdiPlus" class="align-self-start" @click="add">
-      Pridať krok
+      {{ t('recipes.steps.add') }}
     </v-btn>
   </div>
 </template>

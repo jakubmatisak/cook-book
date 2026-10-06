@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { mdiAccountGroupOutline, mdiPlus } from '@mdi/js'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FamilyMemberDto } from '@shared/api'
-import { MEMBER_COLORS, MEMBER_KIND_LABELS } from '@shared/family'
+import { MEMBER_COLORS } from '@shared/family'
 import { entryPortions } from '@shared/portions'
-import { PREFERENCE_CHIP_LABELS } from '@shared/preferences'
 import { useIsOwner, useMe } from '@/api/me'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
-import { plural } from '@/lib/format'
+import { errorText } from '@/i18n/errors'
+import { formatNumber, tc } from '@/i18n/format'
 import MemberDialog from '../components/MemberDialog.vue'
 
+const { t } = useI18n()
 const { data: me, isPending, error } = useMe()
 const isOwner = useIsOwner()
 const members = computed(() => me.value?.members ?? [])
@@ -19,7 +21,11 @@ const members = computed(() => me.value?.members ?? [])
 const groups = computed(() =>
   [
     { key: 'family', title: null, members: members.value.filter((m) => m.kind !== 'guest') },
-    { key: 'guests', title: 'Návštevy', members: members.value.filter((m) => m.kind === 'guest') },
+    {
+      key: 'guests',
+      title: t('family.page.guests'),
+      members: members.value.filter((m) => m.kind === 'guest'),
+    },
   ].filter((g) => g.members.length > 0),
 )
 const hasGuests = computed(() => members.value.some((m) => m.kind === 'guest'))
@@ -30,8 +36,8 @@ const totalPortions = computed(() =>
 const subtitle = computed(() => {
   if (!members.value.length) return undefined
   return totalPortions.value === null
-    ? 'Nikto sa nepočíta do porcií'
-    : `Na jedno jedlo pre celú rodinu: ${plural(totalPortions.value, 'porcia', 'porcie', 'porcií')}`
+    ? t('family.page.nobodyCounted')
+    : t('family.page.totalPortions', { portions: tc('common.plural.portions', totalPortions.value) })
 })
 
 const dialogOpen = ref(false)
@@ -48,37 +54,37 @@ function openEdit(member: FamilyMemberDto) {
   dialogOpen.value = true
 }
 
-const formatFactor = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',')
 const memberSubtitle = (m: FamilyMemberDto) =>
-  `${MEMBER_KIND_LABELS[m.kind]} · porcia ${formatFactor(m.portionFactor)}${m.isActive ? '' : ' · nepočíta sa'}`
+  t(m.isActive ? 'family.page.memberSubtitle' : 'family.page.memberSubtitleInactive', {
+    kind: t(`common.memberKind.${m.kind}`),
+    factor: formatNumber(m.portionFactor),
+  })
 </script>
 
 <template>
-  <PageHeader title="Rodina" :subtitle="subtitle">
-    <v-btn v-if="members.length && isOwner" color="primary" :prepend-icon="mdiPlus" @click="openNew"
-      >Pridať</v-btn
-    >
+  <PageHeader :title="t('common.nav.family')" :subtitle="subtitle">
+    <v-btn v-if="members.length && isOwner" color="primary" :prepend-icon="mdiPlus" @click="openNew">{{
+      t('common.actions.add')
+    }}</v-btn>
   </PageHeader>
 
-  <v-alert v-if="error" type="error" :text="error.message" />
+  <v-alert v-if="error" type="error" :text="errorText(error)" />
   <v-skeleton-loader v-else-if="isPending" type="list-item-avatar-two-line@3" />
 
   <EmptyState
     v-else-if="!members.length"
     :icon="mdiAccountGroupOutline"
-    title="Kto u vás je?"
-    :text="
-      isOwner
-        ? 'Pridaj dospelých aj deti. Podľa veľkosti porcií sa potom prepočíta, koľko navariť a nakúpiť. Návštevy s alergiami a averziami pridáš tiež.'
-        : 'Rodinu pridáva vlastník domácnosti.'
-    "
+    :title="t('family.page.empty.title')"
+    :text="isOwner ? t('family.page.empty.ownerText') : t('family.page.empty.memberText')"
   >
-    <v-btn v-if="isOwner" color="primary" :prepend-icon="mdiPlus" @click="openNew">Pridať člena rodiny</v-btn>
+    <v-btn v-if="isOwner" color="primary" :prepend-icon="mdiPlus" @click="openNew">{{
+      t('family.page.addMember')
+    }}</v-btn>
   </EmptyState>
 
   <v-card v-else>
     <v-alert v-if="!isOwner" type="info" density="compact" data-test="family-readonly">
-      Rodinu a jej preferencie môže meniť len vlastník domácnosti.
+      {{ t('family.page.readonly') }}
     </v-alert>
     <v-list lines="two">
       <template v-for="group in groups" :key="group.key">
@@ -103,7 +109,7 @@ const memberSubtitle = (m: FamilyMemberDto) =>
                 variant="tonal"
                 :color="p.kind === 'allergy' ? 'error' : p.kind === 'dislike' ? 'warning' : 'secondary'"
               >
-                {{ PREFERENCE_CHIP_LABELS[p.kind] }}: {{ p.label }}
+                {{ t(`common.preference.${p.kind}`) }}: {{ p.label }}
               </v-chip>
             </span>
           </template>
@@ -116,7 +122,7 @@ const memberSubtitle = (m: FamilyMemberDto) =>
       </template>
     </v-list>
     <p v-if="hasGuests" class="text-caption text-medium-emphasis px-4 pb-3">
-      Návšteva sa do porcií a upozornení počíta, až keď ju pri jedle v jedálničku vyberieš.
+      {{ t('family.page.guestsNote') }}
     </p>
   </v-card>
 

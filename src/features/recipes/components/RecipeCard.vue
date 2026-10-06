@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { mdiCheckCircleOutline, mdiClockOutline, mdiPotSteamOutline } from '@mdi/js'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { RecipeSummaryDto } from '@shared/api'
-import { RECIPE_CATEGORY_LABELS } from '@shared/recipes'
-import { formatMinutes, totalMinutes } from '@/lib/format'
+import { formatMinutes } from '@/i18n/format'
+import { totalMinutes } from '@/lib/format'
 import FavoriteButton from './FavoriteButton.vue'
 
 const props = defineProps<{ recipe: RecipeSummaryDto }>()
+const { t } = useI18n()
 
 const time = computed(() => totalMinutes(props.recipe.prepMinutes, props.recipe.cookMinutes))
 const subtitle = computed(() => {
-  const parts = [RECIPE_CATEGORY_LABELS[props.recipe.category]]
+  const parts = [t(`common.category.${props.recipe.category}`)]
   if (time.value !== null) parts.push(formatMinutes(time.value))
   return parts.join(' · ')
 })
@@ -61,10 +63,14 @@ const subtitle = computed(() => {
         variant="tonal"
         :prepend-icon="mdiCheckCircleOutline"
       >
-        Máš všetko
+        {{ t('recipes.missing.haveAll') }}
       </v-chip>
       <v-chip v-else size="small" color="warning" variant="tonal">
-        Chýba: {{ recipe.missing.slice(0, 3).join(', ') }}{{ recipe.missing.length > 3 ? '…' : '' }}
+        {{
+          t('recipes.missing.some', {
+            items: recipe.missing.slice(0, 3).join(', ') + (recipe.missing.length > 3 ? '…' : ''),
+          })
+        }}
       </v-chip>
     </v-card-text>
     <!-- Riadok tagov je vždy vyhradený, aj keď recept tagy nemá. -->

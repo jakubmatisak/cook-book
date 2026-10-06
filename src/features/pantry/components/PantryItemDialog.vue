@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { unitText } from '@/i18n/quantity'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { PantryItemDto } from '@shared/api'
 import { UNITS, type UnitCode } from '@shared/units'
 import { useSavePantryItem, useTogglePantry } from '@/api/catalog'
+import { errorText } from '@/i18n/errors'
 import { parseQuantity } from '@/features/recipes/form'
+import { quantityInputText } from '../format'
 
+const { t } = useI18n()
 const open = defineModel<boolean>({ required: true })
 const emit = defineEmits<{ editIngredient: [] }>()
 const props = defineProps<{
@@ -25,20 +30,22 @@ const toggle = useTogglePantry()
 watch(open, (isOpen) => {
   if (!isOpen) return
   const item = props.item
-  quantity.value = item?.quantity == null ? '' : String(item.quantity).replace('.', ',')
+  quantity.value = quantityInputText(item?.quantity)
   unit.value = item?.unit ?? null
   expiresOn.value = item?.expiresOn ?? ''
   location.value = item?.location ?? ''
   error.value = ''
 })
 
-const unitItems = UNITS.map((u) => ({ title: u.code, value: u.code, subtitle: u.label }))
+const unitItems = computed(() =>
+  UNITS.map((u) => ({ title: unitText(u.code), value: u.code, subtitle: t(`common.unit.${u.code}`) })),
+)
 
 async function onSave() {
   if (!props.ingredient) return
   const q = parseQuantity(quantity.value)
   if (q !== null && !(Number.isFinite(q) && q > 0))
-    return void (error.value = 'Množstvo napr. 500 alebo 1,5.')
+    return void (error.value = t('pantry.item.quantityInvalid'))
   try {
     await save.mutateAsync({
       ingredientId: props.ingredient.id,
@@ -51,7 +58,7 @@ async function onSave() {
     })
     open.value = false
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Uloženie zlyhalo.'
+    error.value = errorText(e, 'pantry.item.saveFailed')
   }
 }
 
@@ -61,24 +68,24 @@ async function onRemove() {
     await toggle.mutateAsync({ ingredientId: props.ingredient.id, inPantry: false })
     open.value = false
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Odstránenie zlyhalo.'
+    error.value = errorText(e, 'pantry.item.removeFailed')
   }
 }
 </script>
 
 <template>
   <v-dialog v-model="open" max-width="440">
-    <v-card :title="ingredient?.name ?? 'Zásoba'">
+    <v-card :title="ingredient?.name ?? t('pantry.item.title')">
       <v-card-text class="d-flex flex-column ga-3">
         <p class="text-body-2 text-medium-emphasis">
-          Množstvo je nepovinné. Keď ho zadáš, nákupný zoznam ho od potreby odpočíta.
+          {{ t('pantry.item.intro') }}
         </p>
         <v-row dense>
           <v-col cols="6">
             <v-text-field
               v-model="quantity"
               autocomplete="off"
-              label="Množstvo"
+              :label="t('pantry.item.quantity')"
               inputmode="decimal"
               hide-details
               autofocus
@@ -90,7 +97,7 @@ async function onRemove() {
               v-model="unit"
               :items="unitItems"
               item-props
-              label="Jednotka"
+              :label="t('pantry.item.unit')"
               clearable
               hide-details
               :disabled="!quantity.trim()"
@@ -100,29 +107,26 @@ async function onRemove() {
         <v-text-field
           v-model="expiresOn"
           autocomplete="off"
-          label="Trvanlivosť do"
+          :label="t('pantry.item.expiresOn')"
           type="date"
           clearable
           hide-details
         />
-        <v-text-field
-          v-model="location"
-          autocomplete="off"
-          label="Kde to je (napr. chladnička)"
-          hide-details
-        />
+        <v-text-field v-model="location" autocomplete="off" :label="t('pantry.item.location')" hide-details />
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
       <v-card-actions class="px-4 pb-4 flex-wrap ga-1">
         <v-btn v-if="item" color="error" variant="text" :loading="toggle.isPending.value" @click="onRemove">
-          Odstrániť zo špajze
+          {{ t('pantry.item.removeFromPantry') }}
         </v-btn>
         <v-btn variant="text" data-test="edit-ingredient-name" @click="emit('editIngredient')">
-          Názov alebo zmazanie
+          {{ t('pantry.item.editIngredient') }}
         </v-btn>
         <v-spacer />
-        <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
-        <v-btn color="primary" :loading="save.isPending.value" @click="onSave">Uložiť</v-btn>
+        <v-btn variant="text" @click="open = false">{{ t('common.actions.cancel') }}</v-btn>
+        <v-btn color="primary" :loading="save.isPending.value" @click="onSave">{{
+          t('common.actions.save')
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

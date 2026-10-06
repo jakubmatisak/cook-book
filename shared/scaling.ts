@@ -1,4 +1,4 @@
-import { formatQuantity, type UnitCode } from './units'
+import { formatQuantity, type QuantityFormat, type UnitCode } from './units'
 
 /** Jednotky, ktoré sa dávkujú po štvrtinách (1 ½ PL, 2 ¼ šálky). */
 const QUARTER_UNITS: ReadonlySet<UnitCode> = new Set(['ks', 'PL', 'ČL', 'šálka', 'balenie', 'štipka'])
@@ -23,18 +23,28 @@ export function scaleQuantity(quantity: number | null, factor: number, unit: Uni
 const FRACTIONS: Readonly<Record<number, string>> = { 0.25: '¼', 0.5: '½', 0.75: '¾' }
 
 /** 4,5 → „4 ½“, 0,25 → „¼“, 1,3 → „1,3“. */
-export function formatFraction(value: number): string {
+export function formatFraction(
+  value: number,
+  number: (n: number) => string = (n) => String(n).replace('.', ','),
+): string {
   const whole = Math.floor(value)
   const symbol = FRACTIONS[Math.round((value - whole) * 100) / 100]
   if (symbol) return whole > 0 ? `${whole} ${symbol}` : symbol
-  return String(Math.round(value * 100) / 100).replace('.', ',')
+  return number(Math.round(value * 100) / 100)
 }
 
 /** Prepočítané množstvo ako text: zlomky pre kusy a lyžice, inak bežný formát (g → kg od 1000). */
-export function formatScaled(quantity: number | null, factor: number, unit: UnitCode | null): string {
+export function formatScaled(
+  quantity: number | null,
+  factor: number,
+  unit: UnitCode | null,
+  fmt?: QuantityFormat,
+): string {
   // Pôvodné porcie: množstvo presne tak, ako je v recepte (bez zaokrúhľovania na štvrtiny).
-  if (factor === 1) return formatQuantity(quantity, unit)
+  if (factor === 1) return formatQuantity(quantity, unit, fmt)
   const scaled = scaleQuantity(quantity, factor, unit)
-  if (scaled !== null && unit && QUARTER_UNITS.has(unit)) return `${formatFraction(scaled)} ${unit}`
-  return formatQuantity(scaled, unit)
+  if (scaled !== null && unit && QUARTER_UNITS.has(unit)) {
+    return `${formatFraction(scaled, fmt?.number)} ${fmt ? fmt.unit(unit) : unit}`
+  }
+  return formatQuantity(scaled, unit, fmt)
 }

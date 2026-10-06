@@ -1,19 +1,24 @@
 <script setup lang="ts">
+import { unitText } from '@/i18n/quantity'
 import { mdiArrowDown, mdiArrowUp, mdiClose, mdiPlus } from '@mdi/js'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { UNITS, type UnitCode } from '@shared/units'
 import { useIngredients } from '@/api/catalog'
 import { emptyIngredientRow, parseQuantity, type IngredientRow } from '../form'
 
+const { t } = useI18n()
 const rows = defineModel<IngredientRow[]>({ required: true })
 const { data: catalog } = useIngredients()
 
 const names = computed(() => catalog.value?.map((i) => i.name) ?? [])
-const unitItems = UNITS.map((u) => ({ title: u.code, value: u.code, subtitle: u.label }))
+const unitItems = computed(() =>
+  UNITS.map((u) => ({ title: unitText(u.code), value: u.code, subtitle: t(`common.unit.${u.code}`) })),
+)
 
 const quantityRule = (value: string) => {
   const parsed = parseQuantity(value ?? '')
-  return parsed === null || (Number.isFinite(parsed) && parsed > 0) || 'Napr. 2, 1,5 alebo 1/2'
+  return parsed === null || (Number.isFinite(parsed) && parsed > 0) || t('recipes.ingredients.quantityRule')
 }
 
 /** Pri výbere známej ingrediencie bez jednotky doplní jej predvolenú jednotku. */
@@ -49,7 +54,7 @@ function move(index: number, delta: number) {
           <v-combobox
             :model-value="row.name"
             :items="names"
-            label="Ingrediencia"
+            :label="t('recipes.ingredients.name')"
             hide-details
             density="compact"
             @update:model-value="onNameChange(row, $event)"
@@ -59,7 +64,7 @@ function move(index: number, delta: number) {
           <v-text-field
             v-model="row.quantity"
             autocomplete="off"
-            label="Množstvo"
+            :label="t('recipes.ingredients.quantity')"
             inputmode="decimal"
             :rules="[quantityRule]"
             hide-details="auto"
@@ -71,7 +76,7 @@ function move(index: number, delta: number) {
             v-model="row.unit"
             :items="unitItems"
             item-props
-            label="Jednotka"
+            :label="t('recipes.ingredients.unit')"
             clearable
             hide-details
             density="compact"
@@ -81,7 +86,7 @@ function move(index: number, delta: number) {
           <v-text-field
             v-model="row.note"
             autocomplete="off"
-            label="Poznámka (napr. nadrobno)"
+            :label="t('recipes.ingredients.note')"
             hide-details
             density="compact"
           />
@@ -90,40 +95,45 @@ function move(index: number, delta: number) {
           <v-text-field
             v-model="row.groupName"
             autocomplete="off"
-            label="Skupina (napr. Na cesto)"
+            :label="t('recipes.ingredients.group')"
             hide-details
             density="compact"
           />
         </v-col>
       </v-row>
       <div class="d-flex align-center mt-1">
-        <v-checkbox v-model="row.isOptional" label="Voliteľná" hide-details density="compact" />
+        <v-checkbox
+          v-model="row.isOptional"
+          :label="t('recipes.ingredients.optional')"
+          hide-details
+          density="compact"
+        />
         <v-spacer />
         <v-btn
           :icon="mdiArrowUp"
           size="small"
           variant="text"
-          aria-label="Posunúť vyššie"
+          :aria-label="t('recipes.rows.up')"
           @click="move(index, -1)"
         />
         <v-btn
           :icon="mdiArrowDown"
           size="small"
           variant="text"
-          aria-label="Posunúť nižšie"
+          :aria-label="t('recipes.rows.down')"
           @click="move(index, 1)"
         />
         <v-btn
           :icon="mdiClose"
           size="small"
           variant="text"
-          aria-label="Odstrániť ingredienciu"
+          :aria-label="t('recipes.ingredients.remove')"
           @click="remove(index)"
         />
       </div>
     </v-sheet>
     <v-btn variant="tonal" color="primary" :prepend-icon="mdiPlus" class="align-self-start" @click="add">
-      Pridať ingredienciu
+      {{ t('recipes.ingredients.add') }}
     </v-btn>
   </div>
 </template>

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { mdiBellRing, mdiPause, mdiPlay, mdiRestart } from '@mdi/js'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { formatTimer, useTimer } from '@/composables/useTimer'
 
+const { t } = useI18n()
 const props = defineProps<{ seconds: number }>()
 const emit = defineEmits<{ done: [] }>()
 
@@ -25,14 +27,14 @@ const finished = computed(() => state.value.status === 'done')
     class="font-weight-bold"
   >
     <v-icon start :icon="finished ? mdiBellRing : mdiPlay" />
-    {{ finished ? 'Hotovo!' : formatTimer(state.remainingMs) }}
+    {{ finished ? t('recipes.timer.done') : formatTimer(state.remainingMs) }}
     <template #append>
       <v-btn
         v-if="!running"
         :icon="finished ? mdiRestart : mdiPlay"
         size="x-small"
         variant="text"
-        :aria-label="finished ? 'Znova' : 'Spustiť časovač'"
+        :aria-label="finished ? t('recipes.timer.again') : t('recipes.timer.start')"
         class="ms-2"
         @click.stop="timer.start()"
       />
@@ -41,7 +43,7 @@ const finished = computed(() => state.value.status === 'done')
         :icon="mdiPause"
         size="x-small"
         variant="text"
-        aria-label="Pozastaviť časovač"
+        :aria-label="t('recipes.timer.pause')"
         class="ms-2"
         @click.stop="timer.pause()"
       />
@@ -50,7 +52,7 @@ const finished = computed(() => state.value.status === 'done')
         :icon="mdiRestart"
         size="x-small"
         variant="text"
-        aria-label="Vynulovať časovač"
+        :aria-label="t('recipes.timer.reset')"
         @click.stop="timer.reset()"
       />
     </template>

@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { slotName } from '@/i18n/defaults'
 import { mdiPlus } from '@mdi/js'
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FamilyMemberDto, MealSlotDto, PlanEntryDto } from '@shared/api'
-import { formatDayLabel } from '@shared/dates'
+import { formatDayLabel } from '@/i18n/format'
 import { cellKey } from '../week'
 import PlanEntryCard from './PlanEntryCard.vue'
 
+const { t } = useI18n()
 const props = defineProps<{
   dates: string[]
   slots: MealSlotDto[]
@@ -72,7 +75,7 @@ function onDrop(event: DragEvent, date: string, slotId: string) {
         :class="{ 'opacity-60': !slot.isEnabled }"
         style="flex: 0 0 7rem; max-width: 7rem"
       >
-        {{ slot.name }}
+        {{ slotName(slot.name) }}
       </v-col>
       <v-col
         v-for="d in dates"
@@ -104,7 +107,7 @@ function onDrop(event: DragEvent, date: string, slotId: string) {
             variant="text"
             :icon="mdiPlus"
             class="align-self-center d-print-none"
-            :aria-label="`Pridať ${slot.name} ${formatDayLabel(d).long}`"
+            :aria-label="t('plan.week.addAria', { slot: slotName(slot.name), day: formatDayLabel(d).long })"
             @click="$emit('add', d, slot.id)"
           />
         </div>

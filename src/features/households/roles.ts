@@ -1,8 +1,7 @@
 import type { HouseholdRole } from '@shared/family'
+import { t } from '@/i18n'
 
-export const ROLE_LABELS: Record<HouseholdRole, string> = {
-  owner: 'Vlastník',
-  member: 'Člen',
-}
+export const HOUSEHOLD_ROLES: readonly HouseholdRole[] = ['owner', 'member']
 
-export const roleLabel = (role: HouseholdRole): string => ROLE_LABELS[role]
+/** Názov roly v aktuálnom jazyku (číta reaktívny jazyk, takže sa v šablónach prekreslí pri jeho zmene). */
+export const roleLabel = (role: HouseholdRole): string => t(`common.role.${role}`)

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { HouseholdRole } from '@shared/family'
 import { useInviteMember } from '@/api/households'
-import { ROLE_LABELS } from '../roles'
+import { errorText } from '@/i18n/errors'
 
+const { t } = useI18n()
 const open = defineModel<boolean>({ required: true })
 
 const email = ref('')
@@ -20,28 +22,28 @@ watch(open, (isOpen) => {
 
 async function onInvite() {
   const value = email.value.trim()
-  if (!value) return void (error.value = 'Zadaj e-mail.')
+  if (!value) return void (error.value = t('households.invite.emailRequired'))
   try {
     await invite.mutateAsync({ email: value, role: role.value })
     open.value = false
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Pozvánku sa nepodarilo uložiť.'
+    error.value = errorText(e, 'households.invite.failed')
   }
 }
 </script>
 
 <template>
   <v-dialog v-model="open" max-width="440">
-    <v-card title="Pozvať do domácnosti">
+    <v-card :title="t('households.invite.title')">
       <v-card-text class="d-flex flex-column ga-3">
         <p class="text-body-2 text-medium-emphasis">
-          Pozvaný sa prihlási týmto e-mailom (jednorazovým kódom, ktorý mu príde) a uvidí túto domácnosť.
+          {{ t('households.invite.intro') }}
         </p>
         <v-text-field
           v-model="email"
           type="email"
           autocomplete="off"
-          label="E-mail"
+          :label="t('households.invite.email')"
           autofocus
           hide-details="auto"
           :error-messages="error"
@@ -54,20 +56,20 @@ async function onInvite() {
           selected-class="bg-primary"
           variant="outlined"
           divided
-          aria-label="Rola"
+          :aria-label="t('households.role')"
         >
-          <v-btn value="member">{{ ROLE_LABELS.member }}</v-btn>
-          <v-btn value="owner">{{ ROLE_LABELS.owner }}</v-btn>
+          <v-btn value="member">{{ t('common.role.member') }}</v-btn>
+          <v-btn value="owner">{{ t('common.role.owner') }}</v-btn>
         </v-btn-toggle>
         <p class="text-caption text-medium-emphasis">
-          Vlastník môže meniť nastavenia, rodinu a členov. Člen robí všetko okolo varenia.
+          {{ t('households.invite.roleHint') }}
         </p>
       </v-card-text>
       <v-card-actions class="px-4 pb-4 flex-wrap ga-1">
         <v-spacer />
-        <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
+        <v-btn variant="text" @click="open = false">{{ t('common.actions.cancel') }}</v-btn>
         <v-btn color="primary" :loading="invite.isPending.value" data-test="invite-submit" @click="onInvite">
-          Pozvať
+          {{ t('households.invite.submit') }}
         </v-btn>
       </v-card-actions>
     </v-card>

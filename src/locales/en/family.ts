@@ -1,0 +1,47 @@
+/** Family: member list and the member edit dialog. */
+export default {
+  page: {
+    guests: 'Guests',
+    nobodyCounted: 'Nobody is counted in portions',
+    totalPortions: 'For one meal for the whole family: {portions}',
+    memberSubtitle: '{kind} · portion {factor}',
+    memberSubtitleInactive: '{kind} · portion {factor} · not counted',
+    addMember: 'Add family member',
+    readonly: 'Only the household owner can change the family and their preferences.',
+    guestsNote: 'A guest is counted in portions and warnings only once you pick them for a meal in the plan.',
+    empty: {
+      title: 'Who lives with you?',
+      ownerText:
+        'Add adults and children. Portion sizes are then used to work out how much to cook and buy. You can also add guests with allergies and dislikes.',
+      memberText: 'The household owner adds the family.',
+    },
+  },
+  member: {
+    newTitle: 'New family member',
+    editTitle: 'Edit family member',
+    name: 'Name',
+    nameRequired: 'Enter a name.',
+    who: 'Who is it',
+    whoAria: 'Adult, child or guest',
+    portionSize: 'Portion size',
+    factorTimesAdult: '{factor} × adult',
+    portionHint:
+      'Used to scale quantities when shopping. A small child is usually 0.3 – 0.5, a teenager about 1.',
+    color: 'Colour',
+    colorAria: 'Colour {color}',
+    foodHealth: 'Food and health',
+    allergies: 'Allergies',
+    allergiesHint: 'We will warn you when planning a meal with this ingredient.',
+    dislikes: 'Dislikes',
+    dislikesHint: 'Ingredients they do not like. Just a warning, the recipe stays in the plan.',
+    diets: 'Diet (tags a recipe should have)',
+    dietsHint: 'E.g. Vegetarian. We will warn about recipes without this tag.',
+    noIngredient: 'No ingredient',
+    noTag: 'No tag',
+    countInPortions: 'Count in portions',
+    countInPortionsHint: 'Turn off when someone is away for a longer time.',
+    reallyDelete: 'Really delete',
+    saveFailed: 'Saving failed.',
+    deleteFailed: 'Deleting failed.',
+  },
+}

@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { slotName } from '@/i18n/defaults'
 import { mdiPlus } from '@mdi/js'
+import { useI18n } from 'vue-i18n'
 import type { FamilyMemberDto, MealSlotDto, PlanEntryDto } from '@shared/api'
-import { formatDayLabel } from '@shared/dates'
+import { formatDayLabel } from '@/i18n/format'
 import { cellKey } from '../week'
 import PlanEntryCard from './PlanEntryCard.vue'
 
+const { t } = useI18n()
 defineProps<{
   dates: string[]
   slots: MealSlotDto[]
@@ -30,7 +33,9 @@ defineEmits<{ add: [date: string, slotId: string]; edit: [entry: PlanEntryDto] }
           <span class="text-body-2 text-medium-emphasis font-weight-regular ms-1">{{
             formatDayLabel(d).date
           }}</span>
-          <v-chip v-if="d === today" size="x-small" color="primary" variant="flat" class="ms-2">dnes</v-chip>
+          <v-chip v-if="d === today" size="x-small" color="primary" variant="flat" class="ms-2">{{
+            t('plan.week.todayChip')
+          }}</v-chip>
         </v-card-title>
       </v-card-item>
       <v-divider />
@@ -38,7 +43,7 @@ defineEmits<{ add: [date: string, slotId: string]; edit: [entry: PlanEntryDto] }
         <v-divider v-if="index > 0" />
         <v-row no-gutters align="center" class="px-3 py-1">
           <v-col cols="auto" style="width: 5rem">
-            <span class="text-caption font-weight-bold text-medium-emphasis">{{ slot.name }}</span>
+            <span class="text-caption font-weight-bold text-medium-emphasis">{{ slotName(slot.name) }}</span>
           </v-col>
           <v-col class="d-flex flex-column ga-1 py-1">
             <PlanEntryCard
@@ -55,7 +60,7 @@ defineEmits<{ add: [date: string, slotId: string]; edit: [entry: PlanEntryDto] }
               size="small"
               variant="text"
               color="primary"
-              :aria-label="`Pridať ${slot.name} ${formatDayLabel(d).long}`"
+              :aria-label="t('plan.week.addAria', { slot: slotName(slot.name), day: formatDayLabel(d).long })"
               @click="$emit('add', d, slot.id)"
             />
           </v-col>

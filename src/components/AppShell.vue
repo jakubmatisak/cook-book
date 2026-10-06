@@ -11,6 +11,7 @@ import {
   mdiWhiteBalanceSunny,
 } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useHouseholds } from '@/api/households'
@@ -41,11 +42,8 @@ const THEME_ICONS: Record<ThemePreference, string> = {
   light: mdiWhiteBalanceSunny,
   dark: mdiWeatherNight,
 }
-const THEME_LABELS: Record<ThemePreference, string> = {
-  system: 'Vzhľad podľa zariadenia',
-  light: 'Svetlý vzhľad',
-  dark: 'Tmavý vzhľad',
-}
+const { t } = useI18n()
+const themeLabel = (value: ThemePreference) => t(`common.shell.theme.${value}`)
 
 // Prepínač domácností: len pre človeka, ktorý je členom viacerých. Prepnutie načíta aplikáciu odznova,
 // aby v pamäti nezostali dáta predošlej domácnosti.
@@ -85,18 +83,24 @@ const mobileMenu = ref(false)
     <v-app-bar v-if="showChrome" density="comfortable" border="b" class="d-print-none">
       <template #prepend>
         <!-- Logo v ľavom rohu: odkaz na úvod. -->
-        <v-btn icon variant="text" to="/" aria-label="Kuchárska kniha, úvod" data-test="logo">
+        <v-btn
+          icon
+          variant="text"
+          to="/"
+          :aria-label="t('common.shell.home', { name: t('common.app.name') })"
+          data-test="logo"
+        >
           <v-avatar size="32" rounded="sm"><v-img src="/favicon.svg" alt="" /></v-avatar>
         </v-btn>
         <v-app-bar-nav-icon
           v-if="mdAndUp"
           :icon="mdiMenu"
-          :aria-label="rail ? 'Rozbaliť menu' : 'Zbaliť menu'"
+          :aria-label="rail ? t('common.shell.expandMenu') : t('common.shell.collapseMenu')"
           data-test="menu-toggle"
           @click="rail = !rail"
         />
       </template>
-      <v-app-bar-title class="font-weight-bold">Kuchárska kniha</v-app-bar-title>
+      <v-app-bar-title class="font-weight-bold">{{ t('common.app.name') }}</v-app-bar-title>
       <template #append>
         <v-menu v-if="households && households.length > 1">
           <template #activator="{ props }">
@@ -107,7 +111,7 @@ const mobileMenu = ref(false)
               :text="mdAndUp ? activeName : undefined"
               variant="text"
               class="text-none"
-              :aria-label="`Domácnosť: ${activeName}. Zmeniť`"
+              :aria-label="t('common.shell.household', { name: activeName })"
               data-test="household-switcher"
             />
           </template>
@@ -125,8 +129,8 @@ const mobileMenu = ref(false)
         <v-btn
           :icon="THEME_ICONS[preference]"
           variant="text"
-          :aria-label="THEME_LABELS[preference] + ' – prepnúť'"
-          :title="THEME_LABELS[preference]"
+          :aria-label="t('common.shell.switchTheme', { theme: themeLabel(preference) })"
+          :title="themeLabel(preference)"
           data-test="theme-toggle"
           @click="cycle"
         />
@@ -137,7 +141,7 @@ const mobileMenu = ref(false)
               v-bind="props"
               :icon="mdiAccountCircleOutline"
               variant="text"
-              aria-label="Účet a verzia"
+              :aria-label="t('common.shell.account')"
               data-test="account"
             />
           </template>
@@ -146,15 +150,15 @@ const mobileMenu = ref(false)
               <!-- Celá stránka (nie router): odhlásenie rieši Cloudflare Access. -->
               <v-list-item
                 :href="ACCESS_LOGOUT_PATH"
-                title="Odhlásiť sa"
+                :title="t('common.shell.logout')"
                 :prepend-icon="mdiLogout"
                 data-test="logout"
               />
               <v-divider />
             </template>
             <v-list-item
-              title="Kuchárska kniha"
-              :subtitle="`Verzia ${APP_VERSION_LABEL}`"
+              :title="t('common.app.name')"
+              :subtitle="t('common.app.version', { version: APP_VERSION_LABEL })"
               data-test="app-version"
             />
           </v-list>
@@ -169,7 +173,7 @@ const mobileMenu = ref(false)
           :key="item.to"
           :to="item.to"
           :prepend-icon="item.icon"
-          :title="item.title"
+          :title="t(item.titleKey)"
           rounded="sm"
           data-test="nav-item"
         />
@@ -179,7 +183,7 @@ const mobileMenu = ref(false)
           :key="item.to"
           :to="item.to"
           :prepend-icon="item.icon"
-          :title="item.title"
+          :title="t(item.titleKey)"
           rounded="sm"
           data-test="nav-item"
         />
@@ -188,7 +192,7 @@ const mobileMenu = ref(false)
         <v-list nav density="comfortable">
           <v-list-item
             :href="ACCESS_LOGOUT_PATH"
-            title="Odhlásiť sa"
+            :title="t('common.shell.logout')"
             :prepend-icon="mdiLogout"
             rounded="sm"
             data-test="nav-logout"
@@ -211,7 +215,7 @@ const mobileMenu = ref(false)
           :key="item.to"
           :to="item.to"
           :prepend-icon="item.icon"
-          :title="item.title"
+          :title="t(item.titleKey)"
           rounded="sm"
           data-test="nav-item"
           @click="mobileMenu = false"
@@ -220,7 +224,7 @@ const mobileMenu = ref(false)
           <v-divider class="my-2" />
           <v-list-item
             :href="ACCESS_LOGOUT_PATH"
-            title="Odhlásiť sa"
+            :title="t('common.shell.logout')"
             :prepend-icon="mdiLogout"
             rounded="sm"
             data-test="nav-logout"
@@ -238,7 +242,7 @@ const mobileMenu = ref(false)
           class="mb-4 d-print-none"
           :icon="mdiCloudOffOutline"
         >
-          Bez signálu. Zmeny sa odošlú po pripojení, odškrtávanie nákupu funguje aj teraz.
+          {{ t('common.shell.offline') }}
         </v-alert>
         <slot />
       </v-container>
@@ -247,11 +251,11 @@ const mobileMenu = ref(false)
     <v-bottom-navigation v-if="!mdAndUp && showChrome" border="t" data-test="bottom-nav">
       <v-btn v-for="item in PRIMARY_NAV" :key="item.to" :to="item.to" data-test="nav-item">
         <v-icon :icon="item.icon" />
-        <span>{{ item.title }}</span>
+        <span>{{ t(item.titleKey) }}</span>
       </v-btn>
       <v-btn data-test="nav-item" data-menu="open" @click="mobileMenu = true">
         <v-icon :icon="mdiMenu" />
-        <span>Menu</span>
+        <span>{{ t('common.nav.menu') }}</span>
       </v-btn>
     </v-bottom-navigation>
   </v-app>

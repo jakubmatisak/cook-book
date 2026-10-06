@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { GenerateResult } from '@shared/api'
-import { addDays, daysBetween, formatDayLabel, isIsoDate, startOfWeek } from '@shared/dates'
+import { addDays, daysBetween, isIsoDate, startOfWeek } from '@shared/dates'
 import { MAX_GENERATE_DAYS } from '@shared/schemas/shopping'
 import { useGenerateList } from '@/api/shopping'
+import { errorText } from '@/i18n/errors'
+import { formatDayLabel, tc } from '@/i18n/format'
 
+const { t } = useI18n()
 const open = defineModel<boolean>({ required: true })
 const props = defineProps<{ listId: string; today: string; weekStartsOn: number }>()
 const emit = defineEmits<{ done: [result: GenerateResult] }>()
@@ -45,20 +49,20 @@ const label = (iso: string) => {
 const presets = computed(() => [
   {
     value: 'rest',
-    title: 'Od dnes do konca týždňa',
+    title: t('shopping.generate.presets.rest'),
     subtitle: `${label(props.today)} – ${label(addDays(thisWeek.value, 6))}`,
   },
   {
     value: 'this',
-    title: 'Celý tento týždeň',
+    title: t('shopping.generate.presets.this'),
     subtitle: `${label(thisWeek.value)} – ${label(addDays(thisWeek.value, 6))}`,
   },
   {
     value: 'next',
-    title: 'Budúci týždeň',
+    title: t('shopping.generate.presets.next'),
     subtitle: `${label(addDays(thisWeek.value, 7))} – ${label(addDays(thisWeek.value, 13))}`,
   },
-  { value: 'custom', title: 'Vlastné dni', subtitle: '' },
+  { value: 'custom', title: t('shopping.generate.presets.custom'), subtitle: '' },
 ])
 
 const generate = useGenerateList()
@@ -66,27 +70,30 @@ const generate = useGenerateList()
 async function onGenerate() {
   error.value = ''
   const { from, to } = range.value
-  if (!isIsoDate(from) || !isIsoDate(to)) return void (error.value = 'Vyber dátum od aj do.')
+  if (!isIsoDate(from) || !isIsoDate(to)) return void (error.value = t('shopping.generate.errors.pickDates'))
   const days = daysBetween(from, to)
-  if (days < 0) return void (error.value = 'Dátum „do“ musí byť po dátume „od“.')
-  if (days >= MAX_GENERATE_DAYS) return void (error.value = `Najviac ${MAX_GENERATE_DAYS} dní naraz.`)
+  if (days < 0) return void (error.value = t('shopping.generate.errors.order'))
+  if (days >= MAX_GENERATE_DAYS) {
+    return void (error.value = t('shopping.generate.errors.tooLong', {
+      days: tc('common.plural.days', MAX_GENERATE_DAYS),
+    }))
+  }
   try {
     const result = await generate.mutateAsync({ listId: props.listId, from, to })
     open.value = false
     emit('done', result)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Generovanie zlyhalo.'
+    error.value = errorText(e, 'shopping.generate.errors.failed')
   }
 }
 </script>
 
 <template>
   <v-dialog v-model="open" max-width="460">
-    <v-card title="Vygenerovať z jedálnička">
+    <v-card :title="t('shopping.generate.title')">
       <v-card-text class="d-flex flex-column ga-3">
         <p class="text-body-2 text-medium-emphasis">
-          Spočíta ingrediencie naplánovaných receptov podľa porcií vašej rodiny. Nekúpené položky z minulého
-          generovania sa nahradia, kúpené a ručne pridané ostanú.
+          {{ t('shopping.generate.text') }}
         </p>
         <v-radio-group v-model="preset" hide-details>
           <v-radio v-for="p in presets" :key="p.value" :value="p.value" color="primary">
@@ -100,18 +107,30 @@ async function onGenerate() {
         </v-radio-group>
         <v-row v-if="preset === 'custom'" dense>
           <v-col cols="6"
-            ><v-text-field v-model="customFrom" autocomplete="off" type="date" label="Od" hide-details
+            ><v-text-field
+              v-model="customFrom"
+              autocomplete="off"
+              type="date"
+              :label="t('shopping.generate.from')"
+              hide-details
           /></v-col>
           <v-col cols="6"
-            ><v-text-field v-model="customTo" autocomplete="off" type="date" label="Do" hide-details
+            ><v-text-field
+              v-model="customTo"
+              autocomplete="off"
+              type="date"
+              :label="t('shopping.generate.to')"
+              hide-details
           /></v-col>
         </v-row>
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
       <v-card-actions class="flex-wrap ga-1">
         <v-spacer />
-        <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
-        <v-btn color="primary" :loading="generate.isPending.value" @click="onGenerate">Vygenerovať</v-btn>
+        <v-btn variant="text" @click="open = false">{{ t('common.actions.cancel') }}</v-btn>
+        <v-btn color="primary" :loading="generate.isPending.value" @click="onGenerate">{{
+          t('shopping.generate.submit')
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

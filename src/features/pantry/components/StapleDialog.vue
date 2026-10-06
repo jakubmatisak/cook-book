@@ -1,11 +1,15 @@
 <script setup lang="ts">
+import { unitText } from '@/i18n/quantity'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { StapleDto } from '@shared/api'
 import { UNITS, type UnitCode } from '@shared/units'
 import { useCreateStaple, useDeleteStaple, useIngredients, useUpdateStaple } from '@/api/catalog'
+import { errorText } from '@/i18n/errors'
 import { parseQuantity } from '@/features/recipes/form'
-import { describeCadence } from '../format'
+import { describeCadence, quantityInputText } from '../format'
 
+const { t } = useI18n()
 const open = defineModel<boolean>({ required: true })
 /** Upravovaná položka; bez nej sa pridáva nová. */
 const props = defineProps<{ staple: StapleDto | null }>()
@@ -27,28 +31,31 @@ watch(open, (isOpen) => {
   if (!isOpen) return
   const s = props.staple
   name.value = s?.name ?? ''
-  quantity.value = s?.quantity == null ? '' : String(s.quantity).replace('.', ',')
+  quantity.value = quantityInputText(s?.quantity)
   unit.value = s?.unit ?? null
   everyNWeeks.value = s?.everyNWeeks ?? 1
   error.value = ''
   confirmDelete.value = false
 })
 
-const unitItems = UNITS.map((u) => ({ title: u.code, value: u.code, subtitle: u.label }))
-const cadenceItems = [1, 2, 3, 4, 6, 8].map((n) => ({ title: describeCadence(n), value: n }))
+const unitItems = computed(() =>
+  UNITS.map((u) => ({ title: unitText(u.code), value: u.code, subtitle: t(`common.unit.${u.code}`) })),
+)
+const cadenceItems = computed(() => [1, 2, 3, 4, 6, 8].map((n) => ({ title: describeCadence(n), value: n })))
 const nameItems = computed(() => ingredients.value?.map((i) => i.name) ?? [])
 
 async function onSave() {
   const q = parseQuantity(quantity.value)
-  if (!props.staple && !name.value.trim()) return void (error.value = 'Zadaj názov položky.')
-  if (q !== null && !(Number.isFinite(q) && q > 0)) return void (error.value = 'Množstvo napr. 2 alebo 1,5.')
+  if (!props.staple && !name.value.trim()) return void (error.value = t('pantry.staple.nameRequired'))
+  if (q !== null && !(Number.isFinite(q) && q > 0))
+    return void (error.value = t('pantry.staple.quantityInvalid'))
   const common = { quantity: q, unit: q === null ? null : unit.value, everyNWeeks: everyNWeeks.value }
   try {
     if (props.staple) await update.mutateAsync({ id: props.staple.id, patch: common })
     else await create.mutateAsync({ name: name.value.trim(), ...common })
     open.value = false
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Uloženie zlyhalo.'
+    error.value = errorText(e, 'pantry.staple.saveFailed')
   }
 }
 
@@ -58,22 +65,22 @@ async function onDelete() {
     await remove.mutateAsync(props.staple.id)
     open.value = false
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Zmazanie zlyhalo.'
+    error.value = errorText(e, 'pantry.staple.deleteFailed')
   }
 }
 </script>
 
 <template>
   <v-dialog v-model="open" max-width="440">
-    <v-card :title="staple ? 'Upraviť stálu položku' : 'Nová stála položka'">
+    <v-card :title="staple ? t('pantry.staple.editTitle') : t('pantry.staple.newTitle')">
       <v-card-text class="d-flex flex-column ga-3">
         <p v-if="!staple" class="text-body-2 text-medium-emphasis">
-          Stále položky (mlieko, chlieb) sa pridajú do nákupu zakaždým, keď ho vygeneruješ, v zvolenom rytme.
+          {{ t('pantry.staple.intro') }}
         </p>
         <v-combobox
           v-model="name"
           :items="nameItems"
-          label="Názov"
+          :label="t('pantry.staple.name')"
           :disabled="Boolean(staple)"
           hide-details
           autofocus
@@ -83,7 +90,7 @@ async function onDelete() {
             <v-text-field
               v-model="quantity"
               autocomplete="off"
-              label="Množstvo"
+              :label="t('pantry.staple.quantity')"
               inputmode="decimal"
               hide-details
             />
@@ -93,28 +100,33 @@ async function onDelete() {
               v-model="unit"
               :items="unitItems"
               item-props
-              label="Jednotka"
+              :label="t('pantry.staple.unit')"
               clearable
               hide-details
               :disabled="!quantity.trim()"
             />
           </v-col>
         </v-row>
-        <v-select v-model="everyNWeeks" :items="cadenceItems" label="Ako často" hide-details />
+        <v-select
+          v-model="everyNWeeks"
+          :items="cadenceItems"
+          :label="t('pantry.staple.cadence')"
+          hide-details
+        />
         <v-alert v-if="error" type="error" density="compact" :text="error" />
       </v-card-text>
       <v-card-actions class="px-4 pb-4 flex-wrap ga-1">
         <template v-if="staple">
-          <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true"
-            >Zmazať</v-btn
-          >
-          <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete"
-            >Naozaj zmazať</v-btn
-          >
+          <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true">{{
+            t('common.actions.delete')
+          }}</v-btn>
+          <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete">{{
+            t('pantry.staple.reallyDelete')
+          }}</v-btn>
         </template>
         <v-spacer />
-        <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
-        <v-btn color="primary" :loading="saving" @click="onSave">Uložiť</v-btn>
+        <v-btn variant="text" @click="open = false">{{ t('common.actions.cancel') }}</v-btn>
+        <v-btn color="primary" :loading="saving" @click="onSave">{{ t('common.actions.save') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

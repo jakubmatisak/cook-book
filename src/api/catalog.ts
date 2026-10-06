@@ -10,6 +10,8 @@ import type {
 } from '@shared/api'
 import type { TagInput } from '@shared/schemas/recipe'
 import type { UnitCode } from '@shared/units'
+import { computed } from 'vue'
+import { shopCategoryName } from '@/i18n/defaults'
 import { apiFetch } from './http'
 import { addIngredientsToCache, ingredientFromStaple, INGREDIENTS_KEY } from './ingredientCache'
 
@@ -33,12 +35,16 @@ export const useIngredients = (options: { refreshCounts?: boolean } = {}) =>
 export const useTags = () =>
   useQuery({ queryKey: ['tags'], queryFn: () => apiFetch<TagDto[]>('/tags'), staleTime: 60_000 })
 
-export const useShopCategories = () =>
-  useQuery({
+/** Kategórie obchodu; predvolené názvy sa zobrazujú v jazyku aplikácie (premenované ostávajú ako zadané). */
+export function useShopCategories() {
+  const query = useQuery({
     queryKey: ['shop-categories'],
     queryFn: () => apiFetch<ShopCategoryDto[]>('/shop-categories'),
     staleTime: 5 * 60_000,
   })
+  const data = computed(() => query.data.value?.map((c) => ({ ...c, name: shopCategoryName(c.name) })))
+  return { ...query, data }
+}
 
 /** Pridá základné suroviny; odpoveď nesie len pridané, takže sa zoznam nesťahuje znova. */
 export function useAddStarterIngredients(): UseMutationReturnType<

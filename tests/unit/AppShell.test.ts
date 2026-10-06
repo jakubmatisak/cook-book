@@ -36,7 +36,7 @@ async function mountShell(width: number) {
   setViewport(width)
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: NAV_ITEMS.map((item) => ({ path: item.to, component: { render: () => h('p', item.title) } })),
+    routes: NAV_ITEMS.map((item) => ({ path: item.to, component: { render: () => h('p', item.titleKey) } })),
   })
   await router.push('/recepty')
   await router.isReady()

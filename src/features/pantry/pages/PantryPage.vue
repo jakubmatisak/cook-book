@@ -10,19 +10,22 @@ import {
   mdiRepeat,
 } from '@mdi/js'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { IngredientDto, PantryItemDto, StapleDto } from '@shared/api'
 import { normalizeText } from '@shared/text'
-import { formatQuantity } from '@shared/units'
+import { formatQuantity } from '@/i18n/quantity'
 import { useIngredients, usePantry, useShopCategories, useStaples, useTogglePantry } from '@/api/catalog'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { useToday } from '@/composables/useToday'
-import { plural } from '@/lib/format'
+import { errorText } from '@/i18n/errors'
+import { tc } from '@/i18n/format'
 import IngredientEditDialog from '@/features/ingredients/components/IngredientEditDialog.vue'
 import PantryItemDialog from '../components/PantryItemDialog.vue'
 import StapleDialog from '../components/StapleDialog.vue'
 import { describeCadence, describeExpiry, expiryStatus } from '../format'
 
+const { t } = useI18n()
 const { data: ingredients, isPending, error } = useIngredients()
 const { data: pantry } = usePantry()
 const { data: categories } = useShopCategories()
@@ -60,14 +63,17 @@ const groups = computed(() => {
     .sort(([a], [b]) => (a ? (order.get(a) ?? 99) : 100) - (b ? (order.get(b) ?? 99) : 100))
     .map(([id, items]) => ({
       id: id ?? 'none',
-      name: categories.value?.find((c) => c.id === id)?.name ?? 'Ostatné',
+      name: categories.value?.find((c) => c.id === id)?.name ?? t('pantry.page.otherCategory'),
       items,
     }))
 })
 
 const subtitle = computed(() =>
   ingredients.value?.length
-    ? `Doma: ${plural(inPantry.value.size, 'ingrediencia', 'ingrediencie', 'ingrediencií')} z ${ingredients.value.length}`
+    ? t('pantry.page.subtitle', {
+        items: tc('ingredients.count', inPantry.value.size),
+        total: ingredients.value.length,
+      })
     : undefined,
 )
 
@@ -76,7 +82,7 @@ async function onToggle(item: IngredientDto) {
   try {
     await toggle.mutateAsync({ ingredientId: item.id, inPantry: !inPantry.value.has(item.id) })
   } catch (e) {
-    snackbar.value = { show: true, text: e instanceof Error ? e.message : 'Zmena sa neuložila.' }
+    snackbar.value = { show: true, text: errorText(e, 'pantry.page.changeFailed') }
   }
 }
 
@@ -106,7 +112,7 @@ function editStaple(staple: StapleDto | null) {
 </script>
 
 <template>
-  <PageHeader title="Špajza" :subtitle="subtitle">
+  <PageHeader :title="t('common.nav.pantry')" :subtitle="subtitle">
     <v-btn
       v-if="tab === 'staples'"
       color="primary"
@@ -114,7 +120,7 @@ function editStaple(staple: StapleDto | null) {
       data-test="add-staple"
       @click="editStaple(null)"
     >
-      Nová stála položka
+      {{ t('pantry.page.addStaple') }}
     </v-btn>
     <v-btn
       v-else
@@ -123,19 +129,18 @@ function editStaple(staple: StapleDto | null) {
       :prepend-icon="mdiPotSteamOutline"
       :to="{ path: '/recepty', query: { doma: '1' } }"
     >
-      Čo viem uvariť
+      {{ t('pantry.page.cookable') }}
     </v-btn>
   </PageHeader>
 
   <v-tabs v-model="tab" color="primary" class="mb-4">
-    <v-tab value="home" data-test="tab-home">Doma</v-tab>
-    <v-tab value="staples" data-test="tab-staples">Stále položky</v-tab>
+    <v-tab value="home" data-test="tab-home">{{ t('pantry.page.tabHome') }}</v-tab>
+    <v-tab value="staples" data-test="tab-staples">{{ t('pantry.page.tabStaples') }}</v-tab>
   </v-tabs>
 
   <template v-if="tab === 'home'">
     <p class="text-body-2 text-medium-emphasis mb-4">
-      Označ, čo máš doma. Pri položke môžeš doplniť množstvo a trvanlivosť, nákupný zoznam potom odpočíta, čo
-      už máš, a filter „Čo viem uvariť“ ukáže, na čo máš všetko.
+      {{ t('pantry.page.homeIntro') }}
     </p>
 
     <div class="d-flex flex-wrap align-center ga-3 mb-4">
@@ -143,7 +148,7 @@ function editStaple(staple: StapleDto | null) {
         v-model="search"
         autocomplete="off"
         :prepend-inner-icon="mdiMagnify"
-        label="Hľadať ingredienciu"
+        :label="t('pantry.page.search')"
         clearable
         hide-details
         class="flex-grow-1"
@@ -155,7 +160,7 @@ function editStaple(staple: StapleDto | null) {
         :prepend-icon="onlyHome ? mdiCheck : undefined"
         @click="onlyHome = !onlyHome"
       >
-        Len čo mám doma
+        {{ t('pantry.page.onlyHome') }}
       </v-chip>
       <v-chip
         :color="onlyExpiring ? 'warning' : undefined"
@@ -164,19 +169,21 @@ function editStaple(staple: StapleDto | null) {
         data-test="expiring-chip"
         @click="onlyExpiring = !onlyExpiring"
       >
-        Končí trvanlivosť<template v-if="expiringCount">&nbsp;({{ expiringCount }})</template>
+        {{ t('pantry.page.expiring') }}<template v-if="expiringCount">&nbsp;({{ expiringCount }})</template>
       </v-chip>
     </div>
 
-    <v-alert v-if="error" type="error" :text="error.message" />
+    <v-alert v-if="error" type="error" :text="errorText(error)" />
     <v-skeleton-loader v-else-if="isPending" type="list-item@6" />
     <EmptyState
       v-else-if="!ingredients?.length"
       :icon="mdiFridgeOutline"
-      title="Zatiaľ žiadne ingrediencie"
-      text="Pribudnú automaticky, keď uložíš prvý recept."
+      :title="t('pantry.page.empty.title')"
+      :text="t('pantry.page.empty.text')"
     />
-    <p v-else-if="!groups.length" class="text-body-2 text-medium-emphasis">Nič sa nenašlo.</p>
+    <p v-else-if="!groups.length" class="text-body-2 text-medium-emphasis">
+      {{ t('pantry.page.nothingFound') }}
+    </p>
 
     <v-card v-else>
       <v-list class="py-0">
@@ -225,7 +232,7 @@ function editStaple(staple: StapleDto | null) {
                 :icon="mdiPencilOutline"
                 size="small"
                 variant="text"
-                :aria-label="`Upraviť množstvo a trvanlivosť: ${item.name}`"
+                :aria-label="t('pantry.page.editAria', { name: item.name })"
                 @click.stop="editItem(item)"
               />
             </template>
@@ -237,19 +244,20 @@ function editStaple(staple: StapleDto | null) {
 
   <template v-else>
     <p class="text-body-2 text-medium-emphasis mb-4">
-      Veci, ktoré kupuješ pravidelne a nie sú v receptoch: mlieko, chlieb, toaletný papier. Pridajú sa do
-      nákupu pri každom generovaní, v zvolenom rytme. Čo máš v špajzi, sa nepridá.
+      {{ t('pantry.page.staplesIntro') }}
     </p>
 
-    <v-alert v-if="staplesError" type="error" :text="staplesError.message" />
+    <v-alert v-if="staplesError" type="error" :text="errorText(staplesError)" />
     <v-skeleton-loader v-else-if="staplesPending" type="list-item@4" />
     <EmptyState
       v-else-if="!staples?.length"
       :icon="mdiRepeat"
-      title="Zatiaľ žiadne stále položky"
-      text="Pridaj, čo kupuješ pravidelne, a nákup ti to pripomenie."
+      :title="t('pantry.page.staplesEmpty.title')"
+      :text="t('pantry.page.staplesEmpty.text')"
     >
-      <v-btn color="primary" :prepend-icon="mdiPlus" @click="editStaple(null)">Pridať stálu položku</v-btn>
+      <v-btn color="primary" :prepend-icon="mdiPlus" @click="editStaple(null)">{{
+        t('pantry.page.addStapleShort')
+      }}</v-btn>
     </EmptyState>
     <v-card v-else>
       <v-list class="py-0">
@@ -275,7 +283,7 @@ function editStaple(staple: StapleDto | null) {
               :icon="mdiPencilOutline"
               size="small"
               variant="text"
-              :aria-label="`Upraviť ${staple.name}`"
+              :aria-label="t('pantry.page.editStapleAria', { name: staple.name })"
               @click.stop="editStaple(staple)"
             />
           </template>

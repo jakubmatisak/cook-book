@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { mdiCameraOutline, mdiClose } from '@mdi/js'
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { uploadImage } from '@/api/recipes'
+import { errorText } from '@/i18n/errors'
 import { resizeImage } from '@/lib/image'
 
+const { t } = useI18n()
 const imageId = defineModel<string | null>('imageId', { required: true })
 const imageUrl = defineModel<string | null>('imageUrl', { required: true })
 
@@ -22,7 +25,7 @@ async function onFile(event: Event) {
     imageId.value = image.id
     imageUrl.value = image.url
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Fotku sa nepodarilo nahrať.'
+    error.value = errorText(e, 'recipes.image.uploadFailed')
   } finally {
     uploading.value = false
     if (input.value) input.value.value = ''
@@ -44,13 +47,13 @@ function clear() {
       height="104"
       variant="outlined"
       class="position-relative"
-      :aria-label="imageUrl ? 'Zmeniť fotku' : 'Pridať fotku'"
+      :aria-label="imageUrl ? t('recipes.image.change') : t('recipes.image.add')"
       @click="input?.click()"
     >
       <v-img v-if="imageUrl" :src="imageUrl" cover height="104" />
       <div v-else class="d-flex flex-column align-center justify-center h-100 text-primary">
         <v-icon :icon="mdiCameraOutline" size="32" />
-        <span class="text-caption">Fotka</span>
+        <span class="text-caption">{{ t('recipes.image.label') }}</span>
       </div>
       <v-btn
         v-if="imageUrl"
@@ -58,7 +61,7 @@ function clear() {
         size="x-small"
         variant="flat"
         class="position-absolute top-0 right-0 ma-1"
-        aria-label="Odstrániť fotku"
+        :aria-label="t('recipes.image.remove')"
         @click.stop="clear"
       />
       <v-overlay :model-value="uploading" contained persistent class="align-center justify-center">

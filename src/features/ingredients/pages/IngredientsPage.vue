@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { unitText } from '@/i18n/quantity'
 import { mdiCheck, mdiFormatListChecks, mdiMagnify, mdiPencilOutline, mdiPlaylistPlus } from '@mdi/js'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
 import type { IngredientDto } from '@shared/api'
 import { normalizeText } from '@shared/text'
@@ -13,9 +15,11 @@ import {
 } from '@/api/catalog'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import { errorText } from '@/i18n/errors'
+import { tc } from '@/i18n/format'
 import IngredientEditDialog from '../components/IngredientEditDialog.vue'
-import { plural } from '@/lib/format'
 
+const { t } = useI18n()
 const { data: ingredients, isPending, error } = useIngredients({ refreshCounts: true })
 const { data: categories } = useShopCategories()
 const update = useUpdateIngredient()
@@ -34,7 +38,9 @@ const filtered = computed(() => {
 const uncategorizedCount = computed(() => ingredients.value?.filter((i) => !i.shopCategoryId).length ?? 0)
 
 const categoryItems = computed(() => categories.value?.map((c) => ({ title: c.name, value: c.id })) ?? [])
-const unitItems = UNITS.map((u) => ({ title: u.code, value: u.code, subtitle: u.label }))
+const unitItems = computed(() =>
+  UNITS.map((u) => ({ title: unitText(u.code), value: u.code, subtitle: t(`common.unit.${u.code}`) })),
+)
 
 const snackbar = ref({ show: false, text: '', color: 'error' })
 
@@ -46,14 +52,14 @@ async function onAddStarter() {
       show: true,
       color: 'success',
       text: added
-        ? `Pridané: ${plural(added, 'ingrediencia', 'ingrediencie', 'ingrediencií')}.`
-        : 'Základné suroviny už máš všetky.',
+        ? t('ingredients.page.added', { items: tc('ingredients.count', added) })
+        : t('ingredients.page.allStarters'),
     }
   } catch (e) {
     snackbar.value = {
       show: true,
       color: 'error',
-      text: e instanceof Error ? e.message : 'Suroviny sa nepodarilo pridať.',
+      text: errorText(e, 'ingredients.page.addFailed'),
     }
   }
 }
@@ -68,7 +74,7 @@ async function patch(
     snackbar.value = {
       show: true,
       color: 'error',
-      text: e instanceof Error ? e.message : 'Zmena sa neuložila.',
+      text: errorText(e, 'ingredients.page.changeFailed'),
     }
   }
 }
@@ -83,7 +89,7 @@ function edit(item: IngredientDto) {
 }
 
 const usage = (item: IngredientDto) =>
-  item.usageCount ? `v ${plural(item.usageCount, 'recepte', 'receptoch', 'receptoch')}` : 'nepoužitá'
+  item.usageCount ? tc('ingredients.usedIn', item.usageCount) : t('ingredients.page.unused')
 </script>
 
 <template>
@@ -96,12 +102,8 @@ const usage = (item: IngredientDto) =>
     data-test="sticky-header"
   >
     <PageHeader
-      title="Ingrediencie"
-      :subtitle="
-        mdAndUp
-          ? 'Kategória obchodu určuje poradie v nákupnom zozname. Nové ingrediencie pribúdajú samy pri písaní receptov.'
-          : undefined
-      "
+      :title="t('common.nav.ingredients')"
+      :subtitle="mdAndUp ? t('ingredients.page.subtitle') : undefined"
     >
       <v-btn
         variant="tonal"
@@ -110,7 +112,7 @@ const usage = (item: IngredientDto) =>
         data-test="add-starter"
         @click="onAddStarter"
       >
-        Pridať základné suroviny
+        {{ t('ingredients.page.addStarters') }}
       </v-btn>
     </PageHeader>
 
@@ -119,7 +121,7 @@ const usage = (item: IngredientDto) =>
         v-model="search"
         autocomplete="off"
         :prepend-inner-icon="mdiMagnify"
-        label="Hľadať ingredienciu"
+        :label="t('ingredients.page.search')"
         clearable
         hide-details
         class="flex-grow-1"
@@ -131,18 +133,18 @@ const usage = (item: IngredientDto) =>
         :prepend-icon="onlyUncategorized ? mdiCheck : undefined"
         @click="onlyUncategorized = !onlyUncategorized"
       >
-        Bez kategórie ({{ uncategorizedCount }})
+        {{ t('ingredients.page.uncategorized', { count: uncategorizedCount }) }}
       </v-chip>
     </div>
   </v-sheet>
 
-  <v-alert v-if="error" type="error" :text="error.message" />
+  <v-alert v-if="error" type="error" :text="errorText(error)" />
   <v-skeleton-loader v-else-if="isPending" type="list-item-two-line@6" />
   <EmptyState
     v-else-if="!ingredients?.length"
     :icon="mdiFormatListChecks"
-    title="Zatiaľ žiadne ingrediencie"
-    text="Pribudnú automaticky, keď uložíš prvý recept, alebo si môžeš naraz pridať základné suroviny."
+    :title="t('ingredients.page.empty.title')"
+    :text="t('ingredients.page.empty.text')"
   >
     <v-btn
       color="primary"
@@ -150,10 +152,12 @@ const usage = (item: IngredientDto) =>
       :loading="addStarter.isPending.value"
       @click="onAddStarter"
     >
-      Pridať základné suroviny
+      {{ t('ingredients.page.addStarters') }}
     </v-btn>
   </EmptyState>
-  <p v-else-if="!filtered.length" class="text-body-2 text-medium-emphasis">Nič sa nenašlo.</p>
+  <p v-else-if="!filtered.length" class="text-body-2 text-medium-emphasis">
+    {{ t('ingredients.page.nothingFound') }}
+  </p>
 
   <v-card v-else>
     <template v-for="(item, index) in filtered" :key="item.id">
@@ -168,7 +172,7 @@ const usage = (item: IngredientDto) =>
             :icon="mdiPencilOutline"
             size="small"
             variant="text"
-            :aria-label="`Upraviť alebo zmazať ingredienciu ${item.name}`"
+            :aria-label="t('ingredients.page.editAria', { name: item.name })"
             data-test="edit-ingredient"
             @click="edit(item)"
           />
@@ -177,7 +181,7 @@ const usage = (item: IngredientDto) =>
           <v-select
             :model-value="item.shopCategoryId"
             :items="categoryItems"
-            label="Kategória obchodu"
+            :label="t('ingredients.page.shopCategory')"
             density="compact"
             clearable
             hide-details
@@ -189,7 +193,7 @@ const usage = (item: IngredientDto) =>
             :model-value="item.defaultUnit"
             :items="unitItems"
             item-props
-            label="Jednotka"
+            :label="t('ingredients.page.unit')"
             density="compact"
             clearable
             hide-details

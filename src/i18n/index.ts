@@ -1,5 +1,6 @@
 import { createI18n } from 'vue-i18n'
 import { en as vuetifyEn, sk as vuetifySk } from 'vuetify/locale'
+import { z } from '@shared/schemas/zod'
 import { LOCALES, type Locale } from '@shared/userSettings'
 import { skPluralRule } from './plural'
 
@@ -53,9 +54,14 @@ export const te = i18n.global.te
 
 export const currentLocale = (): Locale => parseLocale(i18n.global.locale.value)
 
+/** Vstavané hlášky zod (napr. „Neplatná hodnota“) idú v jazyku aplikácie. */
+const applyZodLocale = (locale: Locale) => z.config(locale === 'en' ? z.locales.en() : z.locales.sk())
+applyZodLocale(currentLocale())
+
 /** Prepne jazyk aplikácie a zapamätá si ho v prehliadači (na server ho ukladá `useSyncUserSettings`). */
 export function setLocale(locale: Locale): void {
   i18n.global.locale.value = locale
+  applyZodLocale(locale)
   try {
     localStorage.setItem(STORAGE_KEY, locale)
   } catch {

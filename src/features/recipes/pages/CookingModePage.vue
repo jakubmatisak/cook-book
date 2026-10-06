@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { mdiArrowLeft, mdiCheckAll, mdiFoodVariant } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
-import { formatScaled } from '@shared/scaling'
+import { formatScaled } from '@/i18n/quantity'
 import { useRecipe } from '@/api/recipes'
 import EmptyState from '@/components/EmptyState.vue'
 import { useWakeLock } from '@/composables/useWakeLock'
+import { errorText } from '@/i18n/errors'
+import { tc } from '@/i18n/format'
 import StepTimer from '../components/StepTimer.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const { mdAndUp } = useDisplay()
 const id = computed(() => String(route.params.id))
@@ -22,10 +26,12 @@ const factor = computed(() => {
   const r = recipe.value
   return r && Number.isFinite(requested) && requested >= 1 ? requested / r.servings : 1
 })
-const servingsLabel = computed(() => {
+const servings = computed(() => {
   const r = recipe.value
   return r ? Math.round(r.servings * factor.value * 100) / 100 : 0
 })
+/** „4 porcie“ (4. pád) pre vety „Varíš pre …“ a „Ingrediencie pre …“. */
+const portions = computed(() => tc('recipes.portionsAcc', servings.value))
 
 // Odškrtnuté kroky prežijú obnovenie stránky (pamätá sa len v tejto karte prehliadača).
 const storageKey = computed(() => `kniha:cook:${id.value}`)
@@ -60,14 +66,21 @@ const allDone = computed(() => steps.value.length > 0 && currentStepId.value ===
 const ingredientsOpen = ref(false)
 const snackbar = ref({ show: false, text: '' })
 function onTimerDone(position: number) {
-  snackbar.value = { show: true, text: `Časovač kroku ${position} dobehol.` }
+  snackbar.value = { show: true, text: t('recipes.cooking.timerDone', { n: position }) }
 }
 </script>
 
 <template>
   <v-toolbar color="transparent" density="compact" class="px-0">
-    <v-btn :icon="mdiArrowLeft" variant="text" aria-label="Späť na recept" :to="`/recepty/${id}`" />
-    <v-toolbar-title class="font-weight-bold">{{ recipe?.title ?? 'Režim varenia' }}</v-toolbar-title>
+    <v-btn
+      :icon="mdiArrowLeft"
+      variant="text"
+      :aria-label="t('recipes.cooking.backToRecipe')"
+      :to="`/recepty/${id}`"
+    />
+    <v-toolbar-title class="font-weight-bold">{{
+      recipe?.title ?? t('recipes.cooking.title')
+    }}</v-toolbar-title>
     <v-btn
       v-if="recipe"
       :prepend-icon="mdiFoodVariant"
@@ -75,30 +88,30 @@ function onTimerDone(position: number) {
       color="primary"
       @click="ingredientsOpen = true"
     >
-      Ingrediencie
+      {{ t('recipes.cooking.ingredients') }}
     </v-btn>
   </v-toolbar>
 
   <v-progress-linear :model-value="progress" color="primary" height="6" rounded class="mb-4" />
 
   <v-skeleton-loader v-if="isPending" type="article, article" />
-  <v-alert v-else-if="error" type="error" :text="error.message" />
+  <v-alert v-else-if="error" type="error" :text="errorText(error)" />
 
   <template v-else-if="recipe">
     <p v-if="!wakeLockSupported" class="text-caption text-medium-emphasis mb-2">
-      Tento prehliadač nevie držať obrazovku zapnutú, nastav jej dlhšie vypnutie v zariadení.
+      {{ t('recipes.cooking.noWakeLock') }}
     </p>
     <p class="text-body-2 text-medium-emphasis mb-3">
-      Varíš pre {{ servingsLabel }} porcií. Ťukni na krok, keď je hotový.
+      {{ t('recipes.cooking.cookingFor', { portions }) }}
     </p>
 
     <EmptyState
       v-if="!steps.length"
       :icon="mdiFoodVariant"
-      title="Recept nemá postup"
-      text="Doplň kroky v úprave receptu."
+      :title="t('recipes.cooking.noStepsTitle')"
+      :text="t('recipes.cooking.noStepsText')"
     >
-      <v-btn color="primary" :to="`/recepty/${id}/upravit`">Upraviť recept</v-btn>
+      <v-btn color="primary" :to="`/recepty/${id}/upravit`">{{ t('recipes.cooking.editRecipe') }}</v-btn>
     </EmptyState>
 
     <div class="d-flex flex-column ga-3">
@@ -113,11 +126,11 @@ function onTimerDone(position: number) {
           <v-checkbox-btn
             :model-value="checked.has(step.id)"
             color="primary"
-            :aria-label="`Krok ${step.position} hotový`"
+            :aria-label="t('recipes.cooking.stepDone', { n: step.position })"
             @update:model-value="toggleStep(step.id)"
           />
           <div class="flex-grow-1" @click="toggleStep(step.id)">
-            <div class="text-overline">Krok {{ step.position }}</div>
+            <div class="text-overline">{{ t('recipes.cooking.step', { n: step.position }) }}</div>
             <div
               class="text-h6 font-weight-regular text-pre-line"
               :class="{ 'text-decoration-line-through': checked.has(step.id) }"
@@ -132,17 +145,23 @@ function onTimerDone(position: number) {
       </v-card>
     </div>
 
-    <v-alert v-if="allDone" type="success" :icon="mdiCheckAll" title="Dobrú chuť!" class="mt-4">
-      Všetky kroky sú hotové.
+    <v-alert
+      v-if="allDone"
+      type="success"
+      :icon="mdiCheckAll"
+      :title="t('recipes.cooking.allDoneTitle')"
+      class="mt-4"
+    >
+      {{ t('recipes.cooking.allDoneText') }}
       <template #append>
-        <v-btn color="success" variant="flat" :to="`/recepty/${id}`">Hotovo</v-btn>
+        <v-btn color="success" variant="flat" :to="`/recepty/${id}`">{{ t('recipes.cooking.done') }}</v-btn>
       </template>
     </v-alert>
 
     <v-navigation-drawer v-if="mdAndUp" v-model="ingredientsOpen" location="end" temporary width="340">
-      <v-list-subheader class="font-weight-bold"
-        >Ingrediencie pre {{ servingsLabel }} porcií</v-list-subheader
-      >
+      <v-list-subheader class="font-weight-bold">{{
+        t('recipes.cooking.ingredientsFor', { portions })
+      }}</v-list-subheader>
       <v-list density="compact">
         <v-list-item v-for="item in recipe.ingredients" :key="item.id" :title="item.name">
           <template #append>
@@ -153,7 +172,7 @@ function onTimerDone(position: number) {
     </v-navigation-drawer>
 
     <v-bottom-sheet v-else v-model="ingredientsOpen">
-      <v-card :title="`Ingrediencie pre ${servingsLabel} porcií`">
+      <v-card :title="t('recipes.cooking.ingredientsFor', { portions })">
         <v-list density="compact">
           <v-list-item v-for="item in recipe.ingredients" :key="item.id" :title="item.name">
             <template #append>

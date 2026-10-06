@@ -10,17 +10,19 @@ import {
   mdiPrinterOutline,
 } from '@mdi/js'
 import { computed, nextTick, ref } from 'vue'
+import { I18nT, useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { PlanEntryDto, TemplateApplyResult, WeekTemplateDto } from '@shared/api'
-import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type RecipeCategory } from '@shared/recipes'
-import { addDays, formatWeekRange, weekDates } from '@shared/dates'
+import { RECIPE_CATEGORIES, type RecipeCategory } from '@shared/recipes'
+import { addDays, weekDates } from '@shared/dates'
 import { useMe } from '@/api/me'
 import { useCopyPlan, useDeleteEntry, usePlan, useSaveEntry } from '@/api/plan'
 import PageHeader from '@/components/PageHeader.vue'
 import { useElementWidth } from '@/composables/useElementWidth'
 import { useToday } from '@/composables/useToday'
 import { printPage } from '@/composables/usePrintMode'
-import { plural } from '@/lib/format'
+import { errorText } from '@/i18n/errors'
+import { formatWeekRange, tc } from '@/i18n/format'
 import ApplyTemplateDialog from '../components/ApplyTemplateDialog.vue'
 import EntryDialog from '../components/EntryDialog.vue'
 import SaveTemplateDialog from '../components/SaveTemplateDialog.vue'
@@ -38,6 +40,7 @@ import {
   visibleSlots,
 } from '../week'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 // Mriežka len keď sa zmestí do šírky obsahu, inak zoznam po dňoch (vodorovný posuvník je nepríjemný).
@@ -66,7 +69,7 @@ const categoryOptions = computed(() => {
   for (const e of entries.value ?? []) if (e.recipe) present.add(e.recipe.category)
   return RECIPE_CATEGORIES.filter((c) => present.has(c)).map((c) => ({
     value: c,
-    title: RECIPE_CATEGORY_LABELS[c],
+    title: t(`common.category.${c}`),
   }))
 })
 const shownEntries = computed(() => filterEntriesByCategory(entries.value ?? [], selectedCategories.value))
@@ -126,16 +129,23 @@ const saveTemplateOpen = ref(false)
 const applyTemplateOpen = ref(false)
 
 function onTemplateSaved(template: WeekTemplateDto) {
-  snackbar.value = { show: true, text: `Šablóna „${template.name}“ je uložená.`, color: 'success' }
+  snackbar.value = {
+    show: true,
+    text: t('plan.snackbar.templateSaved', { name: template.name }),
+    color: 'success',
+  }
 }
 
 function onTemplateApplied(result: TemplateApplyResult) {
-  const skipped = result.skipped
-    ? ` (${plural(result.skipped, 'jedlo', 'jedlá', 'jedál')} bez receptu sa vynechalo)`
-    : ''
+  const meals = tc('common.plural.meals', result.applied)
   snackbar.value = {
     show: true,
-    text: `Vložené: ${plural(result.applied, 'jedlo', 'jedlá', 'jedál')}${skipped}.`,
+    text: result.skipped
+      ? t('plan.snackbar.templateAppliedSkipped', {
+          meals,
+          skipped: tc('common.plural.meals', result.skipped),
+        })
+      : t('plan.snackbar.templateApplied', { meals }),
     color: 'success',
   }
 }
@@ -163,12 +173,12 @@ async function onMove(entry: PlanEntryDto, date: string, slotId: string, copyEnt
     }
     snackbar.value = {
       show: true,
-      text: copyEntry ? 'Jedlo skopírované.' : 'Jedlo presunuté.',
+      text: copyEntry ? t('plan.snackbar.entryCopied') : t('plan.snackbar.entryMoved'),
       color: 'success',
     }
   } catch (e) {
     undo.value = null
-    snackbar.value = { show: true, text: e instanceof Error ? e.message : 'Presun zlyhal.', color: 'error' }
+    snackbar.value = { show: true, text: errorText(e, 'plan.snackbar.moveFailed'), color: 'error' }
   }
 }
 
@@ -181,7 +191,7 @@ async function onUndo() {
   } catch (e) {
     snackbar.value = {
       show: true,
-      text: e instanceof Error ? e.message : 'Vrátenie zlyhalo.',
+      text: errorText(e, 'plan.snackbar.undoFailed'),
       color: 'error',
     }
   }
@@ -205,14 +215,14 @@ async function copyToNextWeek() {
     copyOpen.value = false
     snackbar.value = {
       show: true,
-      text: `Skopírované: ${plural(result.copied, 'jedlo', 'jedlá', 'jedál')}.`,
+      text: t('plan.snackbar.weekCopied', { meals: tc('common.plural.meals', result.copied) }),
       color: 'success',
     }
     await goToWeek(nextWeek.value)
   } catch (e) {
     snackbar.value = {
       show: true,
-      text: e instanceof Error ? e.message : 'Kopírovanie zlyhalo.',
+      text: errorText(e, 'plan.snackbar.copyFailed'),
       color: 'error',
     }
   }
@@ -220,11 +230,15 @@ async function copyToNextWeek() {
 </script>
 
 <template>
-  <PageHeader title="Jedálniček">
+  <PageHeader :title="t('plan.title')">
     <v-btn-group variant="outlined" density="comfortable" divided>
-      <v-btn :icon="mdiChevronLeft" aria-label="Predošlý týždeň" @click="goToWeek(addDays(start, -7))" />
+      <v-btn
+        :icon="mdiChevronLeft"
+        :aria-label="t('plan.week.previous')"
+        @click="goToWeek(addDays(start, -7))"
+      />
       <v-btn class="text-none font-weight-bold" style="min-width: 11rem">{{ formatWeekRange(start) }}</v-btn>
-      <v-btn :icon="mdiChevronRight" aria-label="Ďalší týždeň" @click="goToWeek(addDays(start, 7))" />
+      <v-btn :icon="mdiChevronRight" :aria-label="t('plan.week.next')" @click="goToWeek(addDays(start, 7))" />
     </v-btn-group>
     <v-btn
       v-if="!isCurrentWeek"
@@ -233,42 +247,51 @@ async function copyToNextWeek() {
       color="primary"
       @click="goToday"
     >
-      Dnes
+      {{ t('plan.week.today') }}
     </v-btn>
     <v-menu>
       <template #activator="{ props }">
-        <v-btn v-bind="props" :icon="mdiDotsVertical" variant="text" aria-label="Ďalšie akcie" />
+        <v-btn
+          v-bind="props"
+          :icon="mdiDotsVertical"
+          variant="text"
+          :aria-label="t('plan.week.moreActions')"
+        />
       </template>
       <v-list>
         <v-list-item
           :prepend-icon="mdiContentCopy"
-          title="Kopírovať do ďalšieho týždňa"
+          :title="t('plan.menu.copyNext')"
           :disabled="!entries?.length"
           @click="copyOpen = true"
         />
         <v-list-item
           :prepend-icon="mdiContentSaveOutline"
-          title="Uložiť týždeň ako šablónu"
+          :title="t('plan.menu.saveTemplate')"
           :disabled="!entries?.length"
           @click="saveTemplateOpen = true"
         />
-        <v-list-item :prepend-icon="mdiPrinterOutline" title="Tlačiť týždeň" @click="printWeek" />
+        <v-list-item :prepend-icon="mdiPrinterOutline" :title="t('plan.menu.print')" @click="printWeek" />
         <v-list-item
           :prepend-icon="mdiCalendarImport"
-          title="Použiť šablónu na tento týždeň"
+          :title="t('plan.menu.applyTemplate')"
           @click="applyTemplateOpen = true"
         />
       </v-list>
     </v-menu>
   </PageHeader>
 
-  <v-alert v-if="error" type="error" :text="error.message" />
+  <v-alert v-if="error" type="error" :text="errorText(error)" />
   <v-skeleton-loader v-else-if="isPending" type="table" />
   <div v-else ref="area">
     <v-alert v-if="!members.length" type="info" density="compact" class="mb-4 d-print-none">
-      Pridaj členov rodiny v sekcii
-      <router-link to="/rodina" class="text-primary font-weight-bold">Rodina</router-link>
-      a porcie sa budú počítať automaticky.
+      <I18nT keypath="plan.noMembers.text" scope="global" tag="span">
+        <template #link>
+          <router-link to="/rodina" class="text-primary font-weight-bold">{{
+            t('plan.noMembers.link')
+          }}</router-link>
+        </template>
+      </I18nT>
     </v-alert>
     <v-chip-group
       v-if="categoryOptions.length > 1 || selectedCategories.length"
@@ -277,7 +300,7 @@ async function copyToNextWeek() {
       filter
       color="primary"
       class="mb-3 d-print-none"
-      aria-label="Typ jedla"
+      :aria-label="t('plan.week.mealType')"
       data-test="category-filter"
     >
       <v-chip
@@ -326,13 +349,12 @@ async function copyToNextWeek() {
   />
 
   <v-dialog v-model="copyOpen" max-width="440">
-    <v-card title="Kopírovať do ďalšieho týždňa">
+    <v-card :title="t('plan.menu.copyNext')">
       <v-card-text>
-        Všetky jedlá z týždňa {{ formatWeekRange(start) }} sa skopírujú do týždňa
-        {{ formatWeekRange(nextWeek) }}.
+        {{ t('plan.copyWeek.text', { from: formatWeekRange(start), to: formatWeekRange(nextWeek) }) }}
         <v-checkbox
           v-model="copyReplace"
-          label="Nahradiť jedlá, ktoré tam už sú"
+          :label="t('plan.replaceExisting')"
           hide-details
           density="compact"
           class="mt-2"
@@ -340,8 +362,10 @@ async function copyToNextWeek() {
       </v-card-text>
       <v-card-actions class="flex-wrap ga-1">
         <v-spacer />
-        <v-btn variant="text" @click="copyOpen = false">Zrušiť</v-btn>
-        <v-btn color="primary" :loading="copy.isPending.value" @click="copyToNextWeek">Kopírovať</v-btn>
+        <v-btn variant="text" @click="copyOpen = false">{{ t('common.actions.cancel') }}</v-btn>
+        <v-btn color="primary" :loading="copy.isPending.value" @click="copyToNextWeek">{{
+          t('common.actions.copy')
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -357,7 +381,7 @@ async function copyToNextWeek() {
   <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="5000">
     {{ snackbar.text }}
     <template v-if="undo" #actions>
-      <v-btn variant="text" @click="onUndo">Späť</v-btn>
+      <v-btn variant="text" @click="onUndo">{{ t('plan.undo') }}</v-btn>
     </template>
   </v-snackbar>
 </template>

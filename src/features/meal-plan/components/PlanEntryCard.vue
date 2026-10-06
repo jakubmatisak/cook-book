@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { mdiAlertOutline, mdiNoteTextOutline } from '@mdi/js'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FamilyMemberDto, PlanEntryDto } from '@shared/api'
 import { entryPortions } from '@shared/portions'
-import { describeWarning } from '@shared/preferences'
+import { formatNumber } from '@/i18n/format'
 
+const { t } = useI18n()
 const props = defineProps<{
   entry: PlanEntryDto
   members: FamilyMemberDto[]
@@ -14,7 +16,11 @@ const props = defineProps<{
 }>()
 defineEmits<{ edit: [entry: PlanEntryDto]; dragstart: [event: DragEvent, entry: PlanEntryDto] }>()
 
-const warningText = computed(() => props.entry.warnings.map(describeWarning).join('; '))
+const warningText = computed(() =>
+  props.entry.warnings
+    .map((w) => t(`common.preference.warning.${w.kind}`, { name: w.memberName, label: w.label }))
+    .join('; '),
+)
 const hasAllergy = computed(() => props.entry.warnings.some((w) => w.kind === 'allergy'))
 const title = computed(() => props.entry.recipe?.title ?? props.entry.freeText ?? '')
 const portions = computed(
@@ -25,9 +31,9 @@ const guestNames = computed(() =>
 )
 const subtitle = computed(() => {
   const parts: string[] = []
-  if (props.entry.recipe?.deleted) parts.push('zmazaný recept')
-  if (portions.value !== null) parts.push(`${String(portions.value).replace('.', ',')} porc.`)
-  if (guestNames.value.length) parts.push(`Návšteva: ${guestNames.value.join(', ')}`)
+  if (props.entry.recipe?.deleted) parts.push(t('plan.card.deletedRecipe'))
+  if (portions.value !== null) parts.push(t('plan.card.portions', { n: formatNumber(portions.value) }))
+  if (guestNames.value.length) parts.push(t('plan.card.guests', { names: guestNames.value.join(', ') }))
   if (props.entry.note && !props.dense) parts.push(props.entry.note)
   return parts.join(' · ')
 })
@@ -39,7 +45,7 @@ const subtitle = computed(() => {
     :color="entry.recipe?.deleted ? 'error' : entry.recipe ? 'primary' : undefined"
     density="compact"
     link
-    :aria-label="`Upraviť: ${title}`"
+    :aria-label="t('plan.card.editAria', { title })"
     :draggable="draggable ? 'true' : undefined"
     @click="$emit('edit', entry)"
     @dragstart="draggable && $emit('dragstart', $event, entry)"

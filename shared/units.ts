@@ -86,10 +86,22 @@ export function toBase(quantity: number, unit: UnitCode): { quantity: number; un
 const PROMOTE: Partial<Record<UnitCode, UnitCode>> = { g: 'kg', ml: 'l' }
 const numberFormat = new Intl.NumberFormat('sk-SK', { maximumFractionDigits: 2, useGrouping: false })
 
-/** Zobrazí množstvo po slovensky: desatinná čiarka, g → kg a ml → l od 1000. */
-export function formatQuantity(quantity: number | null, unit: UnitCode | null): string {
+/** Ako sa zobrazuje číslo a jednotka (klient ich dosadí podľa jazyka; predvolene slovenčina so zhodou kódov). */
+export interface QuantityFormat {
+  number: (n: number) => string
+  unit: (unit: UnitCode) => string
+}
+
+const SK_FORMAT: QuantityFormat = { number: (n) => numberFormat.format(n), unit: (u) => u }
+
+/** Zobrazí množstvo (predvolene po slovensky): desatinná čiarka, g → kg a ml → l od 1000. */
+export function formatQuantity(
+  quantity: number | null,
+  unit: UnitCode | null,
+  fmt: QuantityFormat = SK_FORMAT,
+): string {
   const valid = quantity !== null && Number.isFinite(quantity) && quantity > 0
-  if (!valid) return unit ?? ''
+  if (!valid) return unit ? fmt.unit(unit) : ''
   let q = quantity
   let u = unit
   const promoted = u ? PROMOTE[u] : undefined
@@ -97,8 +109,8 @@ export function formatQuantity(quantity: number | null, unit: UnitCode | null): 
     q = q / 1000
     u = promoted
   }
-  const n = numberFormat.format(q)
-  return u ? `${n} ${u}` : n
+  const n = fmt.number(q)
+  return u ? `${n} ${fmt.unit(u)}` : n
 }
 
 const UNIT_BY_TEXT = new Map<string, UnitCode>([

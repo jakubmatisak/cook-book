@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { watch } from 'vue'
+import { i18n, t } from '@/i18n'
 import { scrollOnNavigate } from './scroll'
 
 export const routes: RouteRecordRaw[] = [
@@ -7,80 +9,80 @@ export const routes: RouteRecordRaw[] = [
     path: '/recepty',
     name: 'recipes',
     component: () => import('@/features/recipes/pages/RecipesPage.vue'),
-    meta: { title: 'Recepty' },
+    meta: { titleKey: 'common.nav.recipes' },
   },
   {
     path: '/recepty/novy',
     name: 'recipe-new',
     component: () => import('@/features/recipes/pages/RecipeEditPage.vue'),
-    meta: { title: 'Nový recept' },
+    meta: { titleKey: 'common.pageTitle.recipeNew' },
   },
   {
     path: '/recepty/:id/varenie',
     name: 'recipe-cooking',
     component: () => import('@/features/recipes/pages/CookingModePage.vue'),
-    meta: { title: 'Režim varenia', bare: true },
+    meta: { titleKey: 'common.pageTitle.cooking', bare: true },
   },
   {
     path: '/recepty/:id/upravit',
     name: 'recipe-edit',
     component: () => import('@/features/recipes/pages/RecipeEditPage.vue'),
-    meta: { title: 'Upraviť recept' },
+    meta: { titleKey: 'common.pageTitle.recipeEdit' },
   },
   {
     path: '/recepty/:id',
     name: 'recipe',
     component: () => import('@/features/recipes/pages/RecipeDetailPage.vue'),
-    meta: { title: 'Recept' },
+    meta: { titleKey: 'common.pageTitle.recipe' },
   },
   {
     path: '/plan',
     name: 'meal-plan',
     component: () => import('@/features/meal-plan/pages/MealPlanPage.vue'),
-    meta: { title: 'Plán' },
+    meta: { titleKey: 'common.nav.plan' },
   },
   {
     path: '/nakup',
     name: 'shopping',
     component: () => import('@/features/shopping/pages/ShoppingPage.vue'),
-    meta: { title: 'Nákup' },
+    meta: { titleKey: 'common.nav.shopping' },
   },
   { path: '/viac', redirect: '/nastavenia' },
   {
     path: '/rodina',
     name: 'family',
     component: () => import('@/features/family/pages/FamilyPage.vue'),
-    meta: { title: 'Rodina' },
+    meta: { titleKey: 'common.nav.family' },
   },
   {
     path: '/ingrediencie',
     name: 'ingredients',
     component: () => import('@/features/ingredients/pages/IngredientsPage.vue'),
-    meta: { title: 'Ingrediencie' },
+    meta: { titleKey: 'common.nav.ingredients' },
   },
   {
     path: '/tagy',
     name: 'tags',
     component: () => import('@/features/tags/pages/TagsPage.vue'),
-    meta: { title: 'Tagy' },
+    meta: { titleKey: 'common.nav.tags' },
   },
   {
     path: '/spajza',
     name: 'pantry',
     component: () => import('@/features/pantry/pages/PantryPage.vue'),
-    meta: { title: 'Špajza' },
+    meta: { titleKey: 'common.nav.pantry' },
   },
   {
     path: '/nastavenia',
     name: 'settings',
     component: () => import('@/features/settings/pages/SettingsPage.vue'),
-    meta: { title: 'Nastavenia' },
+    meta: { titleKey: 'common.nav.settings' },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/pages/NotFoundPage.vue'),
-    meta: { title: 'Nenájdené' },
+    meta: { titleKey: 'common.pageTitle.notFound' },
   },
 ]
 
@@ -90,7 +92,11 @@ export const router = createRouter({
   scrollBehavior: scrollOnNavigate,
 })
 
-router.afterEach((to) => {
-  const title = typeof to.meta.title === 'string' ? to.meta.title : undefined
-  document.title = title ? `${title} · Kuchárska kniha` : 'Kuchárska kniha'
-})
+/** Názov karty prehliadača: „<stránka> · <aplikácia>“ v aktuálnom jazyku. */
+export function updateDocumentTitle(titleKey: unknown) {
+  const app = t('common.app.name')
+  document.title = typeof titleKey === 'string' ? `${t(titleKey)} · ${app}` : app
+}
+
+router.afterEach((to) => updateDocumentTitle(to.meta.titleKey))
+watch(i18n.global.locale, () => updateDocumentTitle(router.currentRoute.value.meta.titleKey))

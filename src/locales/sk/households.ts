@@ -1,0 +1,47 @@
+/** Domácnosti: karta členov, pozvánka, založenie, výber a brána pred aplikáciou. */
+export default {
+  name: 'Názov domácnosti',
+  role: 'Rola',
+  card: {
+    title: 'Domácnosť a členovia',
+    accountsIntro: 'Účty, ktoré sa môžu prihlásiť do tejto domácnosti ({members}).',
+    lastLogin: 'naposledy {date}',
+    neverLoggedIn: 'ešte sa neprihlásil',
+    locked: 'E-mail je nastavený pri nasadení a v aplikácii sa neodoberie.',
+    removeMember: 'Odobrať {email}',
+    ownerOnly: 'Členov, názov a nastavenia domácnosti môže meniť len vlastník.',
+    invite: 'Pozvať',
+    removeTitle: 'Odobrať z domácnosti?',
+    removeText: '{email} stratí prístup k tejto domácnosti. Recepty ani plán sa nezmažú.',
+    nameSaved: 'Názov uložený.',
+    nameFailed: 'Názov sa neuložil.',
+    roleFailed: 'Rolu sa nepodarilo zmeniť.',
+    removeFailed: 'Člena sa nepodarilo odobrať.',
+  },
+  invite: {
+    title: 'Pozvať do domácnosti',
+    intro: 'Pozvaný sa prihlási týmto e-mailom (jednorazovým kódom, ktorý mu príde) a uvidí túto domácnosť.',
+    email: 'E-mail',
+    emailRequired: 'Zadaj e-mail.',
+    roleHint: 'Vlastník môže meniť nastavenia, rodinu a členov. Člen robí všetko okolo varenia.',
+    submit: 'Pozvať',
+    failed: 'Pozvánku sa nepodarilo uložiť.',
+  },
+  create: {
+    title: 'Nová domácnosť',
+    intro: 'Nová domácnosť má vlastné recepty, jedálniček, nákupný zoznam a špajzu. Budeš jej vlastníkom.',
+    namePlaceholder: 'napr. U rodičov',
+    nameRequired: 'Zadaj názov domácnosti.',
+    submit: 'Založiť',
+    failed: 'Domácnosť sa nepodarilo založiť.',
+  },
+  picker: {
+    title: 'Vyber domácnosť',
+    text: 'Si členom viacerých domácností.',
+  },
+  gate: {
+    loadFailed: 'Nepodarilo sa načítať domácnosti',
+    noneTitle: 'Nie si členom žiadnej domácnosti',
+    noneText: 'Požiadaj vlastníka domácnosti, nech ťa pozve.',
+  },
+}

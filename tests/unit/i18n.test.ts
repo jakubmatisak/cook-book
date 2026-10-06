@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { ApiError } from '@/api/http'
+import { DEFAULT_SHOP_CATEGORY_KEYS, DEFAULT_SLOT_KEYS, shopCategoryName, slotName } from '@/i18n/defaults'
 import { errorText } from '@/i18n/errors'
+import { validationText, VALIDATION_KEYS } from '@/i18n/validation'
+import { z } from '@shared/schemas/zod'
 import { formatDate, formatDayLabel, formatMinutes, formatNumber, formatWeekRange, tc } from '@/i18n/format'
-import { currentLocale, messages, parseLocale, setLocale, t } from '@/i18n'
+import { currentLocale, messages, parseLocale, setLocale, t, te } from '@/i18n'
 import { skPluralRule } from '@/i18n/plural'
 
 afterEach(() => {
@@ -126,5 +129,52 @@ describe('errorText', () => {
     expect(errorText(new ApiError(400, 'nieco_ine', 'Vlastná hláška'))).toBe('Vlastná hláška')
     expect(errorText('?')).toBe('Something went wrong. Try again.')
     expect(errorText(new Error('Chyba'))).toBe('Chyba')
+  })
+})
+
+describe('hlášky overenia', () => {
+  it('známe hlášky zo shared/schemas sa v angličtine preložia, v slovenčine ostanú', () => {
+    expect(validationText('Zadaj názov receptu.')).toBe('Zadaj názov receptu.')
+    setLocale('en')
+    expect(validationText('Zadaj názov receptu.')).toBe('Enter a recipe name.')
+    expect(validationText('Neznáma hláška')).toBe('Neznáma hláška')
+  })
+
+  it('každý kľúč v tabuľke hlášok má preklad v oboch jazykoch', () => {
+    for (const key of VALIDATION_KEYS) {
+      expect(te('common.validation.' + key, 'sk'), key).toBe(true)
+      expect(te('common.validation.' + key, 'en'), key).toBe(true)
+    }
+  })
+
+  it('vstavané hlášky zod idú v jazyku aplikácie', () => {
+    const message = () => z.string().safeParse(1).error!.issues[0]!.message
+    const sk = message()
+    setLocale('en')
+    expect(message()).not.toBe(sk)
+    expect(message()).toMatch(/Invalid input/i)
+  })
+})
+
+describe('predvolené názvy domácnosti', () => {
+  it('v slovenčine ostávajú, v angličtine sa preložia, premenované ostanú ako zadané', () => {
+    expect(slotName('Obed')).toBe('Obed')
+    expect(shopCategoryName('Mäso a ryby')).toBe('Mäso a ryby')
+    setLocale('en')
+    expect(slotName('Obed')).toBe('Lunch')
+    expect(shopCategoryName('Mäso a ryby')).toBe('Meat and fish')
+    expect(slotName('Brunch')).toBe('Brunch')
+    expect(shopCategoryName('Sladkosti')).toBe('Sladkosti')
+  })
+
+  it('každý predvolený názov má preklad v oboch jazykoch', () => {
+    for (const key of DEFAULT_SLOT_KEYS) {
+      expect(te('common.defaults.slot.' + key, 'sk'), key).toBe(true)
+      expect(te('common.defaults.slot.' + key, 'en'), key).toBe(true)
+    }
+    for (const key of DEFAULT_SHOP_CATEGORY_KEYS) {
+      expect(te('common.defaults.shopCategory.' + key, 'sk'), key).toBe(true)
+      expect(te('common.defaults.shopCategory.' + key, 'en'), key).toBe(true)
+    }
   })
 })

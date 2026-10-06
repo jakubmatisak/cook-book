@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { mdiCheck } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FamilyMemberDto } from '@shared/api'
-import { MEMBER_COLORS, MEMBER_KIND_LABELS, type MemberKind } from '@shared/family'
+import { MEMBER_COLORS, type MemberKind } from '@shared/family'
 import { useIngredients, useTags } from '@/api/catalog'
 import { useDeleteMember, useSaveMember, useSaveMemberPreferences } from '@/api/family'
+import { errorText } from '@/i18n/errors'
+import { formatNumber } from '@/i18n/format'
 
+const { t } = useI18n()
 const open = defineModel<boolean>({ required: true })
 const props = defineProps<{ member: FamilyMemberDto | null; childFactor: number; nextColor: string }>()
 
@@ -29,7 +33,7 @@ const saving = computed(() => save.isPending.value || savePreferences.isPending.
 const { data: ingredients } = useIngredients()
 const { data: tags } = useTags()
 const ingredientItems = computed(() => ingredients.value?.map((i) => ({ title: i.name, value: i.id })) ?? [])
-const tagItems = computed(() => tags.value?.map((t) => ({ title: t.name, value: t.id })) ?? [])
+const tagItems = computed(() => tags.value?.map((tag) => ({ title: tag.name, value: tag.id })) ?? [])
 
 const idsOf = (member: FamilyMemberDto | null, kind: 'allergy' | 'dislike' | 'diet') =>
   (member?.preferences ?? [])
@@ -57,11 +61,9 @@ function onKindChange(value: MemberKind) {
   if (!props.member) factor.value = value === 'child' ? props.childFactor : 1
 }
 
-const formatFactor = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',')
-
 async function onSave() {
   if (!name.value.trim()) {
-    error.value = 'Zadaj meno.'
+    error.value = t('family.member.nameRequired')
     return
   }
   try {
@@ -83,7 +85,7 @@ async function onSave() {
     })
     open.value = false
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Uloženie zlyhalo.'
+    error.value = errorText(e, 'family.member.saveFailed')
   }
 }
 
@@ -93,54 +95,56 @@ async function onDelete() {
     await remove.mutateAsync(props.member.id)
     open.value = false
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Zmazanie zlyhalo.'
+    error.value = errorText(e, 'family.member.deleteFailed')
   }
 }
 </script>
 
 <template>
   <v-dialog v-model="open" max-width="460">
-    <v-card :title="member ? 'Upraviť člena rodiny' : 'Nový člen rodiny'">
+    <v-card :title="member ? t('family.member.editTitle') : t('family.member.newTitle')">
       <v-card-text class="d-flex flex-column ga-4">
         <v-text-field
           v-model="name"
           autocomplete="off"
-          label="Meno"
+          :label="t('family.member.name')"
           autofocus
           hide-details="auto"
           @keydown.enter="onSave"
         />
 
         <div>
-          <div class="text-caption text-medium-emphasis mb-1">Kto to je</div>
+          <div class="text-caption text-medium-emphasis mb-1">{{ t('family.member.who') }}</div>
           <v-btn-toggle
             :model-value="kind"
             mandatory
             selected-class="bg-primary"
             variant="outlined"
             divided
-            aria-label="Dospelý, dieťa alebo návšteva"
+            :aria-label="t('family.member.whoAria')"
             @update:model-value="onKindChange"
           >
-            <v-btn value="adult">{{ MEMBER_KIND_LABELS.adult }}</v-btn>
-            <v-btn value="child">{{ MEMBER_KIND_LABELS.child }}</v-btn>
-            <v-btn value="guest" data-test="kind-guest">{{ MEMBER_KIND_LABELS.guest }}</v-btn>
+            <v-btn value="adult">{{ t('common.memberKind.adult') }}</v-btn>
+            <v-btn value="child">{{ t('common.memberKind.child') }}</v-btn>
+            <v-btn value="guest" data-test="kind-guest">{{ t('common.memberKind.guest') }}</v-btn>
           </v-btn-toggle>
         </div>
 
         <div>
           <div class="d-flex align-baseline justify-space-between">
-            <span class="text-caption text-medium-emphasis">Veľkosť porcie</span>
-            <span class="text-body-2 font-weight-bold">{{ formatFactor(factor) }} × dospelý</span>
+            <span class="text-caption text-medium-emphasis">{{ t('family.member.portionSize') }}</span>
+            <span class="text-body-2 font-weight-bold">{{
+              t('family.member.factorTimesAdult', { factor: formatNumber(factor) })
+            }}</span>
           </div>
           <v-slider v-model="factor" :min="0.25" :max="1.5" :step="0.05" color="primary" hide-details />
           <p class="text-caption text-medium-emphasis">
-            Podľa toho sa prepočíta množstvo pri nákupe. Malé dieťa býva 0,3 – 0,5, tínedžer okolo 1.
+            {{ t('family.member.portionHint') }}
           </p>
         </div>
 
         <div>
-          <div class="text-caption text-medium-emphasis mb-1">Farba</div>
+          <div class="text-caption text-medium-emphasis mb-1">{{ t('family.member.color') }}</div>
           <v-chip-group v-model="color" mandatory column selected-class="elevation-6">
             <v-chip
               v-for="c in MEMBER_COLORS"
@@ -150,7 +154,7 @@ async function onDelete() {
               :base-color="c"
               variant="flat"
               size="large"
-              :aria-label="`Farba ${c}`"
+              :aria-label="t('family.member.colorAria', { color: c })"
               class="px-3"
             >
               <v-icon :icon="mdiCheck" :style="{ visibility: color === c ? 'visible' : 'hidden' }" />
@@ -159,40 +163,40 @@ async function onDelete() {
         </div>
 
         <div>
-          <div class="text-caption text-medium-emphasis mb-1">Jedlo a zdravie</div>
+          <div class="text-caption text-medium-emphasis mb-1">{{ t('family.member.foodHealth') }}</div>
           <div class="d-flex flex-column ga-3">
             <v-autocomplete
               v-model="allergies"
               :items="ingredientItems"
-              label="Alergie"
-              hint="Pri plánovaní jedla s touto ingredienciou ťa upozorníme."
+              :label="t('family.member.allergies')"
+              :hint="t('family.member.allergiesHint')"
               persistent-hint
               multiple
               chips
               closable-chips
-              no-data-text="Žiadna ingrediencia"
+              :no-data-text="t('family.member.noIngredient')"
             />
             <v-autocomplete
               v-model="dislikes"
               :items="ingredientItems"
-              label="Averzie"
-              hint="Ingrediencie, ktoré nechutia. Len upozornenie, recept ostane v pláne."
+              :label="t('family.member.dislikes')"
+              :hint="t('family.member.dislikesHint')"
               persistent-hint
               multiple
               chips
               closable-chips
-              no-data-text="Žiadna ingrediencia"
+              :no-data-text="t('family.member.noIngredient')"
             />
             <v-autocomplete
               v-model="diets"
               :items="tagItems"
-              label="Diéta (tagy, ktoré recept má mať)"
-              hint="Napr. Vegetariánske. Upozorníme na recepty bez tohto tagu."
+              :label="t('family.member.diets')"
+              :hint="t('family.member.dietsHint')"
               persistent-hint
               multiple
               chips
               closable-chips
-              no-data-text="Žiadny tag"
+              :no-data-text="t('family.member.noTag')"
             />
           </div>
         </div>
@@ -200,8 +204,8 @@ async function onDelete() {
         <v-switch
           v-model="isActive"
           color="primary"
-          label="Počítať do porcií"
-          hint="Vypni, keď niekto dlhšie nie je doma."
+          :label="t('family.member.countInPortions')"
+          :hint="t('family.member.countInPortionsHint')"
           persistent-hint
         />
 
@@ -209,16 +213,16 @@ async function onDelete() {
       </v-card-text>
       <v-card-actions class="flex-wrap ga-1">
         <template v-if="member">
-          <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true"
-            >Zmazať</v-btn
-          >
-          <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete"
-            >Naozaj zmazať</v-btn
-          >
+          <v-btn v-if="!confirmDelete" color="error" variant="text" @click="confirmDelete = true">{{
+            t('common.actions.delete')
+          }}</v-btn>
+          <v-btn v-else color="error" :loading="remove.isPending.value" @click="onDelete">{{
+            t('family.member.reallyDelete')
+          }}</v-btn>
         </template>
         <v-spacer />
-        <v-btn variant="text" @click="open = false">Zrušiť</v-btn>
-        <v-btn color="primary" :loading="saving" @click="onSave">Uložiť</v-btn>
+        <v-btn variant="text" @click="open = false">{{ t('common.actions.cancel') }}</v-btn>
+        <v-btn color="primary" :loading="saving" @click="onSave">{{ t('common.actions.save') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

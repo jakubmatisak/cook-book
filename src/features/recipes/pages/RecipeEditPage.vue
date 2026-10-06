@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { mdiArrowLeft, mdiContentSaveOutline } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import type { VForm } from 'vuetify/components'
-import { DIFFICULTY_LABELS, RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS } from '@shared/recipes'
+import { RECIPE_CATEGORIES } from '@shared/recipes'
 import { recipeInputSchema } from '@shared/schemas/recipe'
 import { useTags } from '@/api/catalog'
 import { ApiError } from '@/api/http'
@@ -11,6 +12,7 @@ import { useRecipe, useSaveRecipe } from '@/api/recipes'
 import { createDraftStore } from '@/composables/useDraft'
 import { useLeavePrompt } from '@/composables/useLeavePrompt'
 import { useFlushOnHide } from '@/composables/useFlushOnHide'
+import { errorText } from '@/i18n/errors'
 import ImagePicker from '../components/ImagePicker.vue'
 import IngredientRows from '../components/IngredientRows.vue'
 import StepRows from '../components/StepRows.vue'
@@ -24,6 +26,7 @@ import {
 } from '../form'
 import { importHandoff } from '../importHandoff'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const id = computed(() => (typeof route.params.id === 'string' ? route.params.id : undefined))
@@ -95,21 +98,23 @@ function discardDraft() {
   draft.clear()
 }
 
-const categoryItems = RECIPE_CATEGORIES.map((value) => ({ value, title: RECIPE_CATEGORY_LABELS[value] }))
-const tagNames = computed(() => tags.value?.map((t) => t.name) ?? [])
+const categoryItems = computed(() =>
+  RECIPE_CATEGORIES.map((value) => ({ value, title: t(`common.category.${value}`) })),
+)
+const tagNames = computed(() => tags.value?.map((tag) => tag.name) ?? [])
 
 const formRef = ref<VForm>()
 const errors = ref<string[]>([])
 
-const required = (v: string) => Boolean(v?.trim()) || 'Povinné pole'
-const minutesRule = (v: string) => !v?.trim() || /^\d+$/.test(v.trim()) || 'Celé číslo minút'
+const required = (v: string) => Boolean(v?.trim()) || t('recipes.editor.required')
+const minutesRule = (v: string) => !v?.trim() || /^\d+$/.test(v.trim()) || t('recipes.editor.wholeMinutes')
 
 async function onSubmit() {
   errors.value = []
   const { valid } = (await formRef.value?.validate()) ?? { valid: true }
   const parsed = recipeInputSchema.safeParse(formToInput(form.value))
   if (!valid || !parsed.success) {
-    errors.value = parsed.success ? ['Skontroluj zvýraznené polia.'] : describeIssues(parsed.error.issues)
+    errors.value = parsed.success ? [t('recipes.editor.checkFields')] : describeIssues(parsed.error.issues)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     return
   }
@@ -122,7 +127,7 @@ async function onSubmit() {
     if (e instanceof ApiError && Array.isArray(e.details)) {
       errors.value = describeIssues(e.details as { path: PropertyKey[]; message: string }[])
     } else {
-      errors.value = [e instanceof Error ? e.message : 'Recept sa nepodarilo uložiť.']
+      errors.value = [errorText(e, 'recipes.editor.saveFailed')]
     }
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -145,45 +150,45 @@ function cancel() {
 <template>
   <div>
     <v-toolbar color="transparent" density="compact" class="mb-2 px-0">
-      <v-btn :icon="mdiArrowLeft" variant="text" aria-label="Späť" @click="cancel" />
+      <v-btn :icon="mdiArrowLeft" variant="text" :aria-label="t('common.actions.back')" @click="cancel" />
       <v-toolbar-title class="text-h5 font-weight-bold">{{
-        isNew ? 'Nový recept' : 'Upraviť recept'
+        isNew ? t('recipes.editor.newTitle') : t('recipes.editor.editTitle')
       }}</v-toolbar-title>
     </v-toolbar>
 
     <v-skeleton-loader v-if="!isNew && loading" type="image, article, article" />
-    <v-alert v-else-if="loadError" type="error" :text="loadError.message" />
+    <v-alert v-else-if="loadError" type="error" :text="errorText(loadError)" />
 
     <v-form v-else ref="formRef" class="d-flex flex-column ga-4" @submit.prevent="onSubmit">
-      <v-alert v-if="errors.length" type="error" title="Recept sa nedá uložiť">
+      <v-alert v-if="errors.length" type="error" :title="t('recipes.editor.errorsTitle')">
         <ul class="mt-1 ps-5">
           <li v-for="message in errors" :key="message">{{ message }}</li>
         </ul>
       </v-alert>
 
-      <v-alert v-if="imported" type="info" title="Recept je načítaný z webu">
-        Skontroluj názov, množstvá a postup. Recept sa uloží, až keď klikneš na Uložiť.
+      <v-alert v-if="imported" type="info" :title="t('recipes.editor.importedTitle')">
+        {{ t('recipes.editor.importedText') }}
         <ul v-if="importWarnings.length" class="mt-1 ps-5">
           <li v-for="warning in importWarnings" :key="warning">{{ warning }}</li>
         </ul>
       </v-alert>
 
-      <v-alert v-if="pendingDraft" type="info" title="Našiel sa rozpísaný recept">
-        Tento recept je rozpísaný a neuložený. Chceš pokračovať?
+      <v-alert v-if="pendingDraft" type="info" :title="t('recipes.editor.draftTitle')">
+        {{ t('recipes.editor.draftText') }}
         <template #append>
-          <v-btn variant="text" @click="discardDraft">Zahodiť</v-btn>
-          <v-btn color="primary" @click="restoreDraft">Obnoviť</v-btn>
+          <v-btn variant="text" @click="discardDraft">{{ t('recipes.editor.discard') }}</v-btn>
+          <v-btn color="primary" @click="restoreDraft">{{ t('recipes.editor.restore') }}</v-btn>
         </template>
       </v-alert>
 
-      <v-card title="Základ">
+      <v-card :title="t('recipes.editor.basics')">
         <v-card-text>
           <div class="d-flex ga-3 mb-3">
             <ImagePicker v-model:image-id="form.coverImageId" v-model:image-url="form.coverImageUrl" />
             <v-text-field
               v-model="form.title"
               autocomplete="off"
-              label="Názov receptu"
+              :label="t('recipes.editor.titleLabel')"
               :rules="[required]"
               autofocus
               class="flex-grow-1"
@@ -191,12 +196,17 @@ function cancel() {
           </div>
           <v-row dense>
             <v-col cols="12" sm="6">
-              <v-select v-model="form.category" :items="categoryItems" label="Kategória" hide-details />
+              <v-select
+                v-model="form.category"
+                :items="categoryItems"
+                :label="t('recipes.editor.category')"
+                hide-details
+              />
             </v-col>
             <v-col cols="12" sm="6">
               <v-number-input
                 v-model="form.servings"
-                label="Porcie"
+                :label="t('recipes.editor.servings')"
                 :min="1"
                 :max="50"
                 control-variant="split"
@@ -207,7 +217,7 @@ function cancel() {
               <v-text-field
                 v-model="form.prepMinutes"
                 autocomplete="off"
-                label="Príprava (min)"
+                :label="t('recipes.editor.prep')"
                 inputmode="numeric"
                 :rules="[minutesRule]"
                 hide-details="auto"
@@ -217,29 +227,29 @@ function cancel() {
               <v-text-field
                 v-model="form.cookMinutes"
                 autocomplete="off"
-                label="Varenie (min)"
+                :label="t('recipes.editor.cook')"
                 inputmode="numeric"
                 :rules="[minutesRule]"
                 hide-details="auto"
               />
             </v-col>
           </v-row>
-          <div class="text-caption text-medium-emphasis mt-3 mb-1">Náročnosť</div>
+          <div class="text-caption text-medium-emphasis mt-3 mb-1">{{ t('recipes.editor.difficulty') }}</div>
           <v-btn-toggle
             v-model="form.difficulty"
             mandatory
             selected-class="bg-primary"
             variant="outlined"
             divided
-            aria-label="Náročnosť"
+            :aria-label="t('recipes.editor.difficulty')"
           >
             <v-btn v-for="level in [1, 2, 3]" :key="level" :value="level">
-              {{ DIFFICULTY_LABELS[level as 1 | 2 | 3] }}
+              {{ t(`common.difficulty.${level}`) }}
             </v-btn>
           </v-btn-toggle>
           <v-textarea
             v-model="form.description"
-            label="Krátky popis"
+            :label="t('recipes.editor.description')"
             rows="2"
             auto-grow
             hide-details
@@ -248,20 +258,20 @@ function cancel() {
         </v-card-text>
       </v-card>
 
-      <v-card title="Ingrediencie">
+      <v-card :title="t('recipes.editor.ingredients')">
         <v-card-text><IngredientRows v-model="form.ingredients" /></v-card-text>
       </v-card>
 
-      <v-card title="Postup">
+      <v-card :title="t('recipes.editor.steps')">
         <v-card-text><StepRows v-model="form.steps" /></v-card-text>
       </v-card>
 
-      <v-card title="Tagy a zdroj">
+      <v-card :title="t('recipes.editor.tagsAndSource')">
         <v-card-text class="d-flex flex-column ga-3">
           <v-combobox
             v-model="form.tags"
             :items="tagNames"
-            label="Tagy (napr. rýchle, detské)"
+            :label="t('recipes.editor.tags')"
             multiple
             chips
             closable-chips
@@ -270,21 +280,21 @@ function cancel() {
           <v-text-field
             v-model="form.sourceUrl"
             autocomplete="off"
-            label="Odkaz na pôvodný recept"
+            :label="t('recipes.editor.sourceUrl')"
             type="url"
             hide-details
           />
           <v-text-field
             v-model="form.sourceText"
             autocomplete="off"
-            label="Zdroj (napr. babka, kniha)"
+            :label="t('recipes.editor.sourceText')"
             hide-details
           />
         </v-card-text>
       </v-card>
 
       <v-sheet color="background" class="position-sticky bottom-0 py-2 d-flex ga-2 justify-end">
-        <v-btn variant="text" @click="cancel">Zrušiť</v-btn>
+        <v-btn variant="text" @click="cancel">{{ t('common.actions.cancel') }}</v-btn>
         <v-btn
           type="submit"
           color="primary"
@@ -292,21 +302,23 @@ function cancel() {
           :prepend-icon="mdiContentSaveOutline"
           :loading="save.isPending.value"
         >
-          Uložiť recept
+          {{ t('recipes.editor.saveRecipe') }}
         </v-btn>
       </v-sheet>
     </v-form>
   </div>
 
   <v-dialog v-model="leavePrompt.open.value" max-width="420" persistent>
-    <v-card title="Neuložené zmeny">
-      <v-card-text>Recept máš rozpísaný a neuložený. Ak odídeš, zmeny sa stratia.</v-card-text>
+    <v-card :title="t('recipes.editor.leaveTitle')">
+      <v-card-text>{{ t('recipes.editor.leaveText') }}</v-card-text>
       <v-card-actions class="px-4 pb-4 flex-wrap ga-1">
         <v-spacer />
         <v-btn color="error" variant="text" data-test="leave-discard" @click="leavePrompt.answer(true)">
-          Zahodiť zmeny
+          {{ t('recipes.editor.leaveDiscard') }}
         </v-btn>
-        <v-btn color="primary" data-test="leave-stay" @click="leavePrompt.answer(false)">Zostať</v-btn>
+        <v-btn color="primary" data-test="leave-stay" @click="leavePrompt.answer(false)">{{
+          t('recipes.editor.leaveStay')
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

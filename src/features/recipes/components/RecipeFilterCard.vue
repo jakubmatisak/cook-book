@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { mdiClose } from '@mdi/js'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { TagDto } from '@shared/api'
-import { TIME_BUCKET_LABELS, TIME_BUCKETS, type RecipeFacets } from '@shared/recipeFacets'
-import { DIFFICULTY_LABELS, RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS } from '@shared/recipes'
+import { TIME_BUCKETS, type RecipeFacets } from '@shared/recipeFacets'
+import { RECIPE_CATEGORIES } from '@shared/recipes'
 import { activeFilterCount, type FilterDimension, type RecipeListState } from '../listQuery'
 
+const { t } = useI18n()
 const props = defineProps<{
   state: RecipeListState
   facets: RecipeFacets
@@ -53,35 +55,35 @@ const sections = computed<Section[]>(() => {
   return [
     section(
       'category',
-      'Kategória',
+      t('recipes.filters.category'),
       state.category,
       RECIPE_CATEGORIES.map((c) => ({
         value: c,
-        label: RECIPE_CATEGORY_LABELS[c],
+        label: t(`common.category.${c}`),
         count: facets.category[c],
       })),
     ),
     section(
       'time',
-      'Čas prípravy',
+      t('recipes.filters.time'),
       state.time,
-      TIME_BUCKETS.map((b) => ({ value: b, label: TIME_BUCKET_LABELS[b], count: facets.time[b] })),
+      TIME_BUCKETS.map((b) => ({ value: b, label: t(`common.timeBucket.${b}`), count: facets.time[b] })),
     ),
     section(
       'difficulty',
-      'Náročnosť',
+      t('recipes.filters.difficulty'),
       state.difficulty,
       ([1, 2, 3] as const).map((d) => ({
         value: d,
-        label: DIFFICULTY_LABELS[d],
+        label: t(`common.difficulty.${d}`),
         count: facets.difficulty[d],
       })),
     ),
     section(
       'tag',
-      'Tagy',
+      t('recipes.filters.tags'),
       state.tag,
-      props.tags.map((t) => ({ value: t.id, label: t.name, count: facets.tag[t.id] })),
+      props.tags.map((tag) => ({ value: tag.id, label: tag.name, count: facets.tag[tag.id] })),
     ),
   ].filter((s) => s.options.length > 0)
 })
@@ -94,9 +96,14 @@ const total = computed(() => activeFilterCount(props.state))
   <v-card :border="false" rounded="0" class="h-100 d-flex flex-column">
     <v-toolbar density="compact" color="transparent">
       <v-toolbar-title class="font-weight-bold">
-        Filtre<span v-if="total"> ({{ total }})</span>
+        {{ t('recipes.filters.title') }}<span v-if="total"> ({{ total }})</span>
       </v-toolbar-title>
-      <v-btn :icon="mdiClose" variant="text" aria-label="Zavrieť filtre" @click="emit('close')" />
+      <v-btn
+        :icon="mdiClose"
+        variant="text"
+        :aria-label="t('recipes.filters.close')"
+        @click="emit('close')"
+      />
     </v-toolbar>
     <v-divider />
 
@@ -138,9 +145,13 @@ const total = computed(() => activeFilterCount(props.state))
 
     <v-divider />
     <v-card-actions class="pa-3 ga-2">
-      <v-btn variant="text" :disabled="total === 0" @click="emit('clear')">Zrušiť filtre</v-btn>
+      <v-btn variant="text" :disabled="total === 0" @click="emit('clear')">{{
+        t('recipes.filters.clear')
+      }}</v-btn>
       <v-spacer />
-      <v-btn color="primary" variant="flat" @click="emit('close')">Zobraziť {{ resultCount }}</v-btn>
+      <v-btn color="primary" variant="flat" @click="emit('close')">{{
+        t('recipes.filters.show', { n: resultCount })
+      }}</v-btn>
     </v-card-actions>
   </v-card>
 </template>
