@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "description": "Rodinná kuchárska kniha – recepty, jedálniček, nákupný zoznam",
   "engines": {
     "node": ">=22"

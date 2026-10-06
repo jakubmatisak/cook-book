@@ -201,7 +201,7 @@ The repository contains no secrets or personal addresses: they live in Worker se
 
 ## License
 
-[MIT](LICENSE)
+[PolyForm Noncommercial 1.0.0](LICENSE). You may download, run, change and deploy the app for yourself, your family and other noncommercial purposes. **Commercial use (a business, selling it, running it as a service for others) needs the author's written permission.** Versions published before this change were released under the MIT License, and that license stays valid for the copies obtained under it.
 
 ---
 
@@ -348,4 +348,4 @@ tests/    unit/ (jsdom) a worker/ (Workers runtime + D1)
 
 ## Licencia
 
-[MIT](LICENSE)
+[PolyForm Noncommercial 1.0.0](LICENSE). Aplikáciu si môžeš stiahnuť, spustiť, upraviť a nasadiť pre seba, rodinu a iné nekomerčné účely. **Komerčné použitie (firma, predaj, prevádzka ako služba pre iných) vyžaduje písomný súhlas autora.** Verzie zverejnené pred touto zmenou boli vydané pod licenciou MIT a tá ostáva platná pre kópie získané podľa nej.
