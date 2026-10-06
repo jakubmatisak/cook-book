@@ -16,6 +16,7 @@ import { importRecipe } from '../services/importRecipe'
 import { suggestRecipes } from '../services/suggestions'
 import { requireOwner } from '../middleware/owner'
 import {
+  addSampleRecipes,
   deleteRecipe,
   getRecipeDetail,
   listRecipes,
@@ -56,6 +57,8 @@ export const recipeRoutes = new Hono<AppEnv>()
     const id = await saveRecipe(c.get('db'), user, input)
     return c.json(await getRecipeDetail(c.get('db'), user.householdId, user.id, id), 201)
   })
+  // Ukážkové recepty pridáva vlastník domácnosti po dávkach (opakuje sa, kým `remaining` nie je 0).
+  .post('/samples', requireOwner, async (c) => c.json(await addSampleRecipes(c.get('db'), c.get('user'))))
   // Zverejnenie a skrytie receptu smie len vlastník domácnosti.
   .put('/:id/visibility', requireOwner, async (c) => {
     const { visibility } = await parseBody(c, recipeVisibilitySchema)

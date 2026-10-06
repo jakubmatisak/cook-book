@@ -21,7 +21,7 @@ import { defaultSortDir, SORT_KEYS, type SortKey } from '@shared/recipeFacets'
 import type { RecipeCategory } from '@shared/recipes'
 import type { TimeBucket } from '@shared/recipeFacets'
 import { useTags } from '@/api/catalog'
-import { useMe } from '@/api/me'
+import { useIsOwner, useMe } from '@/api/me'
 import { useRecipes } from '@/api/recipes'
 import { useSaveUserSettings } from '@/api/userSettings'
 import EmptyState from '@/components/EmptyState.vue'
@@ -29,6 +29,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
 import ImportRecipeDialog from '../components/ImportRecipeDialog.vue'
+import SampleRecipesButton from '../components/SampleRecipesButton.vue'
 import RecipeCard from '../components/RecipeCard.vue'
 import RecipeFilterPanel from '../components/RecipeFilterPanel.vue'
 import RecipeTable from '../components/RecipeTable.vue'
@@ -100,6 +101,7 @@ watch(view, (value) => {
 // ─── Pamätanie na používateľa: pohľad a predvolené filtre ─────────────────────
 // Po načítaní nastavení sa vrátia uložené filtre (len keď adresa nenesie žiadny) a pohľad; zmeny sa ukladajú.
 const { data: me } = useMe()
+const isOwner = useIsOwner()
 const saveSettings = useSaveUserSettings()
 const settingsRestored = ref(false)
 watch(
@@ -427,6 +429,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">{{
           t('recipes.list.addFirst')
         }}</v-btn>
+        <SampleRecipesButton v-if="isOwner" class="mt-3" />
       </div>
     </EmptyState>
   </template>
