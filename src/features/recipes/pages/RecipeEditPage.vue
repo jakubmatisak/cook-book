@@ -10,7 +10,7 @@ import { ApiError } from '@/api/http'
 import { useRecipe, useSaveRecipe } from '@/api/recipes'
 import { createDraftStore } from '@/composables/useDraft'
 import { useLeavePrompt } from '@/composables/useLeavePrompt'
-import { useUnsavedChangesGuard } from '@/composables/useUnsavedChangesGuard'
+import { useFlushOnHide } from '@/composables/useFlushOnHide'
 import ImagePicker from '../components/ImagePicker.vue'
 import IngredientRows from '../components/IngredientRows.vue'
 import StepRows from '../components/StepRows.vue'
@@ -62,10 +62,11 @@ watch(
 
 const dirty = computed(() => JSON.stringify(formToInput(form.value)) !== snapshot.value)
 const saved = ref(false)
-useUnsavedChangesGuard(() => dirty.value && !saved.value)
 
-// Koncept v úložisku prehliadača: prežije obnovenie stránky aj na iPhone, kde beforeunload nefunguje.
+// Koncept v úložisku prehliadača: prežije obnovenie aj zatvorenie stránky, preto nepotrebujeme okno prehliadača
+// „Naozaj odísť?“ (to sa nedá upraviť). Pri zatváraní a skrytí stránky sa uloží hneď, bez čakania na pauzu v písaní.
 const draft = createDraftStore<RecipeForm>(`recipe:${id.value ?? 'new'}`)
+useFlushOnHide(() => draft.flush())
 const pendingDraft = ref<RecipeForm | null>(null)
 watch(
   loaded,

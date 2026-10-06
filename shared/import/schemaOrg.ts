@@ -302,19 +302,44 @@ export function parseIngredientLine(raw: string): ParsedIngredient {
   const whole = () => finish({ name: text, quantity: null, unit: null }, null)
 
   const q = takeQuantity(text)
-  if (!q || !(q.quantity > 0) || !q.rest) return whole()
+  if (!q) return trailingQuantity()
+  if (!(q.quantity > 0) || !q.rest) return whole()
 
-  const tokens = q.rest.split(' ')
+  const unit = takeUnit(q.rest, q.quantity)
+  if (unit) {
+    if (!unit.rest) return whole()
+    return finish({ name: unit.rest, quantity: unit.quantity, unit: unit.unit }, q.range)
+  }
+  return finish({ name: q.rest, quantity: q.quantity, unit: null }, q.range)
+
+  /**
+   * Slovenský zápis „názov, množstvo jednotka“ („cukor práškový, 200 g“, „keksy, 1 bal“): množstvo je až za
+   * čiarkou. Text za čiarkou, ktorý nezačína číslom („bielky, sneh zo 4 ks“), ostáva poznámkou.
+   */
+  function trailingQuantity(): ParsedIngredient {
+    const post = tail ? takeQuantity(tail) : null
+    if (!post || !(post.quantity > 0) || !text) return whole()
+    const unit = post.rest ? takeUnit(post.rest, post.quantity) : null
+    const remainder = unit ? unit.rest : post.rest
+    const notes = [post.range, ...parentheses, remainder].filter((n): n is string => Boolean(n))
+    return {
+      name: text,
+      quantity: unit ? unit.quantity : post.quantity,
+      unit: unit ? unit.unit : null,
+      note: notes.length ? notes.join(', ') : null,
+    }
+  }
+}
+
+/** Ak text začína jednotkou („g masla“, „bal“), vráti ju, prepočítané množstvo a zvyšok textu. */
+function takeUnit(rest: string, quantity: number): { unit: UnitCode; quantity: number; rest: string } | null {
+  const tokens = rest.split(' ')
   const unitToken = tokens[0]!.replace(/[.,]$/, '')
   const foreign = FOREIGN_UNITS[unitToken.toLowerCase()]
   const known = foreign ? foreign.unit : unitFromText(unitToken)
-  if (known) {
-    const name = tokens.slice(1).join(' ')
-    if (!name) return whole()
-    const converted = foreign && foreign.factor !== 1 ? Math.round(q.quantity * foreign.factor) : q.quantity
-    return finish({ name, quantity: converted, unit: known }, q.range)
-  }
-  return finish({ name: q.rest, quantity: q.quantity, unit: null }, q.range)
+  if (!known) return null
+  const converted = foreign && foreign.factor !== 1 ? Math.round(quantity * foreign.factor) : quantity
+  return { unit: known, quantity: converted, rest: tokens.slice(1).join(' ') }
 }
 
 // ─── JSON-LD ──────────────────────────────────────────────────────────────────

@@ -67,6 +67,7 @@ export const UNIT_ALIASES: Readonly<Record<string, UnitCode>> = {
   salka: 'šálka',
   salky: 'šálka',
   salok: 'šálka',
+  bal: 'balenie',
   balenia: 'balenie',
   baleni: 'balenie',
   stipky: 'štipka',

@@ -63,3 +63,28 @@ describe('createDraftStore', () => {
     expect(() => store.clear()).not.toThrow()
   })
 })
+
+describe('flush – uloženie hneď, keď sa stránka zatvára alebo obnovuje', () => {
+  it('zapíše čakajúci obsah bez čakania na pauzu v písaní', () => {
+    vi.useFakeTimers()
+    const storage = fakeStorage()
+    const store = createDraftStore<{ title: string }>('recipe:new', { storage, debounceMs: 500 })
+    store.save({ title: 'Guláš' })
+    expect(storage.data.size).toBe(0)
+    store.flush()
+    expect(store.load()).toEqual({ title: 'Guláš' })
+    vi.advanceTimersByTime(1000) // už nič nečaká
+    expect(store.load()).toEqual({ title: 'Guláš' })
+  })
+
+  it('bez čakajúceho obsahu nič nezapíše a po clear neoživí starý obsah', () => {
+    const storage = fakeStorage()
+    const store = createDraftStore<{ title: string }>('recipe:new', { storage, debounceMs: 500 })
+    store.flush()
+    expect(storage.data.size).toBe(0)
+    store.save({ title: 'A' })
+    store.clear()
+    store.flush()
+    expect(storage.data.size).toBe(0)
+  })
+})

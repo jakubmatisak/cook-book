@@ -128,6 +128,55 @@ describe('parseIngredientLine', () => {
     expect(parse('2 – 3 cibule')).toEqual({ name: 'cibule', quantity: 2, unit: null, note: '2–3' })
   })
 
+  it('slovenský zápis „názov, množstvo jednotka“ (množstvo za čiarkou)', () => {
+    expect(parse('cukor práškový, 200 g')).toEqual({
+      name: 'cukor práškový',
+      quantity: 200,
+      unit: 'g',
+      note: null,
+    })
+    expect(parse('keksy BeBe kakaové, 1 bal')).toEqual({
+      name: 'keksy BeBe kakaové',
+      quantity: 1,
+      unit: 'balenie',
+      note: null,
+    })
+    expect(parse('keksy BeBe mliečne, 1  bal')).toMatchObject({ quantity: 1, unit: 'balenie' })
+    expect(parse('žĺtky, 4 ks')).toEqual({ name: 'žĺtky', quantity: 4, unit: 'ks', note: null })
+    expect(parse('banány, 500 g')).toEqual({ name: 'banány', quantity: 500, unit: 'g', note: null })
+  })
+
+  it('množstvo za čiarkou: rozsah, neznáma jednotka a zvyšok idú do poznámky', () => {
+    expect(parse('cukor vanilkový, 1-2 ks')).toEqual({
+      name: 'cukor vanilkový',
+      quantity: 1,
+      unit: 'ks',
+      note: '1–2',
+    })
+    expect(parse('Jablká, 1 700ml pohár strúhané')).toEqual({
+      name: 'Jablká',
+      quantity: 1,
+      unit: null,
+      note: '700ml pohár strúhané',
+    })
+    expect(parse('múka, 2 PL hladká')).toEqual({ name: 'múka', quantity: 2, unit: 'PL', note: 'hladká' })
+  })
+
+  it('text za čiarkou bez množstva na začiatku ostáva poznámkou', () => {
+    expect(parse('bielky, sneh zo 4 ks')).toEqual({
+      name: 'bielky',
+      quantity: null,
+      unit: null,
+      note: 'sneh zo 4 ks',
+    })
+    expect(parse('mrkva, nastrúhaná')).toEqual({
+      name: 'mrkva',
+      quantity: null,
+      unit: null,
+      note: 'nastrúhaná',
+    })
+  })
+
   it('zátvorky a text za čiarkou idú do poznámky', () => {
     expect(parse('2 (200 g) cibule, nakrájané')).toEqual({
       name: 'cibule',
