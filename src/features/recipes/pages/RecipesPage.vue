@@ -373,7 +373,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         class="mb-3"
       />
 
-      <div class="d-flex flex-column flex-md-row align-md-center ga-2 mb-3">
+      <div class="d-flex flex-column flex-md-row flex-md-wrap align-md-center ga-2 mb-3">
         <div class="d-flex flex-wrap align-center ga-2">
           <v-btn
             :prepend-icon="mdiFilterVariant"
@@ -434,7 +434,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             hide-details
             density="compact"
             class="flex-grow-1"
-            :style="{ minWidth: 0, maxWidth: mdAndUp ? '14rem' : undefined }"
+            :style="{ minWidth: '10rem', maxWidth: mdAndUp ? '14rem' : undefined }"
             data-test="sort-select"
             @update:model-value="setSort"
           />
@@ -451,6 +451,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             mandatory
             height="40"
             selected-class="bg-primary"
+            class="flex-shrink-0"
             data-test="view-toggle"
           >
             <v-btn :icon="mdiViewGridOutline" value="grid" :aria-label="t('recipes.list.viewGrid')" />
