@@ -6,6 +6,7 @@ import type {
   ShopCategoryDto,
   StapleDto,
   StarterIngredientsResult,
+  StarterStatusDto,
   TagDto,
 } from '@shared/api'
 import type { TagInput } from '@shared/schemas/recipe'
@@ -46,6 +47,14 @@ export function useShopCategories() {
   return { ...query, data }
 }
 
+/** Koľko základných surovín chýba (tlačidlo „Pridať základné suroviny“ dáva zmysel, len keď niečo chýba). */
+export const useStarterStatus = () =>
+  useQuery({
+    queryKey: [...INGREDIENTS_KEY, 'starter-status'],
+    queryFn: () => apiFetch<StarterStatusDto>('/ingredients/starter'),
+    staleTime: 0,
+  })
+
 /** Pridá základné suroviny; odpoveď nesie len pridané, takže sa zoznam nesťahuje znova. */
 export function useAddStarterIngredients(): UseMutationReturnType<
   StarterIngredientsResult,
@@ -56,7 +65,10 @@ export function useAddStarterIngredients(): UseMutationReturnType<
   const client = useQueryClient()
   return useMutation({
     mutationFn: () => apiFetch<StarterIngredientsResult>('/ingredients/starter', { method: 'POST' }),
-    onSuccess: (result) => addIngredientsToCache(client, result.items),
+    onSuccess: (result) => {
+      addIngredientsToCache(client, result.items)
+      void client.invalidateQueries({ queryKey: [...INGREDIENTS_KEY, 'starter-status'] })
+    },
   })
 }
 

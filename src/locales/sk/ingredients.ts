@@ -6,6 +6,7 @@ export default {
     subtitle:
       'Kategória obchodu určuje poradie v nákupnom zozname. Nové ingrediencie pribúdajú samy pri písaní receptov.',
     addStarters: 'Pridať základné suroviny',
+    addStartersCount: 'Pridať základné suroviny ({n})',
     added: 'Pridané: {items}.',
     allStarters: 'Základné suroviny už máš všetky.',
     addFailed: 'Suroviny sa nepodarilo pridať.',

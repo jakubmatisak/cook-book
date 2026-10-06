@@ -18,6 +18,7 @@ import {
   useAddStarterIngredients,
   useIngredients,
   useShopCategories,
+  useStarterStatus,
   useUpdateIngredient,
 } from '@/api/catalog'
 import { useBulkDeleteIngredients } from '@/api/bulk'
@@ -36,6 +37,9 @@ const { t } = useI18n()
 const { data: ingredients, isPending, error } = useIngredients({ refreshCounts: true })
 const { data: categories } = useShopCategories()
 const update = useUpdateIngredient()
+const { data: starter } = useStarterStatus()
+// Tlačidlo má zmysel, len keď niektorá základná surovina chýba.
+const missingStarters = computed(() => starter.value?.missing ?? 0)
 
 const search = ref('')
 const onlyUncategorized = ref(false)
@@ -150,13 +154,14 @@ const usage = (item: IngredientDto) =>
         :subtitle="mdAndUp ? t('ingredients.page.subtitle') : undefined"
       >
         <v-btn
+          v-if="missingStarters > 0"
           variant="tonal"
           :prepend-icon="mdiPlaylistPlus"
           :loading="addStarter.isPending.value"
           data-test="add-starter"
           @click="onAddStarter"
         >
-          {{ t('ingredients.page.addStarters') }}
+          {{ t('ingredients.page.addStartersCount', { n: missingStarters }) }}
         </v-btn>
         <v-btn
           :prepend-icon="mdiCheckboxMarkedOutline"

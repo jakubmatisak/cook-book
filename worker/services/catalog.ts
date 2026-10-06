@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
-import type { IngredientDto, StarterIngredientsResult } from '../../shared/api'
+import type { IngredientDto, StarterIngredientsResult, StarterStatusDto } from '../../shared/api'
 import { STARTER_INGREDIENTS } from '../../shared/data/starterIngredients'
 import { newId } from '../../shared/ids'
 import { plural } from '../../shared/format'
@@ -241,6 +241,17 @@ export async function resolveTags(db: Db, householdId: string, names: readonly s
  * suroviny sa podľa názvu bez diakritiky (aj zmazané) preskočia a nič sa neprepíše. Kategória sa nájde
  * podľa názvu medzi kategóriami obchodu tej istej domácnosti.
  */
+export async function starterStatus(db: Db, householdId: string): Promise<StarterStatusDto> {
+  const payload = JSON.stringify(STARTER_INGREDIENTS.map((i) => ({ norm: normalizeText(i.name) })))
+  const row = await db.get<{ missing: number }>(sql`
+    select count(*) as missing
+    from json_each(${payload}) j
+    where not exists (
+      select 1 from ingredients i
+      where i.household_id = ${householdId} and i.name_normalized = json_extract(j.value, '$.norm'))`)
+  return { total: STARTER_INGREDIENTS.length, missing: Number(row?.missing ?? 0) }
+}
+
 export async function addStarterIngredients(db: Db, householdId: string): Promise<StarterIngredientsResult> {
   const payload = JSON.stringify(
     STARTER_INGREDIENTS.map((i) => ({

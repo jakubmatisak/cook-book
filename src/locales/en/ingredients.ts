@@ -6,6 +6,7 @@ export default {
     subtitle:
       'The shop category sets the order in the shopping list. New ingredients are added automatically as you write recipes.',
     addStarters: 'Add basic ingredients',
+    addStartersCount: 'Add basic ingredients ({n})',
     added: 'Added: {items}.',
     allStarters: 'You already have all the basic ingredients.',
     addFailed: 'Could not add the ingredients.',

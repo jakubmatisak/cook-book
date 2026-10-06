@@ -256,6 +256,12 @@ export interface RecipeListDto {
   facets: RecipeFacets
 }
 
+/** Koľko základných surovín domácnosti ešte chýba (ktoré nemá ani zmazané); pridanie ich pridá práve toľko. */
+export interface StarterStatusDto {
+  total: number
+  missing: number
+}
+
 /** Výsledok pridania štartovacieho zoznamu: len naozaj pridané suroviny, aby klient nemusel sťahovať celý zoznam. */
 export interface StarterIngredientsResult {
   added: number

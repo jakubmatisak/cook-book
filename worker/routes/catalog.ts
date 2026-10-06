@@ -13,6 +13,7 @@ import {
   createIngredient,
   deleteIngredient,
   listIngredients,
+  starterStatus,
   updateIngredient,
 } from '../services/catalog'
 import { createTag, deleteTag, listTags, updateTag } from '../services/tags'
@@ -35,6 +36,7 @@ export const ingredientRoutes = new Hono<AppEnv>()
     const { ids } = await parseBody(c, bulkIdsSchema)
     return c.json(await bulkDeleteIngredients(c.get('db'), c.get('user').householdId, ids))
   })
+  .get('/starter', async (c) => c.json(await starterStatus(c.get('db'), c.get('user').householdId)))
   .post('/starter', async (c) => c.json(await addStarterIngredients(c.get('db'), c.get('user').householdId)))
   .put('/:id', async (c) => {
     const input = await parseBody(c, ingredientUpdateSchema)
