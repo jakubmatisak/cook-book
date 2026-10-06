@@ -6,6 +6,7 @@ import { ApiError, downloadFile } from '@/api/http'
 import { useIsOwner, useMe } from '@/api/me'
 import PageHeader from '@/components/PageHeader.vue'
 import HouseholdMembersCard from '@/features/households/components/HouseholdMembersCard.vue'
+import LanguageCard from '../components/LanguageCard.vue'
 import { useThemePreference } from '@/composables/useThemePreference'
 import { ACCESS_LOGOUT_PATH, canLogout } from '@/lib/auth'
 import { plural } from '@/lib/format'
@@ -106,6 +107,7 @@ async function exportRecipes() {
     </v-card>
 
     <div class="text-overline">Moje nastavenia</div>
+    <LanguageCard />
     <v-card title="Vzhľad">
       <v-card-text>
         <v-btn-toggle

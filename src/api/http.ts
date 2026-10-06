@@ -1,4 +1,5 @@
 import type { ApiErrorBody } from '@shared/api'
+import { t } from '@/i18n'
 import { activeHouseholdId } from '@/lib/household'
 
 export const API_BASE = '/api/v1'
@@ -63,8 +64,6 @@ const handleSessionExpired = () => {
   defaultHandler()
 }
 
-const NETWORK_ERROR_MESSAGE = 'Nepodarilo sa spojiť so serverom. Skontroluj pripojenie.'
-
 const isErrorBody = (value: unknown): value is ApiErrorBody =>
   typeof value === 'object' &&
   value !== null &&
@@ -100,11 +99,11 @@ async function send(path: string, init: RequestInit | undefined, opts: ApiFetchO
       ...init,
     })
   } catch {
-    throw new ApiError(0, 'network_error', NETWORK_ERROR_MESSAGE)
+    throw new ApiError(0, 'network_error', t('common.errors.network_error'))
   }
   if (res.type === 'opaqueredirect') {
     ;(opts.onUnauthorized ?? handleSessionExpired)()
-    throw new ApiError(401, 'session_expired', 'Prihlásenie vypršalo, presmerúvam na prihlásenie.')
+    throw new ApiError(401, 'session_expired', t('common.errors.session_expired'))
   }
   if (!res.ok) {
     if (res.status === 401) (opts.onUnauthorized ?? handleSessionExpired)()
@@ -112,7 +111,7 @@ async function send(path: string, init: RequestInit | undefined, opts: ApiFetchO
     if (isErrorBody(body)) {
       throw new ApiError(res.status, body.error.code, body.error.message, body.error.details)
     }
-    throw new ApiError(res.status, `http_${res.status}`, `Server vrátil chybu ${res.status}.`)
+    throw new ApiError(res.status, `http_${res.status}`, t('common.errors.http', { status: res.status }))
   }
   return res
 }
@@ -128,7 +127,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit, opts: ApiFet
   if (res.status === 204) return undefined as T
   const body = await readJson(res)
   if (body === undefined) {
-    throw new ApiError(res.status, 'invalid_response', 'Server vrátil neočakávanú odpoveď.')
+    throw new ApiError(res.status, 'invalid_response', t('common.errors.invalid_response'))
   }
   return body as T
 }

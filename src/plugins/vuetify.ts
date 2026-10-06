@@ -1,15 +1,17 @@
 import { createVuetify } from 'vuetify'
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
-import { sk } from 'vuetify/locale'
+import { createVueI18nAdapter } from 'vuetify/locale/adapters/vue-i18n'
+import { useI18n } from 'vue-i18n'
 import 'vuetify/styles'
 import { colors } from '@/design/tokens'
+import { i18n as appI18n } from '@/i18n'
 
 /**
  * Jediné miesto, kde sa určuje vzhľad: téma (farby) a predvolené props komponentov.
  * Komponenty v aplikácii používajú len Vuetify komponenty a utility triedy.
  * Zaoblenie je hranatejšie (škála v src/design/settings.scss: sm 2 px, md 4 px, lg 6 px).
  */
-export const createAppVuetify = () =>
+export const createAppVuetify = (i18n: typeof appI18n = appI18n) =>
   createVuetify({
     theme: {
       defaultTheme: 'light',
@@ -57,6 +59,7 @@ export const createAppVuetify = () =>
       VSnackbar: { rounded: 'md' },
       VEmptyState: { color: 'primary', size: 64 },
     },
-    locale: { locale: 'sk', fallback: 'sk', messages: { sk } },
+    // Texty Vuetify (kalendár, tabuľky, …) idú cez vue-i18n, takže sa menia spolu s jazykom aplikácie.
+    locale: { adapter: createVueI18nAdapter({ i18n, useI18n }) },
     icons: { defaultSet: 'mdi', aliases, sets: { mdi } },
   })

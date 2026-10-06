@@ -1,6 +1,7 @@
 import { ref, watch } from 'vue'
 import { useMe } from '@/api/me'
 import { useSaveUserSettings } from '@/api/userSettings'
+import { currentLocale, i18n, setLocale } from '@/i18n'
 import { useThemePreference } from './useThemePreference'
 
 /**
@@ -20,10 +21,18 @@ export function useSyncUserSettings() {
       if (!settings || synced.value) return
       if (settings.theme && settings.theme !== preference.value) set(settings.theme)
       else if (!settings.theme && preference.value !== 'system') save.mutate({ theme: preference.value })
+      // Jazyk: rovnako ako vzhľad (server má prednosť, jazyk zvolený na zariadení sa prenesie na server)
+      if (settings.locale && settings.locale !== currentLocale()) setLocale(settings.locale)
+      else if (!settings.locale && currentLocale() !== 'sk') save.mutate({ locale: currentLocale() })
       synced.value = true
     },
     { immediate: true },
   )
+
+  watch(i18n.global.locale, () => {
+    if (!synced.value) return
+    if (currentLocale() !== (me.value?.userSettings.locale ?? 'sk')) save.mutate({ locale: currentLocale() })
+  })
 
   watch(preference, (value) => {
     if (!synced.value) return

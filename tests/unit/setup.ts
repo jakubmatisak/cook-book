@@ -1,3 +1,9 @@
+import { config } from '@vue/test-utils'
+import { i18n } from '@/i18n'
+
+// Každý testovaný komponent má k dispozícii preklady (predvolený jazyk je slovenčina).
+config.global.plugins = [...(config.global.plugins ?? []), i18n]
+
 class ResizeObserverStub {
   observe() {}
   unobserve() {}

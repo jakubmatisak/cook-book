@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { useSyncUserSettings } from '@/composables/useSyncUserSettings'
+import { currentLocale, setLocale } from '@/i18n'
 import { useThemePreference } from '@/composables/useThemePreference'
 import { jsonResponse, me, mountPlugins, stubApi } from './helpers/apiStub'
 
@@ -32,6 +33,7 @@ afterEach(() => {
   for (const w of mounted.splice(0)) w.unmount()
   vi.unstubAllGlobals()
   useThemePreference().set('system')
+  setLocale('sk')
   localStorage.clear()
 })
 
@@ -64,5 +66,32 @@ describe('useSyncUserSettings – vzhľad', () => {
   it('bez uloženého vzhľadu a s predvoleným na zariadení sa nič neukladá', async () => {
     const { calls } = await mountHost({ '/me': meWith({}) })
     expect(puts(calls)).toEqual([])
+  })
+})
+
+describe('useSyncUserSettings – jazyk', () => {
+  it('prevezme jazyk uložený na serveri', async () => {
+    const { calls } = await mountHost({ '/me': meWith({ locale: 'en' }) })
+    expect(currentLocale()).toBe('en')
+    expect(puts(calls)).toEqual([])
+  })
+
+  it('zmena jazyka sa uloží na server', async () => {
+    const { calls } = await mountHost({
+      '/me': meWith({}),
+      'PUT /me/settings': () => jsonResponse({ locale: 'en' }),
+    })
+    setLocale('en')
+    await flushPromises()
+    expect(puts(calls)).toEqual([{ locale: 'en' }])
+  })
+
+  it('jazyk zvolený na zariadení pred prvým uložením sa na server prenesie', async () => {
+    setLocale('en')
+    const { calls } = await mountHost({
+      '/me': meWith({}),
+      'PUT /me/settings': () => jsonResponse({ locale: 'en' }),
+    })
+    expect(puts(calls)).toEqual([{ locale: 'en' }])
   })
 })
