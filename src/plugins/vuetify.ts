@@ -33,6 +33,8 @@ export const createAppVuetify = () =>
         color: 'primary',
         rounded: 'sm',
         autocomplete: 'suppress',
+        // Po výbere položky sa napísané hľadanie zmaže, nech nezostáva v poli.
+        clearOnSelect: true,
       },
       VCombobox: {
         variant: 'outlined',
