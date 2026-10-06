@@ -21,6 +21,7 @@ import { HttpError } from '../errors'
 import { chunk } from '../http'
 import { listMembers } from './family'
 import { imageUrl } from './recipes'
+import { listStays, stayGuestsOn } from './stays'
 
 type EntryRow = typeof mealPlanEntries.$inferSelect
 
@@ -70,6 +71,7 @@ function toEntryDto(row: JoinedRow): EntryBase {
     sortOrder: e.sortOrder,
     audience: e.audience,
     guestIds: [],
+    presentGuestIds: [],
   }
 }
 
@@ -86,12 +88,23 @@ async function loadGuestIds(db: Db, entryIds: string[]): Promise<Map<string, str
   return guests
 }
 
-const withGuests = async (db: Db, entries: EntryBase[]): Promise<EntryBase[]> => {
+/** Doplní ručne vybrané návštevy a všetky prítomné (ručné + pobyty, ktoré pokrývajú deň jedla). */
+const withGuests = async (db: Db, householdId: string, entries: EntryBase[]): Promise<EntryBase[]> => {
+  if (entries.length === 0) return entries
   const guests = await loadGuestIds(
     db,
     entries.map((e) => e.id),
   )
-  return entries.map((e) => ({ ...e, guestIds: guests.get(e.id) ?? [] }))
+  const dates = entries.map((e) => e.date).sort()
+  const stays = await listStays(db, householdId, dates[0]!, dates[dates.length - 1]!)
+  return entries.map((e) => {
+    const explicit = guests.get(e.id) ?? []
+    return {
+      ...e,
+      guestIds: explicit,
+      presentGuestIds: [...new Set([...explicit, ...stayGuestsOn(stays, e.date)])],
+    }
+  })
 }
 
 /** Vybrať sa dajú len návštevy (typ guest) z vlastnej domácnosti. */
@@ -158,7 +171,7 @@ async function attachWarnings(db: Db, householdId: string, entries: EntryBase[])
             { ingredientIds: ingredientsOf.get(e.recipeId!) ?? [], tagIds: tagsOf.get(e.recipeId!) ?? [] },
             members,
             e.audience,
-            e.guestIds,
+            e.presentGuestIds,
           )
         : [],
   }))
@@ -185,7 +198,7 @@ export async function listPlan(
       asc(mealPlanEntries.sortOrder),
       asc(mealPlanEntries.createdAt),
     )
-  return attachWarnings(db, householdId, await withGuests(db, rows.map(toEntryDto)))
+  return attachWarnings(db, householdId, await withGuests(db, householdId, rows.map(toEntryDto)))
 }
 
 async function getEntryDto(db: Db, householdId: string, id: string): Promise<PlanEntryDto> {
@@ -193,7 +206,7 @@ async function getEntryDto(db: Db, householdId: string, id: string): Promise<Pla
     .where(and(eq(mealPlanEntries.id, id), eq(mealPlanEntries.householdId, householdId)))
     .get()
   if (!row) throw new HttpError(404, 'not_found', 'Jedlo v pláne neexistuje.')
-  const [entry] = await attachWarnings(db, householdId, await withGuests(db, [toEntryDto(row)]))
+  const [entry] = await attachWarnings(db, householdId, await withGuests(db, householdId, [toEntryDto(row)]))
   return entry!
 }
 

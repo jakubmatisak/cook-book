@@ -36,6 +36,13 @@
       "when": 1791281515367,
       "tag": "0004_verejne_recepty",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791285947323,
+      "tag": "0005_pobyty_navstev",
+      "breakpoints": true
     }
   ]
 }

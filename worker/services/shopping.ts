@@ -29,6 +29,7 @@ import type { UserRow } from '../env'
 import { HttpError } from '../errors'
 import { chunk } from '../http'
 import { listMembers } from './family'
+import { listStays, stayGuestsOn } from './stays'
 import { imageUrl } from './recipes'
 
 type ItemRow = typeof shoppingItems.$inferSelect
@@ -198,13 +199,15 @@ async function loadPlanForShopping(
     db,
     entries.map((e) => e.id),
   )
+  // Návštevy z pobytov, ktoré pokrývajú deň jedla, sa počítajú automaticky.
+  const stays = await listStays(db, householdId, input.from, input.to)
 
   return entries.map((e) => ({
     id: e.id,
     date: e.date,
     servingsOverride: e.servingsOverride,
     audience: e.audience,
-    guestIds: guests.get(e.id) ?? [],
+    guestIds: [...new Set([...(guests.get(e.id) ?? []), ...stayGuestsOn(stays, e.date)])],
     recipe: e.recipeId
       ? {
           id: e.recipeId,

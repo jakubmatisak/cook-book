@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { PlanCopyResult } from '../../shared/api'
 import {
+  guestStayInputSchema,
   planCopySchema,
   planEntryInputSchema,
   planRangeQuerySchema,
@@ -10,6 +11,7 @@ import {
 import type { AppEnv } from '../env'
 import { parseBody } from '../http'
 import { copyPlan, createEntry, deleteEntry, listPlan, updateEntry } from '../services/plan'
+import { createStays, deleteStay, listStays } from '../services/stays'
 import { applyTemplate, deleteTemplate, listTemplates, saveTemplate } from '../services/templates'
 
 export const planRoutes = new Hono<AppEnv>()
@@ -40,6 +42,19 @@ export const planRoutes = new Hono<AppEnv>()
   })
   .delete('/templates/:id', async (c) => {
     await deleteTemplate(c.get('db'), c.get('user').householdId, c.req.param('id'))
+    return c.body(null, 204)
+  })
+  // Pobyty návštev: jedlá v dňoch pobytu s návštevou počítajú automaticky.
+  .get('/stays', async (c) => {
+    const { from, to } = planRangeQuerySchema.parse(c.req.query())
+    return c.json(await listStays(c.get('db'), c.get('user').householdId, from, to))
+  })
+  .post('/stays', async (c) => {
+    const input = await parseBody(c, guestStayInputSchema)
+    return c.json(await createStays(c.get('db'), c.get('user').householdId, input), 201)
+  })
+  .delete('/stays/:id', async (c) => {
+    await deleteStay(c.get('db'), c.get('user').householdId, c.req.param('id'))
     return c.body(null, 204)
   })
   .post('/copy', async (c) => {

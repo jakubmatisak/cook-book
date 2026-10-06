@@ -14,6 +14,7 @@ const TABLES_CHILD_FIRST = [
   'week_template_entries',
   'week_templates',
   'cook_log',
+  'guest_stays',
   'meal_plan_entry_members',
   'meal_plan_entries',
   'meal_slots',

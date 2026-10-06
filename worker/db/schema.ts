@@ -358,6 +358,22 @@ export const mealPlanEntryMembers = sqliteTable(
   (t) => [primaryKey({ columns: [t.entryId, t.memberId] })],
 )
 
+/** Pobyt návštevy: jedlá v dňoch od – do (vrátane) s ňou počítajú automaticky. */
+export const guestStays = sqliteTable(
+  'guest_stays',
+  {
+    id: id(),
+    householdId: householdRef(),
+    memberId: text('member_id')
+      .notNull()
+      .references(() => familyMembers.id, { onDelete: 'cascade' }),
+    fromDate: text('from_date').notNull(),
+    toDate: text('to_date').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('guest_stays_household_range_idx').on(t.householdId, t.fromDate, t.toDate)],
+)
+
 export const weekTemplates = sqliteTable('week_templates', {
   id: id(),
   householdId: householdRef(),

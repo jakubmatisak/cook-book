@@ -122,6 +122,7 @@ export const EXPORT_TABLES = [
   'mealSlots',
   'mealPlanEntries',
   'mealPlanEntryMembers',
+  'guestStays',
   'cookLog',
   'weekTemplates',
   'weekTemplateEntries',
@@ -281,10 +282,20 @@ export interface PlanEntryDto {
   note: string | null
   sortOrder: number
   audience: PlanAudience
-  /** Návštevy (osoby typu guest) vybrané pri tomto jedle. */
+  /** Návštevy (osoby typu guest) vybrané ručne pri tomto jedle. */
   guestIds: string[]
+  /** Všetky návštevy, ktoré sú pri tomto jedle: ručne vybrané aj tie, ktorých pobyt pokrýva deň jedla. */
+  presentGuestIds: string[]
   /** Čo v tomto jedle nesedí rodine (alergia, averzia, diéta); recept sa neskrýva. */
   warnings: PreferenceWarning[]
+}
+
+/** Pobyt návštevy: od – do (vrátane); jedlá v týchto dňoch s ňou počítajú automaticky. */
+export interface GuestStayDto {
+  id: string
+  memberId: string
+  fromDate: string
+  toDate: string
 }
 
 export interface WeekTemplateDto {

@@ -64,6 +64,7 @@ export async function exportHousehold(db: Db, householdId: string): Promise<Expo
     recipeNotes: db.select().from(t.recipeNotes).where(inArray(t.recipeNotes.recipeId, recipeIds)),
     mealSlots: db.select().from(t.mealSlots).where(own(t.mealSlots.householdId)),
     mealPlanEntries: db.select().from(t.mealPlanEntries).where(own(t.mealPlanEntries.householdId)),
+    guestStays: db.select().from(t.guestStays).where(own(t.guestStays.householdId)),
     mealPlanEntryMembers: db
       .select()
       .from(t.mealPlanEntryMembers)
