@@ -1,5 +1,12 @@
 # Zmeny
 
+## 1.3.1 – 2026-10-07
+
+### Opravy
+
+- Recept s dlhým názvom (napr. z recepty.aktuality.sk) sa dá uložiť – kontrola adresy receptu už nepoužíva
+  LIKE, ktorý D1 obmedzuje na 50 bajtov.
+
 ## 1.3.0 – 2026-10-07
 
 ### Nové

@@ -75,7 +75,8 @@ async function uniqueSlug(db: Db, householdId: string, base: string, exceptId?: 
     .where(
       and(
         eq(recipes.householdId, householdId),
-        or(eq(recipes.slug, base), sql`${recipes.slug} like ${`${base}-%`}`),
+        // Bez LIKE: D1 povolí vzor najviac 50 bajtov a dlhý názov receptu by uloženie zhodil.
+        or(eq(recipes.slug, base), sql`substr(${recipes.slug}, 1, ${base.length + 1}) = ${`${base}-`}`),
         exceptId ? ne(recipes.id, exceptId) : undefined,
       ),
     )
