@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { unitText } from '@/i18n/quantity'
 import {
-  mdiCheck,
   mdiCheckboxMarkedOutline,
+  mdiFilterVariant,
   mdiFormatListChecks,
   mdiMagnify,
   mdiPencilOutline,
@@ -44,21 +44,28 @@ const { data: starter } = useStarterStatus()
 const missingStarters = computed(() => starter.value?.missing ?? 0)
 
 const search = ref('')
-const onlyUncategorized = ref(false)
+/** Filter podľa kategórie obchodu (napr. len mäso); `none` = ingrediencie bez kategórie. */
+const category = ref<string | null>(null)
+const NO_CATEGORY = 'none'
 
 const filtered = computed(() => {
   const needle = normalizeText(search.value ?? '')
   return (ingredients.value ?? []).filter(
     (i) =>
-      (!needle || normalizeText(i.name).includes(needle)) && (!onlyUncategorized.value || !i.shopCategoryId),
+      (!needle || normalizeText(i.name).includes(needle)) &&
+      (!category.value || (i.shopCategoryId ?? NO_CATEGORY) === category.value),
   )
 })
+
+// Na mobile je výber kategórie v spodnom paneli, aby nad zoznamom ostalo len hľadanie.
+const filtersOpen = ref(false)
+const filterCount = computed(() => (category.value ? 1 : 0))
 
 // Riadky s dvoma rozbaľovacími zoznamami sú ťažké: stovky naraz by stránku na chvíľu zasekli. Vykresľujú sa
 // po dávkach, ďalšia dávka pribudne, keď sa koniec zoznamu priblíži k obrazovke.
 const BATCH = 30
 const limit = ref(BATCH)
-watch([search, onlyUncategorized], () => (limit.value = BATCH))
+watch([search, category], () => (limit.value = BATCH))
 const visible = computed(() => filtered.value.slice(0, limit.value))
 const remaining = computed(() => filtered.value.length - visible.value.length)
 const showMore = () => (limit.value += BATCH)
@@ -66,7 +73,24 @@ const onEndVisible = (isIntersecting: boolean) => {
   if (isIntersecting) showMore()
 }
 
-const uncategorizedCount = computed(() => ingredients.value?.filter((i) => !i.shopCategoryId).length ?? 0)
+/** Kategórie s počtom ingrediencií vo filtri; na konci tie bez kategórie. */
+const filterItems = computed(() => {
+  const counts = new Map<string, number>()
+  for (const i of ingredients.value ?? []) {
+    const key = i.shopCategoryId ?? NO_CATEGORY
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return [
+    ...(categories.value ?? []).map((c) => ({
+      title: t('ingredients.page.categoryOption', { name: c.name, count: counts.get(c.id) ?? 0 }),
+      value: c.id,
+    })),
+    {
+      title: t('ingredients.page.uncategorized', { count: counts.get(NO_CATEGORY) ?? 0 }),
+      value: NO_CATEGORY,
+    },
+  ]
+})
 
 const categoryItems = computed(() => categories.value?.map((c) => ({ title: c.name, value: c.id })) ?? [])
 const unitItems = computed(() =>
@@ -208,19 +232,50 @@ const usage = (item: IngredientDto) =>
           clearable
           hide-details
           class="flex-grow-1"
-          style="min-width: 16rem"
+          :style="mdAndUp ? 'min-width: 16rem' : undefined"
         />
-        <v-btn
-          :color="onlyUncategorized ? 'primary' : undefined"
-          :variant="onlyUncategorized ? 'flat' : 'outlined'"
-          :prepend-icon="onlyUncategorized ? mdiCheck : undefined"
-          :height="controlHeight"
-          :aria-pressed="onlyUncategorized"
-          @click="onlyUncategorized = !onlyUncategorized"
-        >
-          {{ t('ingredients.page.uncategorized', { count: uncategorizedCount }) }}
-        </v-btn>
+        <v-select
+          v-if="mdAndUp"
+          v-model="category"
+          :items="filterItems"
+          :label="t('ingredients.page.category')"
+          clearable
+          hide-details
+          data-test="ingredients-category"
+          style="min-width: 14rem; max-width: 20rem"
+        />
+        <v-badge v-else :model-value="filterCount > 0" :content="filterCount" color="primary">
+          <v-btn
+            :icon="mdiFilterVariant"
+            variant="tonal"
+            :color="filterCount ? 'primary' : undefined"
+            :height="controlHeight"
+            :width="controlHeight"
+            :aria-label="t('ingredients.page.filters')"
+            data-test="ingredients-filters-button"
+            @click="filtersOpen = true"
+          />
+        </v-badge>
       </div>
+
+      <v-bottom-sheet v-if="!mdAndUp" v-model="filtersOpen">
+        <v-card :title="t('ingredients.page.filters')">
+          <v-card-text>
+            <v-select
+              v-model="category"
+              :items="filterItems"
+              :label="t('ingredients.page.category')"
+              clearable
+              hide-details
+              data-test="ingredients-category"
+            />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn color="primary" @click="filtersOpen = false">{{ t('common.actions.close') }}</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-bottom-sheet>
     </template>
 
     <v-alert v-if="error" type="error" :text="errorText(error)" />

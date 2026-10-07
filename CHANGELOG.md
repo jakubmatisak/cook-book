@@ -1,5 +1,12 @@
 # Zmeny
 
+## 1.2.0 – 2026-10-07
+
+### Nové
+
+- Ingrediencie: filter podľa kategórie obchodu (napr. len mäso) s počtom ingrediencií pri každej kategórii
+  a voľbou Bez kategórie; na mobile v spodnom paneli Filtre ako v Špajzi.
+
 ## 1.1.0 – 2026-10-07
 
 ### Nové
