@@ -26,6 +26,8 @@ export default defineConfig({
           environment: 'jsdom',
           include: ['tests/unit/**/*.test.ts', 'tests/config/**/*.test.ts'],
           setupFiles: ['tests/unit/setup.ts'],
+          // Stránky s Vuetify sa v plnej sade (jsdom, veľa súborov súbežne) vykresľujú pomaly.
+          testTimeout: 20_000,
           server: { deps: { inline: ['vuetify'] } },
         },
       },

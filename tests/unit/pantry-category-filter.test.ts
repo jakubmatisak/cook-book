@@ -85,7 +85,7 @@ describe('Špajza: filter podľa kategórie', () => {
   it('filter funguje spolu s „Len čo mám doma“ a hľadaním', async () => {
     const wrapper = await mountPantry()
     await choose(wrapper, 'Zelenina')
-    const onlyHome = wrapper.findAll('.v-chip').find((c) => c.text().includes('Len čo mám doma'))!
+    const onlyHome = wrapper.find('[data-test="only-home-chip"]')
     await onlyHome.trigger('click')
     expect(names(wrapper)).toEqual(['Mrkva'])
   })

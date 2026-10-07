@@ -17,8 +17,10 @@ import { normalizeText } from '@shared/text'
 import { formatQuantity } from '@/i18n/quantity'
 import { useIngredients, usePantry, useShopCategories, useStaples, useTogglePantry } from '@/api/catalog'
 import EmptyState from '@/components/EmptyState.vue'
+import ActionButton from '@/components/ActionButton.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import ListLayout from '@/components/ListLayout.vue'
+import { useControlHeight } from '@/composables/useDensity'
 import { useToday } from '@/composables/useToday'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
@@ -45,6 +47,7 @@ const onlyExpiring = ref(false)
 const category = ref<string | null>(null)
 // Na mobile sú filtre v spodnom paneli, aby nad zoznamom ostalo len hľadanie.
 const { mdAndUp } = useDisplay()
+const controlHeight = useControlHeight()
 const filtersOpen = ref(false)
 const filterCount = computed(
   () => (category.value ? 1 : 0) + (onlyHome.value ? 1 : 0) + (onlyExpiring.value ? 1 : 0),
@@ -143,39 +146,29 @@ function editStaple(staple: StapleDto | null) {
   <ListLayout>
     <template #header>
       <PageHeader :title="t('common.nav.pantry')" :subtitle="subtitle">
-        <!-- Na mobile len ikonky (popis je v aria-label), nech hlavička nezaberá pol obrazovky. -->
-        <v-btn
+        <ActionButton
           v-if="tab === 'staples'"
+          :icon="mdiPlus"
+          :label="t('pantry.page.addStaple')"
           color="primary"
-          :prepend-icon="mdAndUp ? mdiPlus : undefined"
-          :icon="mdAndUp ? undefined : mdiPlus"
-          :aria-label="t('pantry.page.addStaple')"
           data-test="add-staple"
           @click="editStaple(null)"
-        >
-          <template v-if="mdAndUp">{{ t('pantry.page.addStaple') }}</template>
-        </v-btn>
+        />
         <template v-else>
-          <v-btn
+          <ActionButton
+            :icon="mdiPlus"
+            :label="t('pantry.page.addIngredient')"
             color="primary"
-            :prepend-icon="mdAndUp ? mdiPlus : undefined"
-            :icon="mdAndUp ? undefined : mdiPlus"
-            :aria-label="t('pantry.page.addIngredient')"
             data-test="add-ingredient"
             @click="addIngredient()"
-          >
-            <template v-if="mdAndUp">{{ t('pantry.page.addIngredient') }}</template>
-          </v-btn>
-          <v-btn
+          />
+          <ActionButton
+            :icon="mdiPotSteamOutline"
+            :label="t('pantry.page.cookable')"
             color="primary"
             variant="tonal"
-            :prepend-icon="mdAndUp ? mdiPotSteamOutline : undefined"
-            :icon="mdAndUp ? undefined : mdiPotSteamOutline"
-            :aria-label="t('pantry.page.cookable')"
             :to="{ path: '/recipes', query: { pantry: '1' } }"
-          >
-            <template v-if="mdAndUp">{{ t('pantry.page.cookable') }}</template>
-          </v-btn>
+          />
         </template>
       </PageHeader>
 
@@ -207,6 +200,8 @@ function editStaple(staple: StapleDto | null) {
           <v-btn
             :icon="mdiFilterVariant"
             variant="tonal"
+            :height="controlHeight"
+            :width="controlHeight"
             :color="filterCount ? 'primary' : undefined"
             :aria-label="t('pantry.page.filters')"
             data-test="pantry-filters-button"

@@ -82,3 +82,31 @@ describe('filtre špajze na mobile', () => {
     expect(wrapper.find('[data-test="pantry-intro"]').exists()).toBe(true)
   })
 })
+
+describe('výška ovládania v riadku s poliami', () => {
+  it('prepínače majú rovnakú výšku ako pole podľa hustoty rozhrania', async () => {
+    for (const [density, height] of [
+      ['compact', '40px'],
+      ['comfortable', '48px'],
+      ['default', '56px'],
+    ] as const) {
+      setViewport(1280)
+      stubApi({
+        '/me': { ...me('owner'), userSettings: { density } },
+        '/ingredients': [ing('i1', 'Mrkva', 'c1')],
+        '/shop-categories': [{ id: 'c1', name: 'Zelenina', sortOrder: 1 }],
+        '/pantry': { ingredientIds: [], items: [] },
+        '/staples': [],
+      })
+      const wrapper = mount(
+        { render: () => h(VApp, null, () => h(PantryPage)) },
+        { global: { plugins: mountPlugins() }, attachTo: document.body },
+      )
+      await flushPromises()
+      const button = wrapper.find('[data-test="only-home-chip"]').element as HTMLElement
+      expect(button.style.height, density).toBe(height)
+      wrapper.unmount()
+      document.body.innerHTML = ''
+    }
+  })
+})

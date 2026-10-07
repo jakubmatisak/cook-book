@@ -28,12 +28,14 @@ import { useSelection } from '@/composables/useSelection'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import ListLayout from '@/components/ListLayout.vue'
+import { useControlHeight } from '@/composables/useDensity'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
 import IngredientBulkEditDialog from '../components/IngredientBulkEditDialog.vue'
 import IngredientEditDialog from '../components/IngredientEditDialog.vue'
 
 const { t } = useI18n()
+const controlHeight = useControlHeight()
 const { data: ingredients, isPending, error } = useIngredients({ refreshCounts: true })
 const { data: categories } = useShopCategories()
 const update = useUpdateIngredient()
@@ -208,14 +210,16 @@ const usage = (item: IngredientDto) =>
           class="flex-grow-1"
           style="min-width: 16rem"
         />
-        <v-chip
+        <v-btn
           :color="onlyUncategorized ? 'primary' : undefined"
           :variant="onlyUncategorized ? 'flat' : 'outlined'"
           :prepend-icon="onlyUncategorized ? mdiCheck : undefined"
+          :height="controlHeight"
+          :aria-pressed="onlyUncategorized"
           @click="onlyUncategorized = !onlyUncategorized"
         >
           {{ t('ingredients.page.uncategorized', { count: uncategorizedCount }) }}
-        </v-chip>
+        </v-btn>
       </div>
     </template>
 

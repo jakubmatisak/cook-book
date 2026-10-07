@@ -25,8 +25,10 @@ import { useTags } from '@/api/catalog'
 import { useMe } from '@/api/me'
 import { useRecipes } from '@/api/recipes'
 import { useKidsEnabled } from '@/composables/useKidsEnabled'
+import { useControlHeight } from '@/composables/useDensity'
 import { useSaveUserSettings } from '@/api/userSettings'
 import EmptyState from '@/components/EmptyState.vue'
+import ActionButton from '@/components/ActionButton.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import ListLayout from '@/components/ListLayout.vue'
 import { errorText } from '@/i18n/errors'
@@ -64,6 +66,8 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { mdAndUp } = useDisplay()
+// Tlačidlá v riadku s poľami majú výšku poľa podľa hustoty rozhrania.
+const controlHeight = useControlHeight()
 
 /** Filtre a zoradenie žijú v URL, aby prežili návrat z detailu a dali sa zdieľať. */
 const state = computed(() => parseListQuery(route.query))
@@ -340,30 +344,19 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         :title="t('recipes.list.title')"
         :subtitle="recipes && mdAndUp ? tc('common.plural.recipes', recipes.length) : undefined"
       >
-        <template v-if="mdAndUp">
-          <v-btn variant="tonal" :prepend-icon="mdiWeb" data-test="import-button" @click="importOpen = true">
-            {{ t('recipes.list.importFromWeb') }}
-          </v-btn>
-          <v-btn color="primary" :prepend-icon="mdiPlus" to="/recipes/new">{{
-            t('recipes.list.newRecipe')
-          }}</v-btn>
-        </template>
-        <!-- Na mobile len ikonky, nech hlavička nezaberá pol obrazovky. -->
-        <template v-else>
-          <v-btn
-            variant="tonal"
-            :icon="mdiWeb"
-            :aria-label="t('recipes.list.importFromWeb')"
-            data-test="import-button"
-            @click="importOpen = true"
-          />
-          <v-btn
-            color="primary"
-            :icon="mdiPlus"
-            :aria-label="t('recipes.list.newRecipe')"
-            to="/recipes/new"
-          />
-        </template>
+        <ActionButton
+          :icon="mdiWeb"
+          :label="t('recipes.list.importFromWeb')"
+          variant="tonal"
+          data-test="import-button"
+          @click="importOpen = true"
+        />
+        <ActionButton
+          :icon="mdiPlus"
+          :label="t('recipes.list.newRecipe')"
+          color="primary"
+          to="/recipes/new"
+        />
       </PageHeader>
 
       <v-alert
@@ -412,6 +405,8 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             <v-btn
               :icon="mdiFilterVariant"
               variant="tonal"
+              :height="controlHeight"
+              :width="controlHeight"
               :color="mobileFilterCount ? 'primary' : undefined"
               :aria-label="t('recipes.list.filters')"
               data-test="filters-button"
@@ -422,6 +417,8 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             :icon="mdiCheckboxMarkedOutline"
             :variant="selection.active.value ? 'flat' : 'tonal'"
             :color="selection.active.value ? 'primary' : undefined"
+            :height="controlHeight"
+            :width="controlHeight"
             :aria-label="t('bulk.select')"
             data-test="select-mode"
             @click="selection.active.value ? selection.stop() : selection.start()"
@@ -435,7 +432,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             :prepend-icon="mdiFilterVariant"
             :color="filterCount ? 'primary' : undefined"
             variant="tonal"
-            height="40"
+            :height="controlHeight"
             data-test="filters-button"
             @click="filtersOpen = true"
           >
@@ -445,7 +442,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             :prepend-icon="favorite ? mdiCheck : mdiHeart"
             :color="favorite ? 'primary' : undefined"
             :variant="favorite ? 'flat' : 'outlined'"
-            height="40"
+            :height="controlHeight"
             data-test="favorite-toggle"
             @click="favorite = !favorite"
           >
@@ -476,7 +473,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
             :color="pantryMode ? 'primary' : undefined"
             :variant="pantryMode ? 'flat' : 'outlined'"
-            height="40"
+            :height="controlHeight"
             data-test="pantry-toggle"
             @click="pantryMode = !pantryMode"
           >
@@ -499,15 +496,15 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
           <v-btn
             :icon="sortDir === 'asc' ? mdiSortAscending : mdiSortDescending"
             variant="tonal"
-            height="40"
-            width="40"
+            :height="controlHeight"
+            :width="controlHeight"
             :aria-label="sortDir === 'asc' ? t('recipes.list.sortAsc') : t('recipes.list.sortDesc')"
             @click="flipSortDir"
           />
           <v-btn-toggle
             v-model="view"
             mandatory
-            height="40"
+            :height="controlHeight"
             selected-class="bg-primary"
             class="flex-shrink-0"
             data-test="view-toggle"
@@ -519,8 +516,8 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             :icon="mdiCheckboxMarkedOutline"
             :variant="selection.active.value ? 'flat' : 'tonal'"
             :color="selection.active.value ? 'primary' : undefined"
-            height="40"
-            width="40"
+            :height="controlHeight"
+            :width="controlHeight"
             :aria-label="t('bulk.select')"
             data-test="select-mode"
             @click="selection.active.value ? selection.stop() : selection.start()"
