@@ -4,8 +4,10 @@ const DAY = 60 * 60 * 24
 
 /** Konfigurácia PWA (manifest + service worker), samostatne kvôli testom. */
 export const pwaOptions: Partial<VitePWAOptions> = {
+  // Nová verzia sa po vydaní nainštaluje sama a aplikácia sa znova načíta. Service worker registruje src/main.ts,
+  // ktorý novú verziu hľadá aj pri každom návrate do aplikácie (src/lib/pwaUpdates.ts).
   registerType: 'autoUpdate',
-  injectRegister: 'script-defer',
+  injectRegister: false,
   // Celá aplikácia je za Cloudflare Access: bez cookies by Access manifest presmeroval na prihlásenie
   // a prehliadač by aplikáciu neponúkol na inštaláciu (<link rel="manifest" crossorigin="use-credentials">).
   useCredentials: true,
@@ -33,6 +35,9 @@ export const pwaOptions: Partial<VitePWAOptions> = {
     navigateFallbackDenylist: [/^\/api\//, /^\/img\//, /^\/cdn-cgi\//, /^\/auth\//],
     globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
     cleanupOutdatedCaches: true,
+    // Nová verzia hneď prevezme otvorené okná (spolu so skipWaiting z autoUpdate).
+    skipWaiting: true,
+    clientsClaim: true,
     runtimeCaching: [
       {
         urlPattern: ({ url, sameOrigin }) =>
