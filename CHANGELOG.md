@@ -1,5 +1,13 @@
 # Zmeny
 
+## 1.2.1 – 2026-10-07
+
+### Opravy
+
+- Špajza: zaškrtnutie „mám doma“ je okamžité aj pri rýchlom zaškrtávaní viacerých vecí (načítanie zo servera
+  ho už neprepíše).
+- Režim varenia: text krokov je zarovnaný vľavo.
+
 ## 1.2.0 – 2026-10-07
 
 ### Nové
