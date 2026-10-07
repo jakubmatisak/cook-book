@@ -168,14 +168,12 @@ const setMissing = (value: string | number) =>
 const canCook = computed(() => list.value?.facets.missing[0] ?? 0)
 const missingOne = computed(() => canCook.value + (list.value?.facets.missing[1] ?? 0))
 const filterCount = computed(() => activeFilterCount(state.value))
-/** Na mobile sú v paneli aj rýchle filtre, preto počet na tlačidle Filtre zahŕňa aj ich. */
-const mobileFilterCount = computed(
-  () =>
-    filterCount.value +
-    (state.value.pantry ? 1 : 0) +
-    (state.value.kids !== 'hide' ? 1 : 0) +
-    (state.value.public !== 'hide' ? 1 : 0),
+/** Detské a cudzie recepty sú v paneli Filtre, preto sa rátajú do čísla na tlačidle. */
+const panelFilterCount = computed(
+  () => filterCount.value + (state.value.kids !== 'hide' ? 1 : 0) + (state.value.public !== 'hide' ? 1 : 0),
 )
+/** Na mobile je v paneli aj „Čo viem uvariť“. */
+const mobileFilterCount = computed(() => panelFilterCount.value + (state.value.pantry ? 1 : 0))
 
 function toggleFilter(dimension: FilterDimension, value: string | number) {
   const s = state.value
@@ -257,9 +255,18 @@ const activeChips = computed(() => {
   const chips: {
     key: string
     label: string
-    dimension: FilterDimension | 'favorite'
+    dimension: FilterDimension | 'kids' | 'public'
     value: string | number
   }[] = []
+  if (s.kids !== 'hide')
+    chips.push({ key: 'kids', label: t(`recipes.list.kids_${s.kids}`), dimension: 'kids', value: s.kids })
+  if (s.public !== 'hide')
+    chips.push({
+      key: 'public',
+      label: t(`recipes.list.public_${s.public}`),
+      dimension: 'public',
+      value: s.public,
+    })
   for (const c of s.category)
     chips.push({ key: `c${c}`, label: t(`common.category.${c}`), dimension: 'category', value: c })
   for (const tb of s.time)
@@ -271,6 +278,12 @@ const activeChips = computed(() => {
     chips.push({ key: `g${tag}`, label: `#${tagName(tag)}`, dimension: 'tag', value: tag })
   return chips
 })
+
+function removeChip(chip: { dimension: FilterDimension | 'kids' | 'public'; value: string | number }) {
+  if (chip.dimension === 'kids') kids.value = 'hide'
+  else if (chip.dimension === 'public') publicMode.value = 'hide'
+  else toggleFilter(chip.dimension, chip.value)
+}
 
 // ─── Zoradenie ────────────────────────────────────────────────────────────────
 const sortItems = computed(() => SORT_KEYS.map((key) => ({ title: t(`common.sort.${key}`), value: key })))
@@ -436,7 +449,8 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             data-test="filters-button"
             @click="filtersOpen = true"
           >
-            {{ t('recipes.list.filters') }}<template v-if="filterCount">&nbsp;({{ filterCount }})</template>
+            {{ t('recipes.list.filters')
+            }}<template v-if="panelFilterCount">&nbsp;({{ panelFilterCount }})</template>
           </v-btn>
           <v-btn
             :prepend-icon="favorite ? mdiCheck : mdiHeart"
@@ -448,25 +462,6 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
           >
             {{ t('recipes.list.favorites') }}
           </v-btn>
-          <v-select
-            v-if="kidsEnabled"
-            v-model="kids"
-            :items="kidsItems"
-            :label="t('recipes.list.kids')"
-            hide-details
-            class="flex-grow-0"
-            style="min-width: 11rem"
-            data-test="kids-select"
-          />
-          <v-select
-            v-model="publicMode"
-            :items="publicItems"
-            :label="t('recipes.list.public')"
-            hide-details
-            class="flex-grow-0"
-            style="min-width: 11rem"
-            data-test="public-select"
-          />
           <v-btn
             :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
             :color="pantryMode ? 'primary' : undefined"
@@ -557,7 +552,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
           size="small"
           color="primary"
           variant="tonal"
-          @click:close="toggleFilter(chip.dimension as FilterDimension, chip.value)"
+          @click:close="removeChip(chip)"
         >
           {{ chip.label }}
         </v-chip>
@@ -651,8 +646,9 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       @toggle="toggleFilter"
       @clear="clearFilters"
     >
+      <!-- Na počítači sú v paneli len Detské a Recepty od iných, ostatné je v riadku nad zoznamom. -->
       <RecipeQuickFilters
-        v-if="!mdAndUp"
+        :visibility-only="mdAndUp"
         v-model:favorite="favorite"
         v-model:kids="kids"
         v-model:public-mode="publicMode"

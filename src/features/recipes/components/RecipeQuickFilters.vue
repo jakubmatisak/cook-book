@@ -18,6 +18,8 @@ import type { KidsMode, PublicMode, RecipeView } from '../listQuery'
  */
 const { t } = useI18n()
 defineProps<{
+  /** Len Detské recepty a Recepty od iných (na počítači sú ostatné filtre v riadku nad zoznamom). */
+  visibilityOnly?: boolean
   kidsEnabled: boolean
   kidsItems: { value: KidsMode; title: string }[]
   publicItems: { value: PublicMode; title: string }[]
@@ -37,7 +39,7 @@ const view = defineModel<RecipeView>('view', { required: true })
 </script>
 
 <template>
-  <div class="d-flex flex-wrap ga-2">
+  <div v-if="!visibilityOnly" class="d-flex flex-wrap ga-2">
     <v-btn
       :prepend-icon="favorite ? mdiCheck : mdiHeart"
       :color="favorite ? 'primary' : undefined"
@@ -59,7 +61,7 @@ const view = defineModel<RecipeView>('view', { required: true })
   </div>
   <!-- Čipy sa na úzkom displeji zalomia, tlačidlá vedľa seba by pretiekli. -->
   <v-chip-group
-    v-if="pantryMode"
+    v-if="pantryMode && !visibilityOnly"
     :model-value="missing"
     mandatory
     column
@@ -86,7 +88,7 @@ const view = defineModel<RecipeView>('view', { required: true })
     hide-details
     data-test="public-select"
   />
-  <div class="d-flex align-center ga-2">
+  <div v-if="!visibilityOnly" class="d-flex align-center ga-2">
     <v-select
       v-model="sortKey"
       :items="sortItems"
@@ -102,7 +104,14 @@ const view = defineModel<RecipeView>('view', { required: true })
       @click="emit('flip-sort-dir')"
     />
   </div>
-  <v-btn-toggle v-model="view" mandatory selected-class="bg-primary" divided data-test="view-toggle">
+  <v-btn-toggle
+    v-if="!visibilityOnly"
+    v-model="view"
+    mandatory
+    selected-class="bg-primary"
+    divided
+    data-test="view-toggle"
+  >
     <v-btn :icon="mdiViewGridOutline" value="grid" :aria-label="t('recipes.list.viewGrid')" />
     <v-btn :icon="mdiViewHeadline" value="table" :aria-label="t('recipes.list.viewTable')" />
   </v-btn-toggle>

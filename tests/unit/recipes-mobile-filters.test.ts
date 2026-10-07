@@ -106,6 +106,36 @@ describe('filtre receptov na mobile', () => {
   })
 })
 
+describe('filtre receptov na počítači v jednom riadku', () => {
+  it('Detské recepty a Recepty od iných sú v paneli Filtre, nie v riadku', async () => {
+    const { wrapper } = await mountPage(1280)
+    const header = wrapper.find('[data-test="list-header"]')
+    expect(header.find('[data-test="kids-select"]').exists()).toBe(false)
+    expect(header.find('[data-test="public-select"]').exists()).toBe(false)
+    await wrapper.find('[data-test="filters-button"]').trigger('click')
+    await flushPromises()
+    const panel = document.body.querySelector('[data-test="filter-quick"]')!
+    expect(panel.querySelector('[data-test="kids-select"]')).not.toBeNull()
+    expect(panel.querySelector('[data-test="public-select"]')).not.toBeNull()
+    // Ostatné rýchle filtre ostávajú v riadku, v paneli nie sú dvakrát.
+    expect(document.body.querySelectorAll('[data-test="favorite-toggle"]')).toHaveLength(1)
+  })
+
+  it('zapnuté detské a cudzie recepty sa zarátajú do Filtre (n) a ukážu sa ako čipy, ktoré sa dajú zrušiť', async () => {
+    const { router, wrapper } = await mountPage(1280, '/recipes?kids=include&public=only')
+    expect(wrapper.find('[data-test="filters-button"]').text()).toContain('(2)')
+    const chips = wrapper.find('[data-test="active-filters"]').text()
+    expect(chips).toContain('Aj detské')
+    expect(chips).toContain('Len cudzie')
+    const kidsChip = wrapper
+      .findAll('[data-test="active-filters"] .v-chip')
+      .find((c) => c.text().includes('Aj detské'))!
+    await kidsChip.find('.v-chip__close').trigger('click')
+    await vi.waitFor(() => expect(router.currentRoute.value.query.kids).toBeUndefined())
+    expect(router.currentRoute.value.query.public).toBe('only')
+  })
+})
+
 describe('výška ovládania v riadku filtrov na počítači', () => {
   it('výbery majú hustotu podľa nastavenia a tlačidlá výšku poľa', async () => {
     setViewport(1280)
@@ -121,13 +151,7 @@ describe('výška ovládania v riadku filtrov na počítači', () => {
       { global: { plugins: [...mountPlugins(), router] }, attachTo: document.body },
     )
     await flushPromises()
-    for (const selector of [
-      '[data-test="kids-select"]',
-      '[data-test="public-select"]',
-      '[data-test="sort-select"]',
-    ]) {
-      expect(wrapper.find(selector).classes(), selector).toContain('v-input--density-comfortable')
-    }
+    expect(wrapper.find('[data-test="sort-select"]').classes()).toContain('v-input--density-comfortable')
     const favorite = wrapper.find('[data-test="favorite-toggle"]').element as HTMLElement
     expect(favorite.style.height).toBe('48px')
     // Tlačidlá prepínača zobrazenia majú tiež výšku poľa.
