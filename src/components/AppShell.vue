@@ -12,6 +12,7 @@ import {
 } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useIsFetching } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useHouseholds } from '@/api/households'
@@ -21,11 +22,15 @@ import { ACCESS_LOGOUT_PATH, canLogout } from '@/lib/auth'
 import { activeHousehold, setActiveHousehold } from '@/lib/household'
 import { APP_VERSION_LABEL } from '@/lib/version'
 import { useApplyTheme, useThemePreference, type ThemePreference } from '@/composables/useThemePreference'
+import { navigationPending } from '@/router/navigationPending'
 import { PRIMARY_NAV, SECONDARY_NAV } from './navigation'
 
 const { mdAndUp } = useDisplay()
 const showLogout = typeof location !== 'undefined' && canLogout(location.hostname)
 const online = useOnline()
+// Tenký pruh pod hornou lištou: prechod na stránku alebo načítavanie dát zo servera.
+const fetching = useIsFetching()
+const loading = computed(() => navigationPending.value || fetching.value > 0)
 const route = useRoute()
 
 /** Stránky s meta.bare (napr. režim varenia) bez lišty a menu. */
@@ -164,6 +169,14 @@ const mobileMenu = ref(false)
           </v-list>
         </v-menu>
       </template>
+      <v-progress-linear
+        :active="loading"
+        indeterminate
+        absolute
+        location="bottom"
+        color="primary"
+        data-test="loading-bar"
+      />
     </v-app-bar>
 
     <v-navigation-drawer v-if="mdAndUp && showChrome" permanent :rail="rail" border="e" data-test="side-nav">

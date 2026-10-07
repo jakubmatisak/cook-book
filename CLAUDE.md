@@ -22,7 +22,7 @@ D1 cez Drizzle, R2 na fotky, prihlásenie Cloudflare Access. Všetko na free pl�
   (SASS premenné). Nepíš farby natvrdo do komponentov.
 - Len Vuetify: komponenty, ich props (variant, density, color, rounded) a utility triedy (`d-flex`, `ga-2`, `pa-4`, `text-h5`…). Žiadny Tailwind, žiadne `<style>` bloky ani vlastné `<button>`/`<div>` widgety; inline `style` len tam, kde Vuetify nemá prop (šírka stĺpca a pod.).
 - Spoločné časti: `PageHeader` (nadpis + akcie), `EmptyState` (v-empty-state).
-- Mobil je prvý; desktopová bočná lišta od Vuetify `mdAndUp` (840 px).
+- Mobil je prvý; desktopová bočná lišta od Vuetify `mdAndUp` (1200 px, hranice v `src/plugins/vuetify.ts` a `src/design/settings.scss`).
 
 ## Príkazy
 

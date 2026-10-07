@@ -332,7 +332,7 @@ function goBack() {
       </v-chip>
     </div>
 
-    <v-row :dense="printing">
+    <v-row :density="printing ? 'compact' : undefined">
       <v-col :cols="printing ? 5 : 12" md="5" lg="4" data-test="recipe-ingredients-col">
         <v-card :title="t('recipes.detail.ingredients')" :border="!printing">
           <v-card-text class="d-none d-print-block pb-0">

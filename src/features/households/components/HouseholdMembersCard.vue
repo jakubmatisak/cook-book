@@ -143,11 +143,15 @@ const canCreate = computed(() => me.value?.user.isAdmin === true)
                   data-test="member-role"
                   @update:model-value="setRole(member, $event)"
                 />
-                <v-icon
+                <!-- Zámok ako tlačidlo len na čítanie: rovnako široký ako kôš, výbery roly sú pod sebou. -->
+                <v-btn
                   v-if="member.locked"
                   :icon="mdiLockOutline"
+                  variant="text"
+                  readonly
                   :title="t('households.card.locked')"
                   :aria-label="t('households.card.locked')"
+                  data-test="member-locked"
                 />
                 <v-btn
                   v-else

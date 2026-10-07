@@ -105,7 +105,7 @@ async function onGenerate() {
             </template>
           </v-radio>
         </v-radio-group>
-        <v-row v-if="preset === 'custom'" dense>
+        <v-row v-if="preset === 'custom'" density="compact">
           <v-col cols="6"
             ><v-text-field
               v-model="customFrom"

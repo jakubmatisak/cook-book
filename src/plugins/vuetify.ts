@@ -15,6 +15,12 @@ type AdapterI18n = Parameters<typeof createVueI18nAdapter>[0]['i18n']
 
 export const createAppVuetify = (i18n: AdapterI18n = appI18n as unknown as AdapterI18n) =>
   createVuetify({
+    // Mobilná verzia (spodná lišta, filtre v paneli, kompaktné rozhranie) platí až do 1200 px; rovnaké hranice
+    // má $grid-breakpoints v src/design/settings.scss.
+    display: {
+      mobileBreakpoint: 'md',
+      thresholds: { xs: 0, sm: 600, md: 1200, lg: 1440, xl: 1920, xxl: 2560 },
+    },
     theme: {
       defaultTheme: 'light',
       themes: {

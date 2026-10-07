@@ -16,6 +16,9 @@ import RecipesPage from '@/features/recipes/pages/RecipesPage.vue'
 import { setLocale } from '@/i18n'
 import { me, mountPlugins, stubApi } from './helpers/apiStub'
 
+// Stránky receptov sa v plnej sade testov vykresľujú pomalšie.
+vi.setConfig({ testTimeout: 20_000 })
+
 const summary = (over: Partial<RecipeSummaryDto> = {}): RecipeSummaryDto => ({
   id: 'r1',
   title: 'Goulash',

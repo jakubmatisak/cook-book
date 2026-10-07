@@ -32,6 +32,14 @@ const setViewport = (width: number) =>
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
 
 describe('HouseholdMembersCard', () => {
+  it('zámok zaberá rovnaké miesto ako tlačidlo odobratia, aby boli výbery roly pod sebou', async () => {
+    setViewport(1280)
+    const { wrapper } = await mountCard(true)
+    const lock = wrapper.find('[data-test="member-locked"]')
+    expect(lock.classes()).toContain('v-btn')
+    expect(lock.classes()).toContain('v-btn--readonly')
+  })
+
   it('na mobile sú rola a odobratie pod e-mailom, na počítači vedľa neho', async () => {
     setViewport(390)
     const mobile = await mountCard(true)

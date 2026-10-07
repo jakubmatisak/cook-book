@@ -52,6 +52,18 @@ const filtered = computed(() => {
   )
 })
 
+// Riadky s dvoma rozbaľovacími zoznamami sú ťažké: stovky naraz by stránku na chvíľu zasekli. Vykresľujú sa
+// po dávkach, ďalšia dávka pribudne, keď sa koniec zoznamu priblíži k obrazovke.
+const BATCH = 30
+const limit = ref(BATCH)
+watch([search, onlyUncategorized], () => (limit.value = BATCH))
+const visible = computed(() => filtered.value.slice(0, limit.value))
+const remaining = computed(() => filtered.value.length - visible.value.length)
+const showMore = () => (limit.value += BATCH)
+const onEndVisible = (isIntersecting: boolean) => {
+  if (isIntersecting) showMore()
+}
+
 const uncategorizedCount = computed(() => ingredients.value?.filter((i) => !i.shopCategoryId).length ?? 0)
 
 const categoryItems = computed(() => categories.value?.map((c) => ({ title: c.name, value: c.id })) ?? [])
@@ -229,9 +241,9 @@ const usage = (item: IngredientDto) =>
     </p>
 
     <v-card v-else>
-      <template v-for="(item, index) in filtered" :key="item.id">
+      <template v-for="(item, index) in visible" :key="item.id">
         <v-divider v-if="index > 0" />
-        <v-row dense align="center" class="px-4 py-2 ma-0">
+        <v-row density="compact" align="center" class="px-4 py-1 ma-0" data-test="ingredient-row">
           <v-col cols="12" sm="4" class="d-flex align-center">
             <v-checkbox-btn
               v-if="selection.active.value"
@@ -281,6 +293,15 @@ const usage = (item: IngredientDto) =>
         </v-row>
       </template>
     </v-card>
+    <div
+      v-if="filtered.length && remaining > 0"
+      v-intersect="onEndVisible"
+      class="d-flex justify-center py-2"
+    >
+      <v-btn variant="text" data-test="ingredients-more" @click="showMore">
+        {{ t('ingredients.page.more', { n: remaining }) }}
+      </v-btn>
+    </div>
 
     <IngredientEditDialog v-model="editOpen" :ingredient="editTarget" />
     <IngredientBulkEditDialog v-model="bulkEditOpen" :ids="selection.selected.value" @saved="onBulkEdited" />

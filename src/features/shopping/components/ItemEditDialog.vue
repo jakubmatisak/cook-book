@@ -86,7 +86,7 @@ async function onDelete() {
           autofocus
           @keydown.enter="onSave"
         />
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="6">
             <v-text-field
               v-model="quantity"

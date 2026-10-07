@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { watch } from 'vue'
 import { i18n, t } from '@/i18n'
 import { legacyRedirect } from './legacy'
+import { navigationPending, trackNavigation } from './navigationPending'
 import { scrollOnNavigate } from './scroll'
 
 export const routes: RouteRecordRaw[] = [
@@ -110,6 +111,8 @@ export const router = createRouter({
   routes,
   scrollBehavior: scrollOnNavigate,
 })
+
+trackNavigation(router, navigationPending)
 
 /** Názov karty prehliadača: „<stránka> · <aplikácia>“ v aktuálnom jazyku. */
 export function updateDocumentTitle(titleKey: unknown) {

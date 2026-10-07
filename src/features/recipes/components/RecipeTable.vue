@@ -83,7 +83,7 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
             v-if="!item.householdName"
             :recipe-id="item.id"
             :is-favorite="item.isFavorite"
-            size="x-small"
+            size="small"
           />
         </template>
       </v-list-item>
@@ -155,7 +155,7 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
           v-if="!item.householdName"
           :recipe-id="item.id"
           :is-favorite="item.isFavorite"
-          size="x-small"
+          size="small"
         />
       </template>
     </v-data-table-server>

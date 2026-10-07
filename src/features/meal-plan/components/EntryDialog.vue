@@ -241,7 +241,7 @@ async function onDelete() {
           </template>
         </v-select>
 
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="12" sm="6">
             <v-number-input
               v-model="servings"

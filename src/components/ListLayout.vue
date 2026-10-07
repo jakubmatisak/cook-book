@@ -8,7 +8,7 @@ const printing = usePrintMode()
 const pinned = computed(() => mdAndUp.value)
 
 // Stránka so zoznamom má presne výšku okna (mínus horná a spodná lišta a odsadenie kontajnera pa-4 / pa-md-6),
-// takže sa nehýbe celá; posúva sa len zoznam pod hlavičkou. Pri tlači sa obsah nerozdeľuje na posúvanú časť.
+// takže sa nehýbe celá; posúva sa len zoznam pod hlavičkou (s odstupom od posuvníka). Pri tlači sa obsah nerozdeľuje na posúvanú časť.
 const heightStyle = computed(() =>
   printing.value
     ? undefined
@@ -27,7 +27,7 @@ const heightStyle = computed(() =>
     </div>
     <div
       class="flex-grow-1"
-      :class="{ 'overflow-y-auto': !printing }"
+      :class="{ 'overflow-y-auto pe-2': !printing }"
       style="min-height: 0"
       data-test="list-body"
     >

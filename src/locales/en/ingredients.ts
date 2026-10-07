@@ -15,6 +15,7 @@ export default {
     uncategorized: 'No category ({count})',
     unused: 'unused',
     nothingFound: 'Nothing found.',
+    more: 'Show more ({n})',
     editAria: 'Edit or delete ingredient {name}',
     shopCategory: 'Shop category',
     unit: 'Unit',

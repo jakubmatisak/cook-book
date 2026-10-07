@@ -11,6 +11,11 @@ class ResizeObserverStub {
 }
 globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver
 
+// Predvolene testy bežia ako na počítači (mobilná verzia platí do 1200 px, jsdom má 1024 px).
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
+}
+
 // jsdom nemá visualViewport, ktorý Vuetify používa pri umiestnení ponúk a okien.
 if (typeof window !== 'undefined' && !('visualViewport' in window)) {
   Object.defineProperty(window, 'visualViewport', {

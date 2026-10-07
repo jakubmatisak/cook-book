@@ -83,7 +83,7 @@ const tiles = computed<Tile[]>(() => {
     <v-btn color="primary" :prepend-icon="mdiPlus" to="/recipes/new">{{ t('home.addFirst') }}</v-btn>
   </EmptyState>
   <!-- Na mobile dlaždice pod sebou ako riadky (ikona vľavo, počet vpravo), od sm mriežka s ikonou nad textom. -->
-  <v-row v-else dense data-test="home-tiles">
+  <v-row v-else density="compact" data-test="home-tiles">
     <v-col v-for="tile in tiles" :key="tile.key" cols="12" sm="4" lg="3">
       <v-card
         :to="tile.to"

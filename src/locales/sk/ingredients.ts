@@ -15,6 +15,7 @@ export default {
     uncategorized: 'Bez kategórie ({count})',
     unused: 'nepoužitá',
     nothingFound: 'Nič sa nenašlo.',
+    more: 'Zobraziť ďalšie ({n})',
     editAria: 'Upraviť alebo zmazať ingredienciu {name}',
     shopCategory: 'Kategória obchodu',
     unit: 'Jednotka',

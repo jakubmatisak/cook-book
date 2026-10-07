@@ -80,7 +80,7 @@ async function onRemove() {
         <p class="text-body-2 text-medium-emphasis">
           {{ t('pantry.item.intro') }}
         </p>
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="6">
             <v-text-field
               v-model="quantity"

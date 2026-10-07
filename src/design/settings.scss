@@ -8,6 +8,15 @@
     'Segoe UI',
     sans-serif,
   ),
+  // Mobilná verzia až do 1200 px (rovnaké hranice ako display.thresholds v src/plugins/vuetify.ts).
+  $grid-breakpoints: (
+      'xs': 0,
+      'sm': 600px,
+      'md': 1200px,
+      'lg': 1440px,
+      'xl': 1920px,
+      'xxl': 2560px,
+    ),
   $border-radius-root: 0,
   $rounded: (
     'sm': 0,

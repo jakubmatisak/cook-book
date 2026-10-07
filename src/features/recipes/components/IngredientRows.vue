@@ -57,7 +57,7 @@ function move(index: number, delta: number) {
 <template>
   <div class="d-flex flex-column ga-3">
     <v-sheet v-for="(row, index) in rows" :key="row.key" border class="pa-3" data-test="ingredient-row">
-      <v-row dense>
+      <v-row density="compact">
         <v-col cols="12" sm="6" order="first" order-sm="last">
           <v-combobox
             :model-value="row.name"
