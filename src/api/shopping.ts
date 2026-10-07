@@ -144,6 +144,27 @@ export function useClearChecked(): UseMutationReturnType<{ removed: number }, Er
   })
 }
 
+/** Kúpené položky presunie do špajze (s množstvom) a z nákupu ich zmaže. */
+export function useMoveCheckedToPantry(): UseMutationReturnType<
+  { moved: number; removed: number },
+  Error,
+  string,
+  unknown
+> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (listId: string) =>
+      apiFetch<{ moved: number; removed: number }>(`/shopping/lists/${listId}/move-to-pantry`, {
+        method: 'POST',
+      }),
+    onSuccess: (_r, listId) => {
+      void client.invalidateQueries({ queryKey: ['pantry'] })
+      void client.invalidateQueries({ queryKey: ['recipes'], refetchType: 'none' })
+      return invalidateItems(client, listId)
+    },
+  })
+}
+
 export interface GenerateVars {
   listId: string
   from: string

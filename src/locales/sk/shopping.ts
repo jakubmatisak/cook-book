@@ -6,6 +6,7 @@ export default {
   moreActions: 'Ďalšie akcie',
   print: 'Tlačiť nákup',
   clearChecked: 'Vymazať kúpené',
+  moveToPantry: 'Presunúť do špajze',
   subtitle: '{toBuy} na kúpenie · {inCart} v košíku',
   inCart: 'V košíku ({n})',
   allInCart: 'Všetko je v košíku.',
@@ -68,5 +69,6 @@ export default {
     toggleFailed: 'Zmena sa neuložila.',
     removeFailed: 'Položku sa nepodarilo odstrániť.',
     cleared: 'Odstránené z košíka: {items}.',
+    moved: 'Presunuté do špajze: {items}.',
   },
 }

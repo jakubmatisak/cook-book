@@ -6,6 +6,7 @@ export default {
   moreActions: 'More actions',
   print: 'Print list',
   clearChecked: 'Clear purchased',
+  moveToPantry: 'Move to pantry',
   subtitle: '{toBuy} to buy · {inCart} in cart',
   inCart: 'In cart ({n})',
   allInCart: 'Everything is in the cart.',
@@ -68,5 +69,6 @@ export default {
     toggleFailed: 'The change was not saved.',
     removeFailed: 'Could not remove the item.',
     cleared: 'Removed from cart: {items}.',
+    moved: 'Moved to pantry: {items}.',
   },
 }

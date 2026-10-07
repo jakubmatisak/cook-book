@@ -1,5 +1,18 @@
 # Zmeny
 
+## 1.3.0 – 2026-10-07
+
+### Nové
+
+- Nákup: kúpené položky sa dajú dole v košíku presunúť do špajze (označia sa ako doma aj s kúpeným množstvom,
+  ktoré sa pripočíta k zásobe) alebo len vymazať.
+- Recepty na počítači: filtre v jednom riadku; Detské recepty a Recepty od iných sú v paneli Filtre a zapnuté sa
+  ukážu ako čipy.
+
+### Opravy
+
+- Špajza: zaškrtnutie prepočíta len jeden riadok a po uložení sa nič znova nesťahuje (na mobile rýchlejšie).
+
 ## 1.2.1 – 2026-10-07
 
 ### Opravy

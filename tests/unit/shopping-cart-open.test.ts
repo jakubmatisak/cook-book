@@ -63,3 +63,25 @@ describe('sekcia „V košíku“', () => {
     expect(wrapper.find('[data-test="cart-list"]').exists()).toBe(false)
   })
 })
+
+describe('kúpené položky dole v košíku', () => {
+  it('„Presunúť do špajze“ pošle kúpené do špajze a oznámi, koľko ich prešlo', async () => {
+    setLocale('sk')
+    const calls = stubApi({
+      '/me': me('owner'),
+      '/shopping/lists': [{ id: 'l1', name: 'Nákup', isDefault: true }],
+      '/shopping/lists/l1/items': [item('i1', 'Mrkva'), item('i2', 'Chlieb', true)],
+      '/shop-categories': [],
+      'POST /shopping/lists/l1/move-to-pantry': { moved: 1, removed: 1 },
+    })
+    const wrapper = mount(ShoppingPage, { global: { plugins: mountPlugins() }, attachTo: document.body })
+    await flushPromises()
+    expect(wrapper.find('[data-test="cart-clear"]').exists()).toBe(true)
+    await wrapper.find('[data-test="cart-to-pantry"]').trigger('click')
+    await flushPromises()
+    expect(calls.some((c) => c.method === 'POST' && c.path === '/shopping/lists/l1/move-to-pantry')).toBe(
+      true,
+    )
+    expect(document.body.textContent).toContain('Presunuté do špajze: 1 položka')
+  })
+})

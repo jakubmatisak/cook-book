@@ -10,6 +10,7 @@ import { parseBody } from '../http'
 import {
   applyBatch,
   clearChecked,
+  moveCheckedToPantry,
   createItem,
   deleteItem,
   generateItems,
@@ -36,6 +37,9 @@ export const shoppingRoutes = new Hono<AppEnv>()
     const removed = await clearChecked(c.get('db'), c.get('user').householdId, c.req.param('id'))
     return c.json({ removed })
   })
+  .post('/lists/:id/move-to-pantry', async (c) =>
+    c.json(await moveCheckedToPantry(c.get('db'), c.get('user').householdId, c.req.param('id'))),
+  )
   .post('/items/batch', async (c) => {
     const input = await parseBody(c, itemBatchSchema)
     return c.json({ applied: await applyBatch(c.get('db'), c.get('user'), input) })

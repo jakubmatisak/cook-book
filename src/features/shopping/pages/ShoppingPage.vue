@@ -6,6 +6,7 @@ import {
   mdiChevronUp,
   mdiCloudOffOutline,
   mdiDeleteSweepOutline,
+  mdiFridgeOutline,
   mdiDotsVertical,
   mdiPrinterOutline,
   mdiPlaylistPlus,
@@ -23,6 +24,7 @@ import {
   shoppingKeys,
   useAddItem,
   useClearChecked,
+  useMoveCheckedToPantry,
   useDeleteItem,
   useShoppingItems,
   useShoppingLists,
@@ -133,6 +135,13 @@ async function onClearChecked() {
   if (!listId.value) return
   const { removed } = await clear.mutateAsync(listId.value)
   notify(t('shopping.snackbar.cleared', { items: tc('common.plural.items', removed) }))
+}
+
+const moveToPantry = useMoveCheckedToPantry()
+async function onMoveToPantry() {
+  if (!listId.value) return
+  const { moved } = await moveToPantry.mutateAsync(listId.value)
+  notify(t('shopping.snackbar.moved', { items: tc('common.plural.items', moved) }))
 }
 
 const editOpen = ref(false)
@@ -286,15 +295,29 @@ function onGenerated(result: GenerateResult) {
                 @remove="onRemove"
               />
             </v-list>
-            <v-card-actions>
+            <!-- Čo s kúpeným: len vymazať, alebo presunúť do špajze (označí ako doma aj s množstvom). -->
+            <v-card-actions class="flex-wrap ga-2 px-4 pb-4">
               <v-spacer />
               <v-btn
                 :prepend-icon="mdiDeleteSweepOutline"
                 variant="text"
                 :loading="clear.isPending.value"
+                :disabled="moveToPantry.isPending.value"
+                data-test="cart-clear"
                 @click="onClearChecked"
               >
                 {{ t('shopping.clearChecked') }}
+              </v-btn>
+              <v-btn
+                :prepend-icon="mdiFridgeOutline"
+                color="primary"
+                variant="tonal"
+                :loading="moveToPantry.isPending.value"
+                :disabled="clear.isPending.value"
+                data-test="cart-to-pantry"
+                @click="onMoveToPantry"
+              >
+                {{ t('shopping.moveToPantry') }}
               </v-btn>
             </v-card-actions>
           </v-card>

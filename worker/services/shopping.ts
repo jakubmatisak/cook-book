@@ -10,6 +10,7 @@ import type {
 } from '../../shared/schemas/shopping'
 import { planShopping, type ShoppingInputEntry, type ShoppingInputIngredient } from '../../shared/shopping'
 import { normalizeText } from '../../shared/text'
+import { toBase, type UnitCode } from '../../shared/units'
 import type { Db } from '../db/client'
 import {
   images,
@@ -28,6 +29,7 @@ import {
 import type { UserRow } from '../env'
 import { HttpError } from '../errors'
 import { chunk } from '../http'
+import { resolveIngredients } from './catalog'
 import { listMembers } from './family'
 import { listStays, stayGuestsOn } from './stays'
 import { imageUrl } from './recipes'
@@ -428,4 +430,88 @@ export async function clearChecked(db: Db, householdId: string, listId: string):
     .where(and(eq(shoppingItems.listId, listId), eq(shoppingItems.isChecked, true)))
     .returning({ id: shoppingItems.id })
   return deleted.length
+}
+
+/** Množstvo v základnej jednotke (kg → g, l → ml), aby sa dalo sčítať. */
+const inBase = (quantity: number | null, unit: UnitCode | null) =>
+  quantity !== null && unit ? toBase(quantity, unit) : { quantity, unit }
+
+/**
+ * Kúpené položky presunie do špajze: suroviny označí ako doma s kúpeným množstvom a z nákupu ich zmaže.
+ * Položka bez ingrediencie (napísaná ručne) dostane ingredienciu podľa názvu. Množstvá sa sčítajú v základnej
+ * jednotke (kg → g, l → ml); zásobu v nezlučiteľnej jednotke (napr. balenie a g) nechá tak, len ostane doma.
+ */
+export async function moveCheckedToPantry(
+  db: Db,
+  householdId: string,
+  listId: string,
+): Promise<{ moved: number; removed: number }> {
+  await assertList(db, householdId, listId)
+  const checked = await db
+    .select({
+      id: shoppingItems.id,
+      name: shoppingItems.name,
+      ingredientId: shoppingItems.ingredientId,
+      quantity: shoppingItems.quantity,
+      unit: shoppingItems.unit,
+    })
+    .from(shoppingItems)
+    .where(and(eq(shoppingItems.listId, listId), eq(shoppingItems.isChecked, true)))
+  if (checked.length === 0) return { moved: 0, removed: 0 }
+
+  const unknown = checked.filter((i) => !i.ingredientId)
+  const resolved = await resolveIngredients(db, householdId, unknown)
+  const ingredientOf = (i: (typeof checked)[number]) => i.ingredientId ?? resolved.get(normalizeText(i.name))!
+
+  // Rovnaká surovina viackrát sa spojí; množstvo sa sčíta len v zlučiteľnej jednotke.
+  // `asBought` je množstvo v jednotke z nákupu (napr. 2 l), kým sa nič nesčítava – tak sa aj uloží.
+  type Amount = { quantity: number | null; unit: UnitCode | null }
+  const bought = new Map<string, Amount & { asBought: Amount | null }>()
+  for (const item of checked) {
+    const id = ingredientOf(item)
+    const amount = inBase(item.quantity, item.unit)
+    const prev = bought.get(id)
+    if (!prev) bought.set(id, { ...amount, asBought: { quantity: item.quantity, unit: item.unit } })
+    else if (prev.unit === amount.unit && prev.quantity !== null && amount.quantity !== null) {
+      prev.quantity += amount.quantity
+      prev.asBought = null
+    }
+  }
+
+  const existing = new Map<string, { id: string; quantity: number | null; unit: UnitCode | null }>()
+  for (const part of chunk([...bought.keys()], 90)) {
+    const rows = await db
+      .select({
+        id: pantryItems.id,
+        ingredientId: pantryItems.ingredientId,
+        quantity: pantryItems.quantity,
+        unit: pantryItems.unit,
+      })
+      .from(pantryItems)
+      .where(and(eq(pantryItems.householdId, householdId), inArray(pantryItems.ingredientId, part)))
+    for (const r of rows) existing.set(r.ingredientId, r)
+  }
+
+  const statements: BatchItem<'sqlite'>[] = []
+  for (const [ingredientId, { quantity, unit, asBought }] of bought) {
+    const stock = existing.get(ingredientId)
+    const fresh = asBought ?? { quantity, unit }
+    if (!stock) {
+      statements.push(db.insert(pantryItems).values({ householdId, ingredientId, ...fresh }))
+    } else if (quantity !== null && stock.quantity === null) {
+      statements.push(db.update(pantryItems).set(fresh).where(eq(pantryItems.id, stock.id)))
+    } else if (quantity !== null && stock.quantity !== null && stock.unit === unit) {
+      statements.push(
+        db
+          .update(pantryItems)
+          .set({ quantity: stock.quantity + quantity })
+          .where(eq(pantryItems.id, stock.id)),
+      )
+    }
+  }
+  statements.push(
+    db.delete(shoppingItems).where(and(eq(shoppingItems.listId, listId), eq(shoppingItems.isChecked, true))),
+  )
+  for (const part of chunk(statements, 40)) await batch(db, part)
+  return { moved: bought.size, removed: checked.length }
 }
