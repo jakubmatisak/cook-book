@@ -179,6 +179,8 @@ export interface PantryToggleVars {
   inPantry: boolean
 }
 
+const PANTRY_TOGGLE_KEY = ['pantry', 'toggle'] as const
+
 /** Označí ingredienciu „mám doma“ hneď v UI, server sa dobehne. */
 export function useTogglePantry(): UseMutationReturnType<void, Error, PantryToggleVars, void> {
   const client = useQueryClient()
@@ -194,13 +196,19 @@ export function useTogglePantry(): UseMutationReturnType<void, Error, PantryTogg
       }
     })
   return useMutation({
+    mutationKey: PANTRY_TOGGLE_KEY,
     mutationFn: ({ ingredientId, inPantry }: PantryToggleVars) =>
       apiFetch<void>(`/pantry/${ingredientId}`, { method: inPantry ? 'PUT' : 'DELETE' }),
-    onMutate: ({ ingredientId, inPantry }) => {
+    onMutate: async ({ ingredientId, inPantry }) => {
+      // Prebiehajúce načítanie špajze by vrátilo starý stav a zaškrtnutie by na chvíľu zmizlo.
+      await client.cancelQueries({ queryKey: ['pantry'] })
       patch(ingredientId, inPantry)
     },
     onError: (_e, { ingredientId, inPantry }) => patch(ingredientId, !inPantry),
     onSettled: () => {
+      // Pri rýchlom zaškrtávaní sa špajza načíta až po poslednej zmene; inak by medzivýsledok zo servera
+      // odškrtol veci, ktoré server ešte len ukladá.
+      if (client.isMutating({ mutationKey: PANTRY_TOGGLE_KEY }) > 1) return
       void client.invalidateQueries({ queryKey: ['pantry'] })
       void client.invalidateQueries({ queryKey: ['recipes'] })
     },
