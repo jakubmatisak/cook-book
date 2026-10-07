@@ -6,6 +6,9 @@ const DAY = 60 * 60 * 24
 export const pwaOptions: Partial<VitePWAOptions> = {
   registerType: 'autoUpdate',
   injectRegister: 'script-defer',
+  // Celá aplikácia je za Cloudflare Access: bez cookies by Access manifest presmeroval na prihlásenie
+  // a prehliadač by aplikáciu neponúkol na inštaláciu (<link rel="manifest" crossorigin="use-credentials">).
+  useCredentials: true,
   includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon-180x180.png'],
   manifest: {
     name: 'Kuchárska kniha',

@@ -3,6 +3,12 @@ import { pwaOptions } from '../../pwa.config'
 
 const workbox = pwaOptions.workbox!
 
+describe('PWA manifest za Cloudflare Access', () => {
+  it('manifest sa sťahuje s prihlasovacími cookies, inak ho Access presmeruje na prihlásenie a PWA sa nedá nainštalovať', () => {
+    expect(pwaOptions.useCredentials).toBe(true)
+  })
+})
+
 describe('PWA service worker', () => {
   it('API cache ukladá len JSON odpovede so stavom 200', () => {
     const api = workbox.runtimeCaching!.find((r) => r.options?.cacheName === 'api')
