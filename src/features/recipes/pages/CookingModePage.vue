@@ -123,9 +123,12 @@ function onTimerDone(position: number) {
         :class="{ 'opacity-60': checked.has(step.id) }"
       >
         <v-card-text class="d-flex ga-3 align-start">
+          <!-- flex-grow-0: inak sa políčko roztiahne a text kroku skáče do stredu. -->
           <v-checkbox-btn
             :model-value="checked.has(step.id)"
             color="primary"
+            class="flex-grow-0"
+            data-test="step-done"
             :aria-label="t('recipes.cooking.stepDone', { n: step.position })"
             @update:model-value="toggleStep(step.id)"
           />

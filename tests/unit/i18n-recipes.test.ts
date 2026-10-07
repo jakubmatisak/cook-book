@@ -196,6 +196,12 @@ describe('Recipes in English', () => {
     expect(wrapper.find('[aria-label="Step 1 done"]').exists()).toBe(true)
   })
 
+  it('in cooking mode the checkbox keeps its own width, so step texts start on the left, not in the middle', async () => {
+    const wrapper = await mountAt('/recipes/r1/cook', CookingModePage, { '/recipes/r1': detail })
+    const checkbox = wrapper.find('[data-test="step-done"]')
+    expect(checkbox.classes()).toContain('flex-grow-0')
+  })
+
   it('editor shows English labels', async () => {
     const wrapper = await mountAt('/recipes/new', RecipeEditPage, {})
     const text = wrapper.text()
