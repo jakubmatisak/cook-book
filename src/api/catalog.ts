@@ -204,13 +204,17 @@ export function useTogglePantry(): UseMutationReturnType<void, Error, PantryTogg
       await client.cancelQueries({ queryKey: ['pantry'] })
       patch(ingredientId, inPantry)
     },
-    onError: (_e, { ingredientId, inPantry }) => patch(ingredientId, !inPantry),
-    onSettled: () => {
-      // Pri rýchlom zaškrtávaní sa špajza načíta až po poslednej zmene; inak by medzivýsledok zo servera
-      // odškrtol veci, ktoré server ešte len ukladá.
-      if (client.isMutating({ mutationKey: PANTRY_TOGGLE_KEY }) > 1) return
-      void client.invalidateQueries({ queryKey: ['pantry'] })
-      void client.invalidateQueries({ queryKey: ['recipes'] })
+    onError: (_e, { ingredientId, inPantry }) => {
+      patch(ingredientId, !inPantry)
+      // Po chybe sa stav zosúladí so serverom, až keď nebeží žiadne ďalšie zaškrtnutie (inak by ho prepísal).
+      if (client.isMutating({ mutationKey: PANTRY_TOGGLE_KEY }) <= 1) {
+        void client.invalidateQueries({ queryKey: ['pantry'] })
+      }
+    },
+    onSuccess: () => {
+      // Server uložil presne to, čo už vidno – špajza sa znova nesťahuje ani neprekresľuje. Recepty („Čo viem
+      // uvariť“) sa len označia ako zastarané a načítajú sa, až keď ich človek otvorí.
+      void client.invalidateQueries({ queryKey: ['recipes'], refetchType: 'none' })
     },
   })
 }

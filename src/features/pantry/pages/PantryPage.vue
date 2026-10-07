@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {
-  mdiClockAlertOutline,
   mdiFilterVariant,
   mdiFridgeOutline,
   mdiMagnify,
@@ -27,9 +26,10 @@ import { tc } from '@/i18n/format'
 import IngredientEditDialog from '@/features/ingredients/components/IngredientEditDialog.vue'
 import NewIngredientDialog from '../components/NewIngredientDialog.vue'
 import PantryFilters from '../components/PantryFilters.vue'
+import PantryList from '../components/PantryList.vue'
 import PantryItemDialog from '../components/PantryItemDialog.vue'
 import StapleDialog from '../components/StapleDialog.vue'
-import { describeCadence, describeExpiry, expiryStatus } from '../format'
+import { describeCadence, expiryStatus } from '../format'
 
 const { t } = useI18n()
 const { data: ingredients, isPending, error } = useIngredients()
@@ -58,6 +58,9 @@ const categoryItems = computed(() => [
 ])
 const inPantry = computed(() => new Set(pantry.value?.ingredientIds ?? []))
 const stock = computed(() => new Map((pantry.value?.items ?? []).map((i) => [i.ingredientId, i])))
+// Riadky zoznamu čítajú stav cez tieto funkcie samy, takže zaškrtnutie neprekreslí celý zoznam.
+const isChecked = (id: string) => inPantry.value.has(id)
+const stockOf = (id: string) => stock.value.get(id)
 
 /** „Čoskoro“ pri zozname zásob znamená najbližší týždeň. */
 const EXPIRING_DAYS = 7
@@ -105,13 +108,6 @@ async function onToggle(item: IngredientDto) {
   } catch (e) {
     snackbar.value = { show: true, text: errorText(e, 'pantry.page.changeFailed') }
   }
-}
-
-const quantityLabel = (item: PantryItemDto | undefined) =>
-  item ? formatQuantity(item.quantity, item.unit) : ''
-const expiryColor = (item: PantryItemDto) => {
-  const status = expiryStatus(item.expiresOn, today.value)
-  return status === 'expired' ? 'error' : status === 'soon' ? 'warning' : undefined
 }
 
 // ─── Úprava zásoby ───────────────────────────────────────────────────────────
@@ -257,63 +253,14 @@ function editStaple(staple: StapleDto | null) {
       </div>
 
       <v-card v-else>
-        <v-list class="py-0">
-          <template v-for="(group, gi) in groups" :key="group.id">
-            <v-divider v-if="gi > 0" />
-            <v-list-subheader class="text-primary font-weight-bold text-uppercase">{{
-              group.name
-            }}</v-list-subheader>
-            <v-list-item
-              v-for="item in group.items"
-              :key="item.id"
-              :title="item.name"
-              link
-              @click="onToggle(item)"
-            >
-              <template #prepend>
-                <v-checkbox-btn
-                  :model-value="inPantry.has(item.id)"
-                  color="primary"
-                  :aria-label="item.name"
-                  @click.stop
-                  @update:model-value="onToggle(item)"
-                />
-              </template>
-              <template v-if="stock.get(item.id)" #subtitle>
-                <span class="d-flex flex-wrap align-center ga-1 mt-1">
-                  <v-chip v-if="quantityLabel(stock.get(item.id))" size="x-small" variant="tonal">
-                    {{ quantityLabel(stock.get(item.id)) }}
-                  </v-chip>
-                  <v-chip
-                    v-if="stock.get(item.id)!.expiresOn"
-                    size="x-small"
-                    variant="tonal"
-                    :color="expiryColor(stock.get(item.id)!)"
-                    :prepend-icon="mdiClockAlertOutline"
-                  >
-                    {{ describeExpiry(stock.get(item.id)!.expiresOn, today) }}
-                  </v-chip>
-                  <span v-if="stock.get(item.id)!.location" class="text-caption">
-                    {{ stock.get(item.id)!.location }}
-                  </span>
-                </span>
-              </template>
-              <template #append>
-                <v-btn
-                  :icon="mdiPencilOutline"
-                  size="small"
-                  variant="text"
-                  :aria-label="
-                    inPantry.has(item.id)
-                      ? t('pantry.page.editAria', { name: item.name })
-                      : t('pantry.page.editIngredientAria', { name: item.name })
-                  "
-                  @click.stop="editItem(item)"
-                />
-              </template>
-            </v-list-item>
-          </template>
-        </v-list>
+        <PantryList
+          :groups="groups"
+          :today="today"
+          :is-checked="isChecked"
+          :stock-of="stockOf"
+          @toggle="onToggle"
+          @edit="editItem"
+        />
       </v-card>
     </template>
 

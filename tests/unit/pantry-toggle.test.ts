@@ -94,3 +94,45 @@ describe('Špajza: zaškrtnutie „mám doma“', () => {
     expect(checked('Cibuľa')).toBe(true)
   })
 })
+
+describe('Špajza: zaškrtnutie je lacné', () => {
+  const pantryGets = () =>
+    (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(
+      ([url, init]) => String(url).includes('/pantry') && !String(url).includes('/pantry/') && !init?.method,
+    ).length
+
+  it('po uložení sa špajza znova nesťahuje (server má to isté, čo už vidno)', async () => {
+    const server = slowServer()
+    mount(
+      { render: () => h(VApp, null, () => h(PantryPage)) },
+      { global: { plugins: mountPlugins() }, attachTo: document.body },
+    )
+    await flushPromises()
+    const before = pantryGets()
+    await click('Mrkva')
+    server.finishNext()
+    await flushPromises()
+    expect(checked('Mrkva')).toBe(true)
+    expect(pantryGets()).toBe(before)
+  })
+
+  it('prepočíta sa len zaškrtnutý riadok, ostatné riadky zoznamu sa vôbec neaktualizujú', async () => {
+    slowServer()
+    // Každá aktualizácia riadku (VListItem) sa zapíše s jeho textom.
+    const updated: string[] = []
+    const countRowUpdates = {
+      updated(this: { $options: { name?: string }; $el?: Element }) {
+        if (this.$options.name === 'VListItem') updated.push(this.$el?.textContent?.trim() ?? '')
+      },
+    }
+    mount(
+      { render: () => h(VApp, null, () => h(PantryPage)) },
+      { global: { plugins: mountPlugins(), mixins: [countRowUpdates] }, attachTo: document.body },
+    )
+    await flushPromises()
+    updated.length = 0
+    await click('Mrkva')
+    expect(checked('Mrkva')).toBe(true)
+    expect(updated.filter((text) => !text.includes('Mrkva'))).toEqual([])
+  })
+})
