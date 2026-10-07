@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { mdiClose, mdiDeleteOutline, mdiPencilOutline } from '@mdi/js'
+import { mdiCallMerge, mdiClose, mdiDeleteOutline, mdiPencilOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-defineProps<{ count: number; total: number }>()
-defineEmits<{ selectAll: []; clear: []; edit: []; remove: []; close: [] }>()
+/** `mergeable`: zobrazí aj Zlúčiť (ingrediencie), dostupné od dvoch vybraných. */
+defineProps<{ count: number; total: number; mergeable?: boolean }>()
+defineEmits<{ selectAll: []; clear: []; edit: []; merge: []; remove: []; close: [] }>()
 </script>
 
 <template>
@@ -41,6 +42,17 @@ defineEmits<{ selectAll: []; clear: []; edit: []; remove: []; close: [] }>()
         @click="$emit('edit')"
       >
         {{ t('bulk.edit') }}
+      </v-btn>
+      <v-btn
+        v-if="mergeable"
+        :prepend-icon="mdiCallMerge"
+        variant="flat"
+        color="primary"
+        :disabled="count < 2"
+        data-test="bulk-merge"
+        @click="$emit('merge')"
+      >
+        {{ t('bulk.merge') }}
       </v-btn>
       <v-btn
         :prepend-icon="mdiDeleteOutline"

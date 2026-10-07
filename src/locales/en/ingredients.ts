@@ -38,4 +38,14 @@ export default {
     renameFailed: 'The change was not saved.',
     deleteFailed: 'Deleting failed.',
   },
+  merge: {
+    title: 'Merge ingredients',
+    keep: 'Which one stays?',
+    name: 'Name',
+    summary: '{sources} will be merged into {target}. Recipes, shopping and pantry will use {target}.',
+    aliasHint: 'The merged names are remembered, so the next import matches them to this ingredient.',
+    confirm: 'Merge',
+    done: 'Merged into {name}.',
+    failed: 'Merging failed.',
+  },
 }

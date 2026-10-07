@@ -165,9 +165,32 @@ export async function deleteIngredient(db: Db, householdId: string, id: string):
   ])
 }
 
+/** Doplní do `result` ingrediencie, ktoré majú hľadaný názov medzi alternatívnymi (po zlúčení). */
+async function matchAliases(db: Db, householdId: string, keys: string[], result: Map<string, string>) {
+  if (keys.length === 0) return
+  const wanted = new Set(keys)
+  const rows = await db
+    .select({ id: ingredients.id, aliases: ingredients.aliases })
+    .from(ingredients)
+    .where(
+      and(
+        eq(ingredients.householdId, householdId),
+        isNull(ingredients.deletedAt),
+        sql`${ingredients.aliases} <> '[]'`,
+      ),
+    )
+  for (const row of rows) {
+    for (const alias of row.aliases) {
+      const key = normalizeText(alias)
+      if (wanted.has(key) && !result.has(key)) result.set(key, row.id)
+    }
+  }
+}
+
 /**
- * Nájde alebo založí ingrediencie podľa mena (bez ohľadu na diakritiku a veľkosť písmen).
- * Zmazané obnoví. Nové dostanú ako predvolenú jednotku prvú použitú.
+ * Nájde alebo založí ingrediencie podľa mena (bez ohľadu na diakritiku a veľkosť písmen). Zhoduje aj
+ * alternatívne názvy zo zlúčenia („Banány“ → Banán). Zmazané obnoví. Nové dostanú ako predvolenú jednotku
+ * prvú použitú.
  * Vracia mapu normalizovaný názov → id.
  */
 export async function resolveIngredients(
@@ -199,6 +222,12 @@ export async function resolveIngredients(
   }
 
   await loadExisting()
+  await matchAliases(
+    db,
+    householdId,
+    keys.filter((k) => !result.has(k)),
+    result,
+  )
   const missing = keys.filter((k) => !result.has(k))
   if (missing.length) {
     const [first, ...rest] = missing.map((key) => {

@@ -6,6 +6,7 @@ export default {
   selectAll: 'Vybrať všetko',
   selectNone: 'Zrušiť výber',
   edit: 'Upraviť',
+  merge: 'Zlúčiť',
   remove: 'Vymazať',
   selectAria: 'Vybrať {name}',
   keep: 'Nemeniť',

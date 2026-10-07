@@ -1,6 +1,11 @@
 import { useMutation, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
-import type { BulkAffectedDto, IngredientBulkDeleteResult } from '@shared/api'
-import { BULK_MAX, type IngredientBulkUpdate, type RecipeBulkUpdate } from '@shared/schemas/bulk'
+import type { BulkAffectedDto, IngredientBulkDeleteResult, IngredientDto } from '@shared/api'
+import {
+  BULK_MAX,
+  type IngredientBulkUpdate,
+  type IngredientMergeInput,
+  type RecipeBulkUpdate,
+} from '@shared/schemas/bulk'
 import { apiFetch } from './http'
 import { INGREDIENTS_KEY, markIngredientsStale } from './ingredientCache'
 
@@ -103,6 +108,25 @@ export function useBulkDeleteIngredients(): UseMutationReturnType<
       void client.invalidateQueries({ queryKey: INGREDIENTS_KEY })
       void client.invalidateQueries({ queryKey: ['pantry'] })
       void client.invalidateQueries({ queryKey: ['staples'] })
+    },
+  })
+}
+
+/** Zlúči ingrediencie do jednej; zmení recepty, nákup, špajzu aj stále položky. */
+export function useMergeIngredients(): UseMutationReturnType<
+  IngredientDto,
+  Error,
+  IngredientMergeInput,
+  unknown
+> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (input: IngredientMergeInput) => post<IngredientDto>('/ingredients/merge', input),
+    onSettled: () => {
+      for (const key of [INGREDIENTS_KEY, ['pantry'], ['staples'], ['shopping']] as const) {
+        void client.invalidateQueries({ queryKey: key })
+      }
+      void client.invalidateQueries({ queryKey: ['recipes'], refetchType: 'none' })
     },
   })
 }

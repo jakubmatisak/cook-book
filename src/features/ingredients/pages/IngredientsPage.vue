@@ -33,6 +33,7 @@ import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
 import IngredientBulkEditDialog from '../components/IngredientBulkEditDialog.vue'
 import IngredientEditDialog from '../components/IngredientEditDialog.vue'
+import IngredientMergeDialog from '../components/IngredientMergeDialog.vue'
 
 const { t } = useI18n()
 const controlHeight = useControlHeight()
@@ -148,6 +149,17 @@ const selection = useSelection()
 const visibleIds = computed(() => filtered.value.map((i) => i.id))
 watch(visibleIds, (ids) => selection.keepOnly(ids))
 const bulkEditOpen = ref(false)
+// Zlúčenie vybraných ingrediencií do jednej (napr. Banán a Banány).
+const mergeOpen = ref(false)
+const mergeItems = computed(() => (ingredients.value ?? []).filter((i) => selection.has(i.id)))
+function onMerged(ingredient: IngredientDto) {
+  selection.stop()
+  snackbar.value = {
+    show: true,
+    color: 'success',
+    text: t('ingredients.merge.done', { name: ingredient.name }),
+  }
+}
 const bulkDeleteOpen = ref(false)
 const bulkDelete = useBulkDeleteIngredients()
 function onBulkEdited(affected: number) {
@@ -216,6 +228,8 @@ const usage = (item: IngredientDto) =>
         v-if="selection.active.value"
         :count="selection.count.value"
         :total="visibleIds.length"
+        mergeable
+        @merge="mergeOpen = true"
         @select-all="selection.set(visibleIds)"
         @clear="selection.clear()"
         @close="selection.stop()"
@@ -363,6 +377,7 @@ const usage = (item: IngredientDto) =>
     </div>
 
     <IngredientEditDialog v-model="editOpen" :ingredient="editTarget" />
+    <IngredientMergeDialog v-model="mergeOpen" :items="mergeItems" @merged="onMerged" />
     <IngredientBulkEditDialog v-model="bulkEditOpen" :ids="selection.selected.value" @saved="onBulkEdited" />
     <ConfirmDialog
       v-model="bulkDeleteOpen"

@@ -6,6 +6,7 @@ export default {
   selectAll: 'Select all',
   selectNone: 'Clear selection',
   edit: 'Edit',
+  merge: 'Merge',
   remove: 'Delete',
   selectAria: 'Select {name}',
   keep: 'Keep',

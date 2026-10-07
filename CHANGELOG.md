@@ -1,5 +1,15 @@
 # Zmeny
 
+## 1.4.0 – 2026-10-07
+
+### Nové
+
+- Ingrediencie: zlúčenie dvoch a viac ingrediencií (napr. Banán a Banány) – v hromadnom výbere tlačidlo Zlúčiť,
+  výber, ktorá ostane, a prípadne nový názov. Recepty, nákup, špajza, stále položky aj alergie sa prepíšu na
+  ponechanú, zásoby sa sčítajú a zlúčené názvy si ingrediencia zapamätá, takže ďalší import ich priradí k nej.
+- Mobil: nadpis, hľadanie a filtre zoznamov ostávajú hore, posúva sa len zoznam; menší nadpis stránky.
+- Tagy a Pri stole majú rovnaké rozloženie ako ostatné zoznamy (ukotvená hlavička, akcie ako ikonky na mobile).
+
 ## 1.3.2 – 2026-10-07
 
 ### Opravy

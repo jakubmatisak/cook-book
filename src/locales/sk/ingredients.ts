@@ -38,4 +38,14 @@ export default {
     renameFailed: 'Zmena sa neuložila.',
     deleteFailed: 'Zmazanie zlyhalo.',
   },
+  merge: {
+    title: 'Zlúčiť ingrediencie',
+    keep: 'Ktorá ostane?',
+    name: 'Názov',
+    summary: '{sources} sa zlúči do {target}. V receptoch, nákupe aj špajzi sa prepíše na {target}.',
+    aliasHint: 'Zlúčené názvy si ingrediencia zapamätá, takže pri ďalšom importe sa priradia k nej.',
+    confirm: 'Zlúčiť',
+    done: 'Zlúčené do {name}.',
+    failed: 'Zlúčenie zlyhalo.',
+  },
 }

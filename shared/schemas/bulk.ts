@@ -34,3 +34,17 @@ export const ingredientBulkUpdateSchema = z
   })
   .refine(hasChange, 'Nie je čo zmeniť.')
 export type IngredientBulkUpdate = z.output<typeof ingredientBulkUpdateSchema>
+
+/** Zlúčenie ingrediencií: zdrojové sa prevedú na cieľovú (recepty, špajza, nákup) a zmažú sa. */
+export const ingredientMergeSchema = z
+  .object({
+    targetId: z.string().min(1).max(40),
+    sourceIds: ids,
+    /** Nový názov ponechanej ingrediencie (napr. jeden zo zlučovaných názvov); bez neho ostane jej názov. */
+    name: z.string().trim().min(1, 'Zadaj názov.').max(120).optional(),
+  })
+  .refine((v) => !v.sourceIds.includes(v.targetId), {
+    message: 'Ingrediencia sa nedá zlúčiť sama so sebou.',
+    path: ['sourceIds'],
+  })
+export type IngredientMergeInput = z.output<typeof ingredientMergeSchema>

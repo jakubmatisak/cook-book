@@ -3,9 +3,10 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import type { ShopCategoryDto } from '../../shared/api'
 import { ingredientCreateSchema, ingredientUpdateSchema, tagInputSchema } from '../../shared/schemas/recipe'
-import { bulkIdsSchema, ingredientBulkUpdateSchema } from '../../shared/schemas/bulk'
+import { bulkIdsSchema, ingredientBulkUpdateSchema, ingredientMergeSchema } from '../../shared/schemas/bulk'
 import { shopCategories } from '../db/schema'
 import { bulkDeleteIngredients, bulkUpdateIngredients } from '../services/bulk'
+import { mergeIngredients } from '../services/merge'
 import type { AppEnv } from '../env'
 import { parseBody } from '../http'
 import {
@@ -31,6 +32,10 @@ export const ingredientRoutes = new Hono<AppEnv>()
     const input = await parseBody(c, ingredientBulkUpdateSchema)
     const { ids, ...patch } = input
     return c.json(await bulkUpdateIngredients(c.get('db'), c.get('user').householdId, { ids, ...patch }))
+  })
+  .post('/merge', async (c) => {
+    const input = await parseBody(c, ingredientMergeSchema)
+    return c.json(await mergeIngredients(c.get('db'), c.get('user').householdId, input))
   })
   .post('/bulk/delete', async (c) => {
     const { ids } = await parseBody(c, bulkIdsSchema)
