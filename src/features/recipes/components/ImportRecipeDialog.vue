@@ -37,7 +37,7 @@ async function submit() {
     const result = await importer.mutateAsync(normalizeUrl(value))
     importHandoff.put(result)
     open.value = false
-    await router.push({ path: '/recepty/novy', query: { import: '1' } })
+    await router.push({ path: '/recipes/new', query: { import: '1' } })
   } catch (e) {
     error.value = errorText(e, 'recipes.import.failed')
   }

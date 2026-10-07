@@ -23,6 +23,6 @@ describe('PWA service worker', () => {
     for (const path of ['/api/v1/me', '/img/a.webp', '/cdn-cgi/access/login', '/auth/relogin']) {
       expect(deny.some((r) => r.test(path))).toBe(true)
     }
-    expect(deny.some((r) => r.test('/recepty/123'))).toBe(false)
+    expect(deny.some((r) => r.test('/recipes/123'))).toBe(false)
   })
 })

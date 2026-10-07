@@ -15,13 +15,13 @@ describe('importBookmarklet', () => {
   it('otvorí v novej karte import s adresou aktuálnej stránky', () => {
     const code = importBookmarklet('https://kniha.example.com')
     expect(code.startsWith('javascript:')).toBe(true)
-    expect(code).toContain('"https://kniha.example.com/recepty/import?url="')
+    expect(code).toContain('"https://kniha.example.com/recipes/import?url="')
     expect(code).toContain('encodeURIComponent(location.href)')
     expect(code).toContain('window.open(')
   })
 
   it('koncové lomky v adrese sa odstránia a citáty v adrese neprerušia kód', () => {
-    expect(importBookmarklet('https://a.sk//')).toContain('"https://a.sk/recepty/import?url="')
+    expect(importBookmarklet('https://a.sk//')).toContain('"https://a.sk/recipes/import?url="')
     expect(importBookmarklet('https://a.sk/"x')).toContain('\\"x')
   })
 })

@@ -86,9 +86,9 @@ async function mountRecipes(role: 'owner' | 'member' = 'owner', extra: Record<st
   })
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/recepty', component: Blank }],
+    routes: [{ path: '/recipes', component: Blank }],
   })
-  await router.push('/recepty')
+  await router.push('/recipes')
   await router.isReady()
   const wrapper = mount(
     { render: () => h(VApp, null, () => h(RecipesPage)) },

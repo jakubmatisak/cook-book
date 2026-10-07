@@ -58,13 +58,13 @@ const stubBase = (extra: Record<string, unknown> = {}) =>
 
 const Blank = defineComponent({ render: () => h('div') })
 
-async function mountPage(page: object, url: string, route = '/verejne') {
+async function mountPage(page: object, url: string, route = '/public') {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
       { path: route, component: Blank },
-      { path: '/recepty/:id', component: Blank },
-      { path: '/verejne', component: Blank },
+      { path: '/recipes/:id', component: Blank },
+      { path: '/public', component: Blank },
     ],
   })
   await router.push(url)
@@ -84,7 +84,7 @@ afterEach(() => {
 })
 
 describe('Verejné recepty – detail', () => {
-  const route = '/verejne/:id'
+  const route = '/public/:id'
 
   it('cudzí recept ide skopírovať do vlastnej domácnosti', async () => {
     const calls = stubBase({
@@ -92,7 +92,7 @@ describe('Verejné recepty – detail', () => {
       'POST /public/recipes/p1/copy': () =>
         jsonResponse({ ...detail(), id: 'novy', visibility: 'private' } as unknown as RecipeDetailDto, 201),
     })
-    const { wrapper } = await mountPage(PublicRecipePage, '/verejne/p1', route)
+    const { wrapper } = await mountPage(PublicRecipePage, '/public/p1', route)
     expect(wrapper.find('[data-test="public-author"]').text()).toBe('Zdieľa: Rodičia')
     expect(wrapper.text()).toContain('1,5 kg') // 1500 g sa ukáže ako kilogramy
     expect(wrapper.text()).toContain('Nastrúhaj jablká.')
@@ -106,7 +106,7 @@ describe('Verejné recepty – detail', () => {
 
   it('vlastný recept sa kopírovať nedá a ponúkne sa otvorenie', async () => {
     stubBase({ '/public/recipes/p1': detail({ ownedByMe: true }) })
-    const { wrapper } = await mountPage(PublicRecipePage, '/verejne/p1', route)
+    const { wrapper } = await mountPage(PublicRecipePage, '/public/p1', route)
     expect(wrapper.find('[data-test="public-copy"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="public-mine"]').text()).toContain('Toto je recept tvojej domácnosti.')
   })
@@ -116,7 +116,7 @@ describe('Verejné recepty – detail', () => {
       '/public/recipes/p1': () =>
         jsonResponse({ error: { code: 'not_found', message: 'Recept neexistuje.' } }, 404),
     })
-    const { wrapper } = await mountPage(PublicRecipePage, '/verejne/p1', route)
+    const { wrapper } = await mountPage(PublicRecipePage, '/public/p1', route)
     expect(wrapper.text()).toContain('Recept sa nenašiel')
   })
 })

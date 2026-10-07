@@ -1,5 +1,5 @@
 /**
- * Adresa, ktorú rozšírenie otvorí: `<adresa aplikácie>/recepty/import?url=<adresa stránky>`.
+ * Adresa, ktorú rozšírenie otvorí: `<adresa aplikácie>/recipes/import?url=<adresa stránky>`.
  * Aplikácia musí bežať na https (alebo na localhost pri vývoji). Karty mimo webu (chrome://, nová karta)
  * a chýbajúca adresa aplikácie dajú `null`.
  * @param {string | undefined} appUrl
@@ -21,5 +21,5 @@ export function buildImportUrl(appUrl, pageUrl) {
   } catch {
     return null
   }
-  return `${base}/recepty/import?url=${encodeURIComponent(page)}`
+  return `${base}/recipes/import?url=${encodeURIComponent(page)}`
 }

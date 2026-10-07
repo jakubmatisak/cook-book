@@ -139,10 +139,16 @@ export const recipeImportSchema = z.object({
   url: z.url({ protocol: /^https?$/, error: 'Zadaj platnú webovú adresu (http alebo https).' }),
 })
 
-export const markdownQuerySchema = z.object({
-  /** Prepočítať množstvá na tento počet porcií. */
-  porcie: z.coerce.number().int().min(1).max(50).optional(),
-})
+const servingsParam = z.coerce.number().int().min(1).max(50).optional()
+
+export const markdownQuerySchema = z
+  .object({
+    /** Prepočítať množstvá na tento počet porcií. */
+    servings: servingsParam,
+    /** Starší názov parametra (aplikácia nainštalovaná pred prechodom na anglické adresy). */
+    porcie: servingsParam,
+  })
+  .transform(({ servings, porcie }) => ({ servings: servings ?? porcie }))
 
 /** Ktorú sadu ukážkových receptov pridať (predvolene základnú). */
 export const sampleSetQuerySchema = z.object({ set: z.enum(SAMPLE_SET_NAMES).default('basic') })

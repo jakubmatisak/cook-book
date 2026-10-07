@@ -140,7 +140,7 @@ async function onSubmit() {
     const detail = await save.mutateAsync({ id: id.value, input: formToInput(form.value) })
     saved.value = true
     draft.clear()
-    await router.replace(`/recepty/${detail.id}`)
+    await router.replace(`/recipes/${detail.id}`)
   } catch (e) {
     if (e instanceof ApiError && Array.isArray(e.details)) {
       errors.value = describeIssues(e.details as { path: PropertyKey[]; message: string }[])
@@ -161,7 +161,7 @@ onBeforeRouteLeave(async () => {
 })
 
 function cancel() {
-  void router.push(id.value ? `/recepty/${id.value}` : '/recepty')
+  void router.push(id.value ? `/recipes/${id.value}` : '/recipes')
 }
 </script>
 

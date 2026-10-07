@@ -17,11 +17,11 @@ const error = ref('')
 
 /** Načíta recept z adresy v URL (rozšírenie do Chromu, záložka) a otvorí predvyplnený editor. */
 async function run() {
-  if (!target) return void router.replace('/recepty')
+  if (!target) return void router.replace('/recipes')
   error.value = ''
   try {
     importHandoff.put(await importer.mutateAsync(target))
-    await router.replace({ path: '/recepty/novy', query: { import: '1' } })
+    await router.replace({ path: '/recipes/new', query: { import: '1' } })
   } catch (e) {
     error.value = errorText(e, 'recipes.import.failed')
   }
@@ -39,7 +39,7 @@ onMounted(run)
         <v-btn color="primary" data-test="import-retry" @click="run">{{
           t('recipes.importFromUrl.retry')
         }}</v-btn>
-        <v-btn variant="tonal" to="/recepty/novy" replace data-test="import-manual">{{
+        <v-btn variant="tonal" to="/recipes/new" replace data-test="import-manual">{{
           t('recipes.importFromUrl.manual')
         }}</v-btn>
       </div>

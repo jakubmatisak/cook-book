@@ -13,7 +13,7 @@ const { t } = useI18n()
 
 // Cudzí verejný recept (iná domácnosť) sa len číta a kopíruje, otvára sa vo verejnom detaile.
 const foreign = computed(() => Boolean(props.recipe.householdName))
-const link = computed(() => (foreign.value ? `/verejne/${props.recipe.id}` : `/recepty/${props.recipe.id}`))
+const link = computed(() => (foreign.value ? `/public/${props.recipe.id}` : `/recipes/${props.recipe.id}`))
 const canSelect = computed(() => props.selectable && !foreign.value)
 
 const time = computed(() => totalMinutes(props.recipe.prepMinutes, props.recipe.cookMinutes))

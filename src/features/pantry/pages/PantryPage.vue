@@ -172,7 +172,7 @@ function editStaple(staple: StapleDto | null) {
             :prepend-icon="mdAndUp ? mdiPotSteamOutline : undefined"
             :icon="mdAndUp ? undefined : mdiPotSteamOutline"
             :aria-label="t('pantry.page.cookable')"
-            :to="{ path: '/recepty', query: { doma: '1' } }"
+            :to="{ path: '/recipes', query: { pantry: '1' } }"
           >
             <template v-if="mdAndUp">{{ t('pantry.page.cookable') }}</template>
           </v-btn>

@@ -7,10 +7,13 @@ import RecipesPage from '@/features/recipes/pages/RecipesPage.vue'
 import { setLocale } from '@/i18n'
 import { me, mountPlugins, stubApi } from './helpers/apiStub'
 
+// Stránka receptov sa v plnej sade testov vykresľuje pomalšie.
+vi.setConfig({ testTimeout: 20_000 })
+
 const emptyList = { items: [], facets: { category: {}, tag: {}, difficulty: {}, time: {}, missing: {} } }
 const Blank = defineComponent({ render: () => h('div') })
 
-async function mountPage(url = '/recepty', kidsEnabled?: boolean) {
+async function mountPage(url = '/recipes', kidsEnabled?: boolean) {
   stubApi({
     '/me': { ...me('owner'), userSettings: kidsEnabled === undefined ? {} : { kidsEnabled } },
     '/recipes': emptyList,
@@ -18,7 +21,7 @@ async function mountPage(url = '/recepty', kidsEnabled?: boolean) {
   })
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/recepty', component: Blank }],
+    routes: [{ path: '/recipes', component: Blank }],
   })
   await router.push(url)
   await router.isReady()
@@ -63,20 +66,20 @@ describe('výber detských receptov v rozbaľovacom poli', () => {
       expect(wrapper.find('[data-test="kids-select"]').text()).toContain('Bez detských')
 
       await chooseKids(wrapper, 'Aj detské')
-      await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBe('1'))
+      await vi.waitFor(() => expect(router.currentRoute.value.query.kids).toBe('include'))
       await vi.waitFor(() => expect(requested().some((u) => u.includes('kids=1'))).toBe(true))
 
       await chooseKids(wrapper, 'Len detské')
-      await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBe('len'))
+      await vi.waitFor(() => expect(router.currentRoute.value.query.kids).toBe('only'))
       await vi.waitFor(() => expect(requested().some((u) => u.includes('kids=only'))).toBe(true))
 
       await chooseKids(wrapper, 'Bez detských')
-      await vi.waitFor(() => expect(router.currentRoute.value.query.detske).toBeUndefined())
+      await vi.waitFor(() => expect(router.currentRoute.value.query.kids).toBeUndefined())
     },
   )
 
   it('z adresy sa zvolí príslušná možnosť', async () => {
-    const { wrapper } = await mountPage('/recepty?detske=len')
+    const { wrapper } = await mountPage('/recipes?kids=only')
     expect(requested().some((u) => u.includes('kids=only'))).toBe(true)
     expect(wrapper.find('[data-test="kids-select"]').text()).toContain('Len detské')
   })
@@ -94,7 +97,7 @@ describe('výber detských receptov v rozbaľovacom poli', () => {
 
 describe('vypnuté detské jedlá v nastaveniach', () => {
   it('prepínač sa nezobrazí a kids sa neposiela, ani keď je v adrese', async () => {
-    const { wrapper } = await mountPage('/recepty?detske=1', false)
+    const { wrapper } = await mountPage('/recipes?kids=include', false)
     expect(wrapper.find('[data-test="kids-select"]').exists()).toBe(false)
     expect(requested().every((u) => !u.includes('kids='))).toBe(true)
   })

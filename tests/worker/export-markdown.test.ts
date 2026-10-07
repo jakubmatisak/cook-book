@@ -48,17 +48,19 @@ describe('GET /recipes/:id/export.md', () => {
     expect([...all.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
   })
 
-  it('prepočíta porcie podľa ?porcie=', async () => {
+  it('prepočíta porcie podľa ?servings= (aj staršieho ?porcie=)', async () => {
     const id = await create(gulas)
-    const text = await (await send(app, 'GET', api(`/recipes/${id}/export.md?porcie=8`))).text()
+    const text = await (await send(app, 'GET', api(`/recipes/${id}/export.md?servings=8`))).text()
     expect(text).toContain('8 porcií')
+    const legacy = await (await send(app, 'GET', api(`/recipes/${id}/export.md?porcie=8`))).text()
+    expect(legacy).toContain('8 porcií')
     expect(text).toContain('- 1,6 kg Hovädzie mäso')
   })
 
   it('neplatný počet porcií je 400, neznámy a cudzí recept 404', async () => {
     const id = await create(gulas)
-    expect((await send(app, 'GET', api(`/recipes/${id}/export.md?porcie=0`))).status).toBe(400)
-    expect((await send(app, 'GET', api(`/recipes/${id}/export.md?porcie=abc`))).status).toBe(400)
+    expect((await send(app, 'GET', api(`/recipes/${id}/export.md?servings=0`))).status).toBe(400)
+    expect((await send(app, 'GET', api(`/recipes/${id}/export.md?servings=abc`))).status).toBe(400)
     expect((await send(app, 'GET', api('/recipes/neexistuje/export.md'))).status).toBe(404)
     await env.DB.batch([
       env.DB.prepare(

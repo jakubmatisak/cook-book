@@ -46,14 +46,14 @@ describe('kategória Detské', () => {
 })
 
 describe('prepínač „aj detské“ v adrese', () => {
-  it('detske=1 zapne zobrazenie, bez neho je vypnuté', () => {
+  it('kids=include zapne zobrazenie, kids=only ukáže len detské, inak sú skryté', () => {
     expect(parseListQuery({}).kids).toBe('hide')
-    expect(parseListQuery({ detske: '1' }).kids).toBe('include')
-    expect(parseListQuery({ detske: 'len' }).kids).toBe('only')
-    expect(parseListQuery({ detske: '0' }).kids).toBe('hide')
+    expect(parseListQuery({ kids: 'include' }).kids).toBe('include')
+    expect(parseListQuery({ kids: 'only' }).kids).toBe('only')
+    expect(parseListQuery({ kids: '0' }).kids).toBe('hide')
   })
 
   it('ukladá sa medzi predvolené filtre', () => {
-    expect(savableListQuery({ detske: '1', q: 'kaša' })).toEqual({ detske: '1' })
+    expect(savableListQuery({ kids: 'include', q: 'kaša' })).toEqual({ kids: 'include' })
   })
 })

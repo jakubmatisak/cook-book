@@ -10,6 +10,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import { useKidsEnabled } from '@/composables/useKidsEnabled'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
+import { CATEGORY_SLUGS } from '@/router/urlSlugs'
 import { CATEGORY_ICONS } from '../categoryIcons'
 
 const { t } = useI18n()
@@ -39,7 +40,7 @@ const tiles = computed<Tile[]>(() => {
     title: t(`common.category.${c}`),
     count: counts[c] ?? 0,
     icon: CATEGORY_ICONS[c],
-    to: { path: '/recepty', query: { kategoria: c } },
+    to: { path: '/recipes', query: { category: CATEGORY_SLUGS[c] } },
   }))
   return [
     {
@@ -47,7 +48,7 @@ const tiles = computed<Tile[]>(() => {
       title: t('home.all'),
       count: regular.value.length,
       icon: mdiBookOpenPageVariantOutline,
-      to: { path: '/recepty', query: {} },
+      to: { path: '/recipes', query: {} },
       color: 'primary',
     },
     {
@@ -55,7 +56,7 @@ const tiles = computed<Tile[]>(() => {
       title: t('home.favorites'),
       count: regular.value.filter((r) => r.isFavorite).length,
       icon: mdiHeart,
-      to: { path: '/recepty', query: { oblubene: '1' } },
+      to: { path: '/recipes', query: { favorites: '1' } },
       color: 'primary',
     },
     ...categories,
@@ -79,7 +80,7 @@ const tiles = computed<Tile[]>(() => {
     :text="t('home.emptyText')"
     data-test="home-empty"
   >
-    <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">{{ t('home.addFirst') }}</v-btn>
+    <v-btn color="primary" :prepend-icon="mdiPlus" to="/recipes/new">{{ t('home.addFirst') }}</v-btn>
   </EmptyState>
   <!-- Na mobile dlaždice pod sebou ako riadky (ikona vľavo, počet vpravo), od sm mriežka s ikonou nad textom. -->
   <v-row v-else dense data-test="home-tiles">

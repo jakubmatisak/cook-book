@@ -68,7 +68,7 @@ async function mountAt(url: string, route: string, page: object, routes: Record<
     history: createMemoryHistory(),
     routes: [
       { path: route, component: Blank },
-      { path: '/recepty', component: Blank },
+      { path: '/recipes', component: Blank },
     ],
   })
   await router.push(url)
@@ -91,13 +91,13 @@ const hasQuantityColumn = (wrapper: Awaited<ReturnType<typeof mountAt>>) => {
 
 describe('zarovnanie ingrediencií bez množstva', () => {
   it('detail receptu: aj ingrediencia bez množstva má stĺpec s množstvom', async () => {
-    const wrapper = await mountAt('/recepty/r1', '/recepty/:id', RecipeDetailPage, { '/recipes/r1': base })
+    const wrapper = await mountAt('/recipes/r1', '/recipes/:id', RecipeDetailPage, { '/recipes/r1': base })
     expect(hasQuantityColumn(wrapper)).toEqual([true, true, true])
   })
 
   it('verejný recept: rovnako', async () => {
     const detail: PublicRecipeDetailDto = { ...base, householdName: 'Rodičia', ownedByMe: false }
-    const wrapper = await mountAt('/verejne/r1', '/verejne/:id', PublicRecipePage, {
+    const wrapper = await mountAt('/public/r1', '/public/:id', PublicRecipePage, {
       '/public/recipes/r1': detail,
     })
     expect(hasQuantityColumn(wrapper)).toEqual([true, true, true])
@@ -108,7 +108,7 @@ describe('zarovnanie ingrediencií bez množstva', () => {
       ...base,
       ingredients: [...base.ingredients, ingredient('i4', 'hrozienok', 0.5, 'balenie')],
     }
-    const wrapper = await mountAt('/recepty/r1', '/recepty/:id', RecipeDetailPage, { '/recipes/r1': detail })
+    const wrapper = await mountAt('/recipes/r1', '/recipes/:id', RecipeDetailPage, { '/recipes/r1': detail })
     const widths = wrapper
       .findAll('[data-test="ingredient-quantity"]')
       .map((el) => (el.element as HTMLElement).style.minWidth)
@@ -118,7 +118,7 @@ describe('zarovnanie ingrediencií bez množstva', () => {
   })
 
   it('pri tlači je recept kompaktný: suroviny a postup vedľa seba, kroky bez veľkých medzier', async () => {
-    const wrapper = await mountAt('/recepty/r1', '/recepty/:id', RecipeDetailPage, { '/recipes/r1': base })
+    const wrapper = await mountAt('/recipes/r1', '/recipes/:id', RecipeDetailPage, { '/recipes/r1': base })
     expect(wrapper.find('[data-test="recipe-ingredients-col"]').classes()).toContain('v-col--cols-12')
     window.dispatchEvent(new Event('beforeprint'))
     await flushPromises()

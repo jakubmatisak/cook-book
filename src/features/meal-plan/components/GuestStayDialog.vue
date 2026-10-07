@@ -71,7 +71,7 @@ async function save() {
         <v-alert v-if="!guestItems.length" type="info" density="compact" data-test="stay-no-guests">
           {{ t('plan.stays.dialog.noGuests') }}
           <template v-if="canAddGuests" #append>
-            <v-btn variant="text" size="small" to="/rodina" @click="open = false">
+            <v-btn variant="text" size="small" to="/people" @click="open = false">
               {{ t('plan.stays.dialog.openFamily') }}
             </v-btn>
           </template>

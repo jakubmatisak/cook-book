@@ -56,7 +56,7 @@ const today = useToday()
 const weekStartsOn = computed(() => me.value?.settings.weekStartsOn ?? 1)
 const start = computed(() =>
   resolveWeekStart(
-    typeof route.query.tyzden === 'string' ? route.query.tyzden : undefined,
+    typeof route.query.week === 'string' ? route.query.week : undefined,
     weekStartsOn.value,
     today.value,
   ),
@@ -94,7 +94,7 @@ const slots = computed(() => visibleSlots(me.value?.slots ?? [], entries.value ?
 const members = computed(() => me.value?.members ?? [])
 
 const goToWeek = (startIso: string | undefined) =>
-  router.replace({ query: startIso ? { tyzden: startIso } : {} })
+  router.replace({ query: startIso ? { week: startIso } : {} })
 
 async function goToday() {
   await goToWeek(undefined)
@@ -304,7 +304,7 @@ async function copyToNextWeek() {
     <v-alert v-if="!members.length" type="info" density="compact" class="mb-4 d-print-none">
       <I18nT keypath="plan.noMembers.text" scope="global" tag="span">
         <template #link>
-          <router-link to="/rodina" class="text-primary font-weight-bold">{{
+          <router-link to="/people" class="text-primary font-weight-bold">{{
             t('plan.noMembers.link')
           }}</router-link>
         </template>

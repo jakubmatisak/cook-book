@@ -87,7 +87,7 @@ describe('plán a nákup v angličtine', () => {
     expect(text).toContain(
       'Add family members under At the table and portions will be calculated automatically.',
     )
-    expect(wrapper.find('a[href="/rodina"]').text()).toBe('At the table')
+    expect(wrapper.find('a[href="/people"]').text()).toBe('At the table')
     expect(wrapper.find('[aria-label="Previous week"]').exists()).toBe(true)
     expect(wrapper.find('[aria-label="Next week"]').exists()).toBe(true)
     expect(text).not.toContain('Jedálniček')

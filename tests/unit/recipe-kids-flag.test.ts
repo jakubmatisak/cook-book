@@ -53,9 +53,9 @@ async function mountEditor(url: string, routes: Record<string, unknown> = {}, us
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: '/recepty/novy', component: Blank },
-      { path: '/recepty/:id/upravit', component: Blank },
-      { path: '/recepty', component: Blank },
+      { path: '/recipes/new', component: Blank },
+      { path: '/recipes/:id/edit', component: Blank },
+      { path: '/recipes', component: Blank },
     ],
   })
   await router.push(url)
@@ -75,14 +75,14 @@ const categoryText = (wrapper: Awaited<ReturnType<typeof mountEditor>>) =>
 
 describe('Editor receptu: zaškrtávacie pole „Detský recept“', () => {
   it('pri novom recepte je pole viditeľné a predvolene nezaškrtnuté', async () => {
-    const wrapper = await mountEditor('/recepty/novy')
+    const wrapper = await mountEditor('/recipes/new')
     expect(flag(wrapper).exists()).toBe(true)
     expect((flag(wrapper).element as HTMLInputElement).checked).toBe(false)
     expect(categoryText(wrapper)).toContain('Hlavné jedlo')
   })
 
   it('zaškrtnutie nastaví typ jedla na Detské a odškrtnutie vráti predošlý typ', async () => {
-    const wrapper = await mountEditor('/recepty/novy')
+    const wrapper = await mountEditor('/recipes/new')
     await flag(wrapper).setValue(true)
     expect(categoryText(wrapper)).toContain('Detské')
     await flag(wrapper).setValue(false)
@@ -90,20 +90,20 @@ describe('Editor receptu: zaškrtávacie pole „Detský recept“', () => {
   })
 
   it('detský recept pri úprave je zaškrtnutý a odškrtnutie dá hlavné jedlo', async () => {
-    const wrapper = await mountEditor('/recepty/k1/upravit', { '/recipes/k1': kidsRecipe })
+    const wrapper = await mountEditor('/recipes/k1/edit', { '/recipes/k1': kidsRecipe })
     expect((flag(wrapper).element as HTMLInputElement).checked).toBe(true)
     await flag(wrapper).setValue(false)
     expect(categoryText(wrapper)).toContain('Hlavné jedlo')
   })
 
   it('pole sa nezobrazí, keď sú detské recepty vypnuté v nastaveniach', async () => {
-    const wrapper = await mountEditor('/recepty/novy', {}, { kidsEnabled: false })
+    const wrapper = await mountEditor('/recipes/new', {}, { kidsEnabled: false })
     expect(flag(wrapper).exists()).toBe(false)
   })
 
   it('v angličtine má popis po anglicky', async () => {
     setLocale('en')
-    const wrapper = await mountEditor('/recepty/novy')
+    const wrapper = await mountEditor('/recipes/new')
     expect(wrapper.find('[data-test="kids-flag"]').text()).toContain('Baby food recipe')
   })
 })

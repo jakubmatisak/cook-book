@@ -95,10 +95,10 @@ export const recipeRoutes = new Hono<AppEnv>()
     return c.json(await getRecipeDetail(c.get('db'), user.householdId, user.id, c.req.param('id')))
   })
   .get('/:id/export.md', async (c) => {
-    const { porcie } = markdownQuerySchema.parse(c.req.query())
+    const { servings } = markdownQuerySchema.parse(c.req.query())
     const user = c.get('user')
     const recipe = await getRecipeDetail(c.get('db'), user.householdId, user.id, c.req.param('id'))
-    return c.body(UTF8_BOM + recipeToMarkdown(recipe, { servings: porcie }), 200, {
+    return c.body(UTF8_BOM + recipeToMarkdown(recipe, { servings }), 200, {
       'Content-Type': 'text/markdown; charset=utf-8',
       'Content-Disposition': `attachment; filename="${markdownFilename(recipe.title)}"`,
       'Cache-Control': 'no-store',

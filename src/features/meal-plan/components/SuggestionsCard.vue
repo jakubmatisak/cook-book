@@ -71,7 +71,7 @@ const rowSubtitle = (s: SuggestionDto) =>
           <v-list-item
             v-for="s in rows"
             :key="s.recipeId"
-            :to="`/recepty/${s.recipeId}`"
+            :to="`/recipes/${s.recipeId}`"
             :title="s.title"
             :subtitle="rowSubtitle(s)"
             data-test="suggestion-row"
@@ -113,7 +113,7 @@ const rowSubtitle = (s: SuggestionDto) =>
                   </template>
                   <v-card-title class="text-body-1 font-weight-bold text-wrap">
                     <router-link
-                      :to="`/recepty/${s.recipeId}`"
+                      :to="`/recipes/${s.recipeId}`"
                       class="text-decoration-none text-high-emphasis"
                     >
                       {{ s.title }}

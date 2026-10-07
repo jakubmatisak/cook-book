@@ -18,12 +18,12 @@ function setViewport(width: number) {
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
 }
 
-async function mountPage(width: number, url = '/recepty') {
+async function mountPage(width: number, url = '/recipes') {
   setViewport(width)
   stubApi({ '/me': me('owner'), '/recipes': emptyList, '/tags': [] })
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/recepty', component: Blank }],
+    routes: [{ path: '/recipes', component: Blank }],
   })
   await router.push(url)
   await router.isReady()
@@ -86,15 +86,15 @@ describe('filtre receptov na mobile', () => {
     await wrapper.find('[data-test="filters-button"]').trigger('click')
     await flushPromises()
     document.body.querySelector<HTMLElement>('[data-test="favorite-toggle"]')!.click()
-    await vi.waitFor(() => expect(router.currentRoute.value.query.oblubene).toBe('1'))
+    await vi.waitFor(() => expect(router.currentRoute.value.query.favorites).toBe('1'))
   })
 
   it('vysvetlenie pri „Čo viem uvariť“ je na mobile skryté, na počítači ostáva', async () => {
-    const mobile = await mountPage(390, '/recepty?doma=1')
+    const mobile = await mountPage(390, '/recipes?pantry=1')
     expect(inPage(mobile.wrapper, '[data-test="pantry-hint"]')).toBe(false)
     mobile.wrapper.unmount()
     document.body.innerHTML = ''
-    const desktop = await mountPage(1280, '/recepty?doma=1')
+    const desktop = await mountPage(1280, '/recipes?pantry=1')
     expect(inPage(desktop.wrapper, '[data-test="pantry-hint"]')).toBe(true)
   })
 

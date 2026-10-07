@@ -119,20 +119,20 @@ const defaultSlotId = computed(
 /** Počet porcií v prepočte; žije v URL (?porcie=), aby ho prevzal aj režim varenia. */
 const servings = computed({
   get: () => {
-    const fromUrl = Number(route.query.porcie)
+    const fromUrl = Number(route.query.servings)
     return Number.isFinite(fromUrl) && fromUrl >= 1 && fromUrl <= 50 ? fromUrl : (recipe.value?.servings ?? 4)
   },
   set: (value: number | null | undefined) => {
     const query = { ...route.query }
-    if (value && value !== recipe.value?.servings) query.porcie = String(value)
-    else delete query.porcie
+    if (value && value !== recipe.value?.servings) query.servings = String(value)
+    else delete query.servings
     void router.replace({ query })
   },
 })
 const factor = computed(() => (recipe.value ? servings.value / recipe.value.servings : 1))
 const cookingLink = computed(() => ({
-  path: `/recepty/${id.value}/varenie`,
-  query: route.query.porcie ? { porcie: String(route.query.porcie) } : {},
+  path: `/recipes/${id.value}/cook`,
+  query: route.query.servings ? { servings: String(route.query.servings) } : {},
 }))
 
 // Tlač, kopírovanie, zdieľanie a export: s aktuálne zvoleným počtom porcií
@@ -163,7 +163,7 @@ async function shareRecipe() {
 
 async function downloadMarkdown() {
   if (!recipe.value) return
-  const query = servings.value !== recipe.value.servings ? `?porcie=${servings.value}` : ''
+  const query = servings.value !== recipe.value.servings ? `?servings=${servings.value}` : ''
   try {
     await downloadFile(`/recipes/${id.value}/export.md${query}`, markdownFilename(recipe.value.title))
   } catch (e) {
@@ -179,7 +179,7 @@ async function onDelete() {
   try {
     await remove.mutateAsync(id.value)
     confirmDelete.value = false
-    await router.replace('/recepty')
+    await router.replace('/recipes')
   } catch (e) {
     deleteError.value = errorText(e, 'recipes.detail.deleteFailed')
   }
@@ -187,7 +187,7 @@ async function onDelete() {
 
 function goBack() {
   if (window.history.state?.back) router.back()
-  else void router.push('/recepty')
+  else void router.push('/recipes')
 }
 </script>
 
@@ -200,7 +200,7 @@ function goBack() {
       <v-btn
         :icon="mdiPencilOutline"
         variant="text"
-        :to="`/recepty/${recipe.id}/upravit`"
+        :to="`/recipes/${recipe.id}/edit`"
         :aria-label="t('common.actions.edit')"
       />
       <v-btn
@@ -274,7 +274,7 @@ function goBack() {
     :title="t('recipes.detail.notFoundTitle')"
     :text="t('recipes.detail.notFoundText')"
   >
-    <v-btn color="primary" to="/recepty">{{ t('recipes.detail.backToRecipes') }}</v-btn>
+    <v-btn color="primary" to="/recipes">{{ t('recipes.detail.backToRecipes') }}</v-btn>
   </EmptyState>
 
   <v-alert v-else-if="error" type="error" :text="errorText(error)" />
@@ -326,7 +326,7 @@ function goBack() {
         size="small"
         variant="tonal"
         :color="tag.color ?? 'secondary'"
-        :to="{ path: '/recepty', query: { tag: tag.id } }"
+        :to="{ path: '/recipes', query: { tag: tag.id } }"
       >
         #{{ tag.name }}
       </v-chip>

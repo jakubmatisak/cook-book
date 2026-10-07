@@ -8,6 +8,6 @@ const { t } = useI18n()
 
 <template>
   <EmptyState :icon="mdiMapMarkerQuestionOutline" :title="t('common.notFound.title')">
-    <v-btn color="primary" to="/recepty">{{ t('common.notFound.back') }}</v-btn>
+    <v-btn color="primary" to="/recipes">{{ t('common.notFound.back') }}</v-btn>
   </EmptyState>
 </template>

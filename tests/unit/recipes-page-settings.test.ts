@@ -11,7 +11,7 @@ vi.setConfig({ testTimeout: 20_000 })
 
 const emptyList = { items: [], facets: { category: {}, tag: {}, difficulty: {}, time: {}, missing: {} } }
 
-async function mountPage(userSettings: object, url = '/recepty', extra: Record<string, unknown> = {}) {
+async function mountPage(userSettings: object, url = '/recipes', extra: Record<string, unknown> = {}) {
   const calls = stubApi({
     '/me': { ...me('owner'), userSettings },
     '/recipes': emptyList,
@@ -21,7 +21,7 @@ async function mountPage(userSettings: object, url = '/recepty', extra: Record<s
   })
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/recepty', component: defineComponent({ render: () => h('div') }) }],
+    routes: [{ path: '/recipes', component: defineComponent({ render: () => h('div') }) }],
   })
   await router.push(url)
   await router.isReady()
@@ -48,15 +48,22 @@ afterEach(() => {
 
 describe('Recepty – predvolené filtre a pohľad', () => {
   it('bez filtrov v adrese vrátia uložené filtre a zoradenie', async () => {
+    const { router } = await mountPage({ recipeQuery: { category: 'dessert', sort: 'time' } })
+    await vi.waitFor(() =>
+      expect(router.currentRoute.value.query).toMatchObject({ category: 'dessert', sort: 'time' }),
+    )
+  })
+
+  it('filtre uložené so slovenskými názvami (pred anglickými adresami) sa vrátia preložené', async () => {
     const { router } = await mountPage({ recipeQuery: { kategoria: 'dezert', zoradit: 'time' } })
     await vi.waitFor(() =>
-      expect(router.currentRoute.value.query).toMatchObject({ kategoria: 'dezert', zoradit: 'time' }),
+      expect(router.currentRoute.value.query).toMatchObject({ category: 'dessert', sort: 'time' }),
     )
   })
 
   it('filter v adrese má prednosť pred uloženými', async () => {
-    const { router } = await mountPage({ recipeQuery: { kategoria: 'dezert' } }, '/recepty?doma=1')
-    expect(router.currentRoute.value.query).toEqual({ doma: '1' })
+    const { router } = await mountPage({ recipeQuery: { category: 'dessert' } }, '/recipes?pantry=1')
+    expect(router.currentRoute.value.query).toEqual({ pantry: '1' })
   })
 
   it('uložený pohľad (tabuľka) sa použije', async () => {
@@ -68,17 +75,17 @@ describe('Recepty – predvolené filtre a pohľad', () => {
   it('zmena filtra sa po krátkej pauze uloží na server', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const { calls, router } = await mountPage({})
-    await router.replace({ query: { kategoria: 'polievka' } })
+    await router.replace({ query: { category: 'soup' } })
     await flushPromises()
     await vi.advanceTimersByTimeAsync(1500)
     await flushPromises()
-    expect(settingsPuts(calls)).toEqual([{ recipeQuery: { kategoria: 'polievka' } }])
+    expect(settingsPuts(calls)).toEqual([{ recipeQuery: { category: 'soup' } }])
   })
 
   it('Zrušiť všetky filtre vyčistí aktuálne aj uložené filtre', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
-    const { calls, router, wrapper } = await mountPage({ recipeQuery: { kategoria: 'dezert', doma: '1' } })
-    expect(router.currentRoute.value.query).toMatchObject({ kategoria: 'dezert', doma: '1' })
+    const { calls, router, wrapper } = await mountPage({ recipeQuery: { category: 'dessert', pantry: '1' } })
+    expect(router.currentRoute.value.query).toMatchObject({ category: 'dessert', pantry: '1' })
     await wrapper.find('[data-test="reset-filters"]').trigger('click')
     await flushPromises()
     await vi.advanceTimersByTimeAsync(1500)

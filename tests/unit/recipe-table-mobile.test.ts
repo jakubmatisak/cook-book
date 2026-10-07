@@ -44,11 +44,11 @@ async function mountTable(width: number, selectable = false) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: '/recepty', component: Blank },
-      { path: '/recepty/:id', component: Blank },
+      { path: '/recipes', component: Blank },
+      { path: '/recipes/:id', component: Blank },
     ],
   })
-  await router.push('/recepty')
+  await router.push('/recipes')
   await router.isReady()
   const wrapper = mount(RecipeTable, {
     props: { items: [recipe('r1', 'Guláš'), recipe('r2', 'Palacinky')], sortBy: [], selectable },
@@ -74,7 +74,7 @@ describe('tabuľka receptov na mobile', () => {
     const { router, wrapper } = await mountTable(390)
     await wrapper.find('[data-test="recipe-row"]').trigger('click')
     await flushPromises()
-    expect(router.currentRoute.value.path).toBe('/recepty/r1')
+    expect(router.currentRoute.value.path).toBe('/recipes/r1')
 
     document.body.innerHTML = ''
     const selecting = await mountTable(390, true)

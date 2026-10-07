@@ -36,19 +36,19 @@ describe('buildImportUrl (rozšírenie do Chromu)', () => {
 
   it('zloží adresu importu a zakóduje adresu stránky', () => {
     expect(buildImportUrl('https://kniha.example.com', page)).toBe(
-      `https://kniha.example.com/recepty/import?url=${encodeURIComponent(page)}`,
+      `https://kniha.example.com/recipes/import?url=${encodeURIComponent(page)}`,
     )
   })
 
   it('koncové lomky a medzery v adrese aplikácie nevadia', () => {
     expect(buildImportUrl('  https://kniha.example.com/// ', 'https://a.sk/r')).toBe(
-      'https://kniha.example.com/recepty/import?url=https%3A%2F%2Fa.sk%2Fr',
+      'https://kniha.example.com/recipes/import?url=https%3A%2F%2Fa.sk%2Fr',
     )
   })
 
   it('povolí aj vývojový localhost', () => {
     expect(buildImportUrl('http://localhost:5180', 'https://a.sk/r')).toBe(
-      'http://localhost:5180/recepty/import?url=https%3A%2F%2Fa.sk%2Fr',
+      'http://localhost:5180/recipes/import?url=https%3A%2F%2Fa.sk%2Fr',
     )
   })
 

@@ -94,7 +94,7 @@ async function addToMine() {
   }
 }
 
-const openCopy = () => router.push(`/recepty/${snackbar.value.recipeId}`)
+const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
 </script>
 
 <template>
@@ -103,7 +103,7 @@ const openCopy = () => router.push(`/recepty/${snackbar.value.recipeId}`)
       :icon="mdiArrowLeft"
       variant="text"
       :aria-label="t('common.actions.back')"
-      @click="router.push({ path: '/recepty', query: { verejne: 'len' } })"
+      @click="router.push({ path: '/recipes', query: { public: 'only' } })"
     />
   </div>
 
@@ -114,7 +114,7 @@ const openCopy = () => router.push(`/recepty/${snackbar.value.recipeId}`)
     :title="t('publicRecipes.detail.notFound.title')"
     :text="t('publicRecipes.detail.notFound.text')"
   >
-    <v-btn color="primary" :to="{ path: '/recepty', query: { verejne: 'len' } }">{{
+    <v-btn color="primary" :to="{ path: '/recipes', query: { public: 'only' } }">{{
       t('publicRecipes.detail.notFound.back')
     }}</v-btn>
   </EmptyState>
@@ -157,7 +157,7 @@ const openCopy = () => router.push(`/recepty/${snackbar.value.recipeId}`)
         data-test="public-mine"
       >
         {{ t('publicRecipes.detail.alreadyMine') }}
-        <v-btn variant="text" size="small" :to="`/recepty/${recipe.id}`">
+        <v-btn variant="text" size="small" :to="`/recipes/${recipe.id}`">
           {{ t('publicRecipes.detail.openMine') }}
         </v-btn>
       </v-alert>

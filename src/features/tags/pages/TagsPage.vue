@@ -88,7 +88,7 @@ const usage = (tag: TagDto) =>
         :key="tag.id"
         :subtitle="usage(tag)"
         link
-        :to="{ path: '/recepty', query: { tag: tag.id } }"
+        :to="{ path: '/recipes', query: { tag: tag.id } }"
       >
         <template #title>
           <v-chip :color="tag.color ?? 'secondary'" variant="tonal" size="small">#{{ tag.name }}</v-chip>

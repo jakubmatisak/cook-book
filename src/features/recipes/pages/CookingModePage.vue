@@ -22,7 +22,7 @@ const { data: recipe, isPending, error } = useRecipe(id)
 const { supported: wakeLockSupported } = useWakeLock()
 
 const factor = computed(() => {
-  const requested = Number(route.query.porcie)
+  const requested = Number(route.query.servings)
   const r = recipe.value
   return r && Number.isFinite(requested) && requested >= 1 ? requested / r.servings : 1
 })
@@ -76,7 +76,7 @@ function onTimerDone(position: number) {
       :icon="mdiArrowLeft"
       variant="text"
       :aria-label="t('recipes.cooking.backToRecipe')"
-      :to="`/recepty/${id}`"
+      :to="`/recipes/${id}`"
     />
     <v-toolbar-title class="font-weight-bold">{{
       recipe?.title ?? t('recipes.cooking.title')
@@ -111,7 +111,7 @@ function onTimerDone(position: number) {
       :title="t('recipes.cooking.noStepsTitle')"
       :text="t('recipes.cooking.noStepsText')"
     >
-      <v-btn color="primary" :to="`/recepty/${id}/upravit`">{{ t('recipes.cooking.editRecipe') }}</v-btn>
+      <v-btn color="primary" :to="`/recipes/${id}/edit`">{{ t('recipes.cooking.editRecipe') }}</v-btn>
     </EmptyState>
 
     <div class="d-flex flex-column ga-3">
@@ -154,7 +154,7 @@ function onTimerDone(position: number) {
     >
       {{ t('recipes.cooking.allDoneText') }}
       <template #append>
-        <v-btn color="success" variant="flat" :to="`/recepty/${id}`">{{ t('recipes.cooking.done') }}</v-btn>
+        <v-btn color="success" variant="flat" :to="`/recipes/${id}`">{{ t('recipes.cooking.done') }}</v-btn>
       </template>
     </v-alert>
 

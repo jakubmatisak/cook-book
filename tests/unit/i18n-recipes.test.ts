@@ -65,10 +65,10 @@ const router = () =>
   createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: '/recepty', component: Blank },
-      { path: '/recepty/:id', component: Blank },
-      { path: '/recepty/:id/varenie', component: Blank },
-      { path: '/recepty/novy', component: Blank },
+      { path: '/recipes', component: Blank },
+      { path: '/recipes/:id', component: Blank },
+      { path: '/recipes/:id/cook', component: Blank },
+      { path: '/recipes/new', component: Blank },
     ],
   })
 
@@ -95,7 +95,7 @@ afterEach(() => {
 
 describe('Recipes in English', () => {
   it('list page shows English texts and category, time and servings labels', async () => {
-    const wrapper = await mountAt('/recepty', RecipesPage, {
+    const wrapper = await mountAt('/recipes', RecipesPage, {
       '/recipes': { items: [summary()], facets },
     })
     const text = wrapper.text()
@@ -112,7 +112,7 @@ describe('Recipes in English', () => {
   })
 
   it('empty list shows the English welcome text', async () => {
-    const wrapper = await mountAt('/recepty', RecipesPage, {
+    const wrapper = await mountAt('/recipes', RecipesPage, {
       '/recipes': { items: [], facets },
     })
     expect(wrapper.text()).toContain('Welcome to the cookbook')
@@ -122,11 +122,11 @@ describe('Recipes in English', () => {
   })
 
   it('pantry hint keeps its link inside the English sentence', async () => {
-    const wrapper = await mountAt('/recepty?doma=1', RecipesPage, {
+    const wrapper = await mountAt('/recipes?pantry=1', RecipesPage, {
       '/recipes': { items: [], facets },
     })
     expect(wrapper.text()).toContain('Recipes sorted by what you have in your pantry.')
-    expect(wrapper.find('a[href="/spajza"]').text()).toBe('pantry')
+    expect(wrapper.find('a[href="/pantry"]').text()).toBe('pantry')
   })
 
   it('recipe card and favorite button', () => {
@@ -162,7 +162,7 @@ describe('Recipes in English', () => {
   })
 
   it('detail page shows English chips, units and optional marker', async () => {
-    const wrapper = await mountAt('/recepty/r1', RecipeDetailPage, { '/recipes/r1': detail })
+    const wrapper = await mountAt('/recipes/r1', RecipeDetailPage, { '/recipes/r1': detail })
     const text = wrapper.text()
     expect(text).toContain('Goulash')
     expect(text).toContain('Prep 20 min')
@@ -179,13 +179,13 @@ describe('Recipes in English', () => {
   })
 
   it('detail page of a missing recipe shows the English empty state', async () => {
-    const wrapper = await mountAt('/recepty/x', RecipeDetailPage, {})
+    const wrapper = await mountAt('/recipes/x', RecipeDetailPage, {})
     expect(wrapper.text()).toContain('Recipe does not exist')
     expect(wrapper.text()).toContain('Back to recipes')
   })
 
   it('cooking mode is translated', async () => {
-    const wrapper = await mountAt('/recepty/r1/varenie', CookingModePage, { '/recipes/r1': detail })
+    const wrapper = await mountAt('/recipes/r1/cook', CookingModePage, { '/recipes/r1': detail })
     const text = wrapper.text()
     expect(text).toContain('You are cooking for 4 servings. Tap a step when it is done.')
     expect(text).toContain('Step 1')
@@ -194,7 +194,7 @@ describe('Recipes in English', () => {
   })
 
   it('editor shows English labels', async () => {
-    const wrapper = await mountAt('/recepty/novy', RecipeEditPage, {})
+    const wrapper = await mountAt('/recipes/new', RecipeEditPage, {})
     const text = wrapper.text()
     expect(text).toContain('New recipe')
     expect(text).toContain('Recipe title')

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { watch } from 'vue'
 import { i18n, t } from '@/i18n'
+import { legacyRedirect } from './legacy'
 import { scrollOnNavigate } from './scroll'
 
 export const routes: RouteRecordRaw[] = [
@@ -11,45 +12,45 @@ export const routes: RouteRecordRaw[] = [
     meta: { titleKey: 'common.nav.home' },
   },
   {
-    path: '/recepty',
+    path: '/recipes',
     name: 'recipes',
     component: () => import('@/features/recipes/pages/RecipesPage.vue'),
     meta: { titleKey: 'common.nav.recipes' },
   },
   {
-    path: '/recepty/novy',
+    path: '/recipes/new',
     name: 'recipe-new',
     component: () => import('@/features/recipes/pages/RecipeEditPage.vue'),
     meta: { titleKey: 'common.pageTitle.recipeNew' },
   },
   {
-    path: '/recepty/import',
+    path: '/recipes/import',
     name: 'recipe-import',
     component: () => import('@/features/recipes/pages/ImportFromUrlPage.vue'),
     meta: { titleKey: 'common.pageTitle.recipeImport' },
   },
   {
-    path: '/recepty/:id/varenie',
+    path: '/recipes/:id/cook',
     name: 'recipe-cooking',
     component: () => import('@/features/recipes/pages/CookingModePage.vue'),
     meta: { titleKey: 'common.pageTitle.cooking', bare: true },
   },
   {
-    path: '/recepty/:id/upravit',
+    path: '/recipes/:id/edit',
     name: 'recipe-edit',
     component: () => import('@/features/recipes/pages/RecipeEditPage.vue'),
     meta: { titleKey: 'common.pageTitle.recipeEdit' },
   },
   {
-    path: '/recepty/:id',
+    path: '/recipes/:id',
     name: 'recipe',
     component: () => import('@/features/recipes/pages/RecipeDetailPage.vue'),
     meta: { titleKey: 'common.pageTitle.recipe' },
   },
-  // Verejné recepty sú súčasťou zoznamu receptov (filter „Verejné recepty“); stará adresa vedie naň.
-  { path: '/verejne', redirect: { path: '/recepty', query: { verejne: 'len' } } },
+  // Verejné recepty sú súčasťou zoznamu receptov (filter „Recepty od iných“).
+  { path: '/public', redirect: { path: '/recipes', query: { public: 'only' } } },
   {
-    path: '/verejne/:id',
+    path: '/public/:id',
     name: 'public-recipe',
     component: () => import('@/features/recipes/pages/PublicRecipePage.vue'),
     meta: { titleKey: 'common.nav.publicRecipes' },
@@ -61,38 +62,37 @@ export const routes: RouteRecordRaw[] = [
     meta: { titleKey: 'common.nav.plan' },
   },
   {
-    path: '/nakup',
+    path: '/shopping',
     name: 'shopping',
     component: () => import('@/features/shopping/pages/ShoppingPage.vue'),
     meta: { titleKey: 'common.nav.shopping' },
   },
-  { path: '/viac', redirect: '/nastavenia' },
   {
-    path: '/rodina',
+    path: '/people',
     name: 'family',
     component: () => import('@/features/family/pages/FamilyPage.vue'),
     meta: { titleKey: 'common.nav.family' },
   },
   {
-    path: '/ingrediencie',
+    path: '/ingredients',
     name: 'ingredients',
     component: () => import('@/features/ingredients/pages/IngredientsPage.vue'),
     meta: { titleKey: 'common.nav.ingredients' },
   },
   {
-    path: '/tagy',
+    path: '/tags',
     name: 'tags',
     component: () => import('@/features/tags/pages/TagsPage.vue'),
     meta: { titleKey: 'common.nav.tags' },
   },
   {
-    path: '/spajza',
+    path: '/pantry',
     name: 'pantry',
     component: () => import('@/features/pantry/pages/PantryPage.vue'),
     meta: { titleKey: 'common.nav.pantry' },
   },
   {
-    path: '/nastavenia',
+    path: '/settings',
     name: 'settings',
     component: () => import('@/features/settings/pages/SettingsPage.vue'),
     meta: { titleKey: 'common.nav.settings' },
@@ -116,6 +116,14 @@ export function updateDocumentTitle(titleKey: unknown) {
   const app = t('common.app.name')
   document.title = typeof titleKey === 'string' ? `${t(titleKey)} · ${app}` : app
 }
+
+// Staré slovenské adresy (záložky, nainštalovaná aplikácia, staršie rozšírenie) vedú na anglické.
+router.beforeEach((to) => {
+  const target = legacyRedirect(to.path, to.query)
+  return target
+    ? { path: target.path, query: target.query as typeof to.query, hash: to.hash, replace: true }
+    : true
+})
 
 router.afterEach((to) => updateDocumentTitle(to.meta.titleKey))
 watch(i18n.global.locale, () => updateDocumentTitle(router.currentRoute.value.meta.titleKey))

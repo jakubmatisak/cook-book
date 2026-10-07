@@ -43,7 +43,9 @@ import RecipeQuickFilters from '../components/RecipeQuickFilters.vue'
 import RecipeTable from '../components/RecipeTable.vue'
 import {
   activeFilterCount,
+  categoriesToParam,
   listToParam,
+  timesToParam,
   parseListQuery,
   queryToRestore,
   savableListQuery,
@@ -158,7 +160,7 @@ const filtersOpen = ref(false)
 const importOpen = ref(false)
 /** „Čo viem uvariť“: všetky recepty / len tie, čo viem uvariť / aj tie, kde chýba jedna surovina. */
 const setMissing = (value: string | number) =>
-  setQuery({ chyba: value === 'all' ? undefined : String(value) })
+  setQuery({ missing: value === 'all' ? undefined : String(value) })
 const canCook = computed(() => list.value?.facets.missing[0] ?? 0)
 const missingOne = computed(() => canCook.value + (list.value?.facets.missing[1] ?? 0))
 const filterCount = computed(() => activeFilterCount(state.value))
@@ -174,30 +176,30 @@ const mobileFilterCount = computed(
 function toggleFilter(dimension: FilterDimension, value: string | number) {
   const s = state.value
   if (dimension === 'category') {
-    setQuery({ kategoria: listToParam(toggleValue(s.category, value as RecipeCategory)) })
+    setQuery({ category: categoriesToParam(toggleValue(s.category, value as RecipeCategory)) })
   } else if (dimension === 'tag') {
     setQuery({ tag: listToParam(toggleValue(s.tag, value as string)) })
   } else if (dimension === 'difficulty') {
-    setQuery({ narocnost: listToParam(toggleValue(s.difficulty, value as number)) })
+    setQuery({ difficulty: listToParam(toggleValue(s.difficulty, value as number)) })
   } else {
-    setQuery({ cas: listToParam(toggleValue(s.time, value as TimeBucket)) })
+    setQuery({ time: timesToParam(toggleValue(s.time, value as TimeBucket)) })
   }
 }
 
 const favorite = computed({
   get: () => state.value.favorite,
-  set: (value: boolean) => setQuery({ oblubene: value ? '1' : undefined }),
+  set: (value: boolean) => setQuery({ favorites: value ? '1' : undefined }),
 })
-const KIDS_PARAMS = { hide: undefined, include: '1', only: 'len' } as const
+const KIDS_PARAMS = { hide: undefined, include: 'include', only: 'only' } as const
 const kids = computed({
   get: () => state.value.kids,
-  set: (value: KidsMode) => setQuery({ detske: KIDS_PARAMS[value] }),
+  set: (value: KidsMode) => setQuery({ kids: KIDS_PARAMS[value] }),
 })
 const KIDS_MODES: readonly KidsMode[] = ['hide', 'include', 'only']
-const PUBLIC_PARAMS = { hide: undefined, include: '1', only: 'len' } as const
+const PUBLIC_PARAMS = { hide: undefined, include: 'include', only: 'only' } as const
 const publicMode = computed({
   get: () => state.value.public,
-  set: (value: PublicMode) => setQuery({ verejne: PUBLIC_PARAMS[value] }),
+  set: (value: PublicMode) => setQuery({ public: PUBLIC_PARAMS[value] }),
 })
 const publicItems = computed(() =>
   KIDS_MODES.map((mode) => ({ value: mode, title: t(`recipes.list.public_${mode}`) })),
@@ -207,33 +209,33 @@ const kidsItems = computed(() =>
 )
 const pantryMode = computed({
   get: () => state.value.pantry,
-  set: (value: boolean) => setQuery({ doma: value ? '1' : undefined, chyba: undefined }),
+  set: (value: boolean) => setQuery({ pantry: value ? '1' : undefined, missing: undefined }),
 })
 
 function clearFilters() {
   setQuery({
-    kategoria: undefined,
+    category: undefined,
     tag: undefined,
-    narocnost: undefined,
-    cas: undefined,
-    oblubene: undefined,
+    difficulty: undefined,
+    time: undefined,
+    favorites: undefined,
   })
 }
 
 /** Úplný reset: všetky filtre, „Čo viem uvariť“, obľúbené aj zoradenie späť na predvolené (vymaže sa aj uložené). */
 function resetAll() {
   setQuery({
-    kategoria: undefined,
+    category: undefined,
     tag: undefined,
-    narocnost: undefined,
-    cas: undefined,
-    oblubene: undefined,
-    detske: undefined,
-    verejne: undefined,
-    doma: undefined,
-    chyba: undefined,
-    zoradit: undefined,
-    smer: undefined,
+    difficulty: undefined,
+    time: undefined,
+    favorites: undefined,
+    kids: undefined,
+    public: undefined,
+    pantry: undefined,
+    missing: undefined,
+    sort: undefined,
+    dir: undefined,
   })
 }
 
@@ -273,10 +275,10 @@ const sortKey = computed<SortKey | null>(() => state.value.sort ?? (state.value.
 const sortDir = computed(() => state.value.dir ?? defaultSortDir(sortKey.value ?? 'name'))
 
 function setSort(key: SortKey | null) {
-  setQuery({ zoradit: key ?? undefined, smer: undefined })
+  setQuery({ sort: key ?? undefined, dir: undefined })
 }
 function flipSortDir() {
-  setQuery({ zoradit: sortKey.value ?? 'name', smer: sortDir.value === 'asc' ? 'desc' : 'asc' })
+  setQuery({ sort: sortKey.value ?? 'name', dir: sortDir.value === 'asc' ? 'desc' : 'asc' })
 }
 
 const tableSort = computed<TableSort[]>({
@@ -285,16 +287,16 @@ const tableSort = computed<TableSort[]>({
     state.value.pantry && !state.value.sort ? [] : stateToTableSort(state.value.sort, state.value.dir),
   set: (value) => {
     const next = tableSortToState(value)
-    if (next) setQuery({ zoradit: next.sort, smer: next.dir })
+    if (next) setQuery({ sort: next.sort, dir: next.dir })
   },
 })
 
 const onboarding = computed(() =>
   [
-    { to: '/recepty/novy', key: 'recipes' },
-    { to: '/rodina', key: 'family' },
+    { to: '/recipes/new', key: 'recipes' },
+    { to: '/people', key: 'family' },
     { to: '/plan', key: 'plan' },
-    { to: '/nakup', key: 'shopping' },
+    { to: '/shopping', key: 'shopping' },
   ].map(({ to, key }) => ({
     to,
     title: t(`recipes.list.onboarding.${key}.title`),
@@ -342,7 +344,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
           <v-btn variant="tonal" :prepend-icon="mdiWeb" data-test="import-button" @click="importOpen = true">
             {{ t('recipes.list.importFromWeb') }}
           </v-btn>
-          <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">{{
+          <v-btn color="primary" :prepend-icon="mdiPlus" to="/recipes/new">{{
             t('recipes.list.newRecipe')
           }}</v-btn>
         </template>
@@ -359,7 +361,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             color="primary"
             :icon="mdiPlus"
             :aria-label="t('recipes.list.newRecipe')"
-            to="/recepty/novy"
+            to="/recipes/new"
           />
         </template>
       </PageHeader>
@@ -374,7 +376,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       >
         <I18nT keypath="recipes.list.pantryHint" scope="global" tag="span">
           <template #pantry>
-            <router-link to="/spajza" class="text-primary font-weight-bold">{{
+            <router-link to="/pantry" class="text-primary font-weight-bold">{{
               t('recipes.list.pantryLink')
             }}</router-link>
           </template>
@@ -592,7 +594,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
               :subtitle="step.text"
             />
           </v-list>
-          <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">{{
+          <v-btn color="primary" :prepend-icon="mdiPlus" to="/recipes/new">{{
             t('recipes.list.addFirst')
           }}</v-btn>
         </div>

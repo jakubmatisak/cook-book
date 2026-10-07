@@ -38,12 +38,12 @@ const rowSubtitle = (r: RecipeSummaryDto) => {
 }
 // V režime výberu klik na riadok recept vyberie, inak ho otvorí.
 const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
-  if (item.householdName) void router.push(`/verejne/${item.id}`)
+  if (item.householdName) void router.push(`/public/${item.id}`)
   else if (props.selectable) {
     selected.value = selected.value.includes(item.id)
       ? selected.value.filter((id) => id !== item.id)
       : [...selected.value, item.id]
-  } else void router.push(`/recepty/${item.id}`)
+  } else void router.push(`/recipes/${item.id}`)
 }
 </script>
 

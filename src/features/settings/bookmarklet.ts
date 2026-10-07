@@ -3,6 +3,6 @@
  * do tejto aplikácie s adresou práve otvorenej stránky. Nepotrebuje inštaláciu ani rozšírenie.
  */
 export function importBookmarklet(origin: string): string {
-  const target = `${origin.replace(/\/+$/, '')}/recepty/import?url=`
+  const target = `${origin.replace(/\/+$/, '')}/recipes/import?url=`
   return `javascript:(function(){window.open(${JSON.stringify(target)}+encodeURIComponent(location.href),'_blank')})()`
 }

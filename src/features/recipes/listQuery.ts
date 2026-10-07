@@ -1,14 +1,9 @@
-import {
-  defaultSortDir,
-  SORT_KEYS,
-  TIME_BUCKETS,
-  type SortDir,
-  type SortKey,
-  type TimeBucket,
-} from '@shared/recipeFacets'
-import { RECIPE_CATEGORIES, type RecipeCategory } from '@shared/recipes'
+import { defaultSortDir, SORT_KEYS, type SortDir, type SortKey, type TimeBucket } from '@shared/recipeFacets'
+import type { RecipeCategory } from '@shared/recipes'
+import { translateLegacyQuery } from '@/router/legacy'
+import { categoryFromSlug, CATEGORY_SLUGS, timeFromSlug, TIME_SLUGS } from '@/router/urlSlugs'
 
-/** Stav zoznamu receptov, ako sa ukladá do URL (názvy parametrov sú po slovensky). */
+/** Stav zoznamu receptov, ako sa ukladá do URL (parametre aj hodnoty sú po anglicky). */
 export interface RecipeListState {
   q: string | undefined
   category: RecipeCategory[]
@@ -17,9 +12,9 @@ export interface RecipeListState {
   time: TimeBucket[]
   favorite: boolean
   pantry: boolean
-  /** Detské recepty: skryté (predvolene), pridané (`detske=1`) alebo len ony (`detske=len`). */
+  /** Detské recepty: skryté (predvolene), pridané (`kids=include`) alebo len ony (`kids=only`). */
   kids: KidsMode
-  /** Verejné recepty iných domácností: bez (predvolene), s nimi (`verejne=1`) alebo len verejné (`verejne=len`). */
+  /** Verejné recepty iných domácností: bez (predvolene), s nimi (`public=include`) alebo len cudzie (`public=only`). */
   public: PublicMode
   /** Najviac toľko chýbajúcich surovín (0 = viem uvariť, 1 = chýba jedna); len pri „Čo viem uvariť“. */
   missing: 0 | 1 | undefined
@@ -41,34 +36,40 @@ const many = (v: unknown): string[] =>
     .map((part) => part.trim())
     .filter(Boolean)
 
-const pick = <T extends string>(values: string[], allowed: readonly T[]): T[] =>
-  values.filter((v): v is T => (allowed as readonly string[]).includes(v))
+const fromSlugs = <T extends string>(values: string[], parse: (slug: string) => T | undefined): T[] =>
+  values.map(parse).filter((v): v is T => v !== undefined)
+
+/** Typy jedla a časy do adresy (anglické podoby). */
+export const categoriesToParam = (list: readonly RecipeCategory[]): string | undefined =>
+  listToParam(list.map((c) => CATEGORY_SLUGS[c]))
+export const timesToParam = (list: readonly TimeBucket[]): string | undefined =>
+  listToParam(list.map((b) => TIME_SLUGS[b]))
 
 export type KidsMode = 'hide' | 'include' | 'only'
-const KIDS_PARAM: Readonly<Record<string, KidsMode>> = { '1': 'include', len: 'only' }
+const KIDS_PARAM: Readonly<Record<string, KidsMode>> = { include: 'include', only: 'only' }
 
 export type PublicMode = 'hide' | 'include' | 'only'
-const PUBLIC_PARAM: Readonly<Record<string, PublicMode>> = { '1': 'include', len: 'only' }
+const PUBLIC_PARAM: Readonly<Record<string, PublicMode>> = { include: 'include', only: 'only' }
 
 const MISSING_VALUES: Readonly<Record<string, 0 | 1>> = { '0': 0, '1': 1 }
 
 export function parseListQuery(query: Query): RecipeListState {
-  const sort = one(query.zoradit)
-  const dir = one(query.smer)
+  const sort = one(query.sort)
+  const dir = one(query.dir)
   return {
     q: one(query.q),
-    category: pick(many(query.kategoria), RECIPE_CATEGORIES),
+    category: fromSlugs(many(query.category), categoryFromSlug),
     tag: many(query.tag),
-    difficulty: many(query.narocnost)
+    difficulty: many(query.difficulty)
       .map(Number)
       .filter((n) => n === 1 || n === 2 || n === 3),
-    time: pick(many(query.cas), TIME_BUCKETS),
-    favorite: one(query.oblubene) === '1',
-    pantry: one(query.doma) === '1',
-    kids: KIDS_PARAM[one(query.detske) ?? ''] ?? 'hide',
-    public: PUBLIC_PARAM[one(query.verejne) ?? ''] ?? 'hide',
-    missing: one(query.doma) === '1' ? MISSING_VALUES[one(query.chyba) ?? ''] : undefined,
-    sort: pick(sort ? [sort] : [], SORT_KEYS)[0],
+    time: fromSlugs(many(query.time), timeFromSlug),
+    favorite: one(query.favorites) === '1',
+    pantry: one(query.pantry) === '1',
+    kids: KIDS_PARAM[one(query.kids) ?? ''] ?? 'hide',
+    public: PUBLIC_PARAM[one(query.public) ?? ''] ?? 'hide',
+    missing: one(query.pantry) === '1' ? MISSING_VALUES[one(query.missing) ?? ''] : undefined,
+    sort: SORT_KEYS.find((key) => key === sort),
     dir: dir === 'asc' || dir === 'desc' ? dir : undefined,
   }
 }
@@ -119,17 +120,17 @@ export const parseRecipeView = (raw: string | null | undefined): RecipeView =>
 
 /** Parametre adresy, ktoré sa ukladajú ako predvolené filtre a zoradenie (hľadaný text nie). */
 const SAVED_QUERY_KEYS = [
-  'kategoria',
+  'category',
   'tag',
-  'narocnost',
-  'cas',
-  'oblubene',
-  'detske',
-  'verejne',
-  'doma',
-  'chyba',
-  'zoradit',
-  'smer',
+  'difficulty',
+  'time',
+  'favorites',
+  'kids',
+  'public',
+  'pantry',
+  'missing',
+  'sort',
+  'dir',
 ] as const
 
 /** Všetky parametre zoznamu receptov vrátane hľadania; ak je niektorý v adrese, uložené filtre sa nevracajú. */
@@ -152,5 +153,6 @@ export function queryToRestore(
 ): Record<string, string> | null {
   if (!saved || Object.keys(saved).length === 0) return null
   if (LIST_QUERY_KEYS.some((key) => one(query[key]))) return null
-  return saved
+  // Filtre uložené pred prechodom na anglické adresy majú slovenské názvy.
+  return translateLegacyQuery(saved) as Record<string, string>
 }

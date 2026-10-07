@@ -48,7 +48,7 @@ async function mountShell(width: number) {
     history: createMemoryHistory(),
     routes: NAV_ITEMS.map((item) => ({ path: item.to, component: { render: () => h('p', item.titleKey) } })),
   })
-  await router.push('/recepty')
+  await router.push('/recipes')
   await router.isReady()
   const wrapper = mount(AppShell, {
     global: { plugins: [createAppVuetify(), router, VueQueryPlugin] },

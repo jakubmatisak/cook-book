@@ -32,14 +32,14 @@ describe('parseListQuery', () => {
   it('prečíta zoznamy oddelené čiarkou a zahodí neplatné hodnoty', () => {
     const state = parseListQuery({
       q: 'guláš',
-      kategoria: 'hlavne,nic,dezert',
+      category: 'main,nic,dessert',
       tag: 'a1,b2',
-      narocnost: '1,5,x,3',
-      cas: 'do30,hocico,nad60',
-      oblubene: '1',
-      doma: '1',
-      zoradit: 'time',
-      smer: 'desc',
+      difficulty: '1,5,x,3',
+      time: 'under30,hocico,over60',
+      favorites: '1',
+      pantry: '1',
+      sort: 'time',
+      dir: 'desc',
     })
     expect(state).toMatchObject({
       q: 'guláš',
@@ -55,25 +55,25 @@ describe('parseListQuery', () => {
   })
 
   it('neplatné zoradenie a smer sa ignorujú, pole z vue-routeru sa berie ako prvá hodnota', () => {
-    expect(parseListQuery({ zoradit: 'nic', smer: 'hore' })).toMatchObject({
+    expect(parseListQuery({ sort: 'nic', dir: 'hore' })).toMatchObject({
       sort: undefined,
       dir: undefined,
     })
-    expect(parseListQuery({ kategoria: ['dezert', 'hlavne'] })).toMatchObject({ category: ['dezert'] })
+    expect(parseListQuery({ category: ['dessert', 'main'] })).toMatchObject({ category: ['dezert'] })
   })
 })
 
 describe('parseListQuery – chýbajúce suroviny', () => {
-  it('chyba=0 a chyba=1 sa prečítajú, iné hodnoty sa ignorujú', () => {
-    expect(parseListQuery({ doma: '1', chyba: '0' }).missing).toBe(0)
-    expect(parseListQuery({ doma: '1', chyba: '1' }).missing).toBe(1)
-    expect(parseListQuery({ doma: '1', chyba: '2' }).missing).toBeUndefined()
-    expect(parseListQuery({ doma: '1', chyba: 'x' }).missing).toBeUndefined()
-    expect(parseListQuery({ doma: '1' }).missing).toBeUndefined()
+  it('missing=0 a missing=1 sa prečítajú, iné hodnoty sa ignorujú', () => {
+    expect(parseListQuery({ pantry: '1', missing: '0' }).missing).toBe(0)
+    expect(parseListQuery({ pantry: '1', missing: '1' }).missing).toBe(1)
+    expect(parseListQuery({ pantry: '1', missing: '2' }).missing).toBeUndefined()
+    expect(parseListQuery({ pantry: '1', missing: 'x' }).missing).toBeUndefined()
+    expect(parseListQuery({ pantry: '1' }).missing).toBeUndefined()
   })
 
-  it('bez „Čo viem uvariť“ sa chyba ignoruje', () => {
-    expect(parseListQuery({ chyba: '1' }).missing).toBeUndefined()
+  it('bez „Čo viem uvariť“ sa missing ignoruje', () => {
+    expect(parseListQuery({ missing: '1' }).missing).toBeUndefined()
   })
 })
 
@@ -134,22 +134,22 @@ describe('predvolené filtre (pamätajú sa na používateľa)', () => {
     expect(
       savableListQuery({
         q: 'guláš',
-        kategoria: 'dezert',
-        doma: '1',
-        zoradit: 'time',
-        smer: 'asc',
-        tyzden: 'x',
+        category: 'dessert',
+        pantry: '1',
+        sort: 'time',
+        dir: 'asc',
+        week: 'x',
       }),
-    ).toEqual({ kategoria: 'dezert', doma: '1', zoradit: 'time', smer: 'asc' })
+    ).toEqual({ category: 'dessert', pantry: '1', sort: 'time', dir: 'asc' })
   })
 
   it('berie prvú hodnotu opakovaného parametra a zahodí prázdne a nie textové', () => {
-    expect(
-      savableListQuery({ kategoria: ['dezert', 'polievka'], tag: '', cas: null, narocnost: '2' }),
-    ).toEqual({
-      kategoria: 'dezert',
-      narocnost: '2',
-    })
+    expect(savableListQuery({ category: ['dessert', 'soup'], tag: '', time: null, difficulty: '2' })).toEqual(
+      {
+        category: 'dessert',
+        difficulty: '2',
+      },
+    )
   })
 
   it('bez filtrov vráti null (nič sa neukladá, uložené sa vymaže)', () => {
@@ -158,11 +158,11 @@ describe('predvolené filtre (pamätajú sa na používateľa)', () => {
   })
 
   it('uložené filtre sa vrátia len keď adresa nenesie žiadny filter ani hľadanie', () => {
-    const saved = { kategoria: 'dezert' }
-    expect(queryToRestore({}, saved)).toEqual({ kategoria: 'dezert' })
-    expect(queryToRestore({ doma: '1' }, saved)).toBeNull()
+    const saved = { category: 'dessert' }
+    expect(queryToRestore({}, saved)).toEqual({ category: 'dessert' })
+    expect(queryToRestore({ pantry: '1' }, saved)).toBeNull()
     expect(queryToRestore({ q: 'guláš' }, saved)).toBeNull()
-    expect(queryToRestore({ tyzden: 'x' }, saved)).toEqual({ kategoria: 'dezert' })
+    expect(queryToRestore({ week: 'x' }, saved)).toEqual({ category: 'dessert' })
     expect(queryToRestore({}, undefined)).toBeNull()
     expect(queryToRestore({}, {})).toBeNull()
   })

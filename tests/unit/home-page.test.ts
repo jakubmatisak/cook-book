@@ -48,7 +48,7 @@ async function mountHome(items: RecipeSummaryDto[], userSettings: Record<string,
     history: createMemoryHistory(),
     routes: [
       { path: '/', component: HomePage },
-      { path: '/recepty', component: Blank },
+      { path: '/recipes', component: Blank },
     ],
   })
   await router.push('/')
@@ -101,26 +101,26 @@ describe('úvodná stránka (prehľad)', () => {
   it('klik na kategóriu otvorí zoznam receptov s filtrom podľa nej', async () => {
     const { router, wrapper } = await mountHome(items)
     await wrapper.find('[data-test="tile-dezert"]').trigger('click')
-    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/recepty'))
-    expect(router.currentRoute.value.query.kategoria).toBe('dezert')
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/recipes'))
+    expect(router.currentRoute.value.query.category).toBe('dessert')
   })
 
   it('Všetky recepty a Obľúbené vedú na zoznam bez kategórie / s filtrom obľúbených', async () => {
     const first = await mountHome(items)
     await first.wrapper.find('[data-test="tile-all"]').trigger('click')
-    await vi.waitFor(() => expect(first.router.currentRoute.value.path).toBe('/recepty'))
+    await vi.waitFor(() => expect(first.router.currentRoute.value.path).toBe('/recipes'))
     expect(first.router.currentRoute.value.query).toEqual({})
     document.body.innerHTML = ''
     const second = await mountHome(items)
     await second.wrapper.find('[data-test="tile-favorites"]').trigger('click')
-    await vi.waitFor(() => expect(second.router.currentRoute.value.query.oblubene).toBe('1'))
+    await vi.waitFor(() => expect(second.router.currentRoute.value.query.favorites).toBe('1'))
   })
 
   it('detské recepty majú vlastnú dlaždicu a pri vypnutých v nastaveniach zmiznú', async () => {
     const on = await mountHome(items)
     expect(on.wrapper.find('[data-test="tile-detske"]').exists()).toBe(true)
     await on.wrapper.find('[data-test="tile-detske"]').trigger('click')
-    await vi.waitFor(() => expect(on.router.currentRoute.value.query.kategoria).toBe('detske'))
+    await vi.waitFor(() => expect(on.router.currentRoute.value.query.category).toBe('kids'))
     document.body.innerHTML = ''
     const off = await mountHome(items, { kidsEnabled: false })
     expect(off.wrapper.find('[data-test="tile-detske"]').exists()).toBe(false)

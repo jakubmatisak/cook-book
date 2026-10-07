@@ -20,9 +20,9 @@ async function mountPage(url: string, routes: Record<string, unknown>) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: '/recepty', component: Blank },
-      { path: '/recepty/novy', component: Blank },
-      { path: '/recepty/import', component: ImportFromUrlPage },
+      { path: '/recipes', component: Blank },
+      { path: '/recipes/new', component: Blank },
+      { path: '/recipes/import', component: ImportFromUrlPage },
     ],
   })
   await router.push(url)
@@ -44,43 +44,43 @@ afterEach(() => {
 
 describe('stránka Import z adresy', () => {
   it('načíta recept z adresy, odovzdá ho editoru a presmeruje na nový recept', async () => {
-    const { calls, router } = await mountPage('/recepty/import?url=https%3A%2F%2Fa.sk%2Fr%3Fid%3D1', {
+    const { calls, router } = await mountPage('/recipes/import?url=https%3A%2F%2Fa.sk%2Fr%3Fid%3D1', {
       'POST /recipes/import': imported,
     })
     expect(calls.find((c) => c.path === '/recipes/import')?.body).toEqual({ url: 'https://a.sk/r?id=1' })
-    await vi.waitFor(() => expect(router.currentRoute.value.fullPath).toBe('/recepty/novy?import=1'))
+    await vi.waitFor(() => expect(router.currentRoute.value.fullPath).toBe('/recipes/new?import=1'))
     expect(importHandoff.take()?.recipe.title).toBe('Jablkový koláč')
   })
 
   it('chýbajúca alebo neplatná adresa vráti na zoznam receptov bez volania importu', async () => {
-    const missing = await mountPage('/recepty/import', {})
-    await vi.waitFor(() => expect(missing.router.currentRoute.value.path).toBe('/recepty'))
+    const missing = await mountPage('/recipes/import', {})
+    await vi.waitFor(() => expect(missing.router.currentRoute.value.path).toBe('/recipes'))
     expect(missing.calls.some((c) => c.path === '/recipes/import')).toBe(false)
 
-    const invalid = await mountPage('/recepty/import?url=javascript%3Aalert(1)', {})
-    await vi.waitFor(() => expect(invalid.router.currentRoute.value.path).toBe('/recepty'))
+    const invalid = await mountPage('/recipes/import?url=javascript%3Aalert(1)', {})
+    await vi.waitFor(() => expect(invalid.router.currentRoute.value.path).toBe('/recipes'))
   })
 
   it('pri chybe ukáže hlášku s možnosťou skúsiť znova a vyplniť ručne', async () => {
-    const { calls, router, wrapper } = await mountPage('/recepty/import?url=https%3A%2F%2Fa.sk%2Fr', {
+    const { calls, router, wrapper } = await mountPage('/recipes/import?url=https%3A%2F%2Fa.sk%2Fr', {
       'POST /recipes/import': () =>
         jsonResponse({ error: { code: 'no_recipe', message: 'Recept sa nenašiel.' } }, 422),
     })
     expect(wrapper.find('[data-test="import-error"]').exists()).toBe(true)
-    expect(router.currentRoute.value.path).toBe('/recepty/import')
+    expect(router.currentRoute.value.path).toBe('/recipes/import')
 
     await wrapper.find('[data-test="import-retry"]').trigger('click')
     await flushPromises()
     expect(calls.filter((c) => c.path === '/recipes/import')).toHaveLength(2)
 
     await wrapper.find('[data-test="import-manual"]').trigger('click')
-    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/recepty/novy'))
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/recipes/new'))
     expect(router.currentRoute.value.query.import).toBeUndefined()
   })
 
   it('texty sú v jazyku aplikácie', async () => {
     setLocale('en')
-    const { wrapper } = await mountPage('/recepty/import?url=https%3A%2F%2Fa.sk%2Fr', {
+    const { wrapper } = await mountPage('/recipes/import?url=https%3A%2F%2Fa.sk%2Fr', {
       'POST /recipes/import': () => jsonResponse({ error: { code: 'x', message: 'no' } }, 500),
     })
     expect(wrapper.find('[data-test="import-retry"]').text()).toBe('Try again')
