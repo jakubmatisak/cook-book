@@ -41,7 +41,15 @@ export default {
   },
   gate: {
     loadFailed: 'Nepodarilo sa načítať domácnosti',
-    noneTitle: 'Nie si členom žiadnej domácnosti',
-    noneText: 'Požiadaj vlastníka domácnosti, nech ťa pozve.',
+  },
+  own: {
+    title: 'Zatiaľ nie si v žiadnej domácnosti',
+    text: 'Založ si vlastnú domácnosť – budeš jej vlastníkom a môžeš do nej pozvať ďalších.',
+    name: 'Názov domácnosti',
+    defaultName: 'Domácnosť {name}',
+    create: 'Založiť domácnosť',
+    failed: 'Domácnosť sa nepodarilo založiť.',
+    invite:
+      'Máš sa pridať do existujúcej domácnosti? Pošli jej vlastníkovi e-mail, ktorým si prihlásený ({email}), nech ťa pozve v Nastaveniach. Potom stránku obnov.',
   },
 }

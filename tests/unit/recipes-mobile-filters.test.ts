@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { VApp } from 'vuetify/components'
+import AppEffects from '@/components/AppEffects.vue'
 import RecipesPage from '@/features/recipes/pages/RecipesPage.vue'
 import { setLocale } from '@/i18n'
 import { me, mountPlugins, stubApi } from './helpers/apiStub'
@@ -102,5 +103,37 @@ describe('filtre receptov na mobile', () => {
     const { wrapper } = await mountPage(1280)
     expect(inPage(wrapper, '[data-test="favorite-toggle"]')).toBe(true)
     expect(inPage(wrapper, '[data-test="sort-select"]')).toBe(true)
+  })
+})
+
+describe('výška ovládania v riadku filtrov na počítači', () => {
+  it('výbery majú hustotu podľa nastavenia a tlačidlá výšku poľa', async () => {
+    setViewport(1280)
+    stubApi({ '/me': me('owner'), '/recipes': emptyList, '/tags': [] })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/recipes', component: Blank }],
+    })
+    await router.push('/recipes')
+    await router.isReady()
+    const wrapper = mount(
+      { render: () => h(VApp, null, () => h(AppEffects, null, () => h(RecipesPage))) },
+      { global: { plugins: [...mountPlugins(), router] }, attachTo: document.body },
+    )
+    await flushPromises()
+    for (const selector of [
+      '[data-test="kids-select"]',
+      '[data-test="public-select"]',
+      '[data-test="sort-select"]',
+    ]) {
+      expect(wrapper.find(selector).classes(), selector).toContain('v-input--density-comfortable')
+    }
+    const favorite = wrapper.find('[data-test="favorite-toggle"]').element as HTMLElement
+    expect(favorite.style.height).toBe('48px')
+    // Tlačidlá prepínača zobrazenia majú tiež výšku poľa.
+    const view = wrapper.find('[data-test="view-toggle"] .v-btn').element as HTMLElement
+    expect(view.style.height).toBe('48px')
+    const group = wrapper.find('[data-test="view-toggle"]').element as HTMLElement
+    expect(group.style.height).toBe('48px')
   })
 })

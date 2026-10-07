@@ -453,7 +453,6 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             v-model="kids"
             :items="kidsItems"
             :label="t('recipes.list.kids')"
-            density="compact"
             hide-details
             class="flex-grow-0"
             style="min-width: 11rem"
@@ -463,7 +462,6 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             v-model="publicMode"
             :items="publicItems"
             :label="t('recipes.list.public')"
-            density="compact"
             hide-details
             class="flex-grow-0"
             style="min-width: 11rem"
@@ -487,7 +485,6 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             :items="sortItems"
             :label="t('recipes.list.sort')"
             hide-details
-            density="compact"
             class="flex-grow-1"
             style="min-width: 10rem; max-width: 14rem"
             data-test="sort-select"
@@ -504,13 +501,25 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
           <v-btn-toggle
             v-model="view"
             mandatory
-            :height="controlHeight"
             selected-class="bg-primary"
             class="flex-shrink-0"
+            :style="{ height: `${controlHeight}px` }"
             data-test="view-toggle"
           >
-            <v-btn :icon="mdiViewGridOutline" value="grid" :aria-label="t('recipes.list.viewGrid')" />
-            <v-btn :icon="mdiViewHeadline" value="table" :aria-label="t('recipes.list.viewTable')" />
+            <v-btn
+              :icon="mdiViewGridOutline"
+              value="grid"
+              :height="controlHeight"
+              :width="controlHeight"
+              :aria-label="t('recipes.list.viewGrid')"
+            />
+            <v-btn
+              :icon="mdiViewHeadline"
+              value="table"
+              :height="controlHeight"
+              :width="controlHeight"
+              :aria-label="t('recipes.list.viewTable')"
+            />
           </v-btn-toggle>
           <v-btn
             :icon="mdiCheckboxMarkedOutline"

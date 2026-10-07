@@ -50,13 +50,15 @@ describe('členstvo a rola', () => {
     expect(body.household.id).toBe(owner.householdId)
   })
 
-  it('používateľ bez členstva (odobratý) a mimo ALLOWED_EMAILS je 403', async () => {
+  it('odobratý člen mimo ALLOWED_EMAILS je 403 no_household a do pôvodnej domácnosti sa nedostane', async () => {
     const owner = await ensureUser(db(), ME)
     const invited = await inviteMember(db(), owner.householdId, STRANGER, 'member')
     await env.DB.prepare('delete from household_members where user_id = ?').bind(invited.id).run()
     const res = await me(STRANGER)
     expect(res.status).toBe(403)
-    expect((await res.json<ApiErrorBody>()).error.code).toBe('forbidden')
+    expect((await res.json<ApiErrorBody>()).error.code).toBe('no_household')
+    const old = await send(app, 'GET', api(`/recipes?h=${owner.householdId}`), undefined, { as: STRANGER })
+    expect(old.status).toBe(403)
   })
 
   it('lastLoginAt sa zapíše pri prihlásení a nemení sa častejšie ako raz za hodinu', async () => {

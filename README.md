@@ -137,9 +137,10 @@ for one, stop and check that the Free plan is selected.
    signature itself, so protection still holds if Access is switched off by mistake.
 
    `ALLOWED_EMAILS` lists the **administrators** of the installation: they can always sign in (the first one
-   becomes the owner of the first household) and only they can create additional households. Everybody else
-   gets in through an invitation from an owner (Settings → Household and members); an address without an
-   invitation gets a 403 and sees no data.
+   becomes the owner of the first household) and only they can create additional households. Anyone else let in
+   by Cloudflare Access who is not in a household yet sees a screen to **create their own household** (and
+   becomes its owner) or to wait for an invitation from an owner (Settings → Household and members). So the
+   Access policy decides who can use the app; each household only ever sees its own data.
 
 6. **Install on a phone**
    - Android (Chrome): menu → Install app.
@@ -302,8 +303,10 @@ niektorý krok pýtal, zastav sa a over, že máš vybraný Free plán.
    tokenu sama, takže ochrana platí aj keby Access niekto omylom vypol.
 
    `ALLOWED_EMAILS` je zoznam **správcov** inštalácie: môžu sa vždy prihlásiť (prvý sa stane vlastníkom prvej
-   domácnosti) a len oni môžu zakladať ďalšie domácnosti. Ostatní vstupujú cez pozvánku od vlastníka (Nastavenia
-   → Domácnosť a členovia); e-mail bez pozvánky dostane 403 a nevidí žiadne dáta.
+   domácnosti) a len oni môžu zakladať ďalšie domácnosti. Ktokoľvek iný, koho pustí Cloudflare Access a ešte nie
+   je v žiadnej domácnosti, uvidí obrazovku, kde si **založí vlastnú domácnosť** (stane sa jej vlastníkom), alebo
+   počká na pozvánku od vlastníka (Nastavenia → Domácnosť a členovia). O tom, kto môže aplikáciu používať, teda
+   rozhoduje pravidlo v Cloudflare Access; každá domácnosť vidí len svoje dáta.
 
 6. **Inštalácia na mobil:** Android (Chrome): menu → Inštalovať aplikáciu. iPhone (Safari): Zdieľať → Pridať na
    plochu.

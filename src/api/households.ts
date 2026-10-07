@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
-import type { HouseholdMemberDto, HouseholdSummaryDto } from '@shared/api'
+import type { HouseholdAccountDto, HouseholdMemberDto, HouseholdSummaryDto } from '@shared/api'
 import type { HouseholdRole } from '@shared/family'
 import { apiFetch } from './http'
 
@@ -19,7 +19,14 @@ export const useHouseholds = () =>
     staleTime: 60_000,
   })
 
-/** Založí ďalšiu domácnosť (len správca aplikácie). */
+/** Prihlásený účet pred výberom domácnosti: e-mail a či si smie založiť domácnosť. */
+export const useHouseholdAccount = () =>
+  useQuery({
+    queryKey: [...householdsKey, 'account'] as const,
+    queryFn: () => apiFetch<HouseholdAccountDto>('/households/account'),
+  })
+
+/** Založí domácnosť: prvú vlastnú si založí každý, ďalšie len správca aplikácie. */
 export function useCreateHousehold(): UseMutationReturnType<HouseholdSummaryDto, Error, string, unknown> {
   const client = useQueryClient()
   return useMutation({

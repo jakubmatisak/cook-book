@@ -77,12 +77,12 @@ describe('Access JWT', () => {
     expect(res.status).toBe(401)
   })
 
-  it('nepovolený e-mail je 403', async () => {
+  it('e-mail bez domácnosti (pustil ho len Access) dostane 403 no_household, kým si domácnosť nezaloží', async () => {
     const res = await call(app, `${PROD}/api/v1/me`, {
       'Cf-Access-Jwt-Assertion': await sign('cudzi@example.com'),
     })
     expect(res.status).toBe(403)
-    expect((await res.json<ApiErrorBody>()).error.code).toBe('forbidden')
+    expect((await res.json<ApiErrorBody>()).error.code).toBe('no_household')
   })
 
   it('na localhoste bez tokenu použije DEV_USER_EMAIL', async () => {

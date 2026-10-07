@@ -49,6 +49,12 @@ export interface HouseholdSummaryDto {
   role: HouseholdRole
 }
 
+/** Prihlásený účet pred výberom domácnosti: kým je prihlásený a či si smie založiť domácnosť. */
+export interface HouseholdAccountDto {
+  email: string
+  canCreate: boolean
+}
+
 export type { MemberKind }
 
 export interface FamilyMemberDto {

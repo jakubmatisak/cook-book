@@ -43,7 +43,15 @@ export default {
   },
   gate: {
     loadFailed: 'Could not load households',
-    noneTitle: 'You are not a member of any household',
-    noneText: 'Ask the household owner to invite you.',
+  },
+  own: {
+    title: 'You are not in any household yet',
+    text: 'Create your own household – you will be its owner and can invite others.',
+    name: 'Household name',
+    defaultName: '{name}’s household',
+    create: 'Create household',
+    failed: 'Could not create the household.',
+    invite:
+      'Joining an existing household instead? Send its owner the e-mail you are signed in with ({email}) so they can invite you in Settings. Then reload the page.',
   },
 }

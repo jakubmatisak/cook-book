@@ -71,8 +71,14 @@ export async function resolveEmail(c: Context<AppEnv>, accessKey?: JWTVerifyGetK
   throw new HttpError(401, 'unauthorized', 'Nie si prihlásený.')
 }
 
+/** Cesty, kam smie aj prihlásený človek bez domácnosti: zoznam domácností, jeho účet a založenie domácnosti. */
+const isHouseholdsPath = (path: string) =>
+  path === '/api/v1/households' || path.startsWith('/api/v1/households/')
+
 /**
- * Vstup do aplikácie: e-mail zo zoznamu správcov (ALLOWED_EMAILS) alebo e-mail s členstvom v nejakej domácnosti.
+ * Vstup do aplikácie: koho pustí Cloudflare Access. E-mail zo zoznamu správcov (ALLOWED_EMAILS) sa pri prvom
+ * prihlásení zaradí do predvolenej domácnosti; ostatní bez členstva vidia len zoznam domácností a môžu si
+ * založiť vlastnú (alebo počkať, kým ich niekto pozve).
  * Aktívna domácnosť sa vyberá parametrom `?h=<id>`; bez neho sa použije jediná domácnosť používateľa.
  * Ak ich má viac a `h` chýba, `user.householdId` ostane prázdne a `requireHousehold` odpovie 400.
  */
@@ -84,12 +90,29 @@ export const authMiddleware = (deps: AuthDeps = {}) =>
 
     let user = await findUserByEmail(db, email)
     let memberships: Membership[] = user ? await listMemberships(db, user.id) : []
-    if (!admin && memberships.length === 0) {
-      throw new HttpError(403, 'forbidden', 'Tento účet nemá prístup ku kuchárskej knihe.')
-    }
     if (admin && memberships.length === 0) {
       user = await ensureUser(db, email)
       memberships = await listMemberships(db, user.id)
+    }
+    if (memberships.length === 0) {
+      if (!isHouseholdsPath(c.req.path)) {
+        throw new HttpError(403, 'no_household', 'Zatiaľ nie si v žiadnej domácnosti.')
+      }
+      // Ešte bez záznamu v databáze: založí sa až spolu s jeho domácnosťou.
+      const now = new Date().toISOString()
+      const newcomer = user ?? {
+        id: '',
+        householdId: '',
+        email,
+        name: email.split('@')[0] || email,
+        memberId: null,
+        createdAt: now,
+        updatedAt: now,
+      }
+      c.set('db', db)
+      c.set('memberships', [])
+      c.set('user', { ...newcomer, householdId: '', role: 'member' })
+      return next()
     }
     if (!user) throw new HttpError(403, 'forbidden', 'Tento účet nemá prístup ku kuchárskej knihe.')
 
@@ -112,7 +135,7 @@ export const authMiddleware = (deps: AuthDeps = {}) =>
 
 /** Dáta domácnosti sa dajú čítať až po výbere domácnosti (okrem zoznamu domácností a fotiek). */
 export const requireHousehold = createMiddleware<AppEnv>(async (c, next) => {
-  if (!c.get('user').householdId && c.req.path !== '/api/v1/households') {
+  if (!c.get('user').householdId && !isHouseholdsPath(c.req.path)) {
     throw new HttpError(400, 'household_required', 'Najprv vyber domácnosť.')
   }
   await next()

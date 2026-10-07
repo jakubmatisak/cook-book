@@ -95,6 +95,30 @@ export async function createHousehold(
   return id
 }
 
+/**
+ * Založí domácnosť človeku a urobí ho jej vlastníkom. Ak ešte nemá záznam používateľa (prvé prihlásenie cez
+ * Cloudflare Access bez pozvania), založí ho tiež – s touto domácnosťou ako pôvodnou.
+ */
+export async function createOwnHousehold(
+  db: Db,
+  rawEmail: string,
+  name: string,
+): Promise<{ id: string; userId: string }> {
+  const email = rawEmail.trim().toLowerCase()
+  const existing = await findUserByEmail(db, email)
+  if (existing) return { id: await createHousehold(db, name, undefined, existing.id), userId: existing.id }
+
+  const id = await createHousehold(db, name)
+  await db
+    .insert(users)
+    .values({ householdId: id, email, name: email.split('@')[0] || email })
+    .onConflictDoNothing()
+  const user = await findUserByEmail(db, email)
+  if (!user) throw new Error(`Používateľa ${email} sa nepodarilo založiť.`)
+  await addMembership(db, user.id, id, 'owner')
+  return { id, userId: user.id }
+}
+
 /** Predvolená domácnosť, do ktorej sa pri prvom prihlásení zaradia e-maily zo zoznamu správcov (ALLOWED_EMAILS). */
 export async function ensureHousehold(db: Db): Promise<string> {
   const id = DEFAULT_HOUSEHOLD_ID

@@ -21,6 +21,34 @@ function stubFetch(households: unknown, status = 200) {
   )
 }
 
+interface Call {
+  method: string
+  path: string
+  body: unknown
+}
+
+/** Falošné API podľa cesty (hodnota alebo funkcia, ktorá ju vráti pri každom volaní). */
+function stubRoutes(routes: Record<string, unknown>) {
+  const calls: Call[] = []
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      const path = String(url).replace('/api/v1', '').split('?')[0]!
+      const method = init?.method ?? 'GET'
+      calls.push({ method, path, body: init?.body ? JSON.parse(String(init.body)) : undefined })
+      const route = routes[`${method} ${path}`] ?? routes[path]
+      const body = typeof route === 'function' ? (route as () => unknown)() : route
+      return Promise.resolve(
+        new Response(JSON.stringify(body ?? { error: { code: 'x', message: path } }), {
+          status: route === undefined ? 404 : method === 'POST' ? 201 : 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+    }),
+  )
+  return calls
+}
+
 async function mountGate() {
   const wrapper = mount(HouseholdGate, {
     global: {
@@ -78,11 +106,37 @@ describe('HouseholdGate', () => {
     expect(activeHouseholdId()).toBe('b')
   })
 
-  it('bez členstva ukáže vysvetlenie a obsah nepustí', async () => {
-    stubFetch([])
+  it('bez členstva ponúkne založiť vlastnú domácnosť a ukáže, ktorým e-mailom je prihlásený', async () => {
+    const calls = stubRoutes({
+      '/households': [],
+      '/households/account': { email: 'kolega@example.com', canCreate: true },
+    })
     const wrapper = await mountGate()
     expect(wrapper.find('[data-test="content"]').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Nie si členom žiadnej domácnosti')
+    expect(wrapper.text()).toContain('Zatiaľ nie si v žiadnej domácnosti')
+    expect(wrapper.text()).toContain('kolega@example.com')
+    const name = wrapper.find('[data-test="own-household-name"] input')
+    expect((name.element as HTMLInputElement).value).toBe('Domácnosť kolega')
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+  })
+
+  it('po založení je vlastníkom novej domácnosti a aplikácia sa otvorí', async () => {
+    let households: unknown[] = []
+    const calls = stubRoutes({
+      '/households': () => households,
+      '/households/account': { email: 'kolega@example.com', canCreate: true },
+      'POST /households': () => {
+        households = [home('n1', 'Naši')]
+        return home('n1', 'Naši')
+      },
+    })
+    const wrapper = await mountGate()
+    await wrapper.find('[data-test="own-household-name"] input').setValue('Naši')
+    await wrapper.find('[data-test="own-household-create"]').trigger('click')
+    await flushPromises()
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ name: 'Naši' })
+    expect(wrapper.find('[data-test="content"]').exists()).toBe(true)
+    expect(activeHouseholdId()).toBe('n1')
   })
 
   it('pri chybe načítania ponúkne skúsiť znova', async () => {

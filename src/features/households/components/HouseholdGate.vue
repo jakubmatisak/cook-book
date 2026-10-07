@@ -12,7 +12,8 @@ import {
   resolveHousehold,
   setActiveHousehold,
 } from '@/lib/household'
-import { mdiAlertCircleOutline, mdiHomeOutline } from '@mdi/js'
+import { mdiAlertCircleOutline } from '@mdi/js'
+import CreateOwnHousehold from './CreateOwnHousehold.vue'
 import HouseholdPicker from './HouseholdPicker.vue'
 
 /**
@@ -72,10 +73,5 @@ function pick(id: string) {
     :preferred="choice.preferred"
     @pick="pick"
   />
-  <EmptyState
-    v-else
-    :icon="mdiHomeOutline"
-    :title="t('households.gate.noneTitle')"
-    :text="t('households.gate.noneText')"
-  />
+  <CreateOwnHousehold v-else @created="pick" />
 </template>
