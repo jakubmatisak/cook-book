@@ -74,6 +74,13 @@ describe('filtre receptov na mobile', () => {
     }
   })
 
+  it('akcie v hlavičke sú na mobile len ikonky s popisom pre čítačky', async () => {
+    const { wrapper } = await mountPage(390)
+    const importButton = wrapper.find('[data-test="import-button"]')
+    expect(importButton.text()).toBe('')
+    expect(importButton.attributes('aria-label')).toBe('Importovať z webu')
+  })
+
   it('Obľúbené v paneli zapnú rovnaký filter ako na počítači', async () => {
     const { router, wrapper } = await mountPage(390)
     await wrapper.find('[data-test="filters-button"]').trigger('click')

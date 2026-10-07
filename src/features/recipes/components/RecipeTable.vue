@@ -15,7 +15,7 @@ const sortBy = defineModel<TableSort[]>('sortBy', { required: true })
 const props = defineProps<{ items: RecipeSummaryDto[]; selectable?: boolean }>()
 const selected = defineModel<string[]>('selected', { default: () => [] })
 const router = useRouter()
-// Na malom displeji tabuľka prejde do zobrazenia po riadkoch (každý záznam ako blok); zoradenie je hore.
+// Na malom displeji je namiesto tabuľky kompaktný zoznam (názov, kategória, čas); zoradenie je v paneli Filtre.
 const { smAndDown } = useDisplay()
 
 const headers = computed(() => [
@@ -30,6 +30,12 @@ const headers = computed(() => [
 ])
 
 const minutes = (r: RecipeSummaryDto) => totalMinutes(r.prepMinutes, r.cookMinutes)
+const rowSubtitle = (r: RecipeSummaryDto) => {
+  const time = minutes(r)
+  return [t(`common.category.${r.category}`), time === null ? null : formatMinutes(time)]
+    .filter(Boolean)
+    .join(' · ')
+}
 // V režime výberu klik na riadok recept vyberie, inak ho otvorí.
 const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
   if (item.householdName) void router.push(`/verejne/${item.id}`)
@@ -42,7 +48,48 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
 </script>
 
 <template>
-  <v-card>
+  <v-card v-if="smAndDown">
+    <v-list lines="two" class="py-0">
+      <v-list-item
+        v-for="item in items"
+        :key="item.id"
+        :title="item.title"
+        :subtitle="rowSubtitle(item)"
+        :active="selected.includes(item.id)"
+        data-test="recipe-row"
+        @click="openRecipe($event, { item })"
+      >
+        <template #prepend>
+          <v-checkbox-btn
+            v-if="selectable && !item.householdName"
+            :model-value="selected.includes(item.id)"
+            color="primary"
+            class="me-2"
+            :aria-label="item.title"
+            @click.stop="openRecipe($event, { item })"
+          />
+          <v-avatar v-else rounded="sm" size="40" color="surface-variant">
+            <v-img v-if="item.coverImageUrl" :src="item.coverImageUrl" cover />
+            <v-icon
+              v-else
+              :icon="item.householdName ? mdiEarth : mdiPotSteamOutline"
+              color="primary"
+              size="20"
+            />
+          </v-avatar>
+        </template>
+        <template #append>
+          <FavoriteButton
+            v-if="!item.householdName"
+            :recipe-id="item.id"
+            :is-favorite="item.isFavorite"
+            size="x-small"
+          />
+        </template>
+      </v-list-item>
+    </v-list>
+  </v-card>
+  <v-card v-else>
     <!-- Zoradenie robí server (rovnaká logika ako pri mriežke), tabuľka len zobrazuje a posiela zvolený stĺpec. -->
     <v-data-table-server
       v-model="selected"
@@ -55,8 +102,6 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
       hover
       hide-default-footer
       must-sort
-      :mobile="smAndDown"
-      :hide-default-header="smAndDown"
       :show-select="selectable"
       :item-selectable="(item: RecipeSummaryDto) => !item.householdName"
       @click:row="openRecipe"

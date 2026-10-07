@@ -57,20 +57,20 @@ const view = defineModel<RecipeView>('view', { required: true })
       {{ t('recipes.list.canCook') }}
     </v-btn>
   </div>
-  <v-btn-toggle
+  <!-- Čipy sa na úzkom displeji zalomia, tlačidlá vedľa seba by pretiekli. -->
+  <v-chip-group
     v-if="pantryMode"
     :model-value="missing"
     mandatory
-    grow
+    column
     selected-class="bg-primary"
-    class="w-100"
     data-test="missing-toggle"
     @update:model-value="emit('update:missing', $event)"
   >
-    <v-btn value="all">{{ t('recipes.list.missingAll') }}</v-btn>
-    <v-btn :value="0">{{ t('recipes.list.missingCanCook', { n: canCook }) }}</v-btn>
-    <v-btn :value="1">{{ t('recipes.list.missingMaxOne', { n: missingOne }) }}</v-btn>
-  </v-btn-toggle>
+    <v-chip value="all" variant="outlined">{{ t('recipes.list.missingAll') }}</v-chip>
+    <v-chip :value="0" variant="outlined">{{ t('recipes.list.missingCanCook', { n: canCook }) }}</v-chip>
+    <v-chip :value="1" variant="outlined">{{ t('recipes.list.missingMaxOne', { n: missingOne }) }}</v-chip>
+  </v-chip-group>
   <v-select
     v-if="kidsEnabled"
     v-model="kids"
@@ -103,7 +103,7 @@ const view = defineModel<RecipeView>('view', { required: true })
     />
   </div>
   <v-btn-toggle v-model="view" mandatory selected-class="bg-primary" divided data-test="view-toggle">
-    <v-btn :prepend-icon="mdiViewGridOutline" value="grid">{{ t('recipes.list.viewGrid') }}</v-btn>
-    <v-btn :prepend-icon="mdiViewHeadline" value="table">{{ t('recipes.list.viewTable') }}</v-btn>
+    <v-btn :icon="mdiViewGridOutline" value="grid" :aria-label="t('recipes.list.viewGrid')" />
+    <v-btn :icon="mdiViewHeadline" value="table" :aria-label="t('recipes.list.viewTable')" />
   </v-btn-toggle>
 </template>

@@ -143,26 +143,38 @@ function editStaple(staple: StapleDto | null) {
   <ListLayout>
     <template #header>
       <PageHeader :title="t('common.nav.pantry')" :subtitle="subtitle">
+        <!-- Na mobile len ikonky (popis je v aria-label), nech hlavička nezaberá pol obrazovky. -->
         <v-btn
           v-if="tab === 'staples'"
           color="primary"
-          :prepend-icon="mdiPlus"
+          :prepend-icon="mdAndUp ? mdiPlus : undefined"
+          :icon="mdAndUp ? undefined : mdiPlus"
+          :aria-label="t('pantry.page.addStaple')"
           data-test="add-staple"
           @click="editStaple(null)"
         >
-          {{ t('pantry.page.addStaple') }}
+          <template v-if="mdAndUp">{{ t('pantry.page.addStaple') }}</template>
         </v-btn>
         <template v-else>
-          <v-btn color="primary" :prepend-icon="mdiPlus" data-test="add-ingredient" @click="addIngredient()">
-            {{ t('pantry.page.addIngredient') }}
+          <v-btn
+            color="primary"
+            :prepend-icon="mdAndUp ? mdiPlus : undefined"
+            :icon="mdAndUp ? undefined : mdiPlus"
+            :aria-label="t('pantry.page.addIngredient')"
+            data-test="add-ingredient"
+            @click="addIngredient()"
+          >
+            <template v-if="mdAndUp">{{ t('pantry.page.addIngredient') }}</template>
           </v-btn>
           <v-btn
             color="primary"
             variant="tonal"
-            :prepend-icon="mdiPotSteamOutline"
+            :prepend-icon="mdAndUp ? mdiPotSteamOutline : undefined"
+            :icon="mdAndUp ? undefined : mdiPotSteamOutline"
+            :aria-label="t('pantry.page.cookable')"
             :to="{ path: '/recepty', query: { doma: '1' } }"
           >
-            {{ t('pantry.page.cookable') }}
+            <template v-if="mdAndUp">{{ t('pantry.page.cookable') }}</template>
           </v-btn>
         </template>
       </PageHeader>

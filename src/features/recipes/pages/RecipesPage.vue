@@ -338,12 +338,30 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         :title="t('recipes.list.title')"
         :subtitle="recipes && mdAndUp ? tc('common.plural.recipes', recipes.length) : undefined"
       >
-        <v-btn variant="tonal" :prepend-icon="mdiWeb" data-test="import-button" @click="importOpen = true">
-          {{ t('recipes.list.importFromWeb') }}
-        </v-btn>
-        <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">{{
-          t('recipes.list.newRecipe')
-        }}</v-btn>
+        <template v-if="mdAndUp">
+          <v-btn variant="tonal" :prepend-icon="mdiWeb" data-test="import-button" @click="importOpen = true">
+            {{ t('recipes.list.importFromWeb') }}
+          </v-btn>
+          <v-btn color="primary" :prepend-icon="mdiPlus" to="/recepty/novy">{{
+            t('recipes.list.newRecipe')
+          }}</v-btn>
+        </template>
+        <!-- Na mobile len ikonky, nech hlavička nezaberá pol obrazovky. -->
+        <template v-else>
+          <v-btn
+            variant="tonal"
+            :icon="mdiWeb"
+            :aria-label="t('recipes.list.importFromWeb')"
+            data-test="import-button"
+            @click="importOpen = true"
+          />
+          <v-btn
+            color="primary"
+            :icon="mdiPlus"
+            :aria-label="t('recipes.list.newRecipe')"
+            to="/recepty/novy"
+          />
+        </template>
       </PageHeader>
 
       <v-alert
