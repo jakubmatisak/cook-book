@@ -112,7 +112,6 @@ async function submit() {
           <v-btn-toggle
             v-model="favorite"
             mandatory
-            density="comfortable"
             selected-class="bg-primary"
             variant="outlined"
             divided
@@ -128,7 +127,6 @@ async function submit() {
           <v-btn-toggle
             v-model="visibility"
             mandatory
-            density="comfortable"
             selected-class="bg-primary"
             variant="outlined"
             divided

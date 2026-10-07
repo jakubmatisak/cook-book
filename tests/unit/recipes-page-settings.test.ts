@@ -6,6 +6,9 @@ import { VApp } from 'vuetify/components'
 import RecipesPage from '@/features/recipes/pages/RecipesPage.vue'
 import { jsonResponse, me, mountPlugins, stubApi, type StubCall } from './helpers/apiStub'
 
+// Stránka receptov sa v plnej sade testov vykresľuje pomalšie.
+vi.setConfig({ testTimeout: 20_000 })
+
 const emptyList = { items: [], facets: { category: {}, tag: {}, difficulty: {}, time: {}, missing: {} } }
 
 async function mountPage(userSettings: object, url = '/recepty', extra: Record<string, unknown> = {}) {

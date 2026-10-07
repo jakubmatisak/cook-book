@@ -31,7 +31,9 @@ const { mdAndUp } = useDisplay()
       @toggle="(d, v) => emit('toggle', d, v)"
       @clear="emit('clear')"
       @close="open = false"
-    />
+    >
+      <template v-if="$slots.default" #top><slot /></template>
+    </RecipeFilterCard>
   </v-navigation-drawer>
   <v-dialog v-else v-model="open" fullscreen transition="dialog-bottom-transition">
     <RecipeFilterCard
@@ -42,6 +44,8 @@ const { mdAndUp } = useDisplay()
       @toggle="(d, v) => emit('toggle', d, v)"
       @clear="emit('clear')"
       @close="open = false"
-    />
+    >
+      <template v-if="$slots.default" #top><slot /></template>
+    </RecipeFilterCard>
   </v-dialog>
 </template>

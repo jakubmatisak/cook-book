@@ -40,6 +40,14 @@ describe('GET /recipes/:id/export.md', () => {
     expect(text).toContain('**Tagy:** #Klasika')
   })
 
+  it('súbor začína značkou UTF-8 (BOM), aby ho Android a Windows nečítali v inom kódovaní', async () => {
+    const id = await create(gulas)
+    const one = new Uint8Array(await (await send(app, 'GET', api(`/recipes/${id}/export.md`))).arrayBuffer())
+    expect([...one.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
+    const all = new Uint8Array(await (await send(app, 'GET', api('/export/recipes.md'))).arrayBuffer())
+    expect([...all.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
+  })
+
   it('prepočíta porcie podľa ?porcie=', async () => {
     const id = await create(gulas)
     const text = await (await send(app, 'GET', api(`/recipes/${id}/export.md?porcie=8`))).text()

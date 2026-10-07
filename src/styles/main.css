@@ -1,2 +1,9 @@
-/* Globálne štýly: len font. Vzhľad určuje Vuetify (src/plugins/vuetify.ts, src/design/settings.scss). */
+/* Globálne štýly: len font a tlač. Vzhľad určuje Vuetify (src/plugins/vuetify.ts, src/design/settings.scss). */
 @import './fonts.css';
+
+/* Pri tlači sa netlačí nič z vrstiev nad stránkou: menu, z ktorého sa tlač spustila, hlášky ani okná. */
+@media print {
+  .v-overlay-container {
+    display: none !important;
+  }
+}

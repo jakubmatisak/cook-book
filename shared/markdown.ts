@@ -105,3 +105,6 @@ export function recipesToMarkdown(recipes: readonly RecipeMarkdownInput[]): stri
 
 /** Názov súboru z názvu receptu: `hovadzi-gulas.md`. */
 export const markdownFilename = (title: string): string => `${slugify(title)}.md`
+
+/** Značka UTF-8 na začiatku stiahnutého súboru: bez nej Android a Windows čítajú diakritiku v inom kódovaní. */
+export const UTF8_BOM = '\uFEFF'

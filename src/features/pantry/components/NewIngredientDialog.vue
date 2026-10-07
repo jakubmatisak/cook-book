@@ -86,13 +86,7 @@ async function save() {
           hide-details
           data-test="new-unit"
         />
-        <v-checkbox
-          v-model="atHome"
-          :label="t('pantry.new.atHome')"
-          hide-details
-          density="comfortable"
-          data-test="new-at-home"
-        />
+        <v-checkbox v-model="atHome" :label="t('pantry.new.atHome')" hide-details data-test="new-at-home" />
       </v-card-text>
       <v-card-actions>
         <v-spacer />

@@ -217,7 +217,6 @@ function cancel() {
             v-model="kidsFlag"
             :label="t('recipes.editor.kidsFlag')"
             hide-details
-            density="comfortable"
             data-test="kids-flag"
           />
           <v-row dense>

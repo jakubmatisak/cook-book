@@ -34,7 +34,7 @@ import { canShare, copyText, shareText } from '@/composables/useShare'
 import { useToday } from '@/composables/useToday'
 import EntryDialog from '@/features/meal-plan/components/EntryDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { printPage } from '@/composables/usePrintMode'
+import { printPage, usePrintMode } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
 import { formatMinutes, tc } from '@/i18n/format'
 import FavoriteButton from '../components/FavoriteButton.vue'
@@ -144,6 +144,8 @@ const markdown = computed(() =>
 const supportsShare = canShare()
 
 const printRecipe = () => printPage()
+// Pri tlači je recept kompaktný: menší nadpis, suroviny a postup vedľa seba, kroky bez veľkých medzier.
+const printing = usePrintMode()
 
 async function copyRecipe() {
   const copied = await copyText(markdown.value)
@@ -288,12 +290,12 @@ function goBack() {
       class="mb-4 d-print-none"
     />
 
-    <h1 class="text-h4 font-weight-bold mb-3">{{ recipe.title }}</h1>
-    <div class="d-flex flex-wrap ga-2 mb-3">
+    <h1 class="font-weight-bold" :class="printing ? 'text-h5 mb-1' : 'text-h4 mb-3'">{{ recipe.title }}</h1>
+    <div class="d-flex flex-wrap ga-2" :class="printing ? 'mb-2' : 'mb-3'">
       <v-chip
         v-for="chip in chips"
         :key="chip.text"
-        size="small"
+        :size="printing ? 'x-small' : 'small'"
         :prepend-icon="chip.icon"
         :color="chip.color"
         :variant="chip.color ? 'tonal' : 'outlined'"
@@ -310,10 +312,14 @@ function goBack() {
     >
       {{ t('recipes.detail.cookingMode') }}
     </v-btn>
-    <p v-if="recipe.description" class="text-body-1 mb-3 text-pre-line">
+    <p
+      v-if="recipe.description"
+      class="text-pre-line"
+      :class="printing ? 'text-body-2 mb-2' : 'text-body-1 mb-3'"
+    >
       {{ recipe.description }}
     </p>
-    <div v-if="recipe.tags.length" class="d-flex flex-wrap ga-1 mb-4">
+    <div v-if="recipe.tags.length" class="d-flex flex-wrap ga-1 mb-4 d-print-none">
       <v-chip
         v-for="tag in recipe.tags"
         :key="tag.id"
@@ -326,9 +332,9 @@ function goBack() {
       </v-chip>
     </div>
 
-    <v-row>
-      <v-col cols="12" md="5" lg="4">
-        <v-card :title="t('recipes.detail.ingredients')">
+    <v-row :dense="printing">
+      <v-col :cols="printing ? 5 : 12" md="5" lg="4" data-test="recipe-ingredients-col">
+        <v-card :title="t('recipes.detail.ingredients')" :border="!printing">
           <v-card-text class="d-none d-print-block pb-0">
             {{ t('recipes.detail.forPortions', { portions: tc('recipes.portionsAcc', servings) }) }}
           </v-card-text>
@@ -355,7 +361,7 @@ function goBack() {
               <v-list-subheader v-if="group.name" class="text-primary font-weight-bold">
                 {{ group.name }}
               </v-list-subheader>
-              <v-list-item v-for="item in group.items" :key="item.id">
+              <v-list-item v-for="item in group.items" :key="item.id" :min-height="printing ? 24 : undefined">
                 <template #prepend>
                   <span
                     class="font-weight-bold text-no-wrap me-3"
@@ -382,19 +388,27 @@ function goBack() {
         </v-card>
       </v-col>
 
-      <v-col cols="12" md="7" lg="8">
-        <v-card :title="t('recipes.detail.steps')">
+      <v-col :cols="printing ? 7 : 12" md="7" lg="8" data-test="recipe-steps-col">
+        <v-card :title="t('recipes.detail.steps')" :border="!printing">
           <v-card-text v-if="!recipe.steps.length" class="text-medium-emphasis">{{
             t('recipes.detail.noSteps')
           }}</v-card-text>
-          <v-list v-else lines="three" class="py-0 pb-2">
-            <v-list-item v-for="step in recipe.steps" :key="step.id" class="py-3">
+          <v-list v-else :lines="printing ? false : 'three'" class="py-0 pb-2">
+            <v-list-item
+              v-for="step in recipe.steps"
+              :key="step.id"
+              :class="printing ? 'py-1' : 'py-3'"
+              data-test="recipe-step"
+            >
               <template #prepend>
-                <v-avatar color="primary" size="32" class="font-weight-bold me-3">{{
+                <v-avatar color="primary" :size="printing ? 22 : 32" class="font-weight-bold me-3">{{
                   step.position
                 }}</v-avatar>
               </template>
-              <v-list-item-title class="text-wrap text-body-1 text-pre-line">
+              <v-list-item-title
+                class="text-wrap text-pre-line"
+                :class="printing ? 'text-body-2' : 'text-body-1'"
+              >
                 {{ step.text }}
               </v-list-item-title>
               <v-list-item-subtitle v-if="step.timerSeconds" class="mt-1">

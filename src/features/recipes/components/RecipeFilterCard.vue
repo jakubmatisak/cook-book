@@ -112,6 +112,9 @@ const total = computed(() => activeFilterCount(props.state))
     <v-divider />
 
     <v-card-text class="flex-grow-1 overflow-y-auto pa-0">
+      <div v-if="$slots.top" class="d-flex flex-column ga-3 pa-4" data-test="filter-quick">
+        <slot name="top" />
+      </div>
       <v-expansion-panels v-model="open" variant="accordion" multiple flat>
         <v-expansion-panel v-for="s in sections" :key="s.key" :value="s.key" :data-test="`filter-${s.key}`">
           <v-expansion-panel-title class="font-weight-bold">

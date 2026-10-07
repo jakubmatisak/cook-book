@@ -22,6 +22,7 @@ export default {
   page: {
     subtitle: 'At home: {items} of {total}',
     addStaple: 'New recurring item',
+    filters: 'Filters',
     cookable: 'What can I cook',
     tabHome: 'At home',
     tabStaples: 'Recurring items',

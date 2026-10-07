@@ -116,4 +116,16 @@ describe('zarovnanie ingrediencií bez množstva', () => {
     expect(new Set(widths).size).toBe(1)
     expect(parseFloat(widths[0]!)).toBeGreaterThan('0,5 balenie'.length)
   })
+
+  it('pri tlači je recept kompaktný: suroviny a postup vedľa seba, kroky bez veľkých medzier', async () => {
+    const wrapper = await mountAt('/recepty/r1', '/recepty/:id', RecipeDetailPage, { '/recipes/r1': base })
+    expect(wrapper.find('[data-test="recipe-ingredients-col"]').classes()).toContain('v-col--cols-12')
+    window.dispatchEvent(new Event('beforeprint'))
+    await flushPromises()
+    expect(wrapper.find('[data-test="recipe-ingredients-col"]').classes()).toContain('v-col--cols-5')
+    expect(wrapper.find('[data-test="recipe-steps-col"]').classes()).toContain('v-col--cols-7')
+    expect(wrapper.find('[data-test="recipe-step"]').classes()).not.toContain('py-3')
+    expect(wrapper.find('h1').classes()).toContain('text-h5')
+    window.dispatchEvent(new Event('afterprint'))
+  })
 })

@@ -11,6 +11,9 @@ import { useSelection } from '@/composables/useSelection'
 import { setLocale } from '@/i18n'
 import { jsonResponse, me, mountPlugins, stubApi, type StubCall } from './helpers/apiStub'
 
+// Stránka receptov sa v plnej sade testov vykresľuje pomalšie.
+vi.setConfig({ testTimeout: 20_000 })
+
 // jsdom nemá IndexedDB, ktorý používa fronta odškrtnutí bez signálu.
 vi.mock('idb-keyval', () => ({ get: async () => undefined, set: async () => {}, del: async () => {} }))
 

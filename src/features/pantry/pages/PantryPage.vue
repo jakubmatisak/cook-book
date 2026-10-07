@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {
-  mdiCheck,
   mdiClockAlertOutline,
+  mdiFilterVariant,
   mdiFridgeOutline,
   mdiMagnify,
   mdiPencilOutline,
@@ -11,6 +11,7 @@ import {
 } from '@mdi/js'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useDisplay } from 'vuetify'
 import type { IngredientDto, PantryItemDto, StapleDto } from '@shared/api'
 import { normalizeText } from '@shared/text'
 import { formatQuantity } from '@/i18n/quantity'
@@ -23,6 +24,7 @@ import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
 import IngredientEditDialog from '@/features/ingredients/components/IngredientEditDialog.vue'
 import NewIngredientDialog from '../components/NewIngredientDialog.vue'
+import PantryFilters from '../components/PantryFilters.vue'
 import PantryItemDialog from '../components/PantryItemDialog.vue'
 import StapleDialog from '../components/StapleDialog.vue'
 import { describeCadence, describeExpiry, expiryStatus } from '../format'
@@ -41,6 +43,12 @@ const onlyHome = ref(false)
 const onlyExpiring = ref(false)
 // Filter podľa kategórie obchodu: id kategórie, `none` (ostatné, bez kategórie) alebo prázdne = všetky.
 const category = ref<string | null>(null)
+// Na mobile sú filtre v spodnom paneli, aby nad zoznamom ostalo len hľadanie.
+const { mdAndUp } = useDisplay()
+const filtersOpen = ref(false)
+const filterCount = computed(
+  () => (category.value ? 1 : 0) + (onlyHome.value ? 1 : 0) + (onlyExpiring.value ? 1 : 0),
+)
 const categoryItems = computed(() => [
   ...(categories.value ?? []).map((c) => ({ title: c.name, value: c.id })),
   { title: t('pantry.page.otherCategory'), value: 'none' },
@@ -173,39 +181,49 @@ function editStaple(staple: StapleDto | null) {
           clearable
           hide-details
           class="flex-grow-1"
-          style="min-width: 16rem"
+          :style="mdAndUp ? 'min-width: 16rem' : undefined"
         />
-        <v-select
-          v-model="category"
-          :items="categoryItems"
-          :label="t('pantry.page.category')"
-          clearable
-          hide-details
-          data-test="pantry-category"
-          style="min-width: 12rem; max-width: 16rem"
+        <PantryFilters
+          v-if="mdAndUp"
+          v-model:category="category"
+          v-model:only-home="onlyHome"
+          v-model:only-expiring="onlyExpiring"
+          :category-items="categoryItems"
+          :expiring-count="expiringCount"
         />
-        <v-chip
-          :color="onlyHome ? 'primary' : undefined"
-          :variant="onlyHome ? 'flat' : 'outlined'"
-          :prepend-icon="onlyHome ? mdiCheck : undefined"
-          @click="onlyHome = !onlyHome"
-        >
-          {{ t('pantry.page.onlyHome') }}
-        </v-chip>
-        <v-chip
-          :color="onlyExpiring ? 'warning' : undefined"
-          :variant="onlyExpiring ? 'flat' : 'outlined'"
-          :prepend-icon="onlyExpiring ? mdiCheck : mdiClockAlertOutline"
-          data-test="expiring-chip"
-          @click="onlyExpiring = !onlyExpiring"
-        >
-          {{ t('pantry.page.expiring') }}<template v-if="expiringCount">&nbsp;({{ expiringCount }})</template>
-        </v-chip>
+        <v-badge v-else :model-value="filterCount > 0" :content="filterCount" color="primary">
+          <v-btn
+            :icon="mdiFilterVariant"
+            variant="tonal"
+            :color="filterCount ? 'primary' : undefined"
+            :aria-label="t('pantry.page.filters')"
+            data-test="pantry-filters-button"
+            @click="filtersOpen = true"
+          />
+        </v-badge>
       </div>
+
+      <v-bottom-sheet v-if="!mdAndUp" v-model="filtersOpen">
+        <v-card :title="t('pantry.page.filters')">
+          <v-card-text class="d-flex flex-column ga-3">
+            <PantryFilters
+              v-model:category="category"
+              v-model:only-home="onlyHome"
+              v-model:only-expiring="onlyExpiring"
+              :category-items="categoryItems"
+              :expiring-count="expiringCount"
+            />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn color="primary" @click="filtersOpen = false">{{ t('common.actions.close') }}</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-bottom-sheet>
     </template>
 
     <template v-if="tab === 'home'">
-      <p class="text-body-2 text-medium-emphasis mb-4">
+      <p v-if="mdAndUp" class="text-body-2 text-medium-emphasis mb-4" data-test="pantry-intro">
         {{ t('pantry.page.homeIntro') }}
       </p>
 

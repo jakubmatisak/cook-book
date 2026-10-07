@@ -248,15 +248,6 @@ async function copyToNextWeek() {
 
 <template>
   <PageHeader :title="t('plan.title')">
-    <v-btn-group variant="outlined" density="comfortable" divided>
-      <v-btn
-        :icon="mdiChevronLeft"
-        :aria-label="t('plan.week.previous')"
-        @click="goToWeek(addDays(start, -7))"
-      />
-      <v-btn class="text-none font-weight-bold" style="min-width: 11rem">{{ formatWeekRange(start) }}</v-btn>
-      <v-btn :icon="mdiChevronRight" :aria-label="t('plan.week.next')" @click="goToWeek(addDays(start, 7))" />
-    </v-btn-group>
     <v-btn
       v-if="!isCurrentWeek"
       :prepend-icon="mdiCalendarToday"
@@ -266,6 +257,15 @@ async function copyToNextWeek() {
     >
       {{ t('plan.week.today') }}
     </v-btn>
+    <v-btn-group variant="outlined" divided>
+      <v-btn
+        :icon="mdiChevronLeft"
+        :aria-label="t('plan.week.previous')"
+        @click="goToWeek(addDays(start, -7))"
+      />
+      <v-btn class="text-none font-weight-bold" style="min-width: 11rem">{{ formatWeekRange(start) }}</v-btn>
+      <v-btn :icon="mdiChevronRight" :aria-label="t('plan.week.next')" @click="goToWeek(addDays(start, 7))" />
+    </v-btn-group>
     <v-menu>
       <template #activator="{ props }">
         <v-btn

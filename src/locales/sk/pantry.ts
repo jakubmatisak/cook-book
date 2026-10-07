@@ -24,6 +24,7 @@ export default {
     subtitle: 'Doma: {items} z {total}',
     addStaple: 'Nová stála položka',
     cookable: 'Čo viem uvariť',
+    filters: 'Filtre',
     tabHome: 'Doma',
     tabStaples: 'Stále položky',
     homeIntro:

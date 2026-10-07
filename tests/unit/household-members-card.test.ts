@@ -28,7 +28,25 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
+const setViewport = (width: number) =>
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
+
 describe('HouseholdMembersCard', () => {
+  it('na mobile sú rola a odobratie pod e-mailom, na počítači vedľa neho', async () => {
+    setViewport(390)
+    const mobile = await mountCard(true)
+    const row = mobile.wrapper.find('[data-test="household-member"]')
+    expect(row.find('.v-list-item__append [data-test="member-role"]').exists()).toBe(false)
+    expect(row.find('[data-test="member-role"]').exists()).toBe(true)
+    mobile.wrapper.unmount()
+    document.body.innerHTML = ''
+
+    setViewport(1280)
+    const desktop = await mountCard(true)
+    const desktopRow = desktop.wrapper.find('[data-test="household-member"]')
+    expect(desktopRow.find('.v-list-item__append [data-test="member-role"]').exists()).toBe(true)
+  })
+
   it('vlastník vidí pozvánku, výber roly, odobratie a zámok pri e-maile zo zoznamu správcov', async () => {
     const { wrapper } = await mountCard(true)
     const rows = wrapper.findAll('[data-test="household-member"]')

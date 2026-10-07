@@ -186,14 +186,7 @@ async function onDelete() {
       :subtitle="dayLabel ? `${slotName} · ${dayLabel.long} ${dayLabel.date}` : ''"
     >
       <v-card-text class="d-flex flex-column ga-4">
-        <v-btn-toggle
-          v-model="mode"
-          mandatory
-          selected-class="bg-primary"
-          variant="outlined"
-          divided
-          density="comfortable"
-        >
+        <v-btn-toggle v-model="mode" mandatory selected-class="bg-primary" variant="outlined" divided>
           <v-btn value="recipe">{{ t('plan.entry.modeRecipe') }}</v-btn>
           <v-btn value="text">{{ t('plan.entry.modeText') }}</v-btn>
         </v-btn-toggle>

@@ -18,6 +18,14 @@ export default {
     light: 'Light',
     dark: 'Dark',
   },
+  density: {
+    title: 'Interface density',
+    aria: 'Size of fields, buttons, lists and tables',
+    compact: 'Compact',
+    comfortable: 'Comfortable',
+    default: 'Spacious',
+    hint: 'Applies on a computer. On a phone the interface is always compact.',
+  },
   plan: {
     title: 'Meal plan',
     slots: 'Meals of the day',

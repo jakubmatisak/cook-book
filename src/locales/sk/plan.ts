@@ -77,6 +77,9 @@ export default {
     collapse: 'Zbaliť návrhy',
     expand: 'Rozbaliť návrhy',
     plan: 'Naplánovať',
+    planAria: 'Naplánovať: {title}',
+    more: 'Ďalšie návrhy ({n})',
+    less: 'Menej návrhov',
     reasons: {
       allAtHome: 'Máš všetko doma',
       missing: 'Chýba: {items}',

@@ -39,6 +39,7 @@ import ImportRecipeDialog from '../components/ImportRecipeDialog.vue'
 import RecipeBulkEditDialog from '../components/RecipeBulkEditDialog.vue'
 import RecipeCard from '../components/RecipeCard.vue'
 import RecipeFilterPanel from '../components/RecipeFilterPanel.vue'
+import RecipeQuickFilters from '../components/RecipeQuickFilters.vue'
 import RecipeTable from '../components/RecipeTable.vue'
 import {
   activeFilterCount,
@@ -161,6 +162,14 @@ const setMissing = (value: string | number) =>
 const canCook = computed(() => list.value?.facets.missing[0] ?? 0)
 const missingOne = computed(() => canCook.value + (list.value?.facets.missing[1] ?? 0))
 const filterCount = computed(() => activeFilterCount(state.value))
+/** Na mobile sú v paneli aj rýchle filtre, preto počet na tlačidle Filtre zahŕňa aj ich. */
+const mobileFilterCount = computed(
+  () =>
+    filterCount.value +
+    (state.value.pantry ? 1 : 0) +
+    (state.value.kids !== 'hide' ? 1 : 0) +
+    (state.value.public !== 'hide' ? 1 : 0),
+)
 
 function toggleFilter(dimension: FilterDimension, value: string | number) {
   const s = state.value
@@ -337,7 +346,14 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         }}</v-btn>
       </PageHeader>
 
-      <v-alert v-if="pantryMode" type="info" density="compact" class="mb-3" :icon="mdiFridgeOutline">
+      <v-alert
+        v-if="pantryMode && mdAndUp"
+        type="info"
+        density="compact"
+        class="mb-3"
+        :icon="mdiFridgeOutline"
+        data-test="pantry-hint"
+      >
         <I18nT keypath="recipes.list.pantryHint" scope="global" tag="span">
           <template #pantry>
             <router-link to="/spajza" class="text-primary font-weight-bold">{{
@@ -348,11 +364,10 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       </v-alert>
 
       <v-btn-toggle
-        v-if="pantryMode"
+        v-if="pantryMode && mdAndUp"
         :model-value="state.missing ?? 'all'"
         mandatory
         grow
-        density="comfortable"
         selected-class="bg-primary"
         class="mb-3 w-100"
         data-test="missing-toggle"
@@ -363,17 +378,38 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         <v-btn :value="1">{{ t('recipes.list.missingMaxOne', { n: missingOne }) }}</v-btn>
       </v-btn-toggle>
 
-      <v-text-field
-        v-model="search"
-        :prepend-inner-icon="mdiMagnify"
-        :label="t('recipes.list.search')"
-        clearable
-        hide-details
-        autocomplete="off"
-        class="mb-3"
-      />
+      <div class="d-flex align-center ga-2 mb-3">
+        <v-text-field
+          v-model="search"
+          :prepend-inner-icon="mdiMagnify"
+          :label="t('recipes.list.search')"
+          clearable
+          hide-details
+          autocomplete="off"
+        />
+        <template v-if="!mdAndUp">
+          <v-badge :model-value="mobileFilterCount > 0" :content="mobileFilterCount" color="primary">
+            <v-btn
+              :icon="mdiFilterVariant"
+              variant="tonal"
+              :color="mobileFilterCount ? 'primary' : undefined"
+              :aria-label="t('recipes.list.filters')"
+              data-test="filters-button"
+              @click="filtersOpen = true"
+            />
+          </v-badge>
+          <v-btn
+            :icon="mdiCheckboxMarkedOutline"
+            :variant="selection.active.value ? 'flat' : 'tonal'"
+            :color="selection.active.value ? 'primary' : undefined"
+            :aria-label="t('bulk.select')"
+            data-test="select-mode"
+            @click="selection.active.value ? selection.stop() : selection.start()"
+          />
+        </template>
+      </div>
 
-      <div class="d-flex flex-column flex-md-row flex-md-wrap align-md-center ga-2 mb-3">
+      <div v-if="mdAndUp" class="d-flex flex-row flex-wrap align-center ga-2 mb-3">
         <div class="d-flex flex-wrap align-center ga-2">
           <v-btn
             :prepend-icon="mdiFilterVariant"
@@ -390,6 +426,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             :color="favorite ? 'primary' : undefined"
             :variant="favorite ? 'flat' : 'outlined'"
             height="40"
+            data-test="favorite-toggle"
             @click="favorite = !favorite"
           >
             {{ t('recipes.list.favorites') }}
@@ -420,13 +457,14 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             :color="pantryMode ? 'primary' : undefined"
             :variant="pantryMode ? 'flat' : 'outlined'"
             height="40"
+            data-test="pantry-toggle"
             @click="pantryMode = !pantryMode"
           >
             {{ t('recipes.list.canCook') }}
           </v-btn>
         </div>
 
-        <div class="d-flex flex-nowrap align-center ga-2 ms-md-auto">
+        <div class="d-flex flex-nowrap align-center ga-2 ms-auto">
           <v-select
             :model-value="sortKey"
             :items="sortItems"
@@ -434,7 +472,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             hide-details
             density="compact"
             class="flex-grow-1"
-            :style="{ minWidth: '10rem', maxWidth: mdAndUp ? '14rem' : undefined }"
+            style="min-width: 10rem; max-width: 14rem"
             data-test="sort-select"
             @update:model-value="setSort"
           />
@@ -586,6 +624,27 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       :result-count="recipes?.length ?? 0"
       @toggle="toggleFilter"
       @clear="clearFilters"
-    />
+    >
+      <RecipeQuickFilters
+        v-if="!mdAndUp"
+        v-model:favorite="favorite"
+        v-model:kids="kids"
+        v-model:public-mode="publicMode"
+        v-model:pantry-mode="pantryMode"
+        v-model:view="view"
+        :sort-key="sortKey"
+        :kids-enabled="kidsEnabled"
+        :kids-items="kidsItems"
+        :public-items="publicItems"
+        :sort-items="sortItems"
+        :sort-dir="sortDir"
+        :missing="state.missing ?? 'all'"
+        :can-cook="canCook"
+        :missing-one="missingOne"
+        @update:sort-key="setSort"
+        @update:missing="setMissing"
+        @flip-sort-dir="flipSortDir"
+      />
+    </RecipeFilterPanel>
   </ListLayout>
 </template>

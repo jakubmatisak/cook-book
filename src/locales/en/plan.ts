@@ -77,6 +77,9 @@ export default {
     collapse: 'Collapse suggestions',
     expand: 'Expand suggestions',
     plan: 'Plan',
+    planAria: 'Plan: {title}',
+    more: 'More suggestions ({n})',
+    less: 'Fewer suggestions',
     reasons: {
       allAtHome: 'You have everything at home',
       missing: 'Missing: {items}',

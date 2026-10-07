@@ -2,6 +2,7 @@
 import { mdiAccountPlusOutline, mdiDeleteOutline, mdiHomePlusOutline, mdiLockOutline } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useDisplay } from 'vuetify'
 import type { HouseholdMemberDto } from '@shared/api'
 import type { HouseholdRole } from '@shared/family'
 import {
@@ -21,6 +22,9 @@ import InviteMemberDialog from './InviteMemberDialog.vue'
 const props = defineProps<{ isOwner: boolean }>()
 
 const { t } = useI18n()
+// Na mobile idú rola a odobratie pod e-mail, aby sa e-mail neskracoval.
+const { smAndDown } = useDisplay()
+const controlsSlot = computed(() => (smAndDown.value ? 'default' : 'append'))
 
 const { data: me } = useMe()
 const { data: members, isPending, error } = useHouseholdMembers()
@@ -119,7 +123,7 @@ const canCreate = computed(() => me.value?.user.isAdmin === true)
         <p class="text-body-2 text-medium-emphasis">
           {{ t('households.card.accountsIntro', { members: tc('common.plural.members', members.length) }) }}
         </p>
-        <v-list lines="two" border density="comfortable" data-test="household-members">
+        <v-list lines="two" border data-test="household-members">
           <v-list-item
             v-for="member in members"
             :key="member.userId"
@@ -127,8 +131,8 @@ const canCreate = computed(() => me.value?.user.isAdmin === true)
             :subtitle="`${roleLabel(member.role)} · ${lastLogin(member)}`"
             data-test="household-member"
           >
-            <template #append>
-              <div v-if="props.isOwner" class="d-flex align-center ga-2">
+            <template #[controlsSlot]>
+              <div v-if="props.isOwner" class="d-flex align-center ga-2" :class="{ 'mt-2': smAndDown }">
                 <v-select
                   :model-value="member.role"
                   :items="roleItems"

@@ -52,7 +52,6 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
       :items-length="items.length"
       :items-per-page="-1"
       item-value="id"
-      density="comfortable"
       hover
       hide-default-footer
       must-sort

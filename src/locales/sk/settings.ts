@@ -18,6 +18,14 @@ export default {
     light: 'Svetlý',
     dark: 'Tmavý',
   },
+  density: {
+    title: 'Hustota rozhrania',
+    aria: 'Veľkosť polí, tlačidiel, zoznamov a tabuliek',
+    compact: 'Kompaktná',
+    comfortable: 'Pohodlná',
+    default: 'Priestranná',
+    hint: 'Platí na počítači. Na mobile je rozhranie vždy kompaktné.',
+  },
   plan: {
     title: 'Jedálniček',
     slots: 'Jedlá dňa',

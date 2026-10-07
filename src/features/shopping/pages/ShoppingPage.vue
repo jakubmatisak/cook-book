@@ -32,6 +32,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import ListLayout from '@/components/ListLayout.vue'
 import { useOnline } from '@/composables/useOnline'
+import { useUserToggle } from '@/composables/useUserToggle'
 import { useToday } from '@/composables/useToday'
 import { printPage } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
@@ -83,7 +84,8 @@ const groups = computed(() => {
   }
   return result
 })
-const showCart = ref(false)
+// Sekcia „V košíku“ je predvolene rozbalená; zbalenie si pamätajú nastavenia človeka.
+const showCart = useUserToggle('shoppingCartOpen')
 
 const subtitle = computed(() => {
   if (!items.value?.length) return undefined
@@ -266,12 +268,14 @@ function onGenerated(result: GenerateResult) {
           variant="text"
           :append-icon="showCart ? mdiChevronUp : mdiChevronDown"
           class="mb-2"
+          data-test="cart-toggle"
+          :aria-expanded="showCart"
           @click="showCart = !showCart"
         >
           {{ t('shopping.inCart', { n: inCart.length }) }}
         </v-btn>
         <v-expand-transition>
-          <v-card v-if="showCart">
+          <v-card v-if="showCart" data-test="cart-list">
             <v-list lines="two" class="py-0">
               <ShoppingItemRow
                 v-for="item in inCart"

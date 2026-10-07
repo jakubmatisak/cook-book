@@ -1,5 +1,5 @@
 import { z } from './zod'
-import { LOCALES, RECIPE_VIEWS, THEME_PREFERENCES } from '../userSettings'
+import { DENSITIES, LOCALES, RECIPE_VIEWS, THEME_PREFERENCES } from '../userSettings'
 
 /** Predvolené filtre: pár parametrov adresy s rozumným limitom, aby sa do nastavení nedal uložiť odpad. */
 const recipeQuery = z
@@ -14,6 +14,9 @@ export const userSettingsUpdateSchema = z
     recipeView: z.enum(RECIPE_VIEWS).nullable().optional(),
     recipeQuery: recipeQuery.nullable().optional(),
     kidsEnabled: z.boolean().nullable().optional(),
+    density: z.enum(DENSITIES).nullable().optional(),
+    shoppingCartOpen: z.boolean().nullable().optional(),
+    planSuggestionsOpen: z.boolean().nullable().optional(),
   })
   .strict()
 export type UserSettingsUpdate = z.output<typeof userSettingsUpdateSchema>

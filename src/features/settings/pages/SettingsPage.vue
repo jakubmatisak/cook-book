@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { DENSITIES, type Density } from '@shared/userSettings'
 import { slotName } from '@/i18n/defaults'
 import {
   mdiBookmarkPlusOutline,
@@ -60,6 +61,14 @@ function saveKids(value: boolean | null) {
       onSuccess: () => client.invalidateQueries({ queryKey: recipeKeys.all }),
       onError: () => (snackbar.value = { show: true, text: t('settings.changeFailed'), color: 'error' }),
     },
+  )
+}
+
+// Pohodlná hustota je predvolená, preto sa pri jej výbere nastavenie zmaže (null).
+function saveDensity(value: Density) {
+  saveUserSettings.mutate(
+    { density: value === 'comfortable' ? null : value },
+    { onError: () => (snackbar.value = { show: true, text: t('settings.changeFailed'), color: 'error' }) },
   )
 }
 
@@ -167,6 +176,25 @@ async function exportRecipes() {
           <v-btn value="light">{{ t('settings.appearance.light') }}</v-btn>
           <v-btn value="dark">{{ t('settings.appearance.dark') }}</v-btn>
         </v-btn-toggle>
+      </v-card-text>
+    </v-card>
+
+    <v-card v-if="me" :title="t('settings.density.title')">
+      <v-card-text>
+        <v-btn-toggle
+          :model-value="me.userSettings.density ?? 'comfortable'"
+          mandatory
+          selected-class="bg-primary"
+          variant="outlined"
+          divided
+          :aria-label="t('settings.density.aria')"
+          @update:model-value="saveDensity"
+        >
+          <v-btn v-for="value in DENSITIES" :key="value" :value="value" :data-test="`density-${value}`">
+            {{ t(`settings.density.${value}`) }}
+          </v-btn>
+        </v-btn-toggle>
+        <div class="text-caption text-medium-emphasis mt-2">{{ t('settings.density.hint') }}</div>
       </v-card-text>
     </v-card>
 

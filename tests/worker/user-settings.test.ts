@@ -72,12 +72,20 @@ describe('nastavenia používateľa', () => {
       { recipeView: 'kalendar' },
       { recipeQuery: 'doma=1' },
       { recipeQuery: { a: 1 } },
+      { density: 'mala' },
+      { shoppingCartOpen: 'ano' },
       { neznamy: true },
     ]) {
       const res = await put(body)
       expect(res.status, JSON.stringify(body)).toBe(400)
       expect((await res.json<ApiErrorBody>()).error.code).toBeTruthy()
     }
+  })
+
+  it('uloží hustotu rozhrania a otvorenie košíka a návrhov „Čo uvariť dnes“', async () => {
+    const body = { density: 'compact', shoppingCartOpen: false, planSuggestionsOpen: false }
+    expect((await put(body)).status).toBe(200)
+    expect((await me()).userSettings).toEqual(body)
   })
 
   it('predvolené filtre majú rozumný limit (počet aj dĺžka)', async () => {
