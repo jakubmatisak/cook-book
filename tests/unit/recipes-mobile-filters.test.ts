@@ -161,3 +161,25 @@ describe('výška ovládania v riadku filtrov na počítači', () => {
     expect(group.style.height).toBe('48px')
   })
 })
+
+describe('ukotvená hlavička na mobile', () => {
+  it('nadpis, hľadanie a Filtre ostávajú hore, posúva sa len zoznam', async () => {
+    const { wrapper } = await mountPage(390)
+    const header = wrapper.find('[data-test="list-header"]')
+    const body = wrapper.find('[data-test="list-body"]')
+    expect(header.find('[data-test="filters-button"]').exists()).toBe(true)
+    expect(body.classes()).toContain('overflow-y-auto')
+    expect(body.element.contains(header.element)).toBe(false)
+  })
+})
+
+describe('nadpis stránky', () => {
+  it('je na mobile menší ako na počítači', async () => {
+    const mobile = await mountPage(390)
+    expect(mobile.wrapper.find('[data-test="page-title"]').classes()).toContain('text-title-large')
+    mobile.wrapper.unmount()
+    document.body.innerHTML = ''
+    const desktop = await mountPage(1280)
+    expect(desktop.wrapper.find('[data-test="page-title"]').classes()).toContain('text-headline-large')
+  })
+})

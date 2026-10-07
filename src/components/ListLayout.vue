@@ -5,10 +5,10 @@ import { usePrintMode } from '@/composables/usePrintMode'
 
 const { mdAndUp } = useDisplay()
 const printing = usePrintMode()
-const pinned = computed(() => mdAndUp.value)
 
 // Stránka so zoznamom má presne výšku okna (mínus horná a spodná lišta a odsadenie kontajnera pa-4 / pa-md-6),
-// takže sa nehýbe celá; posúva sa len zoznam pod hlavičkou (s odstupom od posuvníka). Pri tlači sa obsah nerozdeľuje na posúvanú časť.
+// takže sa nehýbe celá; posúva sa len zoznam pod hlavičkou (s odstupom od posuvníka). Pri tlači sa obsah
+// nerozdeľuje na posúvanú časť.
 const heightStyle = computed(() =>
   printing.value
     ? undefined
@@ -19,10 +19,9 @@ const heightStyle = computed(() =>
 </script>
 
 <template>
-  <!-- Hlavička (nadpis, hľadanie, filtre) ostáva hore, pod ňou sa posúva len obsah. Na mobile by zaberala príliš
-       veľa miesta, tam sa posúva spolu so zoznamom. -->
+  <!-- Hlavička (nadpis, hľadanie, filtre) ostáva hore aj na mobile, pod ňou sa posúva len obsah. -->
   <div class="d-flex flex-column" :style="heightStyle" data-test="list-layout">
-    <div v-if="pinned" class="flex-shrink-0 pb-1" data-test="list-header">
+    <div class="flex-shrink-0 pb-1" data-test="list-header">
       <slot name="header" />
     </div>
     <div
@@ -31,9 +30,6 @@ const heightStyle = computed(() =>
       style="min-height: 0"
       data-test="list-body"
     >
-      <div v-if="!pinned" data-test="list-header">
-        <slot name="header" />
-      </div>
       <slot />
     </div>
   </div>
