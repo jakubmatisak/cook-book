@@ -1,5 +1,13 @@
 # Zmeny
 
+## 1.3.2 – 2026-10-07
+
+### Opravy
+
+- Mobil: prvé otvorenie po vydaní novej verzie sa nezasekne – nová verzia sa načíta až pri najbližšom prechode
+  na inú stránku (rovno na cieľ), nie uprostred ťukania. Keď stará stránka žiada súbor, ktorý po vydaní na
+  serveri už nie je, cieľ sa načíta celý znova namiesto toho, aby sa nič nestalo.
+
 ## 1.3.1 – 2026-10-07
 
 ### Opravy

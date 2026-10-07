@@ -34,13 +34,18 @@ async function mountPage(userSettings: object, url = '/recipes', extra: Record<s
     },
   )
   await flushPromises()
+  mounted.push(wrapper)
   return { calls, router, wrapper }
 }
+
+// Odložené uloženie filtrov z jedného testu nesmie dobehnúť do ďalšieho – komponenty sa po teste odpoja.
+const mounted: { unmount: () => void }[] = []
 
 const settingsPuts = (calls: StubCall[]) =>
   calls.filter((c) => c.method === 'PUT' && c.path === '/me/settings').map((c) => c.body)
 
 afterEach(() => {
+  for (const w of mounted.splice(0)) w.unmount()
   vi.useRealTimers()
   vi.unstubAllGlobals()
   document.body.innerHTML = ''
