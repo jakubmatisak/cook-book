@@ -1,5 +1,13 @@
 # Zmeny
 
+## 1.5.1 – 2026-10-08
+
+### Opravy
+
+- Na ultraširokom monitore má obsah najviac Full HD šírku (1920 px) a je vycentrovaný.
+- Tlač zdieľaného a verejného receptu je kompaktná ako pri detaile: suroviny a postup vedľa seba, menší nadpis
+  a hustejšie riadky.
+
 ## 1.5.0 – 2026-10-08
 
 ### Nové
