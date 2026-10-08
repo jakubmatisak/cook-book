@@ -121,7 +121,7 @@ describe('AppShell', () => {
       const wrapper = await mountShell(width)
       await wrapper.find('[data-test="account"]').trigger('click')
       await flushPromises()
-      expect(document.body.textContent).toContain('Verzia 1.5.3')
+      expect(document.body.textContent).toContain('Verzia 1.6.0')
       // lokálne (bez Cloudflare Access) sa odhlásenie neponúka
       expect(document.querySelector('[data-test="logout"]')).toBeNull()
       wrapper.unmount()

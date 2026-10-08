@@ -1,5 +1,22 @@
 # Zmeny
 
+## 1.6.0 – 2026-10-08
+
+### Nové
+
+- Poznámky pri každom recepte: voľný text (odhady, pôvodný zápis, tipy) v editore, v detaile, na zdieľanom
+  odkaze aj v exporte do Markdownu.
+- Prílohy receptu: v editore sa nahrá viac fotiek naraz (zmenšené na 1600 px), dajú sa preusporiadať a odobrať.
+  V detaile sú galériou náhľadov nad poznámkami; klik otvorí fotku na celú obrazovku s listovaním. Zdieľaný
+  odkaz a iné domácnosti prílohy nevidia. Fotky odobratej prílohy aj zmazaného receptu sa zmažú z úložiska.
+- Nastavenie „Zobrazovať recepty od iných“: verejné recepty iných domácností sa ukážu v receptoch a na úvode bez
+  ďalšieho filtra; filter „Len moje“ ich skryje. Výber receptu do jedálnička ponúka naďalej len vlastné recepty.
+
+### Opravy
+
+- Nákupný zoznam sa už sám od seba neobnovuje každých 5 sekúnd (zbytočné dotazy na server). Zoznam sa načíta
+  pri otvorení, po návrate do aplikácie a po pripojení. Iné pravidelné dotazy aplikácia nerobí.
+
 ## 1.5.3 – 2026-10-08
 
 ### Opravy

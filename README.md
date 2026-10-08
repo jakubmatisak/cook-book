@@ -5,7 +5,7 @@ free tier of Cloudflare: one Worker serves the Vue frontend and the API, data li
 sign-in is handled by Cloudflare Access.
 
 > The app UI is in **Slovak and English**. This README is in English first, [Slovenská verzia](#slovenská-verzia) is below.
-> Status: **1.5.3**.
+> Status: **1.6.0**.
 
 - Website with screenshots: <https://jakubmatisak.github.io/cook-book-website/>
 - Design and phases: [docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md](docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md) (Slovak)
@@ -223,7 +223,7 @@ The repository contains no secrets or personal addresses: they live in Worker se
 
 Rodinná webová aplikácia (PWA) na recepty, týždenný jedálniček a nákupný zoznam. Beží celá zadarmo na
 Cloudflare: jeden Worker servíruje Vue frontend aj API, dáta sú v D1, fotky v R2 a prihlásenie rieši
-Cloudflare Access. Verzia **1.5.3**.
+Cloudflare Access. Verzia **1.6.0**.
 
 Stránka so screenshotmi: <https://jakubmatisak.github.io/cook-book-website/>
 
@@ -249,6 +249,11 @@ Stránka so screenshotmi: <https://jakubmatisak.github.io/cook-book-website/>
   nezávislé a súkromné.
 - **Zdieľanie odkazom:** každý recept sa dá zdieľať odkazom, ktorý ho otvorí (s tlačidlom na tlač) komukoľvek, aj
   bez prihlásenia; zdieľanie sa dá kedykoľvek zastaviť.
+- **Poznámky a prílohy:** každý recept má voľné poznámky (odhady, pôvodný zápis, tipy) a prílohy – fotky napr.
+  strán z pôvodného zošita. V detaile sú prílohy galériou nad poznámkami a otvoria sa na celú obrazovku; zdieľaný
+  odkaz a iné domácnosti vidia len poznámky.
+- **Recepty od iných:** v nastaveniach si človek zapne „Zobrazovať recepty od iných“ – verejné recepty iných
+  domácností sa potom ukážu v receptoch aj na úvode bez ďalšieho filtra (vo filtri sa dajú skryť).
 - **Jazyky a osobné nastavenia:** celá aplikácia je po slovensky aj anglicky. Jazyk, vzhľad, pohľad zoznamu a
   naposledy použité filtre receptov sa ukladajú na človeka (s tlačidlom na úplný reset filtrov), takže ho
   nasledujú na všetkých zariadeniach aj domácnostiach.
