@@ -1,11 +1,12 @@
+import { RECIPE_CATEGORIES } from './recipes'
 import { normalizeText } from './text'
 
 export type TimeBucket = 'do30' | 'do60' | 'nad60'
 export const TIME_BUCKETS: readonly TimeBucket[] = ['do30', 'do60', 'nad60']
 
-export type SortKey = 'name' | 'created' | 'time' | 'difficulty' | 'cooked'
+export type SortKey = 'name' | 'category' | 'created' | 'time' | 'difficulty' | 'cooked'
 export type SortDir = 'asc' | 'desc'
-export const SORT_KEYS: readonly SortKey[] = ['name', 'created', 'time', 'difficulty', 'cooked']
+export const SORT_KEYS: readonly SortKey[] = ['name', 'category', 'created', 'time', 'difficulty', 'cooked']
 
 /** Minimum, ktoré filtre a zoradenie potrebujú z receptu. */
 export interface FacetRow {
@@ -123,6 +124,11 @@ export function sortRecipes<T extends FacetRow>(rows: readonly T[], key: SortKey
     switch (key) {
       case 'name':
         return normalizeText(r.title)
+      case 'category': {
+        // V poradí typov jedla ako vo filtri, nie podľa abecedy.
+        const index = (RECIPE_CATEGORIES as readonly string[]).indexOf(r.category)
+        return index === -1 ? null : index
+      }
       case 'created':
         return r.createdAt
       case 'time':
@@ -153,6 +159,7 @@ export const TIME_BUCKET_LABELS: Readonly<Record<TimeBucket, string>> = {
 
 export const SORT_LABELS: Readonly<Record<SortKey, string>> = {
   name: 'Názov',
+  category: 'Kategória',
   created: 'Dátum pridania',
   time: 'Čas prípravy',
   difficulty: 'Náročnosť',

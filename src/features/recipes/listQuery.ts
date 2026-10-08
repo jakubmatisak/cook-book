@@ -87,6 +87,7 @@ export const activeFilterCount = (s: RecipeListState): number =>
 /** Kľúče stĺpcov tabuľky ↔ kľúče zoradenia. */
 const TABLE_KEYS: Readonly<Record<string, SortKey>> = {
   title: 'name',
+  category: 'category',
   totalMinutes: 'time',
   difficulty: 'difficulty',
   lastCookedAt: 'cooked',

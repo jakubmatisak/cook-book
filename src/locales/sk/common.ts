@@ -103,6 +103,7 @@ export default {
   timeBucket: { do30: 'Do 30 min', do60: '30 – 60 min', nad60: 'Nad 60 min' },
   sort: {
     name: 'Názov',
+    category: 'Kategória',
     created: 'Dátum pridania',
     time: 'Čas prípravy',
     difficulty: 'Náročnosť',

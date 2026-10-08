@@ -104,6 +104,7 @@ export default {
   timeBucket: { do30: 'Up to 30 min', do60: '30 – 60 min', nad60: 'Over 60 min' },
   sort: {
     name: 'Name',
+    category: 'Category',
     created: 'Date added',
     time: 'Preparation time',
     difficulty: 'Difficulty',

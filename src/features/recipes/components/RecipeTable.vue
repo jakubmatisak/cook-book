@@ -21,7 +21,7 @@ const { smAndDown } = useDisplay()
 const headers = computed(() => [
   { title: '', key: 'coverImageUrl', sortable: false, width: 72 },
   { title: t('recipes.table.name'), key: 'title' },
-  { title: t('recipes.table.category'), key: 'category', sortable: false },
+  { title: t('recipes.table.category'), key: 'category' },
   { title: t('recipes.table.time'), key: 'totalMinutes' },
   { title: t('recipes.table.difficulty'), key: 'difficulty' },
   { title: t('recipes.table.lastCooked'), key: 'lastCookedAt' },
