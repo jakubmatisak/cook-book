@@ -250,7 +250,7 @@ const mobileMenu = ref(false)
     </v-navigation-drawer>
 
     <v-main>
-      <v-container fluid class="pa-4 pa-md-6">
+      <v-container fluid class="pa-4 pa-md-6" style="max-width: 1920px">
         <v-alert
           v-if="!online"
           type="warning"
