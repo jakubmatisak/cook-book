@@ -243,3 +243,14 @@ describe('describeIssues and form numbers in English', () => {
     expect(form.steps[0]!.timerMinutes).toBe('1.5')
   })
 })
+
+describe('mriežka receptov', () => {
+  it('má toľko stĺpcov, koľko sa zmestí (karta aspoň 260 px), nie pevné tri', async () => {
+    const wrapper = await mountAt('/recipes', RecipesPage, {
+      '/recipes': { items: [summary(), summary({ id: 'r2', title: 'Soup' })], facets },
+    })
+    const grid = wrapper.find('[data-test="recipe-grid"]')
+    expect(grid.attributes('style')).toContain('grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))')
+    expect(grid.findAll('.v-col')).toHaveLength(0)
+  })
+})

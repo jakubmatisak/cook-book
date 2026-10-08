@@ -610,16 +610,23 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       :selectable="selection.active.value"
     />
 
-    <v-row v-else-if="recipes">
-      <v-col v-for="recipe in recipes" :key="recipe.id" cols="12" sm="6" lg="4">
-        <RecipeCard
-          :recipe="recipe"
-          :selectable="selection.active.value"
-          :selected="selection.has(recipe.id)"
-          @toggle="selection.toggle(recipe.id)"
-        />
-      </v-col>
-    </v-row>
+    <!-- Toľko stĺpcov, koľko sa zmestí (karta aspoň 260 px): na mobile jeden, na širokom monitore päť. Mriežka
+         Vuetify má len pevné podiely z 12, preto CSS grid. -->
+    <div
+      v-else-if="recipes"
+      class="ga-4"
+      style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))"
+      data-test="recipe-grid"
+    >
+      <RecipeCard
+        v-for="recipe in recipes"
+        :key="recipe.id"
+        :recipe="recipe"
+        :selectable="selection.active.value"
+        :selected="selection.has(recipe.id)"
+        @toggle="selection.toggle(recipe.id)"
+      />
+    </div>
 
     <ImportRecipeDialog v-model="importOpen" />
 
