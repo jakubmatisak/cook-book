@@ -2,11 +2,16 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { RecipeIngredientDto, RecipeStepDto } from '@shared/api'
+import { usePrintMode } from '@/composables/usePrintMode'
 import { formatQuantity, quantityColumnWidth } from '@/i18n/quantity'
 
-/** Ingrediencie (v skupinách, množstvá pod sebou) a postup receptu na čítanie – verejný a zdieľaný recept. */
+/**
+ * Ingrediencie (v skupinách, množstvá pod sebou) a postup receptu na čítanie – verejný a zdieľaný recept. Pri tlači
+ * je kompaktný ako detail receptu: suroviny a postup vedľa seba, bez rámčekov, hustejšie riadky.
+ */
 const props = defineProps<{ ingredients: RecipeIngredientDto[]; steps: RecipeStepDto[] }>()
 const { t } = useI18n()
+const printing = usePrintMode()
 
 const groups = computed(() => {
   const map = new Map<string, RecipeIngredientDto[]>()
@@ -26,9 +31,9 @@ const suffix = (item: RecipeIngredientDto) =>
 </script>
 
 <template>
-  <v-row>
-    <v-col cols="12" md="5" lg="4">
-      <v-card :title="t('recipes.detail.ingredients')">
+  <v-row :density="printing ? 'compact' : undefined">
+    <v-col :cols="printing ? 5 : 12" md="5" lg="4" data-test="recipe-ingredients-col">
+      <v-card :title="t('recipes.detail.ingredients')" :border="!printing">
         <v-card-text v-if="!ingredients.length" class="text-medium-emphasis">
           {{ t('recipes.detail.noIngredients') }}
         </v-card-text>
@@ -37,7 +42,7 @@ const suffix = (item: RecipeIngredientDto) =>
             <v-list-subheader v-if="group.name" class="text-primary font-weight-bold">
               {{ group.name }}
             </v-list-subheader>
-            <v-list-item v-for="item in group.items" :key="item.id">
+            <v-list-item v-for="item in group.items" :key="item.id" :min-height="printing ? 24 : undefined">
               <template #prepend>
                 <span
                   class="font-weight-bold text-no-wrap me-3"
@@ -55,14 +60,24 @@ const suffix = (item: RecipeIngredientDto) =>
         </v-list>
       </v-card>
     </v-col>
-    <v-col cols="12" md="7" lg="8">
-      <v-card :title="t('recipes.detail.steps')">
-        <v-list lines="three" class="py-0 pb-2">
-          <v-list-item v-for="step in steps" :key="step.id" class="py-3">
+    <v-col :cols="printing ? 7 : 12" md="7" lg="8" data-test="recipe-steps-col">
+      <v-card :title="t('recipes.detail.steps')" :border="!printing">
+        <v-list :lines="printing ? false : 'three'" class="py-0 pb-2">
+          <v-list-item
+            v-for="step in steps"
+            :key="step.id"
+            :class="printing ? 'py-1' : 'py-3'"
+            data-test="recipe-step"
+          >
             <template #prepend>
-              <v-avatar color="primary" size="32" class="font-weight-bold">{{ step.position }}</v-avatar>
+              <v-avatar color="primary" :size="printing ? 22 : 32" class="font-weight-bold">{{
+                step.position
+              }}</v-avatar>
             </template>
-            <v-list-item-title class="text-wrap text-body-large text-pre-line">
+            <v-list-item-title
+              class="text-wrap text-pre-line"
+              :class="printing ? 'text-body-medium' : 'text-body-large'"
+            >
               {{ step.text }}
             </v-list-item-title>
           </v-list-item>

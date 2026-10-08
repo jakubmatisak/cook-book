@@ -6,7 +6,7 @@ import { useRoute } from 'vue-router'
 import { ApiError } from '@/api/http'
 import { useSharedRecipe } from '@/api/shared'
 import EmptyState from '@/components/EmptyState.vue'
-import { printPage } from '@/composables/usePrintMode'
+import { printPage, usePrintMode } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
 import RecipeCover from '../components/RecipeCover.vue'
 import RecipeIngredientsSteps from '../components/RecipeIngredientsSteps.vue'
@@ -18,6 +18,8 @@ const route = useRoute()
 const token = computed(() => String(route.params.token))
 const { data: recipe, isPending, error } = useSharedRecipe(token)
 const chips = useRecipeChips(recipe)
+// Pri tlači kompaktne ako detail receptu: menší nadpis, štítky a popis.
+const printing = usePrintMode()
 
 const notFound = computed(() => error.value instanceof ApiError && error.value.status === 404)
 
@@ -57,12 +59,14 @@ watch(
   <template v-else-if="recipe">
     <RecipeCover v-if="recipe.coverImageUrl" :src="recipe.coverImageUrl" />
 
-    <h1 class="text-headline-large font-weight-bold mb-3">{{ recipe.title }}</h1>
-    <div class="d-flex flex-wrap ga-2 mb-3">
+    <h1 class="font-weight-bold" :class="printing ? 'text-headline-small mb-1' : 'text-headline-large mb-3'">
+      {{ recipe.title }}
+    </h1>
+    <div class="d-flex flex-wrap ga-2" :class="printing ? 'mb-2' : 'mb-3'">
       <v-chip
         v-for="chip in chips"
         :key="chip.text"
-        size="small"
+        :size="printing ? 'x-small' : 'small'"
         :prepend-icon="chip.icon"
         :color="chip.color"
         :variant="chip.color ? 'tonal' : 'outlined'"
@@ -72,7 +76,8 @@ watch(
     </div>
     <p
       v-if="recipe.description"
-      class="text-body-large mb-3 text-pre-line text-justify"
+      class="text-pre-line text-justify"
+      :class="printing ? 'text-body-medium mb-2' : 'text-body-large mb-3'"
       data-test="recipe-description"
     >
       {{ recipe.description }}

@@ -9,6 +9,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import RecipeCover from '../components/RecipeCover.vue'
 import RecipeIngredientsSteps from '../components/RecipeIngredientsSteps.vue'
 import { useRecipeChips } from '../recipeChips'
+import { usePrintMode } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
 
 const { t, locale } = useI18n()
@@ -29,6 +30,8 @@ watch(
 )
 
 const chips = useRecipeChips(recipe)
+// Pri tlači kompaktne ako detail receptu: menší nadpis, štítky a popis.
+const printing = usePrintMode()
 
 const snackbar = ref({ show: false, text: '', color: 'success', recipeId: '' })
 
@@ -75,15 +78,17 @@ const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
   <template v-else-if="recipe">
     <RecipeCover v-if="recipe.coverImageUrl" :src="recipe.coverImageUrl" />
 
-    <h1 class="text-headline-large font-weight-bold mb-1">{{ recipe.title }}</h1>
+    <h1 class="font-weight-bold mb-1" :class="printing ? 'text-headline-small' : 'text-headline-large'">
+      {{ recipe.title }}
+    </h1>
     <p class="text-body-medium text-medium-emphasis mb-3" data-test="public-author">
       {{ t('publicRecipes.detail.from', { name: recipe.householdName }) }}
     </p>
-    <div class="d-flex flex-wrap ga-2 mb-3">
+    <div class="d-flex flex-wrap ga-2" :class="printing ? 'mb-2' : 'mb-3'">
       <v-chip
         v-for="chip in chips"
         :key="chip.text"
-        size="small"
+        :size="printing ? 'x-small' : 'small'"
         :prepend-icon="chip.icon"
         :color="chip.color"
         :variant="chip.color ? 'tonal' : 'outlined'"
@@ -92,7 +97,7 @@ const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
       </v-chip>
     </div>
 
-    <div class="d-flex flex-wrap ga-2 mb-4">
+    <div class="d-flex flex-wrap ga-2 mb-4 d-print-none">
       <v-alert
         v-if="recipe.ownedByMe"
         type="info"
@@ -119,7 +124,8 @@ const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
 
     <p
       v-if="recipe.description"
-      class="text-body-large mb-3 text-pre-line text-justify"
+      class="text-pre-line text-justify"
+      :class="printing ? 'text-body-medium mb-2' : 'text-body-large mb-3'"
       data-test="recipe-description"
     >
       {{ recipe.description }}

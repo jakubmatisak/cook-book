@@ -81,6 +81,17 @@ describe('recept otvorený odkazom na zdieľanie', () => {
     expect(print).toHaveBeenCalled()
   })
 
+  it('pri tlači je recept kompaktný ako detail: suroviny a postup vedľa seba, menší nadpis a riadky', async () => {
+    const { wrapper } = await mountShared({ '/shared/kod123': recipe })
+    window.dispatchEvent(new Event('beforeprint'))
+    await flushPromises()
+    expect(wrapper.find('[data-test="recipe-ingredients-col"]').classes()).toContain('v-col--cols-5')
+    expect(wrapper.find('[data-test="recipe-steps-col"]').classes()).toContain('v-col--cols-7')
+    expect(wrapper.find('[data-test="recipe-step"]').classes()).not.toContain('py-3')
+    expect(wrapper.find('h1').classes()).toContain('text-headline-small')
+    window.dispatchEvent(new Event('afterprint'))
+  })
+
   it('neplatný alebo zastavený odkaz povie, že už nefunguje', async () => {
     const { wrapper } = await mountShared({
       '/shared/kod123': () => jsonResponse({ error: { code: 'not_found', message: 'x' } }, 404),
