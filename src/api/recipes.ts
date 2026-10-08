@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type {
+  RecipeShareDto,
   ImageDto,
   ImportRecipeResultDto,
   RecipeDetailDto,
@@ -131,6 +132,30 @@ export function useDeleteRecipe(): UseMutationReturnType<void, Error, string, un
       void client.invalidateQueries({ queryKey: ['recipes', 'list'] })
       markIngredientsStale(client)
     },
+  })
+}
+
+/** Zapne zdieľanie receptu odkazom (`/s/<kód>`); detail si kód hneď zapamätá. */
+export function useShareRecipe(): UseMutationReturnType<RecipeShareDto, Error, string, unknown> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<RecipeShareDto>(`/recipes/${id}/share`, { method: 'POST' }),
+    onSuccess: (share, id) =>
+      client.setQueryData<RecipeDetailDto>(recipeKeys.detail(id), (old) =>
+        old ? { ...old, shareToken: share.token } : old,
+      ),
+  })
+}
+
+/** Zastaví zdieľanie: starý odkaz prestane fungovať. */
+export function useUnshareRecipe(): UseMutationReturnType<void, Error, string, unknown> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/recipes/${id}/share`, { method: 'DELETE' }),
+    onSuccess: (_data, id) =>
+      client.setQueryData<RecipeDetailDto>(recipeKeys.detail(id), (old) =>
+        old ? { ...old, shareToken: null } : old,
+      ),
   })
 }
 

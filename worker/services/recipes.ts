@@ -349,6 +349,7 @@ export async function getRecipeDetail(
     sourceUrl: r.sourceUrl,
     sourceText: r.sourceText,
     coverImageId: r.coverImageId,
+    shareToken: r.shareToken,
     ingredients: ingredientRows.map(({ row, name }) => ({
       id: row.id,
       ingredientId: row.ingredientId,

@@ -216,9 +216,35 @@ export interface RecipeDetailDto extends RecipeSummaryDto {
   sourceUrl: string | null
   sourceText: string | null
   coverImageId: string | null
+  /** Kód odkazu na zdieľanie (`/s/<kód>`); null = recept sa nezdieľa. Len pre vlastnú domácnosť. */
+  shareToken?: string | null
   ingredients: RecipeIngredientDto[]
   steps: RecipeStepDto[]
 }
+
+/** Odkaz na zdieľanie receptu: kód a cesta stránky, ktorú otvorí ktokoľvek aj bez prihlásenia. */
+export interface RecipeShareDto {
+  token: string
+  url: string
+}
+
+/** Recept otvorený cez odkaz na zdieľanie – bez údajov domácnosti (tagy, obľúbené, špajza). */
+export type SharedRecipeDto = Pick<
+  RecipeDetailDto,
+  | 'id'
+  | 'title'
+  | 'category'
+  | 'servings'
+  | 'prepMinutes'
+  | 'cookMinutes'
+  | 'difficulty'
+  | 'coverImageUrl'
+  | 'description'
+  | 'sourceUrl'
+  | 'sourceText'
+  | 'ingredients'
+  | 'steps'
+>
 
 /** Verejný recept v zozname Verejných receptov: autor je názov domácnosti, `ownedByMe` = patrí mojej domácnosti. */
 export interface PublicRecipeSummaryDto extends RecipeSummaryDto {

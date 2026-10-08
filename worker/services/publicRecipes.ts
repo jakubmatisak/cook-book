@@ -79,6 +79,8 @@ export async function getPublicRecipe(
     ingredients: detail.ingredients.map((i) => ({ ...i, inPantry: false })),
     householdName: found.householdName,
     ownedByMe: found.householdId === user.householdId,
+    // Kód zdieľania otvorí recept bez prihlásenia – cudzím domácnostiam sa neukáže.
+    shareToken: found.householdId === user.householdId ? detail.shareToken : null,
   }
 }
 

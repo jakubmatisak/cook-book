@@ -29,7 +29,7 @@ import { formatScaled, quantityColumnWidth } from '@/i18n/quantity'
 import { markdownFilename, recipeToMarkdown } from '@shared/markdown'
 import { ApiError, downloadFile } from '@/api/http'
 import { useIsOwner, useMe } from '@/api/me'
-import { useDeleteRecipe, useRecipe } from '@/api/recipes'
+import { useDeleteRecipe, useRecipe, useShareRecipe, useUnshareRecipe } from '@/api/recipes'
 import { canShare, copyText, shareText } from '@/composables/useShare'
 import { useToday } from '@/composables/useToday'
 import EntryDialog from '@/features/meal-plan/components/EntryDialog.vue'
@@ -162,6 +162,40 @@ async function shareRecipe() {
   }
 }
 
+// Zdieľanie odkazom: recept cez `/s/<kód>` otvorí ktokoľvek aj bez prihlásenia, kým sa zdieľanie nezastaví.
+const shareLinkMutation = useShareRecipe()
+const unshare = useUnshareRecipe()
+const shareUrl = (token: string) => `${window.location.origin}/s/${token}`
+
+async function copyShareLink(token: string) {
+  const url = shareUrl(token)
+  const copied = await copyText(url)
+  notify(
+    copied ? t('recipes.detail.linkCopied') : t('recipes.detail.linkCopyFailed', { url }),
+    copied ? 'success' : 'error',
+  )
+}
+
+async function shareLink() {
+  if (!recipe.value) return
+  try {
+    const share = await shareLinkMutation.mutateAsync(recipe.value.id)
+    await copyShareLink(share.token)
+  } catch (e) {
+    notify(errorText(e), 'error')
+  }
+}
+
+async function stopSharing() {
+  if (!recipe.value) return
+  try {
+    await unshare.mutateAsync(recipe.value.id)
+    notify(t('recipes.detail.sharingStopped'))
+  } catch (e) {
+    notify(errorText(e), 'error')
+  }
+}
+
 async function downloadMarkdown() {
   if (!recipe.value) return
   const query = servings.value !== recipe.value.servings ? `?servings=${servings.value}` : ''
@@ -240,6 +274,13 @@ function goBack() {
             @click="shareRecipe"
           />
           <v-list-item
+            v-if="!recipe.shareToken"
+            :prepend-icon="mdiLinkVariant"
+            :title="t('recipes.detail.shareLink')"
+            data-test="share-link"
+            @click="shareLink"
+          />
+          <v-list-item
             :prepend-icon="mdiFileDownloadOutline"
             :title="t('recipes.detail.downloadMd')"
             data-test="download-md"
@@ -297,6 +338,33 @@ function goBack() {
       >
         {{ chip.text }}
       </v-chip>
+    </div>
+    <div
+      v-if="recipe.shareToken"
+      class="d-flex flex-wrap align-center ga-2 mb-3 d-print-none"
+      data-test="share-status"
+    >
+      <v-chip color="success" variant="tonal" size="small" :prepend-icon="mdiLinkVariant">
+        {{ t('recipes.detail.shared') }}
+      </v-chip>
+      <v-btn
+        size="small"
+        variant="tonal"
+        :prepend-icon="mdiContentCopy"
+        data-test="share-copy"
+        @click="copyShareLink(recipe.shareToken)"
+      >
+        {{ t('recipes.detail.copyLink') }}
+      </v-btn>
+      <v-btn
+        size="small"
+        variant="text"
+        :loading="unshare.isPending.value"
+        data-test="share-stop"
+        @click="stopSharing"
+      >
+        {{ t('recipes.detail.stopSharing') }}
+      </v-btn>
     </div>
     <v-btn
       color="primary"

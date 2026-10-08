@@ -187,6 +187,8 @@ export const recipes = sqliteTable(
     /** `public` = vidia ho všetci prihlásení z každej domácnosti (nie len členovia domácnosti). */
     visibility: text('visibility', { enum: RECIPE_VISIBILITIES }).notNull().default('private'),
     coverImageId: text('cover_image_id').references(() => images.id, { onDelete: 'set null' }),
+    /** Kód odkazu na zdieľanie (`/s/<kód>`), ktorý otvorí recept aj bez prihlásenia; null = nezdieľaný. */
+    shareToken: text('share_token').unique(),
     parentRecipeId: text('parent_recipe_id').references((): AnySQLiteColumn => recipes.id, {
       onDelete: 'set null',
     }),

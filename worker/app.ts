@@ -14,6 +14,7 @@ import { pantryRoutes } from './routes/pantry'
 import { planRoutes } from './routes/plan'
 import { publicRoutes } from './routes/public'
 import { recipeRoutes } from './routes/recipes'
+import { sharedRoutes } from './routes/shared'
 import { shoppingRoutes } from './routes/shopping'
 import { stapleRoutes } from './routes/staples'
 
@@ -35,8 +36,11 @@ export function createApp(deps: AppDeps = {}) {
       await next()
     }),
   )
-  app.use('/api/v1/*', auth)
-  app.use('/api/v1/*', requireHousehold)
+  // Recept cez odkaz na zdieľanie otvorí ktokoľvek – jediná cesta API bez prihlásenia.
+  const isShared = (path: string) => path.startsWith('/api/v1/shared/')
+  app.use('/api/v1/*', (c, next) => (isShared(c.req.path) ? next() : auth(c, next)))
+  app.use('/api/v1/*', (c, next) => (isShared(c.req.path) ? next() : requireHousehold(c, next)))
+  app.route('/api/v1/shared', sharedRoutes)
   app.use('/img/*', auth)
   app.route('/api/v1/households', householdsRoutes)
   app.route('/api/v1/household', householdRoutes)

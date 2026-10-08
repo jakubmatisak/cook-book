@@ -50,6 +50,13 @@ export const routes: RouteRecordRaw[] = [
   },
   // Verejné recepty sú súčasťou zoznamu receptov (filter „Recepty od iných“).
   { path: '/public', redirect: { path: '/recipes', query: { public: 'only' } } },
+  // Recept otvorený odkazom na zdieľanie – bez prihlásenia a bez menu aplikácie (App.vue).
+  {
+    path: '/s/:token',
+    name: 'shared-recipe',
+    component: () => import('@/features/recipes/pages/SharedRecipePage.vue'),
+    meta: { public: true },
+  },
   {
     path: '/public/:id',
     name: 'public-recipe',

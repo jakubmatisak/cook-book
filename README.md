@@ -33,6 +33,8 @@ sign-in is handled by Cloudflare Access.
 - **Public recipes:** a household owner can publish a recipe; every signed-in user (in any household) can browse
   public recipes, filter them by meal type and add a copy (with photo) to their own recipes. Copies are independent
   and private.
+- **Sharing via link:** any recipe can be shared with a link that opens it (with a print button) for anyone, even
+  without signing in; sharing can be stopped at any time.
 - **Languages and personal settings:** the whole app is available in Slovak and English. Language, appearance, the
   list view and the last-used recipe filters are saved per user (with a button to reset all filters), so they
   follow you across devices and households.
@@ -159,6 +161,14 @@ needs a full address: build with `SITE_URL=https://your-app.example.com npm run 
 `.env.local`). Note that Cloudflare Access protects the whole site, so chat apps cannot read the preview of a private
 link; to allow it, add an Access **Bypass** policy for the path `/og-image.png` (and for any page you want previewed).
 
+### Sharing a recipe via link
+
+Recipe detail → ⋮ → **Share via link** creates a link `/s/<code>` that opens the recipe (with photo and a print
+button) for anyone, without signing in; **Stop sharing** turns the link off. For people outside your Access policy to
+open it, add a second Access application with a **Bypass** policy (include: Everyone) for these paths of your domain:
+`s/*`, `api/v1/shared/*`, `assets/*`, `favicon.svg` and `favicon.ico`. The code in the link is the only key; the rest
+of the API stays protected by Access and by the app's own token check.
+
 ### Signing out
 
 The app menu (the account icon in the top right corner) has **Sign out**, which uses Cloudflare Access
@@ -237,6 +247,8 @@ Stránka so screenshotmi: <https://jakubmatisak.github.io/cook-book-website/>
 - **Verejné recepty:** vlastník domácnosti môže recept zverejniť; každý prihlásený (v ktorejkoľvek domácnosti) si
   verejné recepty prehliada, filtruje podľa typu jedla a pridá si kópiu (aj s fotkou) do svojich receptov. Kópie sú
   nezávislé a súkromné.
+- **Zdieľanie odkazom:** každý recept sa dá zdieľať odkazom, ktorý ho otvorí (s tlačidlom na tlač) komukoľvek, aj
+  bez prihlásenia; zdieľanie sa dá kedykoľvek zastaviť.
 - **Jazyky a osobné nastavenia:** celá aplikácia je po slovensky aj anglicky. Jazyk, vzhľad, pohľad zoznamu a
   naposledy použité filtre receptov sa ukladajú na človeka (s tlačidlom na úplný reset filtrov), takže ho
   nasledujú na všetkých zariadeniach aj domácnostiach.
@@ -320,6 +332,12 @@ schémy spúšťaj ručne `npm run db:migrate:remote` pred pushom (vždy pred na
 `SITE_URL=https://tvoja-aplikacia.example.com npm run build` (alebo daj `VITE_SITE_URL` do `.env.local`). Pozor:
 Cloudflare Access chráni celú stránku, takže chatové aplikácie náhľad súkromného odkazu nevidia; povoliť sa dá
 pravidlom Access **Bypass** pre cestu `/og-image.png` (a pre stránky, ktoré chceš zdieľať s náhľadom).
+
+**Zdieľanie receptu odkazom:** detail receptu → ⋮ → **Zdieľať odkazom** vytvorí odkaz `/s/<kód>`, ktorý recept
+(s fotkou a tlačidlom na tlač) otvorí komukoľvek aj bez prihlásenia; **Zastaviť zdieľanie** odkaz vypne. Aby ho
+otvorili aj ľudia mimo pravidla Access, pridaj v Zero Trust druhú aplikáciu s pravidlom **Bypass** (Include:
+Everyone) pre tieto cesty tvojej domény: `s/*`, `api/v1/shared/*`, `assets/*`, `favicon.svg` a `favicon.ico`. Kód v
+odkaze je jediný kľúč; zvyšok API ostáva chránený cez Access aj vlastnú kontrolu tokenu v aplikácii.
 
 **Odhlásenie:** v ponuke účtu v pravom hornom rohu je **Odhlásiť sa** (cez Cloudflare Access). Ukazuje sa len na
 nasadenej stránke, lokálne nie.

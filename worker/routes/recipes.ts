@@ -20,6 +20,7 @@ import { bulkIdsSchema, recipeBulkUpdateSchema } from '../../shared/schemas/bulk
 import { HttpError } from '../errors'
 import { getUserSettings } from '../services/userSettings'
 import { requireOwner } from '../middleware/owner'
+import { shareRecipe, unshareRecipe } from '../services/share'
 import {
   addSampleRecipes,
   deleteRecipe,
@@ -113,6 +114,14 @@ export const recipeRoutes = new Hono<AppEnv>()
     const user = c.get('user')
     const id = await saveRecipe(c.get('db'), user, input, c.req.param('id'), c.env.BUCKET)
     return c.json(await getRecipeDetail(c.get('db'), user.householdId, user.id, id))
+  })
+  // Zdieľanie odkazom (`/s/<kód>`): zapnutie vráti odkaz, vypnutie ho zruší.
+  .post('/:id/share', async (c) => {
+    return c.json(await shareRecipe(c.get('db'), c.get('user').householdId, c.req.param('id')))
+  })
+  .delete('/:id/share', async (c) => {
+    await unshareRecipe(c.get('db'), c.get('user').householdId, c.req.param('id'))
+    return c.body(null, 204)
   })
   .delete('/:id', async (c) => {
     await deleteRecipe(c.get('db'), c.get('user').householdId, c.req.param('id'), c.env.BUCKET)

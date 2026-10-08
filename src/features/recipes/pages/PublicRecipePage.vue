@@ -1,24 +1,15 @@
 <script setup lang="ts">
-import {
-  mdiArrowLeft,
-  mdiChefHat,
-  mdiClockOutline,
-  mdiLinkVariant,
-  mdiPlaylistPlus,
-  mdiPotSteamOutline,
-  mdiSilverwareForkKnife,
-} from '@mdi/js'
+import { mdiArrowLeft, mdiLinkVariant, mdiPlaylistPlus, mdiPotSteamOutline } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import type { RecipeIngredientDto } from '@shared/api'
 import { ApiError } from '@/api/http'
 import { useCopyPublicRecipe, usePublicRecipe } from '@/api/publicRecipes'
 import EmptyState from '@/components/EmptyState.vue'
 import RecipeCover from '../components/RecipeCover.vue'
+import RecipeIngredientsSteps from '../components/RecipeIngredientsSteps.vue'
+import { useRecipeChips } from '../recipeChips'
 import { errorText } from '@/i18n/errors'
-import { formatMinutes, tc } from '@/i18n/format'
-import { formatQuantity, quantityColumnWidth } from '@/i18n/quantity'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -37,47 +28,7 @@ watch(
   { immediate: true },
 )
 
-const groups = computed(() => {
-  const map = new Map<string, RecipeIngredientDto[]>()
-  for (const item of recipe.value?.ingredients ?? []) {
-    const key = item.groupName ?? ''
-    map.set(key, [...(map.get(key) ?? []), item])
-  }
-  return [...map.entries()].map(([name, items]) => ({ name, items }))
-})
-
-const quantityWidth = computed(() =>
-  quantityColumnWidth(
-    (recipe.value?.ingredients ?? []).map((item) => formatQuantity(item.quantity, item.unit)),
-  ),
-)
-
-const suffix = (item: RecipeIngredientDto) =>
-  (item.note ? `, ${item.note}` : '') + (item.isOptional ? ` (${t('recipes.detail.optional')})` : '')
-
-interface Chip {
-  icon?: string
-  text: string
-  color?: string
-}
-const chips = computed<Chip[]>(() => {
-  const r = recipe.value
-  if (!r) return []
-  const list: Chip[] = [{ text: t(`common.category.${r.category}`), color: 'primary' }]
-  if (r.prepMinutes !== null)
-    list.push({
-      icon: mdiClockOutline,
-      text: t('recipes.detail.prep', { time: formatMinutes(r.prepMinutes) }),
-    })
-  if (r.cookMinutes !== null)
-    list.push({
-      icon: mdiPotSteamOutline,
-      text: t('recipes.detail.cook', { time: formatMinutes(r.cookMinutes) }),
-    })
-  list.push({ icon: mdiSilverwareForkKnife, text: tc('common.plural.portions', r.servings) })
-  list.push({ icon: mdiChefHat, text: t(`common.difficulty.${r.difficulty}`) })
-  return list
-})
+const chips = useRecipeChips(recipe)
 
 const snackbar = ref({ show: false, text: '', color: 'success', recipeId: '' })
 
@@ -188,52 +139,7 @@ const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
 
     <!-- Ukončí obtekanie titulnej fotky, aby ingrediencie a postup boli pod hlavičkou. -->
     <div style="clear: both" />
-    <v-row>
-      <v-col cols="12" md="5" lg="4">
-        <v-card :title="t('recipes.detail.ingredients')">
-          <v-card-text v-if="!recipe.ingredients.length" class="text-medium-emphasis">
-            {{ t('recipes.detail.noIngredients') }}
-          </v-card-text>
-          <v-list density="compact" class="py-0 pb-2">
-            <template v-for="group in groups" :key="group.name">
-              <v-list-subheader v-if="group.name" class="text-primary font-weight-bold">
-                {{ group.name }}
-              </v-list-subheader>
-              <v-list-item v-for="item in group.items" :key="item.id">
-                <template #prepend>
-                  <span
-                    class="font-weight-bold text-no-wrap me-3"
-                    :style="{ minWidth: quantityWidth }"
-                    data-test="ingredient-quantity"
-                  >
-                    {{ formatQuantity(item.quantity, item.unit) }}
-                  </span>
-                </template>
-                <v-list-item-title class="text-wrap">
-                  {{ item.name }}<span class="text-medium-emphasis">{{ suffix(item) }}</span>
-                </v-list-item-title>
-              </v-list-item>
-            </template>
-          </v-list>
-        </v-card>
-      </v-col>
-      <v-col cols="12" md="7" lg="8">
-        <v-card :title="t('recipes.detail.steps')">
-          <v-list lines="three" class="py-0 pb-2">
-            <v-list-item v-for="step in recipe.steps" :key="step.id" class="py-3">
-              <template #prepend>
-                <v-avatar color="primary" size="32" class="font-weight-bold">{{
-                  step.position + 1
-                }}</v-avatar>
-              </template>
-              <v-list-item-title class="text-wrap text-body-large text-pre-line">
-                {{ step.text }}
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-card>
-      </v-col>
-    </v-row>
+    <RecipeIngredientsSteps :ingredients="recipe.ingredients" :steps="recipe.steps" />
   </template>
 
   <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="6000">
