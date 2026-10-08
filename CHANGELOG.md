@@ -1,5 +1,14 @@
 # Zmeny
 
+## 1.4.5 – 2026-10-08
+
+### Nové
+
+- Kategória Prílohové omáčky a Pestá (filter, úvodná stránka, editor, import z webu, Markdown export).
+- Detail receptu: titulná fotka je menší štvorec vpravo a text ju obteká (pod 600 px ostáva hore na celú
+  šírku), aby sa nenaťahovala a bola ostrá aj z malého súboru. Rovnako verejný recept.
+- Popis receptu je zarovnaný do bloku.
+
 ## 1.4.4 – 2026-10-08
 
 ### Opravy
