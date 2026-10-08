@@ -48,7 +48,8 @@ export function stubApi(routes: Record<string, unknown | ((call: StubCall) => Re
       const call: StubCall = {
         method: init?.method ?? 'GET',
         path,
-        body: init?.body ? JSON.parse(String(init.body)) : undefined,
+        // JSON telo sa rozparsuje; FormData (nahrávanie fotky) sa zaznamená tak, ako je.
+        body: typeof init?.body === 'string' ? JSON.parse(init.body) : (init?.body ?? undefined),
       }
       calls.push(call)
       const handler = routes[`${call.method} ${path}`] ?? routes[path]

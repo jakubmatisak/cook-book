@@ -16,6 +16,7 @@ import { useFlushOnHide } from '@/composables/useFlushOnHide'
 import { errorText } from '@/i18n/errors'
 import ImagePicker from '../components/ImagePicker.vue'
 import IngredientRows from '../components/IngredientRows.vue'
+import RecipeAttachmentsEditor from '../components/RecipeAttachmentsEditor.vue'
 import StepRows from '../components/StepRows.vue'
 import {
   describeIssues,
@@ -292,6 +293,23 @@ function cancel() {
 
       <v-card :title="t('recipes.editor.steps')">
         <v-card-text><StepRows v-model="form.steps" /></v-card-text>
+      </v-card>
+
+      <v-card :title="t('recipes.editor.notesAndAttachments')">
+        <v-card-text class="d-flex flex-column ga-4">
+          <div>
+            <div class="text-body-small text-medium-emphasis mb-2">{{ t('recipes.attachments.hint') }}</div>
+            <RecipeAttachmentsEditor v-model="form.attachments" />
+          </div>
+          <v-textarea
+            v-model="form.notes"
+            :label="t('recipes.editor.notes')"
+            rows="3"
+            auto-grow
+            hide-details
+            data-test="recipe-notes-input"
+          />
+        </v-card-text>
       </v-card>
 
       <v-card :title="t('recipes.editor.tagsAndSource')">

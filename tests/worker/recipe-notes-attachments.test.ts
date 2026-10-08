@@ -1,8 +1,17 @@
 import { env } from 'cloudflare:workers'
 import { describe, expect, it } from 'vitest'
-import type { ImageDto, RecipeDetailDto } from '@shared/api'
+import type {
+  ImageDto,
+  PublicRecipeDetailDto,
+  RecipeDetailDto,
+  RecipeShareDto,
+  SharedRecipeDto,
+} from '@shared/api'
 import { createApp } from '../../worker/app'
-import { api, send } from './helpers'
+import { getDb } from '../../worker/db/client'
+import { createHousehold, ensureUser } from '../../worker/services/household'
+import { inviteMember } from '../../worker/services/memberships'
+import { api, call, PROD, send } from './helpers'
 
 const app = createApp()
 
@@ -86,5 +95,40 @@ describe('uloženie zo staršej verzie aplikácie', () => {
     expect(again.notes).toBe('Prepis')
     expect(again.attachments?.map((a) => a.id)).toEqual([photo.id])
     expect(await keys()).toEqual([keyOf(photo)])
+  })
+})
+
+describe('poznámky a prílohy mimo vlastnej domácnosti', () => {
+  it('odkaz na zdieľanie ukáže poznámky, ale nie prílohy', async () => {
+    const photo = await upload()
+    const { recipe } = await save({ title: 'Krémeš', notes: 'Prepis', attachmentIds: [photo.id] })
+    const { token } = await (
+      await send(app, 'POST', api(`/recipes/${recipe.id}/share`))
+    ).json<RecipeShareDto>()
+    const shared = await (await call(app, `${PROD}/api/v1/shared/${token}`)).json<SharedRecipeDto>()
+    expect(shared.notes).toBe('Prepis')
+    expect(shared).not.toHaveProperty('attachments')
+  })
+
+  it('verejný recept iná domácnosť vidí s poznámkami bez príloh; kópia si vezme poznámky', async () => {
+    await ensureUser(getDb(env), 'ja@example.com')
+    const other = await createHousehold(getDb(env), 'Rodičia')
+    await inviteMember(getDb(env), other, 'manzelka@example.com', 'owner')
+    const photo = await upload()
+    const { recipe } = await save({ title: 'Krémeš', notes: 'Prepis', attachmentIds: [photo.id] })
+    await send(app, 'PUT', api(`/recipes/${recipe.id}/visibility`), { visibility: 'public' })
+
+    const as = { as: 'manzelka@example.com' }
+    const seen = await (
+      await send(app, 'GET', api(`/public/recipes/${recipe.id}`), undefined, as)
+    ).json<PublicRecipeDetailDto>()
+    expect(seen.notes).toBe('Prepis')
+    expect(seen.attachments).toEqual([])
+
+    const copy = await (
+      await send(app, 'POST', api(`/public/recipes/${recipe.id}/copy`), undefined, as)
+    ).json<RecipeDetailDto>()
+    expect(copy.notes).toBe('Prepis')
+    expect(copy.attachments).toEqual([])
   })
 })

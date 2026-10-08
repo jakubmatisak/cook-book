@@ -10,6 +10,7 @@ import { printPage, usePrintMode } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
 import RecipeCover from '../components/RecipeCover.vue'
 import RecipeIngredientsSteps from '../components/RecipeIngredientsSteps.vue'
+import RecipeNotes from '../components/RecipeNotes.vue'
 import { useRecipeChips } from '../recipeChips'
 
 /** Recept otvorený odkazom na zdieľanie: bez menu a prihlásenia, s tlačidlom na tlač. */
@@ -101,5 +102,6 @@ watch(
     <p v-if="recipe.sourceText" class="text-body-small text-medium-emphasis mt-3">
       {{ t('recipes.shared.source', { source: recipe.sourceText }) }}
     </p>
+    <RecipeNotes v-if="recipe.notes" :notes="recipe.notes" class="mt-4" />
   </template>
 </template>

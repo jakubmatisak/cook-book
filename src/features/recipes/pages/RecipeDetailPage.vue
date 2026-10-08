@@ -39,7 +39,9 @@ import { printPage, usePrintMode } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
 import { formatMinutes, tc } from '@/i18n/format'
 import FavoriteButton from '../components/FavoriteButton.vue'
+import RecipeAttachmentsGallery from '../components/RecipeAttachmentsGallery.vue'
 import RecipeCover from '../components/RecipeCover.vue'
+import RecipeNotes from '../components/RecipeNotes.vue'
 import VisibilityDialog from '../components/VisibilityDialog.vue'
 
 const { t, locale } = useI18n()
@@ -511,6 +513,12 @@ function goBack() {
         </div>
       </v-col>
     </v-row>
+
+    <!-- Fotky originálu (napr. strany zo zošita) nad poznámkami s prepisom. -->
+    <div v-if="recipe.attachments?.length || recipe.notes" class="d-flex flex-column ga-4 mt-4">
+      <RecipeAttachmentsGallery v-if="recipe.attachments?.length" :attachments="recipe.attachments" />
+      <RecipeNotes v-if="recipe.notes" :notes="recipe.notes" />
+    </div>
   </template>
 
   <EntryDialog

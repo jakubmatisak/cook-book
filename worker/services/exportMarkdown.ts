@@ -69,6 +69,7 @@ export async function loadRecipesForMarkdown(db: Db, householdId: string): Promi
     difficulty: r.difficulty,
     sourceUrl: r.sourceUrl,
     sourceText: r.sourceText,
+    notes: r.notes,
     tags: (tagsOf.get(r.id) ?? []).map((t) => ({ name: t.name })),
     ingredients: (ingredientsOf.get(r.id) ?? []).map(({ recipeId: _recipeId, ...i }) => i),
     steps: (stepsOf.get(r.id) ?? []).map(({ recipeId: _recipeId, ...s }) => s),

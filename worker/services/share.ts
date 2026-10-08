@@ -72,6 +72,7 @@ export async function getSharedRecipe(db: Db, token: string): Promise<SharedReci
     description: d.description,
     sourceUrl: d.sourceUrl,
     sourceText: d.sourceText,
+    notes: d.notes ?? null,
     ingredients: d.ingredients.map((i) => ({ ...i, inPantry: false })),
     steps: d.steps,
   }

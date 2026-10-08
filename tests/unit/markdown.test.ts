@@ -93,6 +93,31 @@ describe('recipeToMarkdown', () => {
     expect(recipeToMarkdown({ ...minimal('A'), sourceText: 'Babka' })).toContain('Zdroj: Babka')
   })
 
+  it('poznámky idú ako vlastná časť za postup, pred zdroj; prázdne sa vynechajú', () => {
+    const text = recipeToMarkdown({
+      ...minimal('Krémeš'),
+      steps: [{ text: 'Upeč.', timerSeconds: null }],
+      notes: 'Vody je odhad.\n\nPôvodný zápis: …',
+      sourceText: 'Zošit',
+    })
+    expect(text).toContain(
+      [
+        '## Postup',
+        '',
+        '1. Upeč.',
+        '',
+        '## Poznámky',
+        '',
+        'Vody je odhad.',
+        '',
+        'Pôvodný zápis: …',
+        '',
+        'Zdroj: Zošit',
+      ].join('\n'),
+    )
+    expect(recipeToMarkdown({ ...minimal('A'), notes: '  ' })).not.toContain('Poznámky')
+  })
+
   it('spolu sa ukáže len keď je známa príprava aj varenie', () => {
     const onlyCook = recipeToMarkdown({ ...minimal('A'), cookMinutes: 30 })
     expect(onlyCook).toContain('varenie 30 min')

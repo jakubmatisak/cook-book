@@ -254,6 +254,7 @@ export type SharedRecipeDto = Pick<
   | 'description'
   | 'sourceUrl'
   | 'sourceText'
+  | 'notes'
   | 'ingredients'
   | 'steps'
 >

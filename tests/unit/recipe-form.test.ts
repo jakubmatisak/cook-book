@@ -96,6 +96,8 @@ describe('formulár receptu', () => {
       description: 'Popis',
       sourceUrl: 'https://example.com/gulas',
       sourceText: null,
+      notes: 'Pôvodný zápis',
+      attachments: [{ id: 'a1', url: '/img/h/a1.webp', width: 1200, height: 1600 }],
       ingredients: [
         {
           id: 'i1',
@@ -122,6 +124,8 @@ describe('formulár receptu', () => {
       difficulty: 3,
       sourceUrl: 'https://example.com/gulas',
       sourceText: null,
+      notes: 'Pôvodný zápis',
+      attachmentIds: ['a1'],
       coverImageId: 'x',
       ingredients: [
         { name: 'Mäso', quantity: 0.75, unit: 'kg', note: null, groupName: 'Základ', isOptional: false },
@@ -129,6 +133,19 @@ describe('formulár receptu', () => {
       steps: [{ text: 'Var.', timerSeconds: 90 }],
       tags: ['Klasika'],
     })
+  })
+
+  it('prázdne poznámky sú null; koncept zo staršej verzie (bez poznámok a príloh) ich na serveri nezmení', () => {
+    const form = emptyRecipeForm()
+    expect(formToInput({ ...form, title: 'A', notes: '  ' })).toMatchObject({
+      notes: null,
+      attachmentIds: [],
+    })
+
+    const { notes: _notes, attachments: _attachments, ...oldDraft } = { ...form, title: 'A' }
+    const input = formToInput(oldDraft as typeof form)
+    expect(input.notes).toBeUndefined()
+    expect(input.attachmentIds).toBeUndefined()
   })
 })
 

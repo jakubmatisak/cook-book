@@ -1,4 +1,4 @@
-import type { ImportRecipeResultDto, RecipeDetailDto } from '@shared/api'
+import type { ImportRecipeResultDto, RecipeAttachmentDto, RecipeDetailDto } from '@shared/api'
 import type { RecipeCategory } from '@shared/recipes'
 import type { RecipeInputRaw } from '@shared/schemas/recipe'
 import type { UnitCode } from '@shared/units'
@@ -32,6 +32,10 @@ export interface RecipeForm {
   difficulty: number
   sourceUrl: string
   sourceText: string
+  /** Voľné poznámky (napr. pôvodný zápis receptu). */
+  notes: string
+  /** Fotky originálu (strany zo zošita) v poradí, v akom sa ukážu. */
+  attachments: RecipeAttachmentDto[]
   coverImageId: string | null
   coverImageUrl: string | null
   ingredients: IngredientRow[]
@@ -65,6 +69,8 @@ export function emptyRecipeForm(): RecipeForm {
     difficulty: 1,
     sourceUrl: '',
     sourceText: '',
+    notes: '',
+    attachments: [],
     coverImageId: null,
     coverImageUrl: null,
     ingredients: [emptyIngredientRow()],
@@ -116,6 +122,8 @@ export function recipeToForm(detail: RecipeDetailDto): RecipeForm {
     difficulty: detail.difficulty,
     sourceUrl: detail.sourceUrl ?? '',
     sourceText: detail.sourceText ?? '',
+    notes: detail.notes ?? '',
+    attachments: detail.attachments ?? [],
     coverImageId: detail.coverImageId,
     coverImageUrl: detail.coverImageUrl,
     ingredients: detail.ingredients.length
@@ -151,6 +159,9 @@ export function formToInput(form: RecipeForm): RecipeInputRaw {
     difficulty: form.difficulty,
     sourceUrl: textOrNull(form.sourceUrl),
     sourceText: textOrNull(form.sourceText),
+    // Koncept uložený staršou verziou poznámky ani prílohy nemá – vtedy sa na serveri nemenia.
+    notes: form.notes === undefined ? undefined : textOrNull(form.notes),
+    attachmentIds: form.attachments?.map((a) => a.id),
     coverImageId: form.coverImageId,
     ingredients: form.ingredients
       .filter((row) => row.name.trim())
@@ -230,6 +241,8 @@ export function importToForm(result: ImportRecipeResultDto): RecipeForm {
     difficulty: r.difficulty ?? 1,
     sourceUrl: textOf(r.sourceUrl),
     sourceText: textOf(r.sourceText),
+    notes: '',
+    attachments: [],
     coverImageId: textOf(r.coverImageId) || null,
     coverImageUrl: result.coverImageUrl,
     ingredients: ingredients.length ? ingredients : [emptyIngredientRow()],

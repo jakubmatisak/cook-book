@@ -15,6 +15,8 @@ export interface RecipeMarkdownInput {
   difficulty: number
   sourceUrl: string | null
   sourceText: string | null
+  /** Voľné poznámky (napr. pôvodný zápis receptu); staršie údaje ich nemajú. */
+  notes?: string | null
   tags: { name: string }[]
   ingredients: {
     name: string
@@ -35,8 +37,8 @@ export interface MarkdownOptions {
 const timerLabel = (seconds: number) => `*(časovač ${formatMinutes(Math.max(1, Math.ceil(seconds / 60)))})*`
 
 /**
- * Recept ako Markdown: názov, údaje, popis, tagy, ingrediencie po skupinách, očíslovaný postup
- * a zdroj. Hodí sa na kopírovanie, zdieľanie aj archiváciu v textovom súbore.
+ * Recept ako Markdown: názov, údaje, popis, tagy, ingrediencie po skupinách, očíslovaný postup,
+ * poznámky a zdroj. Hodí sa na kopírovanie, zdieľanie aj archiváciu v textovom súbore.
  */
 export function recipeToMarkdown(recipe: RecipeMarkdownInput, options: MarkdownOptions = {}): string {
   const servings = options.servings ?? recipe.servings
@@ -86,6 +88,8 @@ export function recipeToMarkdown(recipe: RecipeMarkdownInput, options: MarkdownO
     })
     lines.push('')
   }
+
+  if (recipe.notes?.trim()) lines.push('## Poznámky', '', recipe.notes.trim(), '')
 
   if (recipe.sourceUrl) {
     lines.push(

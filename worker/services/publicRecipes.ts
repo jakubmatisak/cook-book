@@ -77,6 +77,8 @@ export async function getPublicRecipe(
     ...detail,
     // Špajza patrí inej domácnosti, preto sa o nej nič neprezradí.
     ingredients: detail.ingredients.map((i) => ({ ...i, inPantry: false })),
+    // Prílohy (fotky originálu) sú len pre vlastnú domácnosť.
+    attachments: found.householdId === user.householdId ? detail.attachments : [],
     householdName: found.householdName,
     ownedByMe: found.householdId === user.householdId,
     // Kód zdieľania otvorí recept bez prihlásenia – cudzím domácnostiam sa neukáže.
@@ -124,6 +126,7 @@ export async function copyPublicRecipe(
     difficulty: source.difficulty,
     sourceUrl: source.sourceUrl,
     sourceText: source.sourceText,
+    notes: source.notes,
     coverImageId,
     ingredients: source.ingredients.map((i) => ({
       name: i.name,
