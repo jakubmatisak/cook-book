@@ -64,6 +64,13 @@
       "when": 1791471771346,
       "tag": "0008_yielding_sleeper",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1791493961270,
+      "tag": "0009_public_gargoyle",
+      "breakpoints": true
     }
   ]
 }

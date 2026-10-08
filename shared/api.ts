@@ -211,11 +211,23 @@ export interface RecipeStepDto {
   timerSeconds: number | null
 }
 
+/** Príloha receptu: fotka (`id` je ID fotky) s adresou a rozmermi pre galériu. */
+export interface RecipeAttachmentDto {
+  id: string
+  url: string
+  width: number | null
+  height: number | null
+}
+
 export interface RecipeDetailDto extends RecipeSummaryDto {
   description: string | null
   sourceUrl: string | null
   sourceText: string | null
   coverImageId: string | null
+  /** Voľné poznámky k receptu (odhady, pôvodný zápis). */
+  notes?: string | null
+  /** Prílohy (fotky) v poradí galérie. */
+  attachments?: RecipeAttachmentDto[]
   /** Kód odkazu na zdieľanie (`/s/<kód>`); null = recept sa nezdieľa. Len pre vlastnú domácnosť. */
   shareToken?: string | null
   ingredients: RecipeIngredientDto[]

@@ -184,6 +184,8 @@ export const recipes = sqliteTable(
     difficulty: integer('difficulty').notNull().default(1),
     sourceUrl: text('source_url'),
     sourceText: text('source_text'),
+    /** Voľné poznámky k receptu (napr. čo je odhad, pôvodný zápis zo zošita). */
+    notes: text('notes'),
     /** `public` = vidia ho všetci prihlásení z každej domácnosti (nie len členovia domácnosti). */
     visibility: text('visibility', { enum: RECIPE_VISIBILITIES }).notNull().default('private'),
     coverImageId: text('cover_image_id').references(() => images.id, { onDelete: 'set null' }),
@@ -241,6 +243,24 @@ export const recipeSteps = sqliteTable(
     imageId: text('image_id').references(() => images.id, { onDelete: 'set null' }),
   },
   (t) => [uniqueIndex('recipe_steps_recipe_position_uq').on(t.recipeId, t.position)],
+)
+
+/** Prílohy receptu (napr. fotky strán zo zošita) v poradí, v akom sa zobrazia v galérii. */
+export const recipeAttachments = sqliteTable(
+  'recipe_attachments',
+  {
+    id: id(),
+    recipeId: recipeRef(),
+    imageId: text('image_id')
+      .notNull()
+      .references(() => images.id, { onDelete: 'cascade' }),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('recipe_attachments_recipe_idx').on(t.recipeId, t.sortOrder),
+    index('recipe_attachments_image_idx').on(t.imageId),
+  ],
 )
 
 export const tags = sqliteTable(

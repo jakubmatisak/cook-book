@@ -55,7 +55,18 @@ export const recipeInputSchema = z.object({
     .preprocess(emptyToNull, z.url({ protocol: /^https?$/, error: 'Zadaj platnú webovú adresu.' }).nullish())
     .transform((v) => v ?? null),
   sourceText: optionalText(500),
+  /**
+   * Voľné poznámky (odhady, pôvodný zápis); univerzálne pre každý recept. Chýbajúce pole = ponechať (staršia verzia
+   * aplikácie ho neposiela), prázdne = vymazať.
+   */
+  notes: z.preprocess(emptyToNull, z.string().trim().max(20_000).nullish()),
   coverImageId: optionalText(40),
+  /** Prílohy (fotky) v poradí galérie; opakované ID sa vynechá. Chýbajúce pole = ponechať doterajšie. */
+  attachmentIds: z
+    .array(z.string().trim().min(1).max(40))
+    .max(30)
+    .optional()
+    .transform((ids) => (ids ? [...new Set(ids)] : undefined)),
   ingredients: z.array(recipeIngredientInputSchema).max(100).default([]),
   steps: z.array(recipeStepInputSchema).max(100).default([]),
   tags: z

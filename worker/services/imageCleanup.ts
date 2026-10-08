@@ -3,11 +3,15 @@ import type { Db } from '../db/client'
 import { images } from '../db/schema'
 import { chunk } from '../http'
 
-/** Fotku nepoužíva žiadny živý recept – ani ako titulnú, ani pri kroku (zmazané recepty sa neobnovujú). */
+/** Fotku nepoužíva žiadny živý recept – ani ako titulnú, ani pri kroku, ani v prílohách (zmazané recepty sa neobnovujú). */
 const unused = sql`not exists (select 1 from recipes r where r.cover_image_id = ${images.id} and r.deleted_at is null)
   and not exists (
     select 1 from recipe_steps s join recipes r on r.id = s.recipe_id
     where s.image_id = ${images.id} and r.deleted_at is null
+  )
+  and not exists (
+    select 1 from recipe_attachments a join recipes r on r.id = a.recipe_id
+    where a.image_id = ${images.id} and r.deleted_at is null
   )`
 
 async function removeImages(

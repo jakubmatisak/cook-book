@@ -27,6 +27,7 @@ import {
   images,
   ingredients,
   mealPlanEntries,
+  recipeAttachments,
   recipeFavorites,
   recipeIngredients,
   recipes,
@@ -96,6 +97,33 @@ async function assertImage(db: Db, householdId: string, imageId: string | null) 
   if (!found) throw new HttpError(400, 'invalid_image', 'Fotka neexistuje.')
 }
 
+/** Všetky prílohy musia byť fotky tejto domácnosti. */
+async function assertAttachments(db: Db, householdId: string, imageIds: readonly string[]) {
+  if (imageIds.length === 0) return
+  let found = 0
+  for (const part of chunk(imageIds, 90)) {
+    const rows = await db
+      .select({ id: images.id })
+      .from(images)
+      .where(and(eq(images.householdId, householdId), inArray(images.id, part)))
+    found += rows.length
+  }
+  if (found !== imageIds.length) throw new HttpError(400, 'invalid_image', 'Fotka neexistuje.')
+}
+
+/** Fotky príloh uvedených receptov (na zmazanie spolu s receptom). */
+export async function attachmentImageIds(db: Db, recipeIds: readonly string[]): Promise<string[]> {
+  const ids: string[] = []
+  for (const part of chunk(recipeIds, 90)) {
+    const rows = await db
+      .select({ imageId: recipeAttachments.imageId })
+      .from(recipeAttachments)
+      .where(inArray(recipeAttachments.recipeId, part))
+    ids.push(...rows.map((r) => r.imageId))
+  }
+  return ids
+}
+
 const isSlugConflict = (error: unknown) => isUniqueViolation(error, 'slug')
 
 /**
@@ -112,6 +140,10 @@ export async function saveRecipe(
   const householdId = user.householdId
   const existing = id ? await findLive(db, householdId, id) : undefined
   await assertImage(db, householdId, input.coverImageId)
+  const attachmentIds = input.attachmentIds
+  if (attachmentIds) await assertAttachments(db, householdId, attachmentIds)
+  // Pri výmene príloh si zapamätáme pôvodné, aby sa odobraté fotky dali zmazať.
+  const previousAttachments = existing && attachmentIds ? await attachmentImageIds(db, [existing.id]) : []
 
   const ingredientIds = await resolveIngredients(
     db,
@@ -129,8 +161,11 @@ export async function saveRecipe(
       : await uniqueSlug(db, householdId, slugify(input.title), existing?.id)
     try {
       await db.batch(buildStatements(slug))
-      if (bucket && existing?.coverImageId && existing.coverImageId !== input.coverImageId) {
-        await releaseImages(db, bucket, householdId, [existing.coverImageId])
+      if (bucket && existing) {
+        const removed = previousAttachments.filter((imageId) => !attachmentIds?.includes(imageId))
+        if (existing.coverImageId && existing.coverImageId !== input.coverImageId)
+          removed.push(existing.coverImageId)
+        await releaseImages(db, bucket, householdId, removed)
       }
       return recipeId
     } catch (error) {
@@ -152,6 +187,8 @@ export async function saveRecipe(
       sourceUrl: input.sourceUrl,
       sourceText: input.sourceText,
       coverImageId: input.coverImageId,
+      // Chýbajúce poznámky (staršia verzia aplikácie) sa nemenia.
+      ...(input.notes !== undefined ? { notes: input.notes } : {}),
     }
 
     const statements: BatchItem<'sqlite'>[] = existing
@@ -160,9 +197,20 @@ export async function saveRecipe(
           db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId)),
           db.delete(recipeSteps).where(eq(recipeSteps.recipeId, recipeId)),
           db.delete(recipeTags).where(eq(recipeTags.recipeId, recipeId)),
+          ...(attachmentIds
+            ? [db.delete(recipeAttachments).where(eq(recipeAttachments.recipeId, recipeId))]
+            : []),
         ]
       : [db.insert(recipes).values({ id: recipeId, householdId, createdBy: user.id, ...values })]
 
+    // Prílohy viacerými riadkami naraz (5 parametrov na riadok, D1 dovolí max 100).
+    chunk(attachmentIds ?? [], 15).forEach((part, index) => {
+      statements.push(
+        db
+          .insert(recipeAttachments)
+          .values(part.map((imageId, i) => ({ recipeId, imageId, sortOrder: index * 15 + i }))),
+      )
+    })
     // Po jednom riadku na príkaz – D1 dovolí max 100 viazaných parametrov.
     input.ingredients.forEach((item, sortOrder) => {
       statements.push(
@@ -243,6 +291,7 @@ export async function deleteRecipe(
   id: string,
   bucket?: R2Bucket,
 ): Promise<void> {
+  const attached = bucket ? await attachmentImageIds(db, [id]) : []
   const [deleted] = await db.batch([
     db
       .update(recipes)
@@ -259,7 +308,7 @@ export async function deleteRecipe(
     ),
   ])
   if (deleted.length === 0) throw notFound()
-  if (bucket) await releaseImages(db, bucket, householdId, [deleted[0]!.coverImageId])
+  if (bucket) await releaseImages(db, bucket, householdId, [deleted[0]!.coverImageId, ...attached])
 }
 
 export async function setFavorite(db: Db, user: UserRow, id: string, favorite: boolean): Promise<void> {
@@ -314,7 +363,7 @@ export async function getRecipeDetail(
   userId: string,
   id: string,
 ): Promise<RecipeDetailDto> {
-  const [head, ingredientRows, stepRows, tagRows] = await db.batch([
+  const [head, ingredientRows, stepRows, tagRows, attachmentRows] = await db.batch([
     db
       .select({
         recipe: recipes,
@@ -338,6 +387,12 @@ export async function getRecipeDetail(
       .innerJoin(tags, eq(tags.id, recipeTags.tagId))
       .where(eq(recipeTags.recipeId, id))
       .orderBy(asc(tags.name)),
+    db
+      .select({ id: images.id, r2Key: images.r2Key, width: images.width, height: images.height })
+      .from(recipeAttachments)
+      .innerJoin(images, eq(images.id, recipeAttachments.imageId))
+      .where(eq(recipeAttachments.recipeId, id))
+      .orderBy(asc(recipeAttachments.sortOrder)),
   ])
   const found = head[0]
   if (!found) throw notFound()
@@ -350,6 +405,13 @@ export async function getRecipeDetail(
     sourceText: r.sourceText,
     coverImageId: r.coverImageId,
     shareToken: r.shareToken,
+    notes: r.notes,
+    attachments: attachmentRows.map((a) => ({
+      id: a.id,
+      url: imageUrl(a.r2Key),
+      width: a.width,
+      height: a.height,
+    })),
     ingredients: ingredientRows.map(({ row, name }) => ({
       id: row.id,
       ingredientId: row.ingredientId,
