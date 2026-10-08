@@ -40,7 +40,8 @@ const slotId = ref('')
 const error = ref('')
 const confirmDelete = ref(false)
 
-const { data: recipeList } = useRecipes(() => ({ kids: 'include' }))
+// Do jedálnička sa dajú len vlastné recepty, preto bez receptov od iných (aj keď ich má človek zapnuté).
+const { data: recipeList } = useRecipes(() => ({ kids: 'include', public: 'hide' }))
 
 // Návštevy pri jedle: ručne vybrané aj tie, ktorých pobyt pokrýva zvolený deň.
 const stayGuestIds = computed(() => [

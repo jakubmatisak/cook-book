@@ -45,3 +45,17 @@ describe('nastavenie „Detské recepty“', () => {
     expect(put?.body).toEqual({ kidsEnabled: null })
   })
 })
+
+describe('nastavenie „Zobrazovať recepty od iných“', () => {
+  it('je predvolene vypnuté; zapnutie uloží showOthersRecipes=true, vypnutie ho vymaže', async () => {
+    const { calls, wrapper } = await mountSettings()
+    const input = wrapper.find('[data-test="others-switch"] input')
+    expect((input.element as HTMLInputElement).checked).toBe(false)
+    expect(wrapper.text()).toContain('Zobrazovať recepty od iných')
+
+    await input.setValue(true)
+    await flushPromises()
+    const puts = calls.filter((c) => c.method === 'PUT' && c.path === '/me/settings')
+    expect(puts.at(-1)?.body).toEqual({ showOthersRecipes: true })
+  })
+})

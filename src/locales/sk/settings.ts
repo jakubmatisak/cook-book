@@ -55,6 +55,11 @@ export default {
     copied: 'Adresa je skopírovaná.',
     copyFailed: 'Adresu sa nepodarilo skopírovať.',
   },
+  others: {
+    title: 'Recepty od iných',
+    label: 'Zobrazovať recepty od iných',
+    hint: 'Verejné recepty iných domácností sa ukážu v receptoch a na úvode spolu s tvojimi. Vo filtri ich môžeš kedykoľvek skryť.',
+  },
   kids: {
     title: 'Detské recepty',
     label: 'Zobrazovať detské recepty',

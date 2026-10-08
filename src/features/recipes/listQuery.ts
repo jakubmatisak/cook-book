@@ -14,7 +14,10 @@ export interface RecipeListState {
   pantry: boolean
   /** Detské recepty: skryté (predvolene), pridané (`kids=include`) alebo len ony (`kids=only`). */
   kids: KidsMode
-  /** Verejné recepty iných domácností: bez (predvolene), s nimi (`public=include`) alebo len cudzie (`public=only`). */
+  /**
+   * Verejné recepty iných domácností: bez (`public=hide`), s nimi (`public=include`) alebo len cudzie (`public=only`).
+   * Bez parametra platí nastavenie človeka „Zobrazovať recepty od iných“.
+   */
   public: PublicMode
   /** Najviac toľko chýbajúcich surovín (0 = viem uvariť, 1 = chýba jedna); len pri „Čo viem uvariť“. */
   missing: 0 | 1 | undefined
@@ -49,11 +52,12 @@ export type KidsMode = 'hide' | 'include' | 'only'
 const KIDS_PARAM: Readonly<Record<string, KidsMode>> = { include: 'include', only: 'only' }
 
 export type PublicMode = 'hide' | 'include' | 'only'
-const PUBLIC_PARAM: Readonly<Record<string, PublicMode>> = { include: 'include', only: 'only' }
+const PUBLIC_PARAM: Readonly<Record<string, PublicMode>> = { hide: 'hide', include: 'include', only: 'only' }
 
 const MISSING_VALUES: Readonly<Record<string, 0 | 1>> = { '0': 0, '1': 1 }
 
-export function parseListQuery(query: Query): RecipeListState {
+/** `publicDefault` – čo platí bez parametra `public` (podľa nastavenia „Zobrazovať recepty od iných“). */
+export function parseListQuery(query: Query, publicDefault: PublicMode = 'hide'): RecipeListState {
   const sort = one(query.sort)
   const dir = one(query.dir)
   return {
@@ -67,7 +71,7 @@ export function parseListQuery(query: Query): RecipeListState {
     favorite: one(query.favorites) === '1',
     pantry: one(query.pantry) === '1',
     kids: KIDS_PARAM[one(query.kids) ?? ''] ?? 'hide',
-    public: PUBLIC_PARAM[one(query.public) ?? ''] ?? 'hide',
+    public: PUBLIC_PARAM[one(query.public) ?? ''] ?? publicDefault,
     missing: one(query.pantry) === '1' ? MISSING_VALUES[one(query.missing) ?? ''] : undefined,
     sort: SORT_KEYS.find((key) => key === sort),
     dir: dir === 'asc' || dir === 'desc' ? dir : undefined,

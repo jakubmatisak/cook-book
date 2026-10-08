@@ -14,6 +14,7 @@ export const userSettingsUpdateSchema = z
     recipeView: z.enum(RECIPE_VIEWS).nullable().optional(),
     recipeQuery: recipeQuery.nullable().optional(),
     kidsEnabled: z.boolean().nullable().optional(),
+    showOthersRecipes: z.boolean().nullable().optional(),
     density: z.enum(DENSITIES).nullable().optional(),
     shoppingCartOpen: z.boolean().nullable().optional(),
     planSuggestionsOpen: z.boolean().nullable().optional(),

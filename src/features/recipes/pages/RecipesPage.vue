@@ -69,8 +69,14 @@ const { mdAndUp } = useDisplay()
 // Tlačidlá v riadku s poľami majú výšku poľa podľa hustoty rozhrania.
 const controlHeight = useControlHeight()
 
+const { data: me } = useMe()
+/** Recepty od iných bez filtra v adrese: podľa nastavenia človeka. */
+const publicDefault = computed<PublicMode>(() =>
+  me.value?.userSettings.showOthersRecipes ? 'include' : 'hide',
+)
+
 /** Filtre a zoradenie žijú v URL, aby prežili návrat z detailu a dali sa zdieľať. */
-const state = computed(() => parseListQuery(route.query))
+const state = computed(() => parseListQuery(route.query, publicDefault.value))
 
 function setQuery(patch: Record<string, string | undefined>) {
   const query = { ...route.query, ...patch }
@@ -94,9 +100,12 @@ onBeforeUnmount(() => clearTimeout(timer))
 
 const kidsEnabled = useKidsEnabled()
 // Pri vypnutých detských jedlách (nastavenia) sa prepínač ani parameter `detske` neuplatnia.
-const listFilters = computed(() =>
-  kidsEnabled.value ? state.value : { ...state.value, kids: 'hide' as const },
-)
+// Predvolené „recepty od iných“ server pozná z nastavení, preto sa posiela len iný výber.
+const listFilters = computed(() => ({
+  ...state.value,
+  public: state.value.public === publicDefault.value ? undefined : state.value.public,
+  ...(kidsEnabled.value ? {} : { kids: 'hide' as const }),
+}))
 const { data: list, isPending, error } = useRecipes(listFilters)
 const { data: tags } = useTags()
 const recipes = computed(() => list.value?.items)
@@ -121,7 +130,6 @@ watch(view, (value) => {
 
 // ─── Pamätanie na používateľa: pohľad a predvolené filtre ─────────────────────
 // Po načítaní nastavení sa vrátia uložené filtre (len keď adresa nenesie žiadny) a pohľad; zmeny sa ukladajú.
-const { data: me } = useMe()
 const saveSettings = useSaveUserSettings()
 const settingsRestored = ref(false)
 watch(
@@ -170,7 +178,10 @@ const missingOne = computed(() => canCook.value + (list.value?.facets.missing[1]
 const filterCount = computed(() => activeFilterCount(state.value))
 /** Detské a cudzie recepty sú v paneli Filtre, preto sa rátajú do čísla na tlačidle. */
 const panelFilterCount = computed(
-  () => filterCount.value + (state.value.kids !== 'hide' ? 1 : 0) + (state.value.public !== 'hide' ? 1 : 0),
+  () =>
+    filterCount.value +
+    (state.value.kids !== 'hide' ? 1 : 0) +
+    (state.value.public !== publicDefault.value ? 1 : 0),
 )
 /** Na mobile je v paneli aj „Čo viem uvariť“. */
 const mobileFilterCount = computed(() => panelFilterCount.value + (state.value.pantry ? 1 : 0))
@@ -198,10 +209,10 @@ const kids = computed({
   set: (value: KidsMode) => setQuery({ kids: KIDS_PARAMS[value] }),
 })
 const KIDS_MODES: readonly KidsMode[] = ['hide', 'include', 'only']
-const PUBLIC_PARAMS = { hide: undefined, include: 'include', only: 'only' } as const
 const publicMode = computed({
   get: () => state.value.public,
-  set: (value: PublicMode) => setQuery({ public: PUBLIC_PARAMS[value] }),
+  // Predvolená hodnota sa do adresy nepíše; iná áno (aj „hide“, keď sú cudzie recepty predvolene zapnuté).
+  set: (value: PublicMode) => setQuery({ public: value === publicDefault.value ? undefined : value }),
 })
 const publicItems = computed(() =>
   KIDS_MODES.map((mode) => ({ value: mode, title: t(`recipes.list.public_${mode}`) })),
@@ -260,7 +271,7 @@ const activeChips = computed(() => {
   }[] = []
   if (s.kids !== 'hide')
     chips.push({ key: 'kids', label: t(`recipes.list.kids_${s.kids}`), dimension: 'kids', value: s.kids })
-  if (s.public !== 'hide')
+  if (s.public !== publicDefault.value)
     chips.push({
       key: 'public',
       label: t(`recipes.list.public_${s.public}`),
@@ -281,7 +292,7 @@ const activeChips = computed(() => {
 
 function removeChip(chip: { dimension: FilterDimension | 'kids' | 'public'; value: string | number }) {
   if (chip.dimension === 'kids') kids.value = 'hide'
-  else if (chip.dimension === 'public') publicMode.value = 'hide'
+  else if (chip.dimension === 'public') publicMode.value = publicDefault.value
   else toggleFilter(chip.dimension, chip.value)
 }
 

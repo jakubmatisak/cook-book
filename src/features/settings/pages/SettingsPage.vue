@@ -51,8 +51,20 @@ async function copyAddress() {
 }
 
 const client = useQueryClient()
+const showOthers = computed(() => me.value?.userSettings.showOthersRecipes === true)
 const kidsEnabled = useKidsEnabled()
 const saveUserSettings = useSaveUserSettings()
+// Vypnuté je predvolené, preto sa vypnutie uloží ako vymazanie (null). Zoznamy receptov sa načítajú znova.
+function saveShowOthers(value: boolean | null) {
+  saveUserSettings.mutate(
+    { showOthersRecipes: value ? true : null },
+    {
+      onSuccess: () => client.invalidateQueries({ queryKey: recipeKeys.all }),
+      onError: () => (snackbar.value = { show: true, text: t('settings.changeFailed'), color: 'error' }),
+    },
+  )
+}
+
 // Zapnuté je predvolené, preto sa pri zapnutí nastavenie zmaže (null) a vypnutie sa uloží ako false.
 function saveKids(value: boolean | null) {
   saveUserSettings.mutate(
@@ -195,6 +207,20 @@ async function exportRecipes() {
           </v-btn>
         </v-btn-toggle>
         <div class="text-body-small text-medium-emphasis mt-2">{{ t('settings.density.hint') }}</div>
+      </v-card-text>
+    </v-card>
+
+    <v-card v-if="me" :title="t('settings.others.title')">
+      <v-card-text>
+        <v-switch
+          :model-value="showOthers"
+          color="primary"
+          :label="t('settings.others.label')"
+          :hint="t('settings.others.hint')"
+          persistent-hint
+          data-test="others-switch"
+          @update:model-value="saveShowOthers"
+        />
       </v-card-text>
     </v-card>
 

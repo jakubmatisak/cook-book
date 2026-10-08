@@ -53,7 +53,8 @@ function toQuery(filters: RecipeFilters): string {
   if (filters.favorite) params.set('favorite', '1')
   if (filters.kids === 'include') params.set('kids', '1')
   if (filters.kids === 'only') params.set('kids', 'only')
-  if (filters.public === 'include' || filters.public === 'only') params.set('public', filters.public)
+  // Bez `public` rozhodne server podľa nastavenia „Zobrazovať recepty od iných“.
+  if (filters.public) params.set('public', filters.public)
   if (filters.pantry) params.set('pantry', '1')
   if (filters.pantry && filters.missing !== undefined) params.set('missing', String(filters.missing))
   const query = params.toString()

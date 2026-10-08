@@ -43,8 +43,13 @@ const items = [
 ]
 const Blank = defineComponent({ render: () => h('div') })
 
-async function mountPage(url = '/recipes', role: 'owner' | 'member' = 'owner') {
-  const calls = stubApi({ '/me': me(role), '/recipes': { items, facets }, '/tags': [] })
+async function mountPage(url = '/recipes', role: 'owner' | 'member' = 'owner', showOthersRecipes = false) {
+  const base = me(role)
+  const calls = stubApi({
+    '/me': { ...base, userSettings: showOthersRecipes ? { showOthersRecipes } : {} },
+    '/recipes': { items, facets },
+    '/tags': [],
+  })
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: '/recipes', component: Blank }],
@@ -88,6 +93,12 @@ describe('adresa a uložené filtre', () => {
     expect(parseListQuery({ public: 'xx' }).public).toBe('hide')
   })
 
+  it('so zapnutým „Zobrazovať recepty od iných“ je predvolené „moje aj cudzie“; public=hide ich skryje', () => {
+    expect(parseListQuery({}, 'include').public).toBe('include')
+    expect(parseListQuery({ public: 'hide' }, 'include').public).toBe('hide')
+    expect(parseListQuery({ public: 'only' }, 'include').public).toBe('only')
+  })
+
   it('ukladá sa medzi predvolené filtre', () => {
     expect(savableListQuery({ public: 'include' })).toEqual({ public: 'include' })
   })
@@ -117,6 +128,20 @@ describe('Verejné recepty v zozname receptov', () => {
     await vi.waitFor(() => expect(router.currentRoute.value.query.public).toBe('only'))
     await vi.waitFor(() => expect(requested().some((u) => u.includes('public=only'))).toBe(true))
     await choose(wrapper, 'Len moje')
+    await vi.waitFor(() => expect(router.currentRoute.value.query.public).toBeUndefined())
+  })
+
+  it('so zapnutým nastavením je filter predvolene „Moje aj cudzie“; „Len moje“ pošle a uloží public=hide', async () => {
+    const { router, wrapper } = await mountPage('/recipes', 'owner', true)
+    expect(wrapper.find('[data-test="public-select"]').text()).toContain('Moje aj cudzie')
+    // Predvolené rozhodne server podľa nastavenia, parameter netreba.
+    expect(requested().every((u) => !u.includes('public='))).toBe(true)
+    expect(wrapper.find('[data-test="active-filters"]').exists()).toBe(false)
+
+    await choose(wrapper, 'Len moje')
+    await vi.waitFor(() => expect(router.currentRoute.value.query.public).toBe('hide'))
+    await vi.waitFor(() => expect(requested().some((u) => u.includes('public=hide'))).toBe(true))
+    await choose(wrapper, 'Moje aj cudzie')
     await vi.waitFor(() => expect(router.currentRoute.value.query.public).toBeUndefined())
   })
 

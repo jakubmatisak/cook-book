@@ -104,3 +104,13 @@ describe('Pridať jedlo: návšteva podľa pobytu', () => {
     expect(placeholders).toContain('2 podľa rodiny')
   })
 })
+
+describe('Pridať jedlo: výber receptu', () => {
+  it('ponúka len vlastné recepty, aj keď má človek zapnuté recepty od iných (plán berie len vlastné)', async () => {
+    await openDialog([])
+    const urls = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]))
+    const list = urls.filter((u) => u.includes('/recipes?'))
+    expect(list.length).toBeGreaterThan(0)
+    expect(list.every((u) => u.includes('public=hide'))).toBe(true)
+  })
+})

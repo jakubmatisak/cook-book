@@ -23,6 +23,8 @@ export interface UserSettingsDto {
   recipeQuery?: Record<string, string>
   /** Detské recepty (kaše, príkrmy) v aplikácii; `false` ich skryje všade. Predvolene zapnuté. */
   kidsEnabled?: boolean
+  /** Verejné recepty iných domácností v zozname receptov a na úvode bez ďalšieho filtra; predvolene nie. */
+  showOthersRecipes?: boolean
   /** Hustota rozhrania na počítači; predvolene `comfortable`. */
   density?: Density
   /** Sekcia „V košíku“ v nákupnom zozname je rozbalená; predvolene áno. */

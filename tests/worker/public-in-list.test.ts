@@ -150,3 +150,19 @@ describe('verejné recepty iných domácností v zozname receptov', () => {
     expect(households).toBeDefined()
   })
 })
+
+describe('nastavenie „Zobrazovať recepty od iných“', () => {
+  it('zapnuté pridá cudzie verejné recepty do zoznamu aj bez parametra; public=hide ich skryje', async () => {
+    const { add } = await setup()
+    await add('Cudzí guláš', { visibility: 'public' })
+    await mine('Môj rezeň')
+    expect((await send(app, 'PUT', api('/me/settings'), { showOthersRecipes: true })).status).toBe(200)
+
+    expect(titles(await list())).toEqual(['Cudzí guláš', 'Môj rezeň'])
+    expect(titles(await list('?public=hide'))).toEqual(['Môj rezeň'])
+    expect(titles(await list('?public=only'))).toEqual(['Cudzí guláš'])
+
+    await send(app, 'PUT', api('/me/settings'), { showOthersRecipes: null })
+    expect(titles(await list())).toEqual(['Môj rezeň'])
+  })
+})

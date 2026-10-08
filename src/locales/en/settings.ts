@@ -55,6 +55,11 @@ export default {
     copied: 'The address is copied.',
     copyFailed: 'The address could not be copied.',
   },
+  others: {
+    title: 'Recipes from others',
+    label: 'Show recipes from others',
+    hint: 'Public recipes of other households appear in Recipes and on Home together with yours. You can hide them in the filter at any time.',
+  },
   kids: {
     title: 'Baby food recipes',
     label: 'Show baby food recipes',
