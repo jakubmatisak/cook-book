@@ -1,5 +1,11 @@
 # Zmeny
 
+## 1.4.3 – 2026-10-08
+
+### Opravy
+
+- Aplikácia sa sama načíta znova najviac raz za 15 s, takže sa po vydaní novej verzie nemôže obnovovať dokola.
+
 ## 1.4.2 – 2026-10-08
 
 ### Opravy
