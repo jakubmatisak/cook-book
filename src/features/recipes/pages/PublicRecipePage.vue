@@ -15,6 +15,7 @@ import type { RecipeIngredientDto } from '@shared/api'
 import { ApiError } from '@/api/http'
 import { useCopyPublicRecipe, usePublicRecipe } from '@/api/publicRecipes'
 import EmptyState from '@/components/EmptyState.vue'
+import RecipeCover from '../components/RecipeCover.vue'
 import { errorText } from '@/i18n/errors'
 import { formatMinutes, tc } from '@/i18n/format'
 import { formatQuantity, quantityColumnWidth } from '@/i18n/quantity'
@@ -121,15 +122,7 @@ const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
   <v-alert v-else-if="error" type="error" :text="errorText(error)" />
 
   <template v-else-if="recipe">
-    <v-img
-      v-if="recipe.coverImageUrl"
-      :src="recipe.coverImageUrl"
-      :aspect-ratio="16 / 9"
-      max-height="420"
-      cover
-      rounded="md"
-      class="mb-4"
-    />
+    <RecipeCover v-if="recipe.coverImageUrl" :src="recipe.coverImageUrl" />
 
     <h1 class="text-headline-large font-weight-bold mb-1">{{ recipe.title }}</h1>
     <p class="text-body-medium text-medium-emphasis mb-3" data-test="public-author">
@@ -187,6 +180,8 @@ const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
       </v-btn>
     </p>
 
+    <!-- Ukončí obtekanie titulnej fotky, aby ingrediencie a postup boli pod hlavičkou. -->
+    <div style="clear: both" />
     <v-row>
       <v-col cols="12" md="5" lg="4">
         <v-card :title="t('recipes.detail.ingredients')">

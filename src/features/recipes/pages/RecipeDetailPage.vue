@@ -38,6 +38,7 @@ import { printPage, usePrintMode } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
 import { formatMinutes, tc } from '@/i18n/format'
 import FavoriteButton from '../components/FavoriteButton.vue'
+import RecipeCover from '../components/RecipeCover.vue'
 import VisibilityDialog from '../components/VisibilityDialog.vue'
 
 const { t, locale } = useI18n()
@@ -280,15 +281,7 @@ function goBack() {
   <v-alert v-else-if="error" type="error" :text="errorText(error)" />
 
   <template v-else-if="recipe">
-    <v-img
-      v-if="recipe.coverImageUrl"
-      :src="recipe.coverImageUrl"
-      :aspect-ratio="16 / 9"
-      max-height="420"
-      cover
-      rounded="md"
-      class="mb-4 d-print-none"
-    />
+    <RecipeCover v-if="recipe.coverImageUrl" :src="recipe.coverImageUrl" />
 
     <h1 class="font-weight-bold" :class="printing ? 'text-headline-small mb-1' : 'text-headline-large mb-3'">
       {{ recipe.title }}
@@ -334,6 +327,8 @@ function goBack() {
       </v-chip>
     </div>
 
+    <!-- Ukončí obtekanie titulnej fotky, aby ingrediencie a postup boli pod hlavičkou. -->
+    <div style="clear: both" />
     <v-row :density="printing ? 'compact' : undefined">
       <v-col :cols="printing ? 5 : 12" md="5" lg="4" data-test="recipe-ingredients-col">
         <v-card :title="t('recipes.detail.ingredients')" :border="!printing">

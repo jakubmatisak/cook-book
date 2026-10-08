@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
+import { defineComponent, h } from 'vue'
 import { reloadOnNavigation, watchForUpdates } from '@/lib/pwaUpdates'
+
+/** Prázdna stránka pre testovací router. */
+const Page = defineComponent({ render: () => h('div') })
 
 /** Falošný dokument: len stav viditeľnosti a udalosť jej zmeny. */
 function fakeDocument() {
@@ -42,8 +46,6 @@ describe('kontrola novej verzie aplikácie', () => {
 describe('nová verzia a chýbajúce súbory stránok pri prechode v menu', () => {
   const setup = async () => {
     const { createRouter, createMemoryHistory } = await import('vue-router')
-    const { defineComponent, h } = await import('vue')
-    const Page = defineComponent({ render: () => h('div') })
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
@@ -103,8 +105,6 @@ describe('poistka proti nekonečnému obnovovaniu', () => {
 
   const load = async (storage: ReturnType<typeof memoryStorage>, now: () => number) => {
     const { createRouter, createMemoryHistory } = await import('vue-router')
-    const { defineComponent, h } = await import('vue')
-    const Page = defineComponent({ render: () => h('div') })
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
