@@ -1,10 +1,4 @@
-import {
-  useIsMutating,
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type UseMutationReturnType,
-} from '@tanstack/vue-query'
+import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type { GenerateResult, ShoppingItemDto, ShoppingListDto } from '@shared/api'
 import type { ItemCreateInput } from '@shared/schemas/shopping'
@@ -40,11 +34,10 @@ export const useShoppingLists = () =>
   })
 
 /**
- * Položky zoznamu; kým je stránka viditeľná, obnovujú sa každých 5 s (zmeny od druhého človeka).
- * Počas prebiehajúceho odškrtnutia sa neobnovujú, aby starý stav zo servera neprepísal zmenu.
+ * Položky zoznamu. Sami od seba sa neobnovujú (žiadne pravidelné dotazy na server); zmeny od druhého človeka
+ * sa načítajú pri otvorení stránky, po návrate do aplikácie a po pripojení – preto `staleTime: 0`.
  */
 export function useShoppingItems(listId: MaybeRefOrGetter<string | undefined>) {
-  const toggling = useIsMutating({ mutationKey: TOGGLE_KEY })
   return useQuery({
     queryKey: computed(() => shoppingKeys.items(toValue(listId) ?? '')),
     queryFn: () =>
@@ -53,8 +46,6 @@ export function useShoppingItems(listId: MaybeRefOrGetter<string | undefined>) {
         offlineQueue,
       ),
     enabled: computed(() => Boolean(toValue(listId))),
-    refetchInterval: computed(() => (toggling.value > 0 ? false : 5_000)),
-    refetchIntervalInBackground: false,
     staleTime: 0,
   })
 }

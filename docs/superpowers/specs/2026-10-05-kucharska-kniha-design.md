@@ -59,7 +59,7 @@ Predpoklady (ak nesedia, oprav ich pred implementáciou):
 - **Tailwind odstránený.** Na želanie používateľa je UI čisté Vuetify: komponenty, defaults v `src/plugins/vuetify.ts`, utility triedy. Žiadne `<style>` bloky ani vlastné widgety. Časť 2.7 o Tailwinde už neplatí.
 - **Nákupný zoznam:** generátor je čistá funkcia `shared/shopping.ts`; voliteľné ingrediencie sa nepridávajú; kusy a balenia sa zaokrúhľujú nahor, gramy a mililitre nahor na krok 1/5/10; pri opätovnom generovaní sa kúpené položky nechajú a ich ingrediencia sa znova nepridá.
 - **Offline odškrtávanie:** fronta v IndexedDB, hromadné odoslanie po pripojení; server použije len zmenu novšiu ako posledná úprava položky (posledná vyhráva).
-- **Synchronizácia medzi vami:** obnova zoznamu každých 5 s, kým je stránka viditeľná (bez Durable Objects).
+- **Synchronizácia medzi vami:** zoznam sa načíta pri otvorení, po návrate do aplikácie a po pripojení (bez Durable Objects). Žiadne pravidelné dotazy na server (polling) – od 1.5.4.
 - **Ručná položka** z jedného riadku („2 kg zemiaky“) prevezme kategóriu obchodu známej ingrediencie.
 - **Nasadenie:** Worker sa volá `cook-book` (prepojený s GitHub repozitárom), beží na `cook-book.<subdoména>.workers.dev` za Cloudflare Access.
 
@@ -136,7 +136,7 @@ Pravidlo: každá fáza končí niečím, čo reálne používate. Nič sa nebud
 ### Fáza 3 – Nákupný zoznam (MUST)
 - Generovanie z plánu pre rozsah dátumov, prepočet podľa porcií členov, agregácia rovnakých ingrediencií, normalizácia jednotiek (g/kg, ml/l, ks).
 - Ručné položky, odškrtávanie, zoradenie podľa kategórie obchodu.
-- Synchronizácia medzi vami (polling každých pár sekúnd, keď je obrazovka otvorená).
+- Synchronizácia medzi vami (načítanie po návrate do aplikácie; pravidelný polling sa nepoužíva).
 - Offline čítanie zoznamu a receptov (cache), odškrtnutie offline sa odošle po pripojení.
 - Po tejto fáze je MVP hotové.
 
@@ -154,7 +154,7 @@ Pravidlo: každá fáza končí niečím, čo reálne používate. Nič sa nebud
 - Varianty receptu (detská/dospelá).
 - Návrh jedálnička podľa pravidiel, „čo uvariť“.
 - Viac nákupných zoznamov, zásoby špajze/mrazničky.
-- Realtime cez Durable Objects (WebSocket) namiesto pollingu.
+- Realtime cez Durable Objects (WebSocket).
 - Push notifikácie, export do kalendára (ICS).
 - Zdieľanie receptu verejným linkom, OCR, nutričné hodnoty, tmavý režim (tmavý režim je vo Vuetify lacný, môže ísť aj skôr).
 
@@ -339,7 +339,7 @@ Záložný plán, ak by Access robil problémy s PWA na iOS (cookie po inštalá
 - **SASS premenné** v `src/design/settings.scss`: `$border-radius-root`, `$body-font-family` (Nunito Variable z `@fontsource-variable/nunito`, len latin a latin-ext, súčasť buildu kvôli offline PWA).
 - **Tailwind v4** v `src/styles/tailwind.css`: importujú sa len `theme` a `utilities` vrstvy (bez `preflight`), prefix `tw` (triedy sa píšu `tw:flex`, `tw:bg-primary`), v `@theme` sa farby mapujú na Vuetify CSS premenné (`--color-primary: rgb(var(--v-theme-primary))`), takže `tw:bg-primary` a Vuetify `color="primary"` sú vždy tá istá farba.
 - **Layout**: `AppShell` – mobil: `v-app-bar` + `v-bottom-navigation` (Recepty, Plán, Nákup, Viac); desktop ≥ md: `v-navigation-drawer rail` vľavo. Max šírka obsahu 1200 px.
-- **Dáta**: TanStack Vue Query. Query kľúče podľa domény, mutácie s optimistic update pre odškrtávanie a obľúbené. Nákupný zoznam: `refetchInterval` 5 s keď je stránka viditeľná.
+- **Dáta**: TanStack Vue Query. Query kľúče podľa domény, mutácie s optimistic update pre odškrtávanie a obľúbené. Nákupný zoznam: `staleTime: 0` (obnova pri návrate do aplikácie), bez `refetchInterval`.
 - **Formuláre**: zod schémy zo `shared/` + `vee-validate` (alebo ručné `rules` vo Vuetify poliach; rozhodne sa v F1 podľa toho, čo je menej kódu).
 - **Obrázky**: pred uploadom zmenšiť v prehliadači (canvas, max 1600 px, WebP ~0.8), až potom `POST /images`.
 - **PWA**: `vite-plugin-pwa`, `registerType: 'autoUpdate'`, precache app shellu, runtime cache `NetworkFirst` pre `/api/v1/*` GET a `CacheFirst` pre `/img/*`. Offline zápisy nákupného zoznamu: fronta v IndexedDB (idb-keyval), po `online` evente `POST /shopping/items/batch`.
