@@ -191,6 +191,7 @@ const CATEGORY_PATTERNS: readonly [RegExp, RecipeCategory][] = [
   [/ranajk|breakfast|brunch/, 'ranajky'],
   [/salat|salad/, 'salat'],
   [/priloh|side/, 'priloha'],
+  [/omack|sauce|pesto/, 'omacka'],
   [/napoj|drink|beverage|cocktail/, 'napoj'],
   [/desiat|snack/, 'desiata'],
   [/hlavn|main course|main dish|entree/, 'hlavne'],

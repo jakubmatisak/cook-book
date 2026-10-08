@@ -129,3 +129,16 @@ describe('zarovnanie ingrediencií bez množstva', () => {
     window.dispatchEvent(new Event('afterprint'))
   })
 })
+
+describe('popis receptu', () => {
+  it('je zarovnaný do bloku (posledný riadok vľavo) v detaile aj vo verejnom recepte', async () => {
+    const detail = { ...base, description: 'Hodí sa k cestovinám, nokom alebo k mäsu.' }
+    const mine = await mountAt('/recipes/r1', '/recipes/:id', RecipeDetailPage, { '/recipes/r1': detail })
+    expect(mine.find('[data-test="recipe-description"]').classes()).toContain('text-justify')
+
+    document.body.innerHTML = ''
+    const pub: PublicRecipeDetailDto = { ...detail, householdName: 'Rodičia', ownedByMe: false }
+    const other = await mountAt('/public/r1', '/public/:id', PublicRecipePage, { '/public/recipes/r1': pub })
+    expect(other.find('[data-test="recipe-description"]').classes()).toContain('text-justify')
+  })
+})

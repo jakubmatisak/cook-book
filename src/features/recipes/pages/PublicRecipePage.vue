@@ -166,7 +166,13 @@ const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
       </v-btn>
     </div>
 
-    <p v-if="recipe.description" class="text-body-large mb-3 text-pre-line">{{ recipe.description }}</p>
+    <p
+      v-if="recipe.description"
+      class="text-body-large mb-3 text-pre-line text-justify"
+      data-test="recipe-description"
+    >
+      {{ recipe.description }}
+    </p>
     <p v-if="recipe.sourceUrl" class="mb-4">
       <v-btn
         variant="text"

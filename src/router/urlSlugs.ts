@@ -9,6 +9,7 @@ export const CATEGORY_SLUGS: Readonly<Record<RecipeCategory, string>> = {
   polievka: 'soup',
   hlavne: 'main',
   priloha: 'side',
+  omacka: 'sauce',
   salat: 'salad',
   dezert: 'dessert',
   ranajky: 'breakfast',

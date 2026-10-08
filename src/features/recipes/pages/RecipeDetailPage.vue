@@ -309,7 +309,8 @@ function goBack() {
     </v-btn>
     <p
       v-if="recipe.description"
-      class="text-pre-line"
+      class="text-pre-line text-justify"
+      data-test="recipe-description"
       :class="printing ? 'text-body-medium mb-2' : 'text-body-large mb-3'"
     >
       {{ recipe.description }}

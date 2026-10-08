@@ -90,6 +90,7 @@ export default {
     polievka: 'Polievka',
     hlavne: 'Hlavné jedlo',
     priloha: 'Príloha',
+    omacka: 'Prílohové omáčky a Pestá',
     salat: 'Šalát',
     dezert: 'Dezert',
     ranajky: 'Raňajky',

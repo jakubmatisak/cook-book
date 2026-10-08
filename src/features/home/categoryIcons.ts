@@ -9,6 +9,7 @@ import {
   mdiFoodDrumstickOutline,
   mdiPotSteamOutline,
   mdiRice,
+  mdiSoySauce,
 } from '@mdi/js'
 import type { RecipeCategory } from '@shared/recipes'
 
@@ -17,6 +18,7 @@ export const CATEGORY_ICONS: Record<RecipeCategory, string> = {
   polievka: mdiPotSteamOutline,
   hlavne: mdiFoodDrumstickOutline,
   priloha: mdiRice,
+  omacka: mdiSoySauce,
   salat: mdiBowlMixOutline,
   dezert: mdiCakeVariantOutline,
   ranajky: mdiBreadSliceOutline,

@@ -91,6 +91,7 @@ export default {
     polievka: 'Soup',
     hlavne: 'Main course',
     priloha: 'Side dish',
+    omacka: 'Sauces & pestos',
     salat: 'Salad',
     dezert: 'Dessert',
     ranajky: 'Breakfast',
