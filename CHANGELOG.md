@@ -1,5 +1,11 @@
 # Zmeny
 
+## 1.5.3 – 2026-10-08
+
+### Opravy
+
+- Mriežka receptov má toľko stĺpcov, koľko sa zmestí: 4 pri 1440 px, 5 na Full HD, na mobile jeden.
+
 ## 1.5.2 – 2026-10-08
 
 ### Opravy
