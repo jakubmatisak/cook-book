@@ -59,7 +59,12 @@ describe('nová verzia a chýbajúce súbory stránok pri prechode v menu', () =
       ],
     })
     const hardNavigate = vi.fn()
-    const updates = reloadOnNavigation(router, hardNavigate)
+    const data = new Map<string, string>()
+    const storage = {
+      getItem: (k: string) => data.get(k) ?? null,
+      setItem: (k: string, v: string) => void data.set(k, v),
+    }
+    const updates = reloadOnNavigation(router, hardNavigate, { storage, now: () => Date.now() })
     await router.push('/')
     return { router, hardNavigate, updates }
   }
@@ -83,5 +88,75 @@ describe('nová verzia a chýbajúce súbory stránok pri prechode v menu', () =
     const { router, hardNavigate } = await setup()
     await router.push('/shopping').catch(() => {})
     expect(hardNavigate).toHaveBeenCalledWith('/shopping')
+  })
+})
+
+describe('poistka proti nekonečnému obnovovaniu', () => {
+  /** Úložisko zdieľané medzi „načítaniami stránky“ – každé načítanie je nová inštancia reloadOnNavigation. */
+  const memoryStorage = () => {
+    const data = new Map<string, string>()
+    return {
+      getItem: (k: string) => data.get(k) ?? null,
+      setItem: (k: string, v: string) => void data.set(k, v),
+    }
+  }
+
+  const load = async (storage: ReturnType<typeof memoryStorage>, now: () => number) => {
+    const { createRouter, createMemoryHistory } = await import('vue-router')
+    const { defineComponent, h } = await import('vue')
+    const Page = defineComponent({ render: () => h('div') })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: Page },
+        { path: '/recipes', component: Page },
+        {
+          path: '/shopping',
+          component: () =>
+            Promise.reject(
+              new TypeError('Failed to fetch dynamically imported module: /assets/Shopping-old.js'),
+            ),
+        },
+      ],
+    })
+    const hardNavigate = vi.fn()
+    const updates = reloadOnNavigation(router, hardNavigate, { storage, now })
+    await router.push('/')
+    return { router, hardNavigate, updates }
+  }
+
+  it('stránku znova načíta najviac raz za 15 s; ďalší prechod ostane v aplikácii', async () => {
+    const storage = memoryStorage()
+    let time = 1_000_000
+    const first = await load(storage, () => time)
+    first.updates.markReady()
+    await first.router.push('/recipes')
+    expect(first.hardNavigate).toHaveBeenCalledTimes(1)
+
+    // Po načítaní sa nová verzia znova hlási pripravená (napr. ďalšie vydanie) – do 15 s sa už neobnovuje.
+    time += 5_000
+    const second = await load(storage, () => time)
+    second.updates.markReady()
+    await second.router.push('/recipes')
+    expect(second.hardNavigate).not.toHaveBeenCalled()
+    expect(second.router.currentRoute.value.path).toBe('/recipes')
+
+    time += 15_000
+    const third = await load(storage, () => time)
+    third.updates.markReady()
+    await third.router.push('/recipes')
+    expect(third.hardNavigate).toHaveBeenCalledTimes(1)
+  })
+
+  it('chýbajúci súbor stránky po znovunačítaní neobnovuje dokola', async () => {
+    const storage = memoryStorage()
+    const time = 2_000_000
+    const first = await load(storage, () => time)
+    await first.router.push('/shopping').catch(() => {})
+    expect(first.hardNavigate).toHaveBeenCalledTimes(1)
+
+    const second = await load(storage, () => time + 1_000)
+    await second.router.push('/shopping').catch(() => {})
+    expect(second.hardNavigate).not.toHaveBeenCalled()
   })
 })
