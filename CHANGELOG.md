@@ -1,5 +1,16 @@
 # Zmeny
 
+## 1.4.6 – 2026-10-08
+
+### Nové
+
+- Recepty sa dajú zoradiť podľa kategórie (aj stĺpec Kategória v tabuľke), v poradí typov jedla.
+- Obsah na počítači využíva celú šírku obrazovky.
+
+### Opravy
+
+- Fotky, ktoré už nepoužíva žiadny recept (po výmene titulnej fotky alebo zmazaní receptu), sa zmažú z úložiska.
+
 ## 1.4.5 – 2026-10-08
 
 ### Nové
