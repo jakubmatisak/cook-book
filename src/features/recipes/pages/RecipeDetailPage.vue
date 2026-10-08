@@ -290,7 +290,9 @@ function goBack() {
       class="mb-4 d-print-none"
     />
 
-    <h1 class="font-weight-bold" :class="printing ? 'text-h5 mb-1' : 'text-h4 mb-3'">{{ recipe.title }}</h1>
+    <h1 class="font-weight-bold" :class="printing ? 'text-headline-small mb-1' : 'text-headline-large mb-3'">
+      {{ recipe.title }}
+    </h1>
     <div class="d-flex flex-wrap ga-2" :class="printing ? 'mb-2' : 'mb-3'">
       <v-chip
         v-for="chip in chips"
@@ -315,7 +317,7 @@ function goBack() {
     <p
       v-if="recipe.description"
       class="text-pre-line"
-      :class="printing ? 'text-body-2 mb-2' : 'text-body-1 mb-3'"
+      :class="printing ? 'text-body-medium mb-2' : 'text-body-large mb-3'"
     >
       {{ recipe.description }}
     </p>
@@ -407,7 +409,7 @@ function goBack() {
               </template>
               <v-list-item-title
                 class="text-wrap text-pre-line"
-                :class="printing ? 'text-body-2' : 'text-body-1'"
+                :class="printing ? 'text-body-medium' : 'text-body-large'"
               >
                 {{ step.text }}
               </v-list-item-title>
@@ -420,7 +422,7 @@ function goBack() {
           </v-list>
         </v-card>
 
-        <div v-if="recipe.sourceUrl || recipe.sourceText" class="text-body-2 text-medium-emphasis mt-4">
+        <div v-if="recipe.sourceUrl || recipe.sourceText" class="text-body-medium text-medium-emphasis mt-4">
           {{ t('recipes.detail.source') }}
           <a
             v-if="recipe.sourceUrl"

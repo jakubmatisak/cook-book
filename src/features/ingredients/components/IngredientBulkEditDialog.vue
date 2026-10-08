@@ -64,7 +64,7 @@ async function submit() {
   <v-dialog v-model="open" max-width="480" :persistent="save.isPending.value">
     <v-card :title="t('bulk.ingredients.editTitle')" data-test="bulk-edit-dialog">
       <v-card-text class="d-flex flex-column ga-4">
-        <p class="text-body-2 text-medium-emphasis">
+        <p class="text-body-medium text-medium-emphasis">
           {{ t('bulk.ingredients.editHint', { items: ids.length }) }}
         </p>
         <v-alert v-if="error" type="error" density="compact" :text="error" />

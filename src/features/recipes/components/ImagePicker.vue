@@ -53,7 +53,7 @@ function clear() {
       <v-img v-if="imageUrl" :src="imageUrl" cover height="104" />
       <div v-else class="d-flex flex-column align-center justify-center h-100 text-primary">
         <v-icon :icon="mdiCameraOutline" size="32" />
-        <span class="text-caption">{{ t('recipes.image.label') }}</span>
+        <span class="text-body-small">{{ t('recipes.image.label') }}</span>
       </div>
       <v-btn
         v-if="imageUrl"

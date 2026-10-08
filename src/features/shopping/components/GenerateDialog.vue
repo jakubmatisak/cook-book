@@ -92,7 +92,7 @@ async function onGenerate() {
   <v-dialog v-model="open" max-width="460">
     <v-card :title="t('shopping.generate.title')">
       <v-card-text class="d-flex flex-column ga-3">
-        <p class="text-body-2 text-medium-emphasis">
+        <p class="text-body-medium text-medium-emphasis">
           {{ t('shopping.generate.text') }}
         </p>
         <v-radio-group v-model="preset" hide-details>
@@ -100,7 +100,7 @@ async function onGenerate() {
             <template #label>
               <span class="d-flex flex-column">
                 <span class="font-weight-bold">{{ p.title }}</span>
-                <span v-if="p.subtitle" class="text-caption text-medium-emphasis">{{ p.subtitle }}</span>
+                <span v-if="p.subtitle" class="text-body-small text-medium-emphasis">{{ p.subtitle }}</span>
               </span>
             </template>
           </v-radio>

@@ -226,7 +226,7 @@ function editStaple(staple: StapleDto | null) {
     </template>
 
     <template v-if="tab === 'home'">
-      <p v-if="mdAndUp" class="text-body-2 text-medium-emphasis mb-4" data-test="pantry-intro">
+      <p v-if="mdAndUp" class="text-body-medium text-medium-emphasis mb-4" data-test="pantry-intro">
         {{ t('pantry.page.homeIntro') }}
       </p>
 
@@ -239,7 +239,7 @@ function editStaple(staple: StapleDto | null) {
         :text="t('pantry.page.empty.text')"
       />
       <div v-else-if="!groups.length" class="d-flex flex-column align-start ga-2">
-        <p class="text-body-2 text-medium-emphasis">{{ t('pantry.page.nothingFound') }}</p>
+        <p class="text-body-medium text-medium-emphasis">{{ t('pantry.page.nothingFound') }}</p>
         <v-btn
           v-if="search?.trim()"
           variant="tonal"
@@ -265,7 +265,7 @@ function editStaple(staple: StapleDto | null) {
     </template>
 
     <template v-else>
-      <p class="text-body-2 text-medium-emphasis mb-4">
+      <p class="text-body-medium text-medium-emphasis mb-4">
         {{ t('pantry.page.staplesIntro') }}
       </p>
 
@@ -297,7 +297,7 @@ function editStaple(staple: StapleDto | null) {
             <template #append>
               <span
                 v-if="formatQuantity(staple.quantity, staple.unit)"
-                class="text-body-2 font-weight-bold me-2"
+                class="text-body-medium font-weight-bold me-2"
               >
                 {{ formatQuantity(staple.quantity, staple.unit) }}
               </span>

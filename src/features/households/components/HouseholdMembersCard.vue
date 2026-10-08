@@ -120,7 +120,7 @@ const canCreate = computed(() => me.value?.user.isAdmin === true)
       <v-alert v-if="error" type="error" :text="errorText(error)" density="compact" />
       <v-skeleton-loader v-else-if="isPending" type="list-item-two-line@2" />
       <template v-else-if="members">
-        <p class="text-body-2 text-medium-emphasis">
+        <p class="text-body-medium text-medium-emphasis">
           {{ t('households.card.accountsIntro', { members: tc('common.plural.members', members.length) }) }}
         </p>
         <v-list lines="two" border data-test="household-members">
@@ -168,7 +168,7 @@ const canCreate = computed(() => me.value?.user.isAdmin === true)
         </v-list>
       </template>
 
-      <p v-if="!props.isOwner" class="text-caption text-medium-emphasis">
+      <p v-if="!props.isOwner" class="text-body-small text-medium-emphasis">
         {{ t('households.card.ownerOnly') }}
       </p>
     </v-card-text>

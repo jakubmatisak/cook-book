@@ -66,12 +66,12 @@ const subtitle = computed(() => {
       </template>
       <!-- Nadpis cez v-card-subtitle: v-card-title má pevnú veľkú veľkosť písma, ktorú utility triedy neprebijú. -->
       <v-card-subtitle
-        class="text-caption font-weight-bold text-wrap opacity-100 text-high-emphasis"
+        class="text-body-small font-weight-bold text-wrap opacity-100 text-high-emphasis"
         :class="{ 'font-italic': !entry.recipe }"
       >
         {{ title }}
       </v-card-subtitle>
-      <v-card-subtitle v-if="subtitle" class="text-caption">
+      <v-card-subtitle v-if="subtitle" class="text-body-small">
         <v-icon v-if="entry.note && dense" :icon="mdiNoteTextOutline" size="12" class="me-1" />{{ subtitle }}
       </v-card-subtitle>
     </v-card-item>

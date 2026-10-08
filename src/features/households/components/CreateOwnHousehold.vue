@@ -51,7 +51,7 @@ async function submit() {
         @keyup.enter="name.trim() && submit()"
       />
       <v-alert v-if="error" type="error" :text="error" />
-      <p v-if="account" class="text-body-2 text-medium-emphasis">
+      <p v-if="account" class="text-body-medium text-medium-emphasis">
         {{ t('households.own.invite', { email: account.email }) }}
       </p>
     </v-card-text>

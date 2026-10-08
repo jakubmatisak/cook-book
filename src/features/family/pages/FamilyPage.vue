@@ -130,7 +130,7 @@ const memberSubtitle = (m: FamilyMemberDto) =>
           </v-list-item>
         </template>
       </v-list>
-      <p v-if="hasGuests" class="text-caption text-medium-emphasis px-4 pb-3">
+      <p v-if="hasGuests" class="text-body-small text-medium-emphasis px-4 pb-3">
         {{ t('family.page.guestsNote') }}
       </p>
     </v-card>

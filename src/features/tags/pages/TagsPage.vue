@@ -123,7 +123,7 @@ const usage = (tag: TagDto) =>
             @keydown.enter="onSave"
           />
           <div>
-            <div class="text-caption text-medium-emphasis mb-1">{{ t('tags.color') }}</div>
+            <div class="text-body-small text-medium-emphasis mb-1">{{ t('tags.color') }}</div>
             <v-chip-group v-model="color" column selected-class="elevation-6">
               <v-chip
                 v-for="c in MEMBER_COLORS"

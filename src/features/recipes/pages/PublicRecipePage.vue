@@ -131,8 +131,8 @@ const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
       class="mb-4"
     />
 
-    <h1 class="text-h4 font-weight-bold mb-1">{{ recipe.title }}</h1>
-    <p class="text-body-2 text-medium-emphasis mb-3" data-test="public-author">
+    <h1 class="text-headline-large font-weight-bold mb-1">{{ recipe.title }}</h1>
+    <p class="text-body-medium text-medium-emphasis mb-3" data-test="public-author">
       {{ t('publicRecipes.detail.from', { name: recipe.householdName }) }}
     </p>
     <div class="d-flex flex-wrap ga-2 mb-3">
@@ -173,7 +173,7 @@ const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
       </v-btn>
     </div>
 
-    <p v-if="recipe.description" class="text-body-1 mb-3 text-pre-line">{{ recipe.description }}</p>
+    <p v-if="recipe.description" class="text-body-large mb-3 text-pre-line">{{ recipe.description }}</p>
     <p v-if="recipe.sourceUrl" class="mb-4">
       <v-btn
         variant="text"
@@ -225,7 +225,7 @@ const openCopy = () => router.push(`/recipes/${snackbar.value.recipeId}`)
                   step.position + 1
                 }}</v-avatar>
               </template>
-              <v-list-item-title class="text-wrap text-body-1 text-pre-line">
+              <v-list-item-title class="text-wrap text-body-large text-pre-line">
                 {{ step.text }}
               </v-list-item-title>
             </v-list-item>

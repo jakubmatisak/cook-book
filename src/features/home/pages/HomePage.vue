@@ -91,8 +91,8 @@ const tiles = computed<Tile[]>(() => {
         :data-test="`tile-${tile.key}`"
       >
         <v-icon :icon="tile.icon" :size="mobile ? 32 : 40" :color="tile.color ?? 'primary'" />
-        <div class="text-subtitle-1 font-weight-bold flex-grow-1 flex-sm-grow-0">{{ tile.title }}</div>
-        <div class="text-body-2 text-medium-emphasis">{{ tc('common.plural.recipes', tile.count) }}</div>
+        <div class="text-title-medium font-weight-bold flex-grow-1 flex-sm-grow-0">{{ tile.title }}</div>
+        <div class="text-body-medium text-medium-emphasis">{{ tc('common.plural.recipes', tile.count) }}</div>
       </v-card>
     </v-col>
   </v-row>

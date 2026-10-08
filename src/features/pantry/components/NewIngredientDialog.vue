@@ -58,7 +58,7 @@ async function save() {
   <v-dialog v-model="open" max-width="460" :persistent="create.isPending.value">
     <v-card :title="t('pantry.new.title')">
       <v-card-text class="d-flex flex-column ga-4">
-        <p class="text-body-2 text-medium-emphasis">{{ t('pantry.new.intro') }}</p>
+        <p class="text-body-medium text-medium-emphasis">{{ t('pantry.new.intro') }}</p>
         <v-alert v-if="error" type="error" density="compact" :text="error" />
         <v-text-field
           v-model="name"

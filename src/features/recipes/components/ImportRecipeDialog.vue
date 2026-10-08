@@ -48,7 +48,7 @@ async function submit() {
   <v-dialog v-model="open" max-width="520" :persistent="loading">
     <v-card :title="t('recipes.import.title')">
       <v-card-text>
-        <p class="text-body-2 text-medium-emphasis mb-4">
+        <p class="text-body-medium text-medium-emphasis mb-4">
           {{ t('recipes.import.intro') }}
         </p>
         <v-alert v-if="!online" type="warning" density="compact" class="mb-3">

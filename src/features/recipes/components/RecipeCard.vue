@@ -62,7 +62,7 @@ const subtitle = computed(() => {
     <v-card-item>
       <!-- Nadpis má vždy vyhradené dva riadky (dlhší sa skráti), aby mali všetky karty rovnakú výšku. -->
       <v-card-title
-        class="text-wrap text-subtitle-1 font-weight-bold"
+        class="text-wrap text-title-medium font-weight-bold"
         style="
           line-height: 1.3;
           min-height: 2.6em;

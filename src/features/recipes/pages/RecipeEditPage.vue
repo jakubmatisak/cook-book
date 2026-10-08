@@ -169,7 +169,7 @@ function cancel() {
   <div>
     <v-toolbar color="transparent" density="compact" class="mb-2 px-0">
       <v-btn :icon="mdiArrowLeft" variant="text" :aria-label="t('common.actions.back')" @click="cancel" />
-      <v-toolbar-title class="text-h5 font-weight-bold">{{
+      <v-toolbar-title class="text-headline-small font-weight-bold">{{
         isNew ? t('recipes.editor.newTitle') : t('recipes.editor.editTitle')
       }}</v-toolbar-title>
     </v-toolbar>
@@ -260,7 +260,9 @@ function cancel() {
               />
             </v-col>
           </v-row>
-          <div class="text-caption text-medium-emphasis mt-3 mb-1">{{ t('recipes.editor.difficulty') }}</div>
+          <div class="text-body-small text-medium-emphasis mt-3 mb-1">
+            {{ t('recipes.editor.difficulty') }}
+          </div>
           <v-btn-toggle
             v-model="form.difficulty"
             mandatory

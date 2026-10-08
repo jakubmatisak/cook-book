@@ -129,7 +129,7 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
               : t('recipes.badge.public')
           }}
         </v-chip>
-        <div v-if="item.missing" class="text-caption text-medium-emphasis">
+        <div v-if="item.missing" class="text-body-small text-medium-emphasis">
           {{
             item.missing.length === 0
               ? t('recipes.missing.haveAll')

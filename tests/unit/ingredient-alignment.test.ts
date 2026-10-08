@@ -125,7 +125,7 @@ describe('zarovnanie ingrediencií bez množstva', () => {
     expect(wrapper.find('[data-test="recipe-ingredients-col"]').classes()).toContain('v-col--cols-5')
     expect(wrapper.find('[data-test="recipe-steps-col"]').classes()).toContain('v-col--cols-7')
     expect(wrapper.find('[data-test="recipe-step"]').classes()).not.toContain('py-3')
-    expect(wrapper.find('h1').classes()).toContain('text-h5')
+    expect(wrapper.find('h1').classes()).toContain('text-headline-small')
     window.dispatchEvent(new Event('afterprint'))
   })
 })

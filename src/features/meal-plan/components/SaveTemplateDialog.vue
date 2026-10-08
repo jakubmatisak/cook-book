@@ -37,7 +37,7 @@ async function onSave() {
   <v-dialog v-model="open" max-width="440">
     <v-card :title="t('plan.saveTemplate.title')">
       <v-card-text class="d-flex flex-column ga-3">
-        <p class="text-body-2 text-medium-emphasis">
+        <p class="text-body-medium text-medium-emphasis">
           {{
             t('plan.saveTemplate.text', {
               meals: tc('common.plural.meals', entryCount),

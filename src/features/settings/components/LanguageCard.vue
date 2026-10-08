@@ -24,7 +24,7 @@ const onChange = (value: unknown) => setLocale(parseLocale(typeof value === 'str
           {{ t(`common.language.${code}`) }}
         </v-btn>
       </v-btn-toggle>
-      <p class="text-caption text-medium-emphasis mt-2">{{ t('common.language.hint') }}</p>
+      <p class="text-body-small text-medium-emphasis mt-2">{{ t('common.language.hint') }}</p>
     </v-card-text>
   </v-card>
 </template>

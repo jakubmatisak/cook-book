@@ -57,11 +57,11 @@ async function onDelete(id: string) {
   <v-dialog v-model="open" max-width="480">
     <v-card :title="t('plan.applyTemplate.title')">
       <v-card-text class="d-flex flex-column ga-3">
-        <p class="text-body-2 text-medium-emphasis">
+        <p class="text-body-medium text-medium-emphasis">
           {{ t('plan.applyTemplate.text', { week: formatWeekRange(toDate) }) }}
         </p>
         <v-skeleton-loader v-if="isPending" type="list-item@2" />
-        <p v-else-if="!templates?.length" class="text-body-2">
+        <p v-else-if="!templates?.length" class="text-body-medium">
           {{ t('plan.applyTemplate.empty') }}
         </p>
         <v-radio-group v-else v-model="selected" hide-details>

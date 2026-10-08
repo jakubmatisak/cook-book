@@ -111,7 +111,7 @@ const rowSubtitle = (s: SuggestionDto) =>
                       <v-icon v-else :icon="mdiPotSteamOutline" color="primary" />
                     </v-avatar>
                   </template>
-                  <v-card-title class="text-body-1 font-weight-bold text-wrap">
+                  <v-card-title class="text-body-large font-weight-bold text-wrap">
                     <router-link
                       :to="`/recipes/${s.recipeId}`"
                       class="text-decoration-none text-high-emphasis"

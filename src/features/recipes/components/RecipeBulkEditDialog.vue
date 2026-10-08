@@ -73,7 +73,7 @@ async function submit() {
   <v-dialog v-model="open" max-width="520" :persistent="save.isPending.value">
     <v-card :title="t('bulk.recipes.editTitle')" data-test="bulk-edit-dialog">
       <v-card-text class="d-flex flex-column ga-4">
-        <p class="text-body-2 text-medium-emphasis">
+        <p class="text-body-medium text-medium-emphasis">
           {{ t('bulk.recipes.editHint', { recipes: ids.length }) }}
         </p>
         <v-alert v-if="error" type="error" density="compact" :text="error" />
@@ -108,7 +108,7 @@ async function submit() {
           data-test="bulk-remove-tags"
         />
         <div>
-          <div class="text-caption text-medium-emphasis mb-1">{{ t('bulk.recipes.favorite') }}</div>
+          <div class="text-body-small text-medium-emphasis mb-1">{{ t('bulk.recipes.favorite') }}</div>
           <v-btn-toggle
             v-model="favorite"
             mandatory
@@ -123,7 +123,7 @@ async function submit() {
           </v-btn-toggle>
         </div>
         <div v-if="isOwner">
-          <div class="text-caption text-medium-emphasis mb-1">{{ t('bulk.recipes.visibility') }}</div>
+          <div class="text-body-small text-medium-emphasis mb-1">{{ t('bulk.recipes.visibility') }}</div>
           <v-btn-toggle
             v-model="visibility"
             mandatory

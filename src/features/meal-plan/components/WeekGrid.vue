@@ -65,13 +65,13 @@ function onDrop(event: DragEvent, date: string, slotId: string) {
         :class="{ 'bg-primary': d === today }"
         style="min-width: 0"
       >
-        <div class="text-caption font-weight-bold text-uppercase">{{ formatDayLabel(d).short }}</div>
-        <div class="text-body-2">{{ formatDayLabel(d).date }}</div>
+        <div class="text-body-small font-weight-bold text-uppercase">{{ formatDayLabel(d).short }}</div>
+        <div class="text-body-medium">{{ formatDayLabel(d).date }}</div>
       </v-col>
     </v-row>
     <v-row v-for="slot in slots" :key="slot.id" no-gutters class="flex-nowrap">
       <v-col
-        class="border-thin pa-2 d-flex align-center text-body-2 font-weight-bold"
+        class="border-thin pa-2 d-flex align-center text-body-medium font-weight-bold"
         :class="{ 'opacity-60': !slot.isEnabled }"
         style="flex: 0 0 7rem; max-width: 7rem"
       >

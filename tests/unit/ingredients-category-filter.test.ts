@@ -51,7 +51,7 @@ async function mountPage(width = 1280) {
 }
 
 const names = (wrapper: Awaited<ReturnType<typeof mountPage>>) =>
-  wrapper.findAll('[data-test="ingredient-row"] .text-body-1').map((el) => el.text())
+  wrapper.findAll('[data-test="ingredient-row"] .text-body-large').map((el) => el.text())
 
 const options = async () => {
   await flushPromises()

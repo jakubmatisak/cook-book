@@ -87,7 +87,7 @@ async function onDelete() {
           data-test="edit-name"
           @keydown.enter="onSave"
         />
-        <p class="text-body-2 text-medium-emphasis">
+        <p class="text-body-medium text-medium-emphasis">
           {{ t('ingredients.edit.renameHint') }}
         </p>
         <v-select

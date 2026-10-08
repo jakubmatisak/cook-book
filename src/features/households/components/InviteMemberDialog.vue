@@ -36,7 +36,7 @@ async function onInvite() {
   <v-dialog v-model="open" max-width="440">
     <v-card :title="t('households.invite.title')">
       <v-card-text class="d-flex flex-column ga-3">
-        <p class="text-body-2 text-medium-emphasis">
+        <p class="text-body-medium text-medium-emphasis">
           {{ t('households.invite.intro') }}
         </p>
         <v-text-field
@@ -61,7 +61,7 @@ async function onInvite() {
           <v-btn value="member">{{ t('common.role.member') }}</v-btn>
           <v-btn value="owner">{{ t('common.role.owner') }}</v-btn>
         </v-btn-toggle>
-        <p class="text-caption text-medium-emphasis">
+        <p class="text-body-small text-medium-emphasis">
           {{ t('households.invite.roleHint') }}
         </p>
       </v-card-text>

@@ -74,7 +74,7 @@ async function onDelete() {
   <v-dialog v-model="open" max-width="440">
     <v-card :title="staple ? t('pantry.staple.editTitle') : t('pantry.staple.newTitle')">
       <v-card-text class="d-flex flex-column ga-3">
-        <p v-if="!staple" class="text-body-2 text-medium-emphasis">
+        <p v-if="!staple" class="text-body-medium text-medium-emphasis">
           {{ t('pantry.staple.intro') }}
         </p>
         <v-combobox

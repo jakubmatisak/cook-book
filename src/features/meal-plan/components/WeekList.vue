@@ -28,9 +28,9 @@ defineEmits<{ add: [date: string, slotId: string]; edit: [entry: PlanEntryDto] }
       :variant="d === today ? 'outlined' : 'flat'"
     >
       <v-card-item>
-        <v-card-title class="text-subtitle-1 font-weight-bold text-capitalize">
+        <v-card-title class="text-title-medium font-weight-bold text-capitalize">
           {{ formatDayLabel(d).long }}
-          <span class="text-body-2 text-medium-emphasis font-weight-regular ms-1">{{
+          <span class="text-body-medium text-medium-emphasis font-weight-regular ms-1">{{
             formatDayLabel(d).date
           }}</span>
           <v-chip v-if="d === today" size="x-small" color="primary" variant="flat" class="ms-2">{{
@@ -43,7 +43,9 @@ defineEmits<{ add: [date: string, slotId: string]; edit: [entry: PlanEntryDto] }
         <v-divider v-if="index > 0" />
         <v-row no-gutters align="center" class="px-3 py-1">
           <v-col cols="auto" style="width: 5rem">
-            <span class="text-caption font-weight-bold text-medium-emphasis">{{ slotName(slot.name) }}</span>
+            <span class="text-body-small font-weight-bold text-medium-emphasis">{{
+              slotName(slot.name)
+            }}</span>
           </v-col>
           <v-col class="d-flex flex-column ga-1 py-1">
             <PlanEntryCard

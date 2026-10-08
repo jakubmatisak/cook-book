@@ -98,10 +98,10 @@ function onTimerDone(position: number) {
   <v-alert v-else-if="error" type="error" :text="errorText(error)" />
 
   <template v-else-if="recipe">
-    <p v-if="!wakeLockSupported" class="text-caption text-medium-emphasis mb-2">
+    <p v-if="!wakeLockSupported" class="text-body-small text-medium-emphasis mb-2">
       {{ t('recipes.cooking.noWakeLock') }}
     </p>
-    <p class="text-body-2 text-medium-emphasis mb-3">
+    <p class="text-body-medium text-medium-emphasis mb-3">
       {{ t('recipes.cooking.cookingFor', { portions }) }}
     </p>
 
@@ -133,9 +133,11 @@ function onTimerDone(position: number) {
             @update:model-value="toggleStep(step.id)"
           />
           <div class="flex-grow-1" @click="toggleStep(step.id)">
-            <div class="text-overline">{{ t('recipes.cooking.step', { n: step.position }) }}</div>
+            <div class="text-label-medium text-uppercase">
+              {{ t('recipes.cooking.step', { n: step.position }) }}
+            </div>
             <div
-              class="text-h6 font-weight-regular text-pre-line"
+              class="text-title-large font-weight-regular text-pre-line"
               :class="{ 'text-decoration-line-through': checked.has(step.id) }"
             >
               {{ step.text }}

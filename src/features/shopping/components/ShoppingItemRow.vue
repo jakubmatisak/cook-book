@@ -52,7 +52,7 @@ const origin = computed(() =>
       }}</span>
     </template>
     <template #append>
-      <span v-if="quantity" class="text-body-2 font-weight-bold me-2">{{ quantity }}</span>
+      <span v-if="quantity" class="text-body-medium font-weight-bold me-2">{{ quantity }}</span>
       <v-menu>
         <template #activator="{ props: activator }">
           <v-btn

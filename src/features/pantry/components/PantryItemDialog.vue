@@ -77,7 +77,7 @@ async function onRemove() {
   <v-dialog v-model="open" max-width="440">
     <v-card :title="ingredient?.name ?? t('pantry.item.title')">
       <v-card-text class="d-flex flex-column ga-3">
-        <p class="text-body-2 text-medium-emphasis">
+        <p class="text-body-medium text-medium-emphasis">
           {{ t('pantry.item.intro') }}
         </p>
         <v-row density="compact">

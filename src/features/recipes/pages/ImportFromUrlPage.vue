@@ -34,7 +34,7 @@ onMounted(run)
   <div class="d-flex flex-column align-center text-center ga-4 py-8">
     <template v-if="error">
       <v-alert type="error" :text="error" max-width="32rem" data-test="import-error" />
-      <p class="text-body-2 text-medium-emphasis text-break">{{ target }}</p>
+      <p class="text-body-medium text-medium-emphasis text-break">{{ target }}</p>
       <div class="d-flex flex-wrap justify-center ga-2">
         <v-btn color="primary" data-test="import-retry" @click="run">{{
           t('recipes.importFromUrl.retry')
@@ -46,8 +46,8 @@ onMounted(run)
     </template>
     <template v-else>
       <v-progress-circular indeterminate color="primary" />
-      <p class="text-body-1">{{ t('recipes.importFromUrl.loading') }}</p>
-      <p class="text-body-2 text-medium-emphasis text-break">{{ target }}</p>
+      <p class="text-body-large">{{ t('recipes.importFromUrl.loading') }}</p>
+      <p class="text-body-medium text-medium-emphasis text-break">{{ target }}</p>
     </template>
   </div>
 </template>

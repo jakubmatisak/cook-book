@@ -309,7 +309,7 @@ const usage = (item: IngredientDto) =>
         {{ t('ingredients.page.addStarters') }}
       </v-btn>
     </EmptyState>
-    <p v-else-if="!filtered.length" class="text-body-2 text-medium-emphasis">
+    <p v-else-if="!filtered.length" class="text-body-medium text-medium-emphasis">
       {{ t('ingredients.page.nothingFound') }}
     </p>
 
@@ -328,8 +328,8 @@ const usage = (item: IngredientDto) =>
               @update:model-value="selection.toggle(item.id)"
             />
             <div class="flex-grow-1">
-              <div class="text-body-1 font-weight-bold">{{ item.name }}</div>
-              <div class="text-caption text-medium-emphasis">{{ usage(item) }}</div>
+              <div class="text-body-large font-weight-bold">{{ item.name }}</div>
+              <div class="text-body-small text-medium-emphasis">{{ usage(item) }}</div>
             </div>
             <v-btn
               :icon="mdiPencilOutline"

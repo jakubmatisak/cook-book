@@ -147,9 +147,9 @@ async function exportRecipes() {
         <v-skeleton-loader v-if="isPending" type="list-item-two-line" />
         <v-alert v-else-if="error" type="error" :text="errorText(error)" />
         <template v-else-if="me">
-          <div class="text-body-1 font-weight-bold">{{ me.user.name }}</div>
-          <div class="text-body-2 text-medium-emphasis">{{ me.user.email }}</div>
-          <I18nT keypath="settings.account.household" scope="global" tag="div" class="text-body-2 mt-3">
+          <div class="text-body-large font-weight-bold">{{ me.user.name }}</div>
+          <div class="text-body-medium text-medium-emphasis">{{ me.user.email }}</div>
+          <I18nT keypath="settings.account.household" scope="global" tag="div" class="text-body-medium mt-3">
             <template #name
               ><strong>{{ me.household.name }}</strong></template
             >
@@ -159,7 +159,7 @@ async function exportRecipes() {
       </v-card-text>
     </v-card>
 
-    <div class="text-overline">{{ t('settings.mine') }}</div>
+    <div class="text-label-medium text-uppercase">{{ t('settings.mine') }}</div>
     <LanguageCard />
     <v-card :title="t('settings.appearance.title')">
       <v-card-text>
@@ -194,7 +194,7 @@ async function exportRecipes() {
             {{ t(`settings.density.${value}`) }}
           </v-btn>
         </v-btn-toggle>
-        <div class="text-caption text-medium-emphasis mt-2">{{ t('settings.density.hint') }}</div>
+        <div class="text-body-small text-medium-emphasis mt-2">{{ t('settings.density.hint') }}</div>
       </v-card-text>
     </v-card>
 
@@ -215,8 +215,8 @@ async function exportRecipes() {
     <v-card :title="t('settings.capture.title')" data-test="capture-card">
       <v-card-text class="d-flex flex-column ga-4">
         <div>
-          <div class="text-subtitle-1 font-weight-bold mb-1">{{ t('settings.capture.bookmarkTitle') }}</div>
-          <p class="text-body-2 mb-3">{{ t('settings.capture.bookmarkText') }}</p>
+          <div class="text-title-medium font-weight-bold mb-1">{{ t('settings.capture.bookmarkTitle') }}</div>
+          <p class="text-body-medium mb-3">{{ t('settings.capture.bookmarkText') }}</p>
           <!-- Odkaz je len na pretiahnutie; kliknutie v nastaveniach by otvorilo import stránky nastavení. -->
           <v-btn
             :href="bookmarklet"
@@ -229,12 +229,14 @@ async function exportRecipes() {
           >
             {{ t('settings.capture.bookmarkButton') }}
           </v-btn>
-          <p class="text-caption text-medium-emphasis mt-2">{{ t('settings.capture.bookmarkHint') }}</p>
+          <p class="text-body-small text-medium-emphasis mt-2">{{ t('settings.capture.bookmarkHint') }}</p>
         </div>
         <v-divider />
         <div>
-          <div class="text-subtitle-1 font-weight-bold mb-1">{{ t('settings.capture.extensionTitle') }}</div>
-          <p class="text-body-2 mb-3">{{ t('settings.capture.extensionText') }}</p>
+          <div class="text-title-medium font-weight-bold mb-1">
+            {{ t('settings.capture.extensionTitle') }}
+          </div>
+          <p class="text-body-medium mb-3">{{ t('settings.capture.extensionText') }}</p>
           <v-btn
             href="/rozsirenie-kucharska-kniha.zip"
             download
@@ -244,14 +246,14 @@ async function exportRecipes() {
           >
             {{ t('settings.capture.extensionDownload') }}
           </v-btn>
-          <ol class="text-body-2 mt-3 ps-5">
+          <ol class="text-body-medium mt-3 ps-5">
             <li>{{ t('settings.capture.step1') }}</li>
             <li>{{ t('settings.capture.step2') }}</li>
             <li>{{ t('settings.capture.step3') }}</li>
             <li>{{ t('settings.capture.step4') }}</li>
           </ol>
           <div class="d-flex align-center ga-2 mt-2">
-            <code class="text-body-2" data-test="app-address">{{ appAddress }}</code>
+            <code data-test="app-address">{{ appAddress }}</code>
             <v-btn
               :icon="mdiContentCopy"
               size="small"
@@ -265,7 +267,7 @@ async function exportRecipes() {
       </v-card-text>
     </v-card>
 
-    <div class="text-overline">{{ t('settings.household') }}</div>
+    <div class="text-label-medium text-uppercase">{{ t('settings.household') }}</div>
     <v-alert v-if="me && !isOwner" type="info" density="compact" data-test="owner-only-note">
       {{ t('settings.ownerOnly') }}
     </v-alert>
@@ -274,8 +276,8 @@ async function exportRecipes() {
     <v-card v-if="me" :title="t('settings.plan.title')">
       <v-card-text class="d-flex flex-column ga-4">
         <div>
-          <div class="text-subtitle-2 mb-1">{{ t('settings.plan.slots') }}</div>
-          <p class="text-caption text-medium-emphasis mb-1">
+          <div class="text-title-small mb-1">{{ t('settings.plan.slots') }}</div>
+          <p class="text-body-small text-medium-emphasis mb-1">
             {{ t('settings.plan.slotsHint') }}
           </p>
           <v-switch
@@ -300,8 +302,8 @@ async function exportRecipes() {
         />
         <div>
           <div class="d-flex align-baseline justify-space-between">
-            <span class="text-subtitle-2">{{ t('settings.plan.childPortion') }}</span>
-            <span class="text-body-2 font-weight-bold">{{
+            <span class="text-title-small">{{ t('settings.plan.childPortion') }}</span>
+            <span class="text-body-medium font-weight-bold">{{
               t('settings.plan.factorTimesAdult', { factor: formatNumber(childFactor) })
             }}</span>
           </div>
@@ -315,13 +317,13 @@ async function exportRecipes() {
             :disabled="!isOwner"
             @end="saveChildFactor"
           />
-          <p class="text-caption text-medium-emphasis">{{ t('settings.plan.childPortionHint') }}</p>
+          <p class="text-body-small text-medium-emphasis">{{ t('settings.plan.childPortionHint') }}</p>
         </div>
       </v-card-text>
     </v-card>
 
     <v-card v-if="me && isOwner" :title="t('samples.title')" data-test="samples-card">
-      <v-card-text class="text-body-2">{{ t('samples.text') }}</v-card-text>
+      <v-card-text class="text-body-medium">{{ t('samples.text') }}</v-card-text>
       <v-card-actions class="px-4 pb-4 ga-2 flex-wrap">
         <SampleRecipesButton />
         <SampleRecipesButton v-if="kidsEnabled" set="kids" class="ms-0" />
@@ -344,7 +346,7 @@ async function exportRecipes() {
     </v-card>
 
     <v-card v-if="me" :title="t('settings.account.title')">
-      <v-card-text class="text-body-2">
+      <v-card-text class="text-body-medium">
         <I18nT keypath="settings.account.loggedIn" scope="global" tag="span">
           <template #email
             ><strong>{{ me.user.email }}</strong></template
@@ -359,7 +361,7 @@ async function exportRecipes() {
     </v-card>
 
     <v-card v-if="isOwner" :title="t('settings.export.title')" data-test="export-card">
-      <v-card-text class="text-body-2">
+      <v-card-text class="text-body-medium">
         {{ t('settings.export.intro') }}
       </v-card-text>
       <v-card-actions class="flex-wrap ga-2">

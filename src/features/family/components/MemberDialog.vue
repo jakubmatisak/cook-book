@@ -114,7 +114,7 @@ async function onDelete() {
         />
 
         <div>
-          <div class="text-caption text-medium-emphasis mb-1">{{ t('family.member.who') }}</div>
+          <div class="text-body-small text-medium-emphasis mb-1">{{ t('family.member.who') }}</div>
           <v-btn-toggle
             :model-value="kind"
             mandatory
@@ -132,19 +132,19 @@ async function onDelete() {
 
         <div>
           <div class="d-flex align-baseline justify-space-between">
-            <span class="text-caption text-medium-emphasis">{{ t('family.member.portionSize') }}</span>
-            <span class="text-body-2 font-weight-bold">{{
+            <span class="text-body-small text-medium-emphasis">{{ t('family.member.portionSize') }}</span>
+            <span class="text-body-medium font-weight-bold">{{
               t('family.member.factorTimesAdult', { factor: formatNumber(factor) })
             }}</span>
           </div>
           <v-slider v-model="factor" :min="0.25" :max="1.5" :step="0.05" color="primary" hide-details />
-          <p class="text-caption text-medium-emphasis">
+          <p class="text-body-small text-medium-emphasis">
             {{ t('family.member.portionHint') }}
           </p>
         </div>
 
         <div>
-          <div class="text-caption text-medium-emphasis mb-1">{{ t('family.member.color') }}</div>
+          <div class="text-body-small text-medium-emphasis mb-1">{{ t('family.member.color') }}</div>
           <v-chip-group v-model="color" mandatory column selected-class="elevation-6">
             <v-chip
               v-for="c in MEMBER_COLORS"
@@ -163,7 +163,7 @@ async function onDelete() {
         </div>
 
         <div>
-          <div class="text-caption text-medium-emphasis mb-1">{{ t('family.member.foodHealth') }}</div>
+          <div class="text-body-small text-medium-emphasis mb-1">{{ t('family.member.foodHealth') }}</div>
           <div class="d-flex flex-column ga-3">
             <v-autocomplete
               v-model="allergies"

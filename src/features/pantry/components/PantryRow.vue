@@ -53,7 +53,7 @@ const expiryColor = computed(() => {
         >
           {{ describeExpiry(stock.expiresOn, today) }}
         </v-chip>
-        <span v-if="stock.location" class="text-caption">{{ stock.location }}</span>
+        <span v-if="stock.location" class="text-body-small">{{ stock.location }}</span>
       </span>
     </template>
     <template #append>
