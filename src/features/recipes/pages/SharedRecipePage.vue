@@ -99,9 +99,9 @@ watch(
     <!-- Ukončí obtekanie titulnej fotky, aby ingrediencie a postup boli pod hlavičkou. -->
     <div style="clear: both" />
     <RecipeIngredientsSteps :ingredients="recipe.ingredients" :steps="recipe.steps" />
-    <p v-if="recipe.sourceText" class="text-body-small text-medium-emphasis mt-3">
+    <RecipeNotes v-if="recipe.notes" :notes="recipe.notes" class="mt-4" />
+    <p v-if="recipe.sourceText" class="text-body-small text-medium-emphasis mt-3" data-test="recipe-source">
       {{ t('recipes.shared.source', { source: recipe.sourceText }) }}
     </p>
-    <RecipeNotes v-if="recipe.notes" :notes="recipe.notes" class="mt-4" />
   </template>
 </template>

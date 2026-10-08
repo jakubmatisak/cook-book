@@ -11,6 +11,7 @@
   odkaz a iné domácnosti prílohy nevidia. Fotky odobratej prílohy aj zmazaného receptu sa zmažú z úložiska.
 - Nastavenie „Zobrazovať recepty od iných“: verejné recepty iných domácností sa ukážu v receptoch a na úvode bez
   ďalšieho filtra; filter „Len moje“ ich skryje. Výber receptu do jedálnička ponúka naďalej len vlastné recepty.
+- Zdroj receptu je v detaile aj na zdieľanom odkaze úplne dole, pod postupom, prílohami a poznámkami.
 
 ### Opravy
 

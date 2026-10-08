@@ -97,6 +97,16 @@ describe('poznámky a prílohy v detaile receptu', () => {
     expect(viewer!.textContent).toContain('2 / 2')
   })
 
+  it('zdroj je úplne dole, pod galériou aj poznámkami', async () => {
+    const wrapper = await mountDetail(
+      detail({ notes: 'Prepis', attachments: [page(1)], sourceText: 'Katkina starká' }),
+    )
+    const notes = wrapper.find('[data-test="recipe-notes"]').element
+    const source = wrapper.find('[data-test="recipe-source"]')
+    expect(source.text()).toContain('Katkina starká')
+    expect(notes.compareDocumentPosition(source.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('bez poznámok a príloh sa tieto časti neukážu', async () => {
     const wrapper = await mountDetail(detail())
     expect(wrapper.find('[data-test="recipe-attachments"]').exists()).toBe(false)
@@ -117,7 +127,7 @@ describe('poznámky na stránke zdieľaného receptu', () => {
       coverImageUrl: null,
       description: null,
       sourceUrl: null,
-      sourceText: null,
+      sourceText: 'Katkina starká',
       notes: 'Pôvodný zápis zo zošita',
       ingredients: [],
       steps: [],
@@ -129,6 +139,9 @@ describe('poznámky na stránke zdieľaného receptu', () => {
     const wrapper = mount(App, { global: { plugins: [...mountPlugins(), router] }, attachTo: document.body })
     await flushPromises()
     expect(wrapper.find('[data-test="recipe-notes"]').text()).toContain('Pôvodný zápis zo zošita')
+    const source = wrapper.find('[data-test="recipe-source"]').element
+    const notes = wrapper.find('[data-test="recipe-notes"]').element
+    expect(notes.compareDocumentPosition(source) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(wrapper.find('[data-test="recipe-attachments"]').exists()).toBe(false)
   })
 })

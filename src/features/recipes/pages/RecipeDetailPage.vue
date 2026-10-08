@@ -497,20 +497,6 @@ function goBack() {
             </v-list-item>
           </v-list>
         </v-card>
-
-        <div v-if="recipe.sourceUrl || recipe.sourceText" class="text-body-medium text-medium-emphasis mt-4">
-          {{ t('recipes.detail.source') }}
-          <a
-            v-if="recipe.sourceUrl"
-            :href="recipe.sourceUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-primary"
-          >
-            <v-icon :icon="mdiLinkVariant" size="14" /> {{ recipe.sourceText || recipe.sourceUrl }}
-          </a>
-          <span v-else>{{ recipe.sourceText }}</span>
-        </div>
       </v-col>
     </v-row>
 
@@ -518,6 +504,25 @@ function goBack() {
     <div v-if="recipe.attachments?.length || recipe.notes" class="d-flex flex-column ga-4 mt-4">
       <RecipeAttachmentsGallery v-if="recipe.attachments?.length" :attachments="recipe.attachments" />
       <RecipeNotes v-if="recipe.notes" :notes="recipe.notes" />
+    </div>
+
+    <!-- Zdroj je úplne dole, pod postupom, prílohami aj poznámkami. -->
+    <div
+      v-if="recipe.sourceUrl || recipe.sourceText"
+      class="text-body-medium text-medium-emphasis mt-4"
+      data-test="recipe-source"
+    >
+      {{ t('recipes.detail.source') }}
+      <a
+        v-if="recipe.sourceUrl"
+        :href="recipe.sourceUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-primary"
+      >
+        <v-icon :icon="mdiLinkVariant" size="14" /> {{ recipe.sourceText || recipe.sourceUrl }}
+      </a>
+      <span v-else>{{ recipe.sourceText }}</span>
     </div>
   </template>
 
