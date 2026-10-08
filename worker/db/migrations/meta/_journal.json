@@ -43,6 +43,13 @@
       "when": 1791285947323,
       "tag": "0005_pobyty_navstev",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791449007277,
+      "tag": "0006_dry_iceman",
+      "breakpoints": true
     }
   ]
 }

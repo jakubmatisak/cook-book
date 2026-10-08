@@ -218,7 +218,10 @@ export const recipeIngredients = sqliteTable(
     isOptional: bool('is_optional').notNull().default(false),
     sortOrder: integer('sort_order').notNull().default(0),
   },
-  (t) => [index('recipe_ingredients_recipe_idx').on(t.recipeId)],
+  (t) => [
+    index('recipe_ingredients_recipe_idx').on(t.recipeId),
+    index('recipe_ingredients_ingredient_idx').on(t.ingredientId),
+  ],
 )
 
 export const recipeSteps = sqliteTable(
@@ -441,6 +444,7 @@ export const shoppingItems = sqliteTable(
   (t) => [
     index('shopping_items_list_idx').on(t.listId, t.isChecked, t.sortOrder),
     index('shopping_items_list_updated_idx').on(t.listId, t.updatedAt),
+    index('shopping_items_ingredient_idx').on(t.ingredientId),
   ],
 )
 
