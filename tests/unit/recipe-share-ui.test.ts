@@ -59,7 +59,7 @@ async function mountDetail(shareToken: string | null, extra: Record<string, unkn
     { global: { plugins: [...mountPlugins(), router] }, attachTo: document.body },
   )
   await flushPromises()
-  return { wrapper, calls, writeText }
+  return { wrapper, calls, writeText, router }
 }
 
 const click = async (selector: string) => {
@@ -96,5 +96,13 @@ describe('zdieľanie receptu odkazom v detaile', () => {
     await click('[data-test="share-stop"]')
     expect(calls.some((c: StubCall) => c.method === 'DELETE' && c.path === '/recipes/r1/share')).toBe(true)
     expect(wrapper.find('[data-test="share-status"]').exists()).toBe(false)
+  })
+})
+
+describe('Späť v detaile receptu', () => {
+  it('vedie vždy do receptov, nie na predošlú stránku v histórii (napr. režim varenia)', async () => {
+    const { wrapper, router } = await mountDetail(null)
+    await wrapper.find('[data-test="detail-back"]').trigger('click')
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/recipes'))
   })
 })

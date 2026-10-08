@@ -221,18 +221,25 @@ async function onDelete() {
   }
 }
 
+// Späť vedie o úroveň vyššie (do receptov), nie na predošlú stránku v histórii – inak by sa vracalo napr. do
+// režimu varenia, z ktorého človek práve prišiel.
 function goBack() {
-  if (window.history.state?.back) router.back()
-  else void router.push('/recipes')
+  void router.push('/recipes')
 }
 </script>
 
 <template>
   <v-toolbar color="transparent" density="compact" class="mb-2 px-0 d-print-none">
-    <v-btn :icon="mdiArrowLeft" variant="text" :aria-label="t('common.actions.back')" @click="goBack" />
+    <v-btn
+      :icon="mdiArrowLeft"
+      variant="text"
+      :aria-label="t('common.actions.back')"
+      data-test="detail-back"
+      @click="goBack"
+    />
     <v-spacer />
     <template v-if="recipe">
-      <FavoriteButton :recipe-id="recipe.id" :is-favorite="recipe.isFavorite" size="default" />
+      <FavoriteButton :recipe-id="recipe.id" :is-favorite="recipe.isFavorite" size="default" plain />
       <v-btn
         :icon="mdiPencilOutline"
         variant="text"

@@ -22,3 +22,20 @@ describe('tlačidlo obľúbených', () => {
     expect(button.classes()).toContain('v-btn--size-small')
   })
 })
+
+describe('tlačidlo obľúbených v hlavičke detailu', () => {
+  it('je ako ostatné ikonky v lište: bez pozadia a s hustotou podľa nastavenia', () => {
+    const wrapper = mount(
+      {
+        render: () =>
+          h(VDefaultsProvider, { defaults: densityDefaults('compact') }, () =>
+            h(FavoriteButton, { recipeId: 'r1', isFavorite: false, size: 'default', plain: true }),
+          ),
+      },
+      { global: { plugins: mountPlugins() } },
+    )
+    const button = wrapper.find('.v-btn')
+    expect(button.classes()).toContain('v-btn--variant-text')
+    expect(button.classes()).not.toContain('v-btn--density-default')
+  })
+})

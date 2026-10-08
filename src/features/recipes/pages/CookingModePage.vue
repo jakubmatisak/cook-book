@@ -77,6 +77,7 @@ function onTimerDone(position: number) {
       variant="text"
       :aria-label="t('recipes.cooking.backToRecipe')"
       :to="`/recipes/${id}`"
+      data-test="cooking-back"
     />
     <v-toolbar-title class="font-weight-bold">{{
       recipe?.title ?? t('recipes.cooking.title')
@@ -86,6 +87,7 @@ function onTimerDone(position: number) {
       :prepend-icon="mdiFoodVariant"
       variant="tonal"
       color="primary"
+      data-test="cooking-ingredients"
       @click="ingredientsOpen = true"
     >
       {{ t('recipes.cooking.ingredients') }}
@@ -164,16 +166,22 @@ function onTimerDone(position: number) {
     </v-alert>
 
     <v-navigation-drawer v-if="mdAndUp" v-model="ingredientsOpen" location="end" temporary width="340">
-      <v-list-subheader class="font-weight-bold">{{
-        t('recipes.cooking.ingredientsFor', { portions })
-      }}</v-list-subheader>
-      <v-list density="compact">
-        <v-list-item v-for="item in recipe.ingredients" :key="item.id" :title="item.name">
-          <template #append>
-            <span class="font-weight-bold">{{ formatScaled(item.quantity, factor, item.unit) }}</span>
-          </template>
-        </v-list-item>
-      </v-list>
+      <!-- Nadpis ako karta na mobile (spodný panel), nie malý podnadpis zoznamu. -->
+      <v-card
+        :title="t('recipes.cooking.ingredientsFor', { portions })"
+        variant="flat"
+        rounded="0"
+        color="transparent"
+        :border="false"
+      >
+        <v-list density="compact">
+          <v-list-item v-for="item in recipe.ingredients" :key="item.id" :title="item.name">
+            <template #append>
+              <span class="font-weight-bold">{{ formatScaled(item.quantity, factor, item.unit) }}</span>
+            </template>
+          </v-list-item>
+        </v-list>
+      </v-card>
     </v-navigation-drawer>
 
     <v-bottom-sheet v-else v-model="ingredientsOpen">
