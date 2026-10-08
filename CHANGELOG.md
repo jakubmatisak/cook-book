@@ -1,5 +1,12 @@
 # Zmeny
 
+## 1.4.2 – 2026-10-08
+
+### Opravy
+
+- Ingrediencie sa načítajú bez čítania celej databázy (index na počet použití). Predtým jedno otvorenie
+  zoznamu prečítalo stovky tisíc riadkov a appka sa blížila k dennému limitu databázy na free pláne.
+
 ## 1.4.1 – 2026-10-08
 
 ### Opravy
