@@ -12,6 +12,7 @@ import {
   mdiEarthOff,
   mdiFileDownloadOutline,
   mdiLinkVariant,
+  mdiLinkVariantOff,
   mdiPencilOutline,
   mdiPlayCircleOutline,
   mdiPotSteamOutline,
@@ -347,24 +348,26 @@ function goBack() {
       <v-chip color="success" variant="tonal" size="small" :prepend-icon="mdiLinkVariant">
         {{ t('recipes.detail.shared') }}
       </v-chip>
-      <v-btn
+      <!-- Akcie ako štítky rovnakej veľkosti ako „Zdieľané“, aby riadok pôsobil jednotne. -->
+      <v-chip
         size="small"
-        variant="tonal"
+        variant="outlined"
         :prepend-icon="mdiContentCopy"
         data-test="share-copy"
         @click="copyShareLink(recipe.shareToken)"
       >
         {{ t('recipes.detail.copyLink') }}
-      </v-btn>
-      <v-btn
+      </v-chip>
+      <v-chip
         size="small"
-        variant="text"
-        :loading="unshare.isPending.value"
+        variant="outlined"
+        :prepend-icon="mdiLinkVariantOff"
+        :disabled="unshare.isPending.value"
         data-test="share-stop"
         @click="stopSharing"
       >
         {{ t('recipes.detail.stopSharing') }}
-      </v-btn>
+      </v-chip>
     </div>
     <v-btn
       color="primary"
