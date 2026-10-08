@@ -1,5 +1,12 @@
 # Zmeny
 
+## 1.4.4 – 2026-10-08
+
+### Opravy
+
+- Rýchlejšia Špajza, zlúčenie a mazanie ingrediencií a ukladanie receptu: ďalšie indexy v databáze, dotazy už
+  neprechádzajú celé tabuľky.
+
 ## 1.4.3 – 2026-10-08
 
 ### Opravy
