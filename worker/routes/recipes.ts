@@ -77,7 +77,7 @@ export const recipeRoutes = new Hono<AppEnv>()
   // Hromadné mazanie a úprava vybraných receptov (viditeľnosť smie meniť len vlastník).
   .post('/bulk/delete', async (c) => {
     const { ids } = await parseBody(c, bulkIdsSchema)
-    return c.json(await bulkDeleteRecipes(c.get('db'), c.get('user').householdId, ids))
+    return c.json(await bulkDeleteRecipes(c.get('db'), c.get('user').householdId, ids, c.env.BUCKET))
   })
   .post('/bulk/update', async (c) => {
     const input = await parseBody(c, recipeBulkUpdateSchema)
@@ -111,11 +111,11 @@ export const recipeRoutes = new Hono<AppEnv>()
   .put('/:id', async (c) => {
     const input = await parseBody(c, recipeInputSchema)
     const user = c.get('user')
-    const id = await saveRecipe(c.get('db'), user, input, c.req.param('id'))
+    const id = await saveRecipe(c.get('db'), user, input, c.req.param('id'), c.env.BUCKET)
     return c.json(await getRecipeDetail(c.get('db'), user.householdId, user.id, id))
   })
   .delete('/:id', async (c) => {
-    await deleteRecipe(c.get('db'), c.get('user').householdId, c.req.param('id'))
+    await deleteRecipe(c.get('db'), c.get('user').householdId, c.req.param('id'), c.env.BUCKET)
     return c.body(null, 204)
   })
   .put('/:id/favorite', async (c) => {

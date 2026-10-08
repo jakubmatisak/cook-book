@@ -38,6 +38,7 @@ import type { UserRow } from '../env'
 import { HttpError, isUniqueViolation } from '../errors'
 import { chunk } from '../http'
 import { resolveIngredients, resolveTags } from './catalog'
+import { releaseImages } from './imageCleanup'
 import { ignoredPantryCategoryIds, pantryIngredientIds } from './pantry'
 
 type RecipeRow = typeof recipes.$inferSelect
@@ -97,8 +98,17 @@ async function assertImage(db: Db, householdId: string, imageId: string | null) 
 
 const isSlugConflict = (error: unknown) => isUniqueViolation(error, 'slug')
 
-/** Vytvorí alebo prepíše recept vrátane ingrediencií, krokov a tagov; vráti jeho id. */
-export async function saveRecipe(db: Db, user: UserRow, input: RecipeInput, id?: string): Promise<string> {
+/**
+ * Vytvorí alebo prepíše recept vrátane ingrediencií, krokov a tagov; vráti jeho id. S `bucket` po výmene titulnej
+ * fotky zmaže starú, ak ju už nič nepoužíva.
+ */
+export async function saveRecipe(
+  db: Db,
+  user: UserRow,
+  input: RecipeInput,
+  id?: string,
+  bucket?: R2Bucket,
+): Promise<string> {
   const householdId = user.householdId
   const existing = id ? await findLive(db, householdId, id) : undefined
   await assertImage(db, householdId, input.coverImageId)
@@ -119,6 +129,9 @@ export async function saveRecipe(db: Db, user: UserRow, input: RecipeInput, id?:
       : await uniqueSlug(db, householdId, slugify(input.title), existing?.id)
     try {
       await db.batch(buildStatements(slug))
+      if (bucket && existing?.coverImageId && existing.coverImageId !== input.coverImageId) {
+        await releaseImages(db, bucket, householdId, [existing.coverImageId])
+      }
       return recipeId
     } catch (error) {
       if (keepSlug || attempt >= 5 || !isSlugConflict(error)) throw error
@@ -223,13 +236,19 @@ export async function setRecipeVisibility(
 }
 
 /** Zmaže recept aj jeho záznamy v jedálničku (ručné záznamy bez receptu ostanú). */
-export async function deleteRecipe(db: Db, householdId: string, id: string): Promise<void> {
+/** Zmaže recept (označením) aj jeho plán; s `bucket` aj titulnú fotku, ak ju nepoužíva iný recept. */
+export async function deleteRecipe(
+  db: Db,
+  householdId: string,
+  id: string,
+  bucket?: R2Bucket,
+): Promise<void> {
   const [deleted] = await db.batch([
     db
       .update(recipes)
       .set({ deletedAt: new Date().toISOString() })
       .where(liveRecipe(householdId, id))
-      .returning({ id: recipes.id }),
+      .returning({ id: recipes.id, coverImageId: recipes.coverImageId }),
     db.delete(mealPlanEntries).where(
       and(
         eq(mealPlanEntries.householdId, householdId),
@@ -240,6 +259,7 @@ export async function deleteRecipe(db: Db, householdId: string, id: string): Pro
     ),
   ])
   if (deleted.length === 0) throw notFound()
+  if (bucket) await releaseImages(db, bucket, householdId, [deleted[0]!.coverImageId])
 }
 
 export async function setFavorite(db: Db, user: UserRow, id: string, favorite: boolean): Promise<void> {

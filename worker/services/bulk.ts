@@ -17,6 +17,7 @@ import {
 import type { UserRow } from '../env'
 import { chunk } from '../http'
 import { assertShopCategory, resolveTags } from './catalog'
+import { releaseImages } from './imageCleanup'
 
 /** Dvojice (recept, štítok či človek) po dávkach, aby sa nepresiahol limit viazaných hodnôt D1 (100 na dopyt). */
 const PAIRS_PER_INSERT = 40
@@ -29,13 +30,14 @@ export async function bulkDeleteRecipes(
   db: Db,
   householdId: string,
   ids: string[],
+  bucket?: R2Bucket,
 ): Promise<BulkAffectedDto> {
   const [deleted] = await db.batch([
     db
       .update(recipes)
       .set({ deletedAt: new Date().toISOString() })
       .where(liveRecipes(householdId, ids))
-      .returning({ id: recipes.id }),
+      .returning({ id: recipes.id, coverImageId: recipes.coverImageId }),
     db.delete(mealPlanEntries).where(
       and(
         eq(mealPlanEntries.householdId, householdId),
@@ -45,6 +47,13 @@ export async function bulkDeleteRecipes(
       ),
     ),
   ])
+  if (bucket)
+    await releaseImages(
+      db,
+      bucket,
+      householdId,
+      deleted.map((r) => r.coverImageId),
+    )
   return { affected: deleted.length }
 }
 
