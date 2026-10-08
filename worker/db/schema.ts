@@ -103,20 +103,24 @@ export const familyMembers = sqliteTable(
   (t) => [index('family_members_household_idx').on(t.householdId)],
 )
 
-export const memberPreferences = sqliteTable('member_preferences', {
-  id: id(),
-  memberId: text('member_id')
-    .notNull()
-    .references(() => familyMembers.id, { onDelete: 'cascade' }),
-  kind: text('kind', { enum: PREFERENCE_KINDS }).notNull(),
-  ingredientId: text('ingredient_id').references((): AnySQLiteColumn => ingredients.id, {
-    onDelete: 'set null',
-  }),
-  tagId: text('tag_id').references((): AnySQLiteColumn => tags.id, { onDelete: 'set null' }),
-  note: text('note'),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-})
+export const memberPreferences = sqliteTable(
+  'member_preferences',
+  {
+    id: id(),
+    memberId: text('member_id')
+      .notNull()
+      .references(() => familyMembers.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: PREFERENCE_KINDS }).notNull(),
+    ingredientId: text('ingredient_id').references((): AnySQLiteColumn => ingredients.id, {
+      onDelete: 'set null',
+    }),
+    tagId: text('tag_id').references((): AnySQLiteColumn => tags.id, { onDelete: 'set null' }),
+    note: text('note'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('member_preferences_ingredient_idx').on(t.ingredientId)],
+)
 
 // ─── Katalóg ─────────────────────────────────────────────────────────────────
 
@@ -462,35 +466,46 @@ export const shoppingItemSources = sqliteTable(
       .references(() => recipeIngredients.id, { onDelete: 'cascade' }),
     quantityContrib: real('quantity_contrib'),
   },
-  (t) => [primaryKey({ columns: [t.itemId, t.planEntryId, t.recipeIngredientId] })],
+  (t) => [
+    primaryKey({ columns: [t.itemId, t.planEntryId, t.recipeIngredientId] }),
+    index('shopping_item_sources_recipe_ingredient_idx').on(t.recipeIngredientId),
+  ],
 )
 
-export const stapleItems = sqliteTable('staple_items', {
-  id: id(),
-  householdId: householdRef(),
-  ingredientId: text('ingredient_id')
-    .notNull()
-    .references(() => ingredients.id, { onDelete: 'cascade' }),
-  quantity: real('quantity'),
-  unit: unit('unit'),
-  everyNWeeks: integer('every_n_weeks').notNull().default(1),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-})
+export const stapleItems = sqliteTable(
+  'staple_items',
+  {
+    id: id(),
+    householdId: householdRef(),
+    ingredientId: text('ingredient_id')
+      .notNull()
+      .references(() => ingredients.id, { onDelete: 'cascade' }),
+    quantity: real('quantity'),
+    unit: unit('unit'),
+    everyNWeeks: integer('every_n_weeks').notNull().default(1),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('staple_items_ingredient_idx').on(t.ingredientId)],
+)
 
-export const pantryItems = sqliteTable('pantry_items', {
-  id: id(),
-  householdId: householdRef(),
-  ingredientId: text('ingredient_id')
-    .notNull()
-    .references(() => ingredients.id, { onDelete: 'cascade' }),
-  quantity: real('quantity'),
-  unit: unit('unit'),
-  location: text('location'),
-  expiresOn: text('expires_on'),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-})
+export const pantryItems = sqliteTable(
+  'pantry_items',
+  {
+    id: id(),
+    householdId: householdRef(),
+    ingredientId: text('ingredient_id')
+      .notNull()
+      .references(() => ingredients.id, { onDelete: 'cascade' }),
+    quantity: real('quantity'),
+    unit: unit('unit'),
+    location: text('location'),
+    expiresOn: text('expires_on'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('pantry_items_household_ingredient_idx').on(t.householdId, t.ingredientId)],
+)
 
 // ─── Ostatné ─────────────────────────────────────────────────────────────────
 
