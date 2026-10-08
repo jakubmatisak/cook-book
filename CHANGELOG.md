@@ -1,5 +1,17 @@
 # Zmeny
 
+## 1.5.0 – 2026-10-08
+
+### Nové
+
+- Zdieľanie receptu odkazom: detail receptu → Zdieľať odkazom vytvorí odkaz, ktorý recept (s fotkou a tlačidlom
+  Tlačiť) otvorí komukoľvek aj bez prihlásenia. Zdieľaný recept je hore označený, odkaz sa dá skopírovať a
+  zdieľanie zastaviť. Vyžaduje výnimku Bypass v Cloudflare Access (návod v README).
+
+### Opravy
+
+- Verejný recept čísluje kroky od 1 (predtým od 2).
+
 ## 1.4.6 – 2026-10-08
 
 ### Nové
