@@ -101,6 +101,13 @@ describe('AppShell', () => {
     expect(wrapper.find('[data-test="content"]').text()).toBe('obsah stránky')
   })
 
+  it('na desktope využije obsah celú šírku obrazovky (bez pevnej max. šírky)', async () => {
+    const wrapper = await mountShell(1920)
+    const container = wrapper.find('.v-main .v-container')
+    expect(container.classes()).toContain('v-container--fluid')
+    expect(container.attributes('style') ?? '').not.toContain('max-width')
+  })
+
   it('logo v ľavom rohu vedie na úvod a bez ponuky', async () => {
     const wrapper = await mountShell(1440)
     const logo = wrapper.find('[data-test="logo"]')
