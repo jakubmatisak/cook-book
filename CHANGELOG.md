@@ -1,5 +1,12 @@
 # Zmeny
 
+## 1.4.1 – 2026-10-08
+
+### Opravy
+
+- Písmo podľa typografie Vuetify 4: popisy, nápovedy a nadpisy majú opäť správnu veľkosť (staré triedy
+  z Vuetify 3 sa ticho ignorovali). Režim varenia má väčší text krokov, sekcie Nastavení sú veľkými písmenami.
+
 ## 1.4.0 – 2026-10-07
 
 ### Nové
