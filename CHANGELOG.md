@@ -1,5 +1,14 @@
 # Zmeny
 
+## 1.5.2 – 2026-10-08
+
+### Opravy
+
+- Späť v detaile receptu vedie vždy do receptov, nie späť do režimu varenia či na inú predošlú stránku.
+- Ikony v lište detailu receptu sú rovnako veľké (srdiečko bez pozadia); akcie zdieľania sú štítky rovnakej
+  veľkosti ako Zdieľané.
+- Panel ingrediencií v režime varenia má na počítači riadny nadpis.
+
 ## 1.5.1 – 2026-10-08
 
 ### Opravy
