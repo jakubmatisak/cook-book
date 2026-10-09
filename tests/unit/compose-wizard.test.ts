@@ -55,6 +55,15 @@ describe('sprievodca – krok 1 a 2', () => {
     expect(brushSummary(grid)).toEqual({ verified: 1, new: 1 })
   })
 
+  it('riadok ani stĺpec neprefarbí obsadené políčka (tie sa nahrádzajú len po potvrdení)', () => {
+    const locked = new Set([`${MON}|obed`])
+    let grid = initialGrid([MON, TUE], ['obed', 'vecera'], locked, false)
+    grid = paintRow(grid, MON, ['obed', 'vecera'], 'new', locked)
+    expect([grid[`${MON}|obed`], grid[`${MON}|vecera`]]).toEqual(['skip', 'new'])
+    grid = paintColumn(grid, [MON, TUE], 'obed', 'verified', locked)
+    expect([grid[`${MON}|obed`], grid[`${TUE}|obed`]]).toEqual(['skip', 'verified'])
+  })
+
   it('predvoľba: pracovné dni do 30 min, víkend bez limitu', () => {
     const sat = '2026-10-17'
     const sun = '2026-10-18'

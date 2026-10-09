@@ -130,6 +130,12 @@ export default {
     paintRow: 'Paint the whole day: {day}',
     paintColumn: 'Paint the column: {slot}',
     cellAria: '{day}, {slot}: {brush}',
+    replaces: '{brush} · instead of: {titles}',
+    replaceCell: {
+      title: 'Replace the meal?',
+      text: '{day}, {slot}: the plan already has {titles}. If you paint the slot, it will be replaced by the suggestion when you confirm.',
+      confirm: 'Replace',
+    },
     limit: 'Cooking time',
     limits: { none: 'No limit', do30: 'Up to 30 min', do60: 'Up to 60 min' },
     presets: { workdays: 'Weekdays up to 30 min', weekend: 'Weekend without limit' },

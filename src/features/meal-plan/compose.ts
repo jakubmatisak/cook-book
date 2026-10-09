@@ -59,19 +59,28 @@ export const paintCell = (grid: BrushGrid, date: string, slotId: string, brush: 
   [cellKey(date, slotId)]: brush,
 })
 
+/** Celý deň; zamknuté (obsadené, ešte nepotvrdené) políčka ostanú, ako sú. */
 export const paintRow = (
   grid: BrushGrid,
   date: string,
   slotIds: readonly string[],
   brush: ComposeBrush,
-): BrushGrid => slotIds.reduce((g, slotId) => paintCell(g, date, slotId, brush), grid)
+  locked: ReadonlySet<string> = new Set(),
+): BrushGrid =>
+  slotIds.reduce(
+    (g, slotId) => (locked.has(cellKey(date, slotId)) ? g : paintCell(g, date, slotId, brush)),
+    grid,
+  )
 
+/** Celé jedlo dňa; zamknuté políčka ostanú, ako sú. */
 export const paintColumn = (
   grid: BrushGrid,
   dates: readonly string[],
   slotId: string,
   brush: ComposeBrush,
-): BrushGrid => dates.reduce((g, date) => paintCell(g, date, slotId, brush), grid)
+  locked: ReadonlySet<string> = new Set(),
+): BrushGrid =>
+  dates.reduce((g, date) => (locked.has(cellKey(date, slotId)) ? g : paintCell(g, date, slotId, brush)), grid)
 
 /** Koľko políčok sa naplní ktorým štetcom („Nevypĺňať“ sa nepočíta). */
 export function brushSummary(grid: BrushGrid): Partial<Record<FillBrush, number>> {

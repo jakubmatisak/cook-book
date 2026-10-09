@@ -173,8 +173,28 @@ const brushText = (b: ComposeBrush) => t(`plan.compose.brushes.${b}`)
 const cellText = (date: string, slotId: string) => {
   const key = cellKey(date, slotId)
   const value = grid.value[key] ?? 'skip'
-  const titles = occupied.value.get(key)
-  return value === 'skip' && titles?.length ? titles.join(', ') : brushText(value)
+  const titles = occupied.value.get(key)?.join(', ')
+  if (!titles) return brushText(value)
+  return value === 'skip' ? titles : t('plan.compose.replaces', { brush: brushText(value), titles })
+}
+
+// Obsadené políčko (s jedlom v jedálničku) sa vyfarbí len po potvrdení – návrh ho potom nahradí. Celý deň či jedlo
+// dňa ho preskočí.
+const lockedCells = computed(
+  () => new Set([...occupied.value.keys()].filter((key) => (grid.value[key] ?? 'skip') === 'skip')),
+)
+const replaceCell = ref<{ date: string; slotId: string; slot: string } | null>(null)
+function onCell(date: string, slotId: string) {
+  if (brush.value !== 'skip' && lockedCells.value.has(cellKey(date, slotId))) {
+    replaceCell.value = { date, slotId, slot: activeSlots.value.find((s) => s.slotId === slotId)?.name ?? '' }
+    return
+  }
+  grid.value = paintCell(grid.value, date, slotId, brush.value)
+}
+function confirmReplaceCell() {
+  const cell = replaceCell.value
+  if (cell) grid.value = paintCell(grid.value, cell.date, cell.slotId, brush.value)
+  replaceCell.value = null
 }
 const summaryText = computed(() => {
   const counts = brushSummary(grid.value)
@@ -206,7 +226,8 @@ async function propose() {
       tagIds: tagIds.value,
       leftoverDays: cookAhead.value ? leftoverDays.value : 0,
       seed: randomSeed(),
-      replace: replace.value,
+      // Vyfarbené obsadené políčka sa nahrádzajú (nevyfarbené návrh neovplyvní).
+      replace: true,
     })
     step.value = 3
   } catch (e) {
@@ -221,7 +242,7 @@ const repeats = computed(() =>
   repeatsOf(
     items.value,
     (existing.value ?? []).flatMap((e) =>
-      e.recipeId && !(replace.value && grid.value[cellKey(e.date, e.slotId)] !== 'skip')
+      e.recipeId && (grid.value[cellKey(e.date, e.slotId)] ?? 'skip') === 'skip'
         ? [{ date: e.date, recipeId: e.recipeId }]
         : [],
     ),
@@ -296,7 +317,7 @@ async function confirm() {
   if (!payload.length) return void (error.value = t('plan.compose.review.nothing'))
   error.value = ''
   try {
-    const result = await apply.mutateAsync({ replace: replace.value, items: payload })
+    const result = await apply.mutateAsync({ replace: true, items: payload })
     emit('applied', result.added, from.value)
     open.value = false
   } catch (e) {
@@ -364,7 +385,7 @@ function back() {
               <div class="text-title-small mb-2">{{ t('plan.compose.slots.title') }}</div>
               <v-row density="compact">
                 <v-col v-for="slot in slotSettings" :key="slot.slotId" cols="12" sm="6" md="4">
-                  <v-card variant="outlined" class="pa-3">
+                  <v-card variant="outlined" class="pa-3 h-100" data-test="compose-slot-card">
                     <v-checkbox
                       v-model="slot.selected"
                       :label="slot.name"
@@ -483,14 +504,14 @@ function back() {
 
             <v-row density="compact" align="center">
               <v-col cols="12" md="4" class="d-none d-md-block" />
-              <v-col v-for="slot in activeSlots" :key="slot.slotId">
+              <v-col v-for="slot in activeSlots" :key="slot.slotId" class="overflow-hidden">
                 <v-btn
                   block
                   variant="text"
                   class="text-none font-weight-bold"
                   :aria-label="t('plan.compose.paintColumn', { slot: slot.name })"
                   :data-test="`paint-column-${slot.slotId}`"
-                  @click="grid = paintColumn(grid, dates, slot.slotId, brush)"
+                  @click="grid = paintColumn(grid, dates, slot.slotId, brush, lockedCells)"
                 >
                   {{ slot.name }}
                 </v-btn>
@@ -500,8 +521,8 @@ function back() {
               <v-col cols="12" md="4" class="d-flex align-center ga-2">
                 <v-btn
                   variant="text"
-                  class="text-none font-weight-bold justify-start"
-                  min-width="104"
+                  class="text-none font-weight-bold justify-start flex-shrink-0"
+                  width="112"
                   :aria-label="t('plan.compose.paintRow', { day: dayLabel(date) })"
                   :data-test="`paint-row-${date}`"
                   @click="
@@ -510,6 +531,7 @@ function back() {
                       date,
                       activeSlots.map((s) => s.slotId),
                       brush,
+                      lockedCells,
                     )
                   "
                 >
@@ -525,7 +547,7 @@ function back() {
                   @update:model-value="setLimit(date, $event)"
                 />
               </v-col>
-              <v-col v-for="slot in activeSlots" :key="slot.slotId">
+              <v-col v-for="slot in activeSlots" :key="slot.slotId" class="overflow-hidden">
                 <v-btn
                   block
                   height="48"
@@ -540,7 +562,7 @@ function back() {
                     })
                   "
                   :data-test="`cell-${date}-${slot.slotId}`"
-                  @click="grid = paintCell(grid, date, slot.slotId, brush)"
+                  @click="onCell(date, slot.slotId)"
                 >
                   <span class="text-truncate">{{ cellText(date, slot.slotId) }}</span>
                 </v-btn>
@@ -565,18 +587,30 @@ function back() {
             </div>
             <v-row density="compact" class="d-none d-md-flex">
               <v-col md="2" />
-              <v-col v-for="slot in activeSlots" :key="slot.slotId" class="text-title-small text-center">
+              <v-col
+                v-for="slot in activeSlots"
+                :key="slot.slotId"
+                class="text-title-small text-center overflow-hidden"
+              >
                 {{ slot.name }}
               </v-col>
             </v-row>
             <v-row v-for="date in dates" :key="date" density="compact">
               <v-col cols="12" md="2" class="text-title-small pt-3">{{ dayLabel(date) }}</v-col>
-              <v-col v-for="slot in activeSlots" :key="slot.slotId" cols="12" :md="true">
+              <v-col
+                v-for="slot in activeSlots"
+                :key="slot.slotId"
+                cols="12"
+                :md="true"
+                class="overflow-hidden d-flex flex-column"
+              >
                 <div class="text-label-medium text-medium-emphasis mb-1 d-md-none">{{ slot.name }}</div>
-                <div class="d-flex flex-column ga-2">
+                <!-- Karty v riadku dňa majú rovnakú výšku, akcie sú vždy dole. -->
+                <div class="d-flex flex-column ga-2 flex-grow-1">
                   <v-card
                     v-for="it in itemsIn(date, slot.slotId)"
                     :key="it.key"
+                    class="flex-grow-1 d-flex flex-column"
                     :variant="it.recipeId ? 'tonal' : 'outlined'"
                     :color="it.leftoverOf ? 'secondary' : it.recipeId ? 'primary' : undefined"
                     density="compact"
@@ -629,7 +663,7 @@ function back() {
                         <v-icon :icon="mdiAlertOutline" size="14" />{{ warningText(w) }}
                       </div>
                     </v-card-item>
-                    <v-card-actions class="pa-1 pt-0 flex-wrap ga-1" style="min-height: 0">
+                    <v-card-actions class="pa-1 pt-0 flex-wrap ga-1 mt-auto" style="min-height: 0">
                       <template v-if="it.leftoverOf">
                         <v-btn size="small" variant="text" :prepend-icon="mdiClose" @click="onClear(it.key)">
                           {{ t('plan.compose.review.clearLeftover') }}
@@ -642,7 +676,7 @@ function back() {
                           variant="text"
                           :aria-label="t('plan.compose.review.other')"
                           :title="t('plan.compose.review.other')"
-                          :disabled="it.options.length < 2 && !!it.recipeId"
+                          :disabled="!it.options.some((o) => o.recipeId !== it.recipeId)"
                           :data-test="`other-${it.key}`"
                           @click="onOther(it.key)"
                         />
@@ -733,6 +767,27 @@ function back() {
           @click="confirm"
         >
           {{ t('plan.compose.confirm') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog :model-value="!!replaceCell" max-width="440" @update:model-value="replaceCell = null">
+    <v-card v-if="replaceCell" :title="t('plan.compose.replaceCell.title')" data-test="replace-cell-dialog">
+      <v-card-text>
+        {{
+          t('plan.compose.replaceCell.text', {
+            day: dayLabel(replaceCell.date),
+            slot: replaceCell.slot,
+            titles: occupied.get(cellKey(replaceCell.date, replaceCell.slotId))?.join(', ') ?? '',
+          })
+        }}
+      </v-card-text>
+      <v-card-actions class="px-4 pb-4">
+        <v-spacer />
+        <v-btn variant="text" @click="replaceCell = null">{{ t('common.actions.cancel') }}</v-btn>
+        <v-btn color="primary" variant="flat" data-test="replace-cell-confirm" @click="confirmReplaceCell">
+          {{ t('plan.compose.replaceCell.confirm') }}
         </v-btn>
       </v-card-actions>
     </v-card>

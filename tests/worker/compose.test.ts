@@ -125,6 +125,20 @@ describe('zostaviť jedálniček – potvrdenie a zvyšky', () => {
     expect((await plan()).map((e) => e.freeText ?? e.recipeId)).toEqual([rezen])
   })
 
+  it('uloží aj veľký návrh naraz (14 dní × 2 jedlá, nad limit parametrov D1)', async () => {
+    const { obed, gulas, rezen } = await setup()
+    const me = await (await send(app, 'GET', api('/me'))).json<MeResponse>()
+    const vecera = me.slots.find((s) => s.name === 'Večera')!.id
+    const days = Array.from({ length: 14 }, (_, i) => `2026-10-${String(12 + i).padStart(2, '0')}`)
+    const items = days.flatMap((date) => [
+      { key: `${date}|o`, date, slotId: obed, recipeId: gulas, leftoverOf: null, leftoverDays: 0 },
+      { key: `${date}|v`, date, slotId: vecera, recipeId: rezen, leftoverOf: null, leftoverDays: 0 },
+    ])
+    const res = await send(app, 'POST', api('/plan/compose/apply'), { replace: true, items })
+    expect(res.status).toBe(201)
+    expect(await plan(days[0], days[13])).toHaveLength(28)
+  })
+
   it('cudzí recept je 400 a nič sa neuloží', async () => {
     const { obed } = await setup()
     const res = await send(app, 'POST', api('/plan/compose/apply'), {

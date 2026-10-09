@@ -61,10 +61,10 @@ async function click(selector: string) {
   await flushPromises()
 }
 
-function mountWizard() {
+function mountWizard(planEntries: unknown[] = []) {
   const calls = stubApi({
     '/me': me('owner'),
-    '/plan': [],
+    '/plan': planEntries,
     '/plan/stays': [],
     '/tags': [],
     '/recipes': { items: [], facets: { category: {}, tag: {}, difficulty: {}, time: {}, missing: {} } },
@@ -126,7 +126,7 @@ describe('sprievodca Zostaviť jedálniček', () => {
       slots: [{ slotId: 's1', categories: ['hlavne'], withSoup: false }],
       timeLimits: { [MON]: 'do30', [TUE]: 'do30' },
       leftoverDays: 0,
-      replace: false,
+      replace: true,
     })
 
     // Krok 3: návrh, upozornenie, iný návrh (Rezeň už je v utorok → Rizoto) a zvyšky +1
@@ -141,7 +141,7 @@ describe('sprievodca Zostaviť jedálniček', () => {
     await click('[data-test="compose-confirm"]')
     const applied = calls.find((c) => c.path === '/plan/compose/apply')!
     expect(applied.body).toEqual({
-      replace: false,
+      replace: true,
       items: [
         { key: `${MON}|s1|main`, date: MON, slotId: 's1', recipeId: 'r3', leftoverOf: null, leftoverDays: 1 },
         {
@@ -155,6 +155,37 @@ describe('sprievodca Zostaviť jedálniček', () => {
       ],
     })
     expect(onApplied).toHaveBeenCalledWith(2, MON)
+  })
+
+  it('karty jedál dňa majú rovnakú výšku (aj bez prepínača polievky)', async () => {
+    mountWizard()
+    await flushPromises()
+    const cards = [...document.body.querySelectorAll('[data-test="compose-slot-card"]')]
+    expect(cards).toHaveLength(2)
+    for (const card of cards) expect(card.classList.contains('h-100')).toBe(true)
+  })
+
+  it('obsadené políčko sa celým dňom neprefarbí a po ťuknutí sa najprv opýta', async () => {
+    const pizza = { id: 'e1', date: MON, slotId: 's1', recipeId: null, recipe: null, freeText: 'Pizza' }
+    mountWizard([pizza])
+    await flushPromises()
+    const to = q('[data-test="compose-to"] input') as HTMLInputElement
+    to.value = TUE
+    to.dispatchEvent(new Event('input'))
+    await click('[data-test="compose-next"]')
+
+    const cell = `[data-test="cell-${MON}-s1"]`
+    expect(q(cell)!.textContent).toContain('Pizza')
+    await click('[data-test="brush-new"]')
+    await click(`[data-test="paint-row-${MON}"]`)
+    expect(q(cell)!.textContent).toContain('Pizza')
+    expect(q(`[data-test="cell-${MON}-s2"]`)!.textContent).toContain('Nové')
+
+    await click(cell)
+    expect(q('[data-test="replace-cell-dialog"]')!.textContent).toContain('Pizza')
+    expect(q(cell)!.textContent).not.toContain('Nové')
+    await click('[data-test="replace-cell-confirm"]')
+    expect(q(cell)!.textContent).toContain('Nové · namiesto: Pizza')
   })
 
   it('neplatný rozsah nepustí ďalej', async () => {

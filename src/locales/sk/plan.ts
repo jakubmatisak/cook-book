@@ -130,6 +130,12 @@ export default {
     paintRow: 'Vyfarbiť celý deň: {day}',
     paintColumn: 'Vyfarbiť stĺpec: {slot}',
     cellAria: '{day}, {slot}: {brush}',
+    replaces: '{brush} · namiesto: {titles}',
+    replaceCell: {
+      title: 'Nahradiť jedlo?',
+      text: '{day}, {slot}: v jedálničku už je {titles}. Ak políčko vyfarbíš, pri potvrdení zostavenia sa nahradí návrhom.',
+      confirm: 'Nahradiť',
+    },
     limit: 'Čas na varenie',
     limits: { none: 'Bez limitu', do30: 'Do 30 min', do60: 'Do 60 min' },
     presets: { workdays: 'Pracovné dni do 30 min', weekend: 'Víkend bez limitu' },

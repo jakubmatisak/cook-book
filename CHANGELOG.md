@@ -1,5 +1,18 @@
 # Zmeny
 
+## 1.7.1 – 2026-10-09
+
+### Opravy
+
+- Zostaviť jedálniček: potvrdenie väčšieho návrhu (viac ako 7 jedál) skončilo chybou „Nastala neočakávaná chyba“.
+  Jedlá sa teraz ukladajú po menších dávkach, aby sa zmestili do limitu databázy.
+- Ťuknutie na obsadené políčko sa najprv opýta, či jedlo nahradiť; vyfarbenie celého dňa alebo jedla dňa obsadené
+  políčka preskočí. Vyfarbené obsadené políčko ukáže „… · namiesto: pôvodné jedlo“ a pri potvrdení sa nahradí.
+- Sprievodca je zarovnaný: karty jedál dňa majú rovnakú výšku, stĺpce mriežky rovnakú šírku, výber času začína pri
+  každom dni na rovnakom mieste a karty v kontrole sú v riadku rovnako vysoké. Pri piatich jedlách dňa sa okno už
+  nerozšíri za okraj obrazovky.
+- „Iný návrh“ je neaktívny, keď pre políčko nie je žiadny ďalší recept.
+
 ## 1.7.0 – 2026-10-09
 
 ### Nové

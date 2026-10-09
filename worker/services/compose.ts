@@ -172,9 +172,10 @@ export async function applyComposition(
       )
     }
   }
-  // Najprv varenie, potom zvyšky (odkaz na varenie musí existovať); 9 stĺpcov na riadok, limit D1 100 parametrov.
+  // Najprv varenie, potom zvyšky (odkaz na varenie musí existovať). Insert posiela všetkých 14 stĺpcov tabuľky,
+  // takže po 7 riadkoch (98 parametrov) kvôli limitu D1 100 parametrov na príkaz.
   const ordered = [...rows.filter((r) => !r.leftoverOfEntryId), ...rows.filter((r) => r.leftoverOfEntryId)]
-  for (const part of chunk(ordered, 10)) statements.push(db.insert(mealPlanEntries).values(part))
+  for (const part of chunk(ordered, 7)) statements.push(db.insert(mealPlanEntries).values(part))
   const [first, ...rest] = statements
   await db.batch([first!, ...rest])
   return rows.length
