@@ -317,7 +317,7 @@ function back() {
         <v-btn :icon="mdiClose" :aria-label="t('plan.compose.close')" @click="open = false" />
         <v-toolbar-title>{{ t('plan.compose.title') }}</v-toolbar-title>
       </v-toolbar>
-      <v-stepper v-model="step" flat class="flex-grow-0">
+      <v-stepper v-model="step" flat mobile-breakpoint="md" class="flex-grow-0">
         <v-stepper-header>
           <v-stepper-item :value="1" :title="t('plan.compose.steps.settings')" :complete="step > 1" />
           <v-divider />
@@ -362,7 +362,7 @@ function back() {
 
             <div>
               <div class="text-title-small mb-2">{{ t('plan.compose.slots.title') }}</div>
-              <v-row dense>
+              <v-row density="compact">
                 <v-col v-for="slot in slotSettings" :key="slot.slotId" cols="12" sm="6" md="4">
                   <v-card variant="outlined" class="pa-3">
                     <v-checkbox
@@ -455,7 +455,7 @@ function back() {
                 :key="b"
                 :value="b"
                 :color="BRUSH_COLORS[b]"
-                :variant="brush === b ? 'flat' : 'tonal'"
+                :variant="brush === b ? 'flat' : 'outlined'"
                 :class="{ 'text-decoration-line-through': b === 'skip' }"
                 :data-test="`brush-${b}`"
               >
@@ -481,7 +481,7 @@ function back() {
               </v-btn>
             </div>
 
-            <v-row dense align="center">
+            <v-row density="compact" align="center">
               <v-col cols="12" md="4" class="d-none d-md-block" />
               <v-col v-for="slot in activeSlots" :key="slot.slotId">
                 <v-btn
@@ -496,11 +496,12 @@ function back() {
                 </v-btn>
               </v-col>
             </v-row>
-            <v-row v-for="date in dates" :key="date" dense align="center">
+            <v-row v-for="date in dates" :key="date" density="compact" align="center">
               <v-col cols="12" md="4" class="d-flex align-center ga-2">
                 <v-btn
                   variant="text"
-                  class="text-none font-weight-bold"
+                  class="text-none font-weight-bold justify-start"
+                  min-width="104"
                   :aria-label="t('plan.compose.paintRow', { day: dayLabel(date) })"
                   :data-test="`paint-row-${date}`"
                   @click="
@@ -562,7 +563,13 @@ function back() {
                 {{ t('plan.compose.review.again') }}
               </v-btn>
             </div>
-            <v-row v-for="date in dates" :key="date" dense>
+            <v-row density="compact" class="d-none d-md-flex">
+              <v-col md="2" />
+              <v-col v-for="slot in activeSlots" :key="slot.slotId" class="text-title-small text-center">
+                {{ slot.name }}
+              </v-col>
+            </v-row>
+            <v-row v-for="date in dates" :key="date" density="compact">
               <v-col cols="12" md="2" class="text-title-small pt-3">{{ dayLabel(date) }}</v-col>
               <v-col v-for="slot in activeSlots" :key="slot.slotId" cols="12" :md="true">
                 <div class="text-label-medium text-medium-emphasis mb-1 d-md-none">{{ slot.name }}</div>
