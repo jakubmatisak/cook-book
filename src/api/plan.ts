@@ -13,7 +13,13 @@ import type {
   TemplateApplyResult,
   WeekTemplateDto,
 } from '@shared/api'
-import type { GuestStayInput, PlanEntryInputRaw } from '@shared/schemas/plan'
+import type { ComposeItem } from '@shared/compose'
+import type {
+  ComposeApplyInputRaw,
+  ComposeRequestInputRaw,
+  GuestStayInput,
+  PlanEntryInputRaw,
+} from '@shared/schemas/plan'
 import { apiFetch } from './http'
 
 export const planKeys = {
@@ -71,6 +77,36 @@ export function useCopyPlan(): UseMutationReturnType<PlanCopyResult, Error, Copy
   const client = useQueryClient()
   return useMutation({
     mutationFn: (vars: CopyPlanVars) => apiFetch<PlanCopyResult>('/plan/copy', json('POST', vars)),
+    onSuccess: () => invalidatePlan(client),
+  })
+}
+
+// ─── Zostaviť jedálniček ─────────────────────────────────────────────────────
+
+/** Návrh jedálnička pre vymaľované políčka (nič sa neukladá). */
+export function useComposePlan(): UseMutationReturnType<
+  ComposeItem[],
+  Error,
+  ComposeRequestInputRaw,
+  unknown
+> {
+  return useMutation({
+    mutationFn: (input: ComposeRequestInputRaw) =>
+      apiFetch<ComposeItem[]>('/plan/compose', json('POST', input)),
+  })
+}
+
+/** Uloží potvrdený návrh naraz; vráti počet uložených jedál. */
+export function useApplyCompose(): UseMutationReturnType<
+  { added: number },
+  Error,
+  ComposeApplyInputRaw,
+  unknown
+> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (input: ComposeApplyInputRaw) =>
+      apiFetch<{ added: number }>('/plan/compose/apply', json('POST', input)),
     onSuccess: () => invalidatePlan(client),
   })
 }

@@ -94,6 +94,24 @@ describe('plán a nákup v angličtine', () => {
     expect(text).not.toContain('Pridaj členov')
   })
 
+  it('tlačidlo Zostaviť jedálniček otvorí sprievodcu (aj v angličtine)', async () => {
+    setLocale('en')
+    stubApi({ '/me': me('owner'), '/plan': [], '/plan/stays': [], '/tags': [], '/recipes/suggestions': [] })
+    const r = router()
+    const wrapper = mount(MealPlanPage, {
+      global: { plugins: [...mountPlugins(), r] },
+      attachTo: document.body,
+    })
+    await r.isReady()
+    await flushPromises()
+    await wrapper.find('[data-test="compose-open"]').trigger('click')
+    await flushPromises()
+    const text = document.body.textContent ?? ''
+    expect(text).toContain('Dates and meals')
+    expect(text).toContain('Cook for several days')
+    expect(document.body.querySelector('[data-test="compose-slot-s1"]')).not.toBeNull()
+  })
+
   it('návrhy: dôvody zo servera sa preložia, v slovenčine ostanú nezmenené', async () => {
     const reasons = ['Chýba: Mlieko, Múka', 'Naposledy pred 3 týždňami', 'Obľúbené', 'Anna: averzia na Huby']
     stubApi({ '/recipes/suggestions': [suggestion(reasons)] })

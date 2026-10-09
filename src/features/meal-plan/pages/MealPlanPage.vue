@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  mdiAutoFix,
   mdiCalendarToday,
   mdiChevronLeft,
   mdiChevronRight,
@@ -14,7 +15,7 @@ import { I18nT, useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { PlanEntryDto, TemplateApplyResult, WeekTemplateDto } from '@shared/api'
 import { RECIPE_CATEGORIES, type RecipeCategory } from '@shared/recipes'
-import { addDays, weekDates } from '@shared/dates'
+import { addDays, startOfWeek, weekDates } from '@shared/dates'
 import { useIsOwner, useMe } from '@/api/me'
 import { useCopyPlan, useDeleteEntry, useDeleteStays, usePlan, usePlanStays, useSaveEntry } from '@/api/plan'
 import PageHeader from '@/components/PageHeader.vue'
@@ -24,6 +25,7 @@ import { printPage } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
 import { formatWeekRange, tc } from '@/i18n/format'
 import ApplyTemplateDialog from '../components/ApplyTemplateDialog.vue'
+import ComposeWizard from '../components/ComposeWizard.vue'
 import EntryDialog from '../components/EntryDialog.vue'
 import GuestStayDialog from '../components/GuestStayDialog.vue'
 import GuestStaysBar from '../components/GuestStaysBar.vue'
@@ -166,6 +168,14 @@ function onTemplateApplied(result: TemplateApplyResult) {
   }
 }
 
+// Zostaviť jedálniček: po uložení sa ukáže týždeň, kde zostavenie začína.
+const composeOpen = ref(false)
+async function onComposed(count: number, from: string) {
+  notify(t('plan.compose.applied', { meals: tc('common.plural.meals', count) }))
+  const week = startOfWeek(from, weekStartsOn.value)
+  if (week !== start.value) await goToWeek(week)
+}
+
 // Presúvanie a kopírovanie jedál myšou v mriežke
 const saveEntry = useSaveEntry()
 const deleteEntry = useDeleteEntry()
@@ -248,6 +258,15 @@ async function copyToNextWeek() {
 
 <template>
   <PageHeader :title="t('plan.title')">
+    <v-btn
+      :prepend-icon="mdiAutoFix"
+      color="primary"
+      variant="flat"
+      data-test="compose-open"
+      @click="composeOpen = true"
+    >
+      {{ t('plan.compose.open') }}
+    </v-btn>
     <v-btn
       v-if="!isCurrentWeek"
       :prepend-icon="mdiCalendarToday"
@@ -397,6 +416,17 @@ async function copyToNextWeek() {
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <ComposeWizard
+    v-if="composeOpen"
+    v-model="composeOpen"
+    :week-start="start"
+    :today="today"
+    :week-starts-on="weekStartsOn"
+    :slots="me?.slots ?? []"
+    :members="members"
+    @applied="onComposed"
+  />
 
   <SaveTemplateDialog
     v-model="saveTemplateOpen"

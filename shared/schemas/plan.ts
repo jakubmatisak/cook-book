@@ -132,6 +132,7 @@ export const composeRequestSchema = z
     return daysBetween(dates[0]!, dates[dates.length - 1]!) < MAX_COMPOSE_DAYS
   }, `Najviac ${MAX_COMPOSE_DAYS} dní.`)
 export type ComposeRequestInput = z.output<typeof composeRequestSchema>
+export type ComposeRequestInputRaw = z.input<typeof composeRequestSchema>
 
 export const composeApplySchema = z.object({
   replace: z.boolean().default(false),
@@ -150,3 +151,4 @@ export const composeApplySchema = z.object({
     .max(200),
 })
 export type ComposeApplyInput = z.output<typeof composeApplySchema>
+export type ComposeApplyInputRaw = z.input<typeof composeApplySchema>

@@ -32,6 +32,8 @@ const translated = (table: Readonly<Record<string, string>>, group: string, name
 }
 
 export const slotName = (name: string): string => translated(SLOT_KEYS, 'slot', name)
+/** Kľúč predvoleného jedla dňa (`breakfast`, `lunch`…), pre premenované undefined. */
+export const defaultSlotKey = (name: string): string | undefined => SLOT_KEYS[name]
 export const shopCategoryName = (name: string): string => translated(SHOP_CATEGORY_KEYS, 'shopCategory', name)
 
 export const DEFAULT_SLOT_KEYS = Object.values(SLOT_KEYS)
