@@ -22,6 +22,7 @@ const category = ref<RecipeCategory | null>(null)
 const addTags = ref<string[]>([])
 const removeTags = ref<string[]>([])
 const favorite = ref<'keep' | 'add' | 'remove'>('keep')
+const verified = ref<'keep' | 'add' | 'remove'>('keep')
 const visibility = ref<'keep' | RecipeVisibility>('keep')
 const error = ref('')
 
@@ -31,6 +32,7 @@ watch(open, (isOpen) => {
   addTags.value = []
   removeTags.value = []
   favorite.value = 'keep'
+  verified.value = 'keep'
   visibility.value = 'keep'
   error.value = ''
   save.reset()
@@ -50,6 +52,7 @@ const change = computed<RecipeChange>(() => ({
   ...(addTags.value.length ? { addTags: addTags.value } : {}),
   ...(removeTags.value.length ? { removeTags: removeTags.value } : {}),
   ...(favorite.value !== 'keep' ? { favorite: favorite.value === 'add' } : {}),
+  ...(verified.value !== 'keep' ? { verified: verified.value === 'add' } : {}),
   ...(isOwner.value && visibility.value !== 'keep' ? { visibility: visibility.value } : {}),
 }))
 const empty = computed(() => Object.keys(change.value).length === 0)
@@ -120,6 +123,21 @@ async function submit() {
             <v-btn value="keep">{{ t('bulk.keep') }}</v-btn>
             <v-btn value="add">{{ t('bulk.recipes.favoriteAdd') }}</v-btn>
             <v-btn value="remove">{{ t('bulk.recipes.favoriteRemove') }}</v-btn>
+          </v-btn-toggle>
+        </div>
+        <div>
+          <div class="text-body-small text-medium-emphasis mb-1">{{ t('bulk.recipes.verified') }}</div>
+          <v-btn-toggle
+            v-model="verified"
+            mandatory
+            selected-class="bg-primary"
+            variant="outlined"
+            divided
+            data-test="bulk-verified"
+          >
+            <v-btn value="keep">{{ t('bulk.keep') }}</v-btn>
+            <v-btn value="add">{{ t('bulk.recipes.verifiedAdd') }}</v-btn>
+            <v-btn value="remove">{{ t('bulk.recipes.verifiedRemove') }}</v-btn>
           </v-btn-toggle>
         </div>
         <div v-if="isOwner">

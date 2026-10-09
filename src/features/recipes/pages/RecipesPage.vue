@@ -2,6 +2,7 @@
 import {
   mdiBookOpenPageVariantOutline,
   mdiCheck,
+  mdiCheckDecagramOutline,
   mdiCheckboxMarkedOutline,
   mdiFilterVariant,
   mdiFridgeOutline,
@@ -203,6 +204,10 @@ const favorite = computed({
   get: () => state.value.favorite,
   set: (value: boolean) => setQuery({ favorites: value ? '1' : undefined }),
 })
+const verified = computed({
+  get: () => state.value.verified,
+  set: (value: boolean) => setQuery({ verified: value ? '1' : undefined }),
+})
 const KIDS_PARAMS = { hide: undefined, include: 'include', only: 'only' } as const
 const kids = computed({
   get: () => state.value.kids,
@@ -232,6 +237,7 @@ function clearFilters() {
     difficulty: undefined,
     time: undefined,
     favorites: undefined,
+    verified: undefined,
   })
 }
 
@@ -243,6 +249,7 @@ function resetAll() {
     difficulty: undefined,
     time: undefined,
     favorites: undefined,
+    verified: undefined,
     kids: undefined,
     public: undefined,
     pantry: undefined,
@@ -425,6 +432,15 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
           autocomplete="off"
         />
         <template v-if="!mdAndUp">
+          <v-btn
+            :icon="view === 'grid' ? mdiViewHeadline : mdiViewGridOutline"
+            variant="tonal"
+            :height="controlHeight"
+            :width="controlHeight"
+            :aria-label="view === 'grid' ? t('recipes.list.viewTable') : t('recipes.list.viewGrid')"
+            data-test="view-toggle"
+            @click="view = view === 'grid' ? 'table' : 'grid'"
+          />
           <v-badge :model-value="mobileFilterCount > 0" :content="mobileFilterCount" color="primary">
             <v-btn
               :icon="mdiFilterVariant"
@@ -450,7 +466,11 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         </template>
       </div>
 
-      <div v-if="mdAndUp" class="d-flex flex-row flex-wrap align-center ga-2 mb-3">
+      <div
+        v-if="mdAndUp"
+        class="d-flex flex-row flex-wrap align-center justify-end ga-2 mb-3"
+        data-test="list-controls"
+      >
         <div class="d-flex flex-wrap align-center ga-2">
           <v-btn
             :prepend-icon="mdiFilterVariant"
@@ -474,6 +494,16 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
             {{ t('recipes.list.favorites') }}
           </v-btn>
           <v-btn
+            :prepend-icon="verified ? mdiCheck : mdiCheckDecagramOutline"
+            :color="verified ? 'primary' : undefined"
+            :variant="verified ? 'flat' : 'outlined'"
+            :height="controlHeight"
+            data-test="verified-toggle"
+            @click="verified = !verified"
+          >
+            {{ t('recipes.list.verified') }}
+          </v-btn>
+          <v-btn
             :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
             :color="pantryMode ? 'primary' : undefined"
             :variant="pantryMode ? 'flat' : 'outlined'"
@@ -485,7 +515,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
           </v-btn>
         </div>
 
-        <div class="d-flex flex-nowrap align-center ga-2 ms-auto">
+        <div class="d-flex flex-nowrap align-center ga-2">
           <v-select
             :model-value="sortKey"
             :items="sortItems"
@@ -668,10 +698,10 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
       <RecipeQuickFilters
         :visibility-only="mdAndUp"
         v-model:favorite="favorite"
+        v-model:verified="verified"
         v-model:kids="kids"
         v-model:public-mode="publicMode"
         v-model:pantry-mode="pantryMode"
-        v-model:view="view"
         :sort-key="sortKey"
         :kids-enabled="kidsEnabled"
         :kids-items="kidsItems"

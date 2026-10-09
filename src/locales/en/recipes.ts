@@ -35,6 +35,7 @@ export default {
     kids_include: 'With baby food',
     kids_only: 'Baby food only',
     favorites: 'Favorites',
+    verified: 'Tried and tested',
     canCook: 'What can I cook',
     sort: 'Sort by',
     sortAsc: 'Sorted ascending, switch to descending',
@@ -109,6 +110,7 @@ export default {
   },
   badge: {
     public: 'Shared',
+    verified: 'Tested',
     publicFrom: 'From: {name}',
   },
   importFromUrl: {
@@ -175,6 +177,7 @@ export default {
   editor: {
     newTitle: 'New recipe',
     kidsFlag: 'Baby food recipe (porridge, puree – up to 18 months)',
+    verified: 'Tried and tested – we cooked it and it works',
     editTitle: 'Edit recipe',
     errorsTitle: 'The recipe cannot be saved',
     checkFields: 'Check the highlighted fields.',
@@ -245,6 +248,11 @@ export default {
     noSteps: 'The method has not been written down yet.',
     source: 'Source:',
     notes: 'Notes',
+    verified: 'Tried and tested',
+    factPrep: 'Prep',
+    factCook: 'Cooking',
+    lastCooked: 'Last cooked',
+    neverCooked: 'Not yet',
     copied: 'Recipe copied.',
     copyFailed: 'Copying failed.',
     shareFailed: 'Sharing failed.',

@@ -18,6 +18,7 @@ vi.mock('@/lib/image', () => ({
 
 afterEach(() => {
   setLocale('sk')
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
   vi.unstubAllGlobals()
   document.body.innerHTML = ''
 })
@@ -58,6 +59,8 @@ const detail = (over: Partial<RecipeDetailDto> = {}): RecipeDetailDto => ({
 const Blank = defineComponent({ render: () => h('div') })
 
 async function mountDetail(recipe: RecipeDetailDto) {
+  // Mobilné rozloženie: zdroj je úplne dole (na počítači je v hlavičke).
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 })
   stubApi({ '/me': me('owner'), '/tags': [], '/recipes/r1': recipe })
   const router = createRouter({
     history: createMemoryHistory(),

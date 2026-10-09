@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { mdiCheckCircleOutline, mdiClockOutline, mdiEarth, mdiPotSteamOutline } from '@mdi/js'
+import {
+  mdiCheckCircleOutline,
+  mdiCheckDecagram,
+  mdiClockOutline,
+  mdiEarth,
+  mdiPotSteamOutline,
+} from '@mdi/js'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { RecipeSummaryDto } from '@shared/api'
@@ -98,6 +104,16 @@ const subtitle = computed(() => {
     </v-card-text>
     <!-- Riadok tagov je vždy vyhradený, aj keď recept tagy nemá. -->
     <v-card-text class="pt-0 d-flex flex-wrap ga-1 align-start mt-auto" style="min-height: 2.25rem">
+      <v-chip
+        v-if="recipe.isVerified"
+        size="x-small"
+        color="success"
+        variant="tonal"
+        :prepend-icon="mdiCheckDecagram"
+        data-test="verified-badge"
+      >
+        {{ t('recipes.badge.verified') }}
+      </v-chip>
       <v-chip
         v-if="recipe.visibility === 'public'"
         size="x-small"

@@ -56,7 +56,7 @@ describe('filtre receptov na mobile', () => {
       '[data-test="public-select"]',
       '[data-test="pantry-toggle"]',
       '[data-test="sort-select"]',
-      '[data-test="view-toggle"]',
+      '[data-test="verified-toggle"]',
     ]) {
       expect(inBody(selector), selector).toBe(false)
     }
@@ -69,7 +69,7 @@ describe('filtre receptov na mobile', () => {
       '[data-test="public-select"]',
       '[data-test="pantry-toggle"]',
       '[data-test="sort-select"]',
-      '[data-test="view-toggle"]',
+      '[data-test="verified-toggle"]',
     ]) {
       expect(inBody(selector), selector).toBe(true)
     }

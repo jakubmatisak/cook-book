@@ -213,6 +213,14 @@ function cancel() {
               class="flex-grow-1"
             />
           </div>
+          <v-switch
+            v-model="form.isVerified"
+            color="success"
+            :label="t('recipes.editor.verified')"
+            hide-details
+            inset
+            data-test="verified-flag"
+          />
           <v-checkbox
             v-if="showKidsFlag"
             v-model="kidsFlag"

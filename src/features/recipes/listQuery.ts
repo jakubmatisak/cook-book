@@ -11,6 +11,8 @@ export interface RecipeListState {
   difficulty: number[]
   time: TimeBucket[]
   favorite: boolean
+  /** Len overené recepty (`verified=1`). */
+  verified: boolean
   pantry: boolean
   /** Detské recepty: skryté (predvolene), pridané (`kids=include`) alebo len ony (`kids=only`). */
   kids: KidsMode
@@ -69,6 +71,7 @@ export function parseListQuery(query: Query, publicDefault: PublicMode = 'hide')
       .filter((n) => n === 1 || n === 2 || n === 3),
     time: fromSlugs(many(query.time), timeFromSlug),
     favorite: one(query.favorites) === '1',
+    verified: one(query.verified) === '1',
     pantry: one(query.pantry) === '1',
     kids: KIDS_PARAM[one(query.kids) ?? ''] ?? 'hide',
     public: PUBLIC_PARAM[one(query.public) ?? ''] ?? publicDefault,
@@ -86,7 +89,12 @@ export const listToParam = (list: readonly (string | number)[]): string | undefi
 
 /** Počet aktívnych filtrov na tlačidle „Filtre (n)“; hľadanie a „čo viem uvariť“ sa nerátajú. */
 export const activeFilterCount = (s: RecipeListState): number =>
-  s.category.length + s.tag.length + s.difficulty.length + s.time.length + (s.favorite ? 1 : 0)
+  s.category.length +
+  s.tag.length +
+  s.difficulty.length +
+  s.time.length +
+  (s.favorite ? 1 : 0) +
+  (s.verified ? 1 : 0)
 
 /** Kľúče stĺpcov tabuľky ↔ kľúče zoradenia. */
 const TABLE_KEYS: Readonly<Record<string, SortKey>> = {
@@ -130,6 +138,7 @@ const SAVED_QUERY_KEYS = [
   'difficulty',
   'time',
   'favorites',
+  'verified',
   'kids',
   'public',
   'pantry',

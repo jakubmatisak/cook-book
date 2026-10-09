@@ -38,6 +38,8 @@ export interface RecipeForm {
   attachments: RecipeAttachmentDto[]
   coverImageId: string | null
   coverImageUrl: string | null
+  /** Overený recept (uvarili sme a funguje). */
+  isVerified: boolean
   ingredients: IngredientRow[]
   steps: StepRow[]
   tags: string[]
@@ -73,6 +75,7 @@ export function emptyRecipeForm(): RecipeForm {
     attachments: [],
     coverImageId: null,
     coverImageUrl: null,
+    isVerified: false,
     ingredients: [emptyIngredientRow()],
     steps: [emptyStepRow()],
     tags: [],
@@ -126,6 +129,7 @@ export function recipeToForm(detail: RecipeDetailDto): RecipeForm {
     attachments: detail.attachments ?? [],
     coverImageId: detail.coverImageId,
     coverImageUrl: detail.coverImageUrl,
+    isVerified: detail.isVerified ?? false,
     ingredients: detail.ingredients.length
       ? detail.ingredients.map((i) => ({
           key: rowKey(),
@@ -163,6 +167,8 @@ export function formToInput(form: RecipeForm): RecipeInputRaw {
     notes: form.notes === undefined ? undefined : textOrNull(form.notes),
     attachmentIds: form.attachments?.map((a) => a.id),
     coverImageId: form.coverImageId,
+    // Koncept zo staršej verzie príznak nemá – vtedy sa nemení.
+    isVerified: form.isVerified,
     ingredients: form.ingredients
       .filter((row) => row.name.trim())
       .map((row) => ({
@@ -245,6 +251,7 @@ export function importToForm(result: ImportRecipeResultDto): RecipeForm {
     attachments: [],
     coverImageId: textOf(r.coverImageId) || null,
     coverImageUrl: result.coverImageUrl,
+    isVerified: false,
     ingredients: ingredients.length ? ingredients : [emptyIngredientRow()],
     steps: steps.length ? steps : [emptyStepRow()],
     tags: r.tags ?? [],

@@ -127,6 +127,7 @@ describe('formulár receptu', () => {
       notes: 'Pôvodný zápis',
       attachmentIds: ['a1'],
       coverImageId: 'x',
+      isVerified: false,
       ingredients: [
         { name: 'Mäso', quantity: 0.75, unit: 'kg', note: null, groupName: 'Základ', isOptional: false },
       ],

@@ -27,6 +27,7 @@ export interface RecipeFilters {
   /** Najviac toľko chýbajúcich surovín (len s `pantry`). */
   missing?: number | undefined
   favorite?: boolean | undefined
+  verified?: boolean | undefined
   /** Zahrnúť aj detské recepty (inak sa v zozname skrývajú). */
   kids?: 'hide' | 'include' | 'only' | undefined
   /** Verejné recepty iných domácností v zozname. */
@@ -51,6 +52,7 @@ function toQuery(filters: RecipeFilters): string {
   if (filters.sort) params.set('sort', filters.sort)
   if (filters.dir) params.set('dir', filters.dir)
   if (filters.favorite) params.set('favorite', '1')
+  if (filters.verified) params.set('verified', '1')
   if (filters.kids === 'include') params.set('kids', '1')
   if (filters.kids === 'only') params.set('kids', 'only')
   // Bez `public` rozhodne server podľa nastavenia „Zobrazovať recepty od iných“.
@@ -179,6 +181,29 @@ export function useToggleFavorite(): UseMutationReturnType<void, Error, Favorite
       apiFetch<void>(`/recipes/${id}/favorite`, { method: favorite ? 'PUT' : 'DELETE' }),
     onMutate: ({ id, favorite }) => patch(id, favorite),
     onError: (_error, { id, favorite }) => patch(id, !favorite),
+    onSettled: () => client.invalidateQueries({ queryKey: ['recipes', 'list'] }),
+  })
+}
+
+/** Overený recept (príznak domácnosti) s okamžitou zmenou v detaile aj zoznamoch. */
+export interface VerifiedVars {
+  id: string
+  verified: boolean
+}
+
+export function useToggleVerified(): UseMutationReturnType<void, Error, VerifiedVars, void> {
+  const client = useQueryClient()
+  const patch = (id: string, isVerified: boolean) => {
+    client.setQueryData<RecipeDetailDto>(recipeKeys.detail(id), (old) => (old ? { ...old, isVerified } : old))
+    client.setQueriesData<RecipeListDto>({ queryKey: ['recipes', 'list'] }, (old) =>
+      old ? { ...old, items: old.items.map((r) => (r.id === id ? { ...r, isVerified } : r)) } : old,
+    )
+  }
+  return useMutation({
+    mutationFn: ({ id, verified }: VerifiedVars) =>
+      apiFetch<void>(`/recipes/${id}/verified`, { method: verified ? 'PUT' : 'DELETE' }),
+    onMutate: ({ id, verified }) => patch(id, verified),
+    onError: (_error, { id, verified }) => patch(id, !verified),
     onSettled: () => client.invalidateQueries({ queryKey: ['recipes', 'list'] }),
   })
 }

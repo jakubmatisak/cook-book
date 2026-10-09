@@ -92,6 +92,7 @@ beforeEach(() => setLocale('en'))
 
 afterEach(() => {
   setLocale('sk')
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
   vi.unstubAllGlobals()
   document.body.innerHTML = ''
 })
@@ -165,6 +166,8 @@ describe('Recipes in English', () => {
   })
 
   it('detail page shows English chips, units and optional marker', async () => {
+    // Štítky s časmi sú v mobilnom rozložení; na počítači sú údaje v hlavičke.
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 })
     const wrapper = await mountAt('/recipes/r1', RecipeDetailPage, { '/recipes/r1': detail })
     const text = wrapper.text()
     expect(text).toContain('Goulash')

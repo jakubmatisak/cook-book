@@ -24,20 +24,27 @@ import {
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import type { RecipeIngredientDto } from '@shared/api'
 import { addDays } from '@shared/dates'
 import { formatScaled, quantityColumnWidth } from '@/i18n/quantity'
 import { markdownFilename, recipeToMarkdown } from '@shared/markdown'
 import { ApiError, downloadFile } from '@/api/http'
 import { useIsOwner, useMe } from '@/api/me'
-import { useDeleteRecipe, useRecipe, useShareRecipe, useUnshareRecipe } from '@/api/recipes'
+import {
+  useDeleteRecipe,
+  useRecipe,
+  useShareRecipe,
+  useToggleVerified,
+  useUnshareRecipe,
+} from '@/api/recipes'
 import { canShare, copyText, shareText } from '@/composables/useShare'
 import { useToday } from '@/composables/useToday'
 import EntryDialog from '@/features/meal-plan/components/EntryDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { printPage, usePrintMode } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
-import { formatMinutes, tc } from '@/i18n/format'
+import { formatDate, formatMinutes, tc } from '@/i18n/format'
 import FavoriteButton from '../components/FavoriteButton.vue'
 import RecipeAttachmentsGallery from '../components/RecipeAttachmentsGallery.vue'
 import RecipeCover from '../components/RecipeCover.vue'
@@ -150,6 +157,38 @@ const supportsShare = canShare()
 const printRecipe = () => printPage()
 // Pri tlači je recept kompaktný: menší nadpis, suroviny a postup vedľa seba, kroky bez veľkých medzier.
 const printing = usePrintMode()
+
+// Na počítači (mimo tlače) hlavička na celú šírku: fotka vľavo, vpravo názov, údaje a akcie (rozloženie B).
+const { mdAndUp } = useDisplay()
+const wide = computed(() => mdAndUp.value && !printing.value)
+
+/** Údaje v riadku hlavičky na počítači. */
+const facts = computed(() => {
+  const r = recipe.value
+  if (!r) return []
+  const list = [
+    { label: t('recipes.detail.servings'), value: String(r.servings) },
+    { label: t('recipes.fields.difficulty'), value: t(`common.difficulty.${r.difficulty}`) },
+  ]
+  if (r.prepMinutes !== null)
+    list.push({ label: t('recipes.detail.factPrep'), value: formatMinutes(r.prepMinutes) })
+  if (r.cookMinutes !== null)
+    list.push({ label: t('recipes.detail.factCook'), value: formatMinutes(r.cookMinutes) })
+  list.push({
+    label: t('recipes.detail.lastCooked'),
+    value: r.lastCookedAt ? formatDate(r.lastCookedAt) : t('recipes.detail.neverCooked'),
+  })
+  return list
+})
+
+// Overený recept: prepínač priamo v detaile, uloží sa hneď.
+const toggleVerified = useToggleVerified()
+const verified = computed({
+  get: () => recipe.value?.isVerified ?? false,
+  set: (value: boolean | null) => {
+    if (recipe.value) toggleVerified.mutate({ id: recipe.value.id, verified: Boolean(value) })
+  },
+})
 
 async function copyRecipe() {
   const copied = await copyText(markdown.value)
@@ -332,23 +371,158 @@ function goBack() {
   <v-alert v-else-if="error" type="error" :text="errorText(error)" />
 
   <template v-else-if="recipe">
-    <RecipeCover v-if="recipe.coverImageUrl" :src="recipe.coverImageUrl" />
+    <v-card v-if="wide" class="mb-6" data-test="recipe-header">
+      <div class="d-flex ga-8 pa-6">
+        <v-img
+          v-if="recipe.coverImageUrl"
+          :src="recipe.coverImageUrl"
+          width="280"
+          height="280"
+          max-width="280"
+          cover
+          class="flex-grow-0 flex-shrink-0"
+          data-test="recipe-cover"
+        />
+        <div class="d-flex flex-column justify-center ga-3 flex-grow-1" style="min-width: 0">
+          <div class="text-label-large text-uppercase text-primary font-weight-bold">
+            {{ t(`common.category.${recipe.category}`) }}
+          </div>
+          <h1 class="text-display-small font-weight-bold">{{ recipe.title }}</h1>
+          <p
+            v-if="recipe.description"
+            class="text-body-large text-pre-line text-justify mb-0"
+            data-test="recipe-description"
+          >
+            {{ recipe.description }}
+          </p>
+          <div class="d-flex flex-wrap align-center ga-2">
+            <v-chip
+              v-for="tag in recipe.tags"
+              :key="tag.id"
+              size="small"
+              variant="tonal"
+              :color="tag.color ?? 'secondary'"
+              :to="{ path: '/recipes', query: { tag: tag.id } }"
+            >
+              #{{ tag.name }}
+            </v-chip>
+            <v-chip
+              v-if="recipe.visibility === 'public'"
+              size="small"
+              variant="outlined"
+              :prepend-icon="mdiEarth"
+            >
+              {{ t('publicRecipes.visibility.chip') }}
+            </v-chip>
+            <v-switch
+              v-model="verified"
+              color="success"
+              :label="t('recipes.detail.verified')"
+              hide-details
+              inset
+              density="compact"
+              class="flex-grow-0 ms-2"
+              data-test="verified-switch"
+            />
+          </div>
+          <div class="d-flex flex-wrap ga-6 mt-1" data-test="recipe-facts">
+            <div v-for="fact in facts" :key="fact.label">
+              <div class="text-label-small text-uppercase text-medium-emphasis">{{ fact.label }}</div>
+              <div class="text-title-large font-weight-bold">{{ fact.value }}</div>
+            </div>
+            <div v-if="recipe.sourceUrl || recipe.sourceText" style="min-width: 0">
+              <div class="text-label-small text-uppercase text-medium-emphasis">
+                {{ t('recipes.fields.sourceText') }}
+              </div>
+              <div class="text-body-large font-weight-bold">
+                <a
+                  v-if="recipe.sourceUrl"
+                  :href="recipe.sourceUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-primary"
+                >
+                  {{ recipe.sourceText || recipe.sourceUrl }}
+                </a>
+                <span v-else>{{ recipe.sourceText }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex flex-wrap ga-3 mt-1">
+            <v-btn color="primary" size="large" :prepend-icon="mdiPlayCircleOutline" :to="cookingLink">
+              {{ t('recipes.detail.cookingMode') }}
+            </v-btn>
+            <v-btn variant="outlined" size="large" :prepend-icon="mdiCalendarPlus" @click="planOpen = true">
+              {{ t('recipes.detail.plan') }}
+            </v-btn>
+          </div>
+        </div>
+      </div>
+    </v-card>
+    <template v-else>
+      <RecipeCover v-if="recipe.coverImageUrl" :src="recipe.coverImageUrl" />
 
-    <h1 class="font-weight-bold" :class="printing ? 'text-headline-small mb-1' : 'text-headline-large mb-3'">
-      {{ recipe.title }}
-    </h1>
-    <div class="d-flex flex-wrap ga-2" :class="printing ? 'mb-2' : 'mb-3'">
-      <v-chip
-        v-for="chip in chips"
-        :key="chip.text"
-        :size="printing ? 'x-small' : 'small'"
-        :prepend-icon="chip.icon"
-        :color="chip.color"
-        :variant="chip.color ? 'tonal' : 'outlined'"
+      <h1
+        class="font-weight-bold"
+        :class="printing ? 'text-headline-small mb-1' : 'text-headline-large mb-3'"
       >
-        {{ chip.text }}
-      </v-chip>
-    </div>
+        {{ recipe.title }}
+      </h1>
+      <div class="d-flex flex-wrap ga-2" :class="printing ? 'mb-2' : 'mb-3'">
+        <v-chip
+          v-for="chip in chips"
+          :key="chip.text"
+          :size="printing ? 'x-small' : 'small'"
+          :prepend-icon="chip.icon"
+          :color="chip.color"
+          :variant="chip.color ? 'tonal' : 'outlined'"
+        >
+          {{ chip.text }}
+        </v-chip>
+      </div>
+      <v-btn
+        color="primary"
+        variant="tonal"
+        :prepend-icon="mdiPlayCircleOutline"
+        :to="cookingLink"
+        class="mb-3 d-print-none"
+      >
+        {{ t('recipes.detail.cookingMode') }}
+      </v-btn>
+      <p
+        v-if="recipe.description"
+        class="text-pre-line text-justify"
+        data-test="recipe-description"
+        :class="printing ? 'text-body-medium mb-2' : 'text-body-large mb-3'"
+      >
+        {{ recipe.description }}
+      </p>
+      <v-switch
+        v-model="verified"
+        color="success"
+        :label="t('recipes.detail.verified')"
+        hide-details
+        inset
+        density="compact"
+        class="mb-3 d-print-none"
+        data-test="verified-switch"
+      />
+      <div v-if="recipe.tags.length" class="d-flex flex-wrap ga-1 mb-4 d-print-none">
+        <v-chip
+          v-for="tag in recipe.tags"
+          :key="tag.id"
+          size="small"
+          variant="tonal"
+          :color="tag.color ?? 'secondary'"
+          :to="{ path: '/recipes', query: { tag: tag.id } }"
+        >
+          #{{ tag.name }}
+        </v-chip>
+      </div>
+
+      <!-- Ukončí obtekanie titulnej fotky, aby ingrediencie a postup boli pod hlavičkou. -->
+      <div style="clear: both" />
+    </template>
     <div
       v-if="recipe.shareToken"
       class="d-flex flex-wrap align-center ga-2 mb-3 d-print-none"
@@ -378,38 +552,6 @@ function goBack() {
         {{ t('recipes.detail.stopSharing') }}
       </v-chip>
     </div>
-    <v-btn
-      color="primary"
-      variant="tonal"
-      :prepend-icon="mdiPlayCircleOutline"
-      :to="cookingLink"
-      class="mb-3 d-print-none"
-    >
-      {{ t('recipes.detail.cookingMode') }}
-    </v-btn>
-    <p
-      v-if="recipe.description"
-      class="text-pre-line text-justify"
-      data-test="recipe-description"
-      :class="printing ? 'text-body-medium mb-2' : 'text-body-large mb-3'"
-    >
-      {{ recipe.description }}
-    </p>
-    <div v-if="recipe.tags.length" class="d-flex flex-wrap ga-1 mb-4 d-print-none">
-      <v-chip
-        v-for="tag in recipe.tags"
-        :key="tag.id"
-        size="small"
-        variant="tonal"
-        :color="tag.color ?? 'secondary'"
-        :to="{ path: '/recipes', query: { tag: tag.id } }"
-      >
-        #{{ tag.name }}
-      </v-chip>
-    </div>
-
-    <!-- Ukončí obtekanie titulnej fotky, aby ingrediencie a postup boli pod hlavičkou. -->
-    <div style="clear: both" />
     <v-row :density="printing ? 'compact' : undefined">
       <v-col :cols="printing ? 5 : 12" md="5" lg="4" data-test="recipe-ingredients-col">
         <v-card :title="t('recipes.detail.ingredients')" :border="!printing">
@@ -508,7 +650,7 @@ function goBack() {
 
     <!-- Zdroj je úplne dole, pod postupom, prílohami aj poznámkami. -->
     <div
-      v-if="recipe.sourceUrl || recipe.sourceText"
+      v-if="(recipe.sourceUrl || recipe.sourceText) && !wide"
       class="text-body-medium text-medium-emphasis mt-4"
       data-test="recipe-source"
     >

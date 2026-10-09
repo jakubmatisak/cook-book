@@ -35,6 +35,8 @@ export const member = (over: Partial<HouseholdMemberDto> & { email: string }): H
 export interface StubCall {
   method: string
   path: string
+  /** Celá adresa aj s parametrami. */
+  url: string
   body: unknown
 }
 
@@ -48,6 +50,7 @@ export function stubApi(routes: Record<string, unknown | ((call: StubCall) => Re
       const call: StubCall = {
         method: init?.method ?? 'GET',
         path,
+        url: String(url),
         // JSON telo sa rozparsuje; FormData (nahrávanie fotky) sa zaznamená tak, ako je.
         body: typeof init?.body === 'string' ? JSON.parse(init.body) : (init?.body ?? undefined),
       }

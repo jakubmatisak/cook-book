@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import {
   mdiCheck,
+  mdiCheckDecagramOutline,
   mdiFridgeOutline,
   mdiHeart,
   mdiSortAscending,
   mdiSortDescending,
-  mdiViewGridOutline,
-  mdiViewHeadline,
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import type { SortKey } from '@shared/recipeFacets'
-import type { KidsMode, PublicMode, RecipeView } from '../listQuery'
+import type { KidsMode, PublicMode } from '../listQuery'
 
 /**
  * Rýchle filtre a zoradenie receptov pod sebou – na mobile sú v paneli Filtre, aby nad zoznamom ostalo len
@@ -31,11 +30,11 @@ defineProps<{
 }>()
 const emit = defineEmits<{ 'flip-sort-dir': []; 'update:missing': [value: number | 'all'] }>()
 const favorite = defineModel<boolean>('favorite', { required: true })
+const verified = defineModel<boolean>('verified', { required: true })
 const kids = defineModel<KidsMode>('kids', { required: true })
 const publicMode = defineModel<PublicMode>('publicMode', { required: true })
 const pantryMode = defineModel<boolean>('pantryMode', { required: true })
 const sortKey = defineModel<SortKey | null>('sortKey', { required: true })
-const view = defineModel<RecipeView>('view', { required: true })
 </script>
 
 <template>
@@ -48,6 +47,15 @@ const view = defineModel<RecipeView>('view', { required: true })
       @click="favorite = !favorite"
     >
       {{ t('recipes.list.favorites') }}
+    </v-btn>
+    <v-btn
+      :prepend-icon="verified ? mdiCheck : mdiCheckDecagramOutline"
+      :color="verified ? 'primary' : undefined"
+      :variant="verified ? 'flat' : 'outlined'"
+      data-test="verified-toggle"
+      @click="verified = !verified"
+    >
+      {{ t('recipes.list.verified') }}
     </v-btn>
     <v-btn
       :prepend-icon="pantryMode ? mdiCheck : mdiFridgeOutline"
@@ -104,15 +112,4 @@ const view = defineModel<RecipeView>('view', { required: true })
       @click="emit('flip-sort-dir')"
     />
   </div>
-  <v-btn-toggle
-    v-if="!visibilityOnly"
-    v-model="view"
-    mandatory
-    selected-class="bg-primary"
-    divided
-    data-test="view-toggle"
-  >
-    <v-btn :icon="mdiViewGridOutline" value="grid" :aria-label="t('recipes.list.viewGrid')" />
-    <v-btn :icon="mdiViewHeadline" value="table" :aria-label="t('recipes.list.viewTable')" />
-  </v-btn-toggle>
 </template>

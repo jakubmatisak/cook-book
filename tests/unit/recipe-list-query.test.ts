@@ -20,6 +20,7 @@ describe('parseListQuery', () => {
       difficulty: [],
       time: [],
       favorite: false,
+      verified: false,
       pantry: false,
       kids: 'hide',
       public: 'hide',

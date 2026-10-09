@@ -34,6 +34,7 @@ export default {
     kids_include: 'Aj detské',
     kids_only: 'Len detské',
     favorites: 'Obľúbené',
+    verified: 'Overené',
     canCook: 'Čo viem uvariť',
     sort: 'Zoradiť',
     sortAsc: 'Zoradené vzostupne, zmeniť na zostupne',
@@ -104,6 +105,7 @@ export default {
   },
   badge: {
     public: 'Zdieľaný',
+    verified: 'Overený',
     publicFrom: 'Od: {name}',
   },
   importFromUrl: {
@@ -170,6 +172,7 @@ export default {
   editor: {
     newTitle: 'Nový recept',
     kidsFlag: 'Detský recept (kaša, príkrm – do 18 mesiacov)',
+    verified: 'Overený recept – uvarili sme a funguje',
     editTitle: 'Upraviť recept',
     errorsTitle: 'Recept sa nedá uložiť',
     checkFields: 'Skontroluj zvýraznené polia.',
@@ -240,6 +243,11 @@ export default {
     noSteps: 'Postup zatiaľ nie je zapísaný.',
     source: 'Zdroj:',
     notes: 'Poznámky',
+    verified: 'Overený recept',
+    factPrep: 'Príprava',
+    factCook: 'Varenie',
+    lastCooked: 'Naposledy varené',
+    neverCooked: 'Ešte nie',
     copied: 'Recept je skopírovaný.',
     copyFailed: 'Kopírovanie sa nepodarilo.',
     shareFailed: 'Zdieľanie sa nepodarilo.',
