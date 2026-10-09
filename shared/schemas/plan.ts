@@ -1,5 +1,6 @@
 import { z } from './zod'
 import { daysBetween, isIsoDate } from '../dates'
+import { RECIPE_CATEGORIES } from '../recipes'
 
 export const MAX_PLAN_RANGE_DAYS = 62
 export const MAX_COPY_DAYS = 14
@@ -96,3 +97,56 @@ export const templateApplySchema = z.object({
   replace: z.boolean().default(false),
 })
 export type TemplateApplyInput = z.output<typeof templateApplySchema>
+
+/** Zostaviť jedálniček: najviac 14 dní, štetce na políčkach (deň × jedlo dňa). */
+export const MAX_COMPOSE_DAYS = 14
+
+const composeSlotSchema = z.object({
+  slotId: z.string().min(1).max(40),
+  categories: z.array(z.enum(RECIPE_CATEGORIES)).min(1).max(RECIPE_CATEGORIES.length),
+  withSoup: z.boolean().default(false),
+})
+
+export const composeRequestSchema = z
+  .object({
+    cells: z
+      .array(
+        z.object({
+          date: isoDate,
+          slotId: z.string().min(1).max(40),
+          brush: z.enum(['all', 'verified', 'new', 'favorite']),
+        }),
+      )
+      .min(1, 'Vyber aspoň jedno políčko.')
+      .max(200),
+    slots: z.array(composeSlotSchema).min(1).max(10),
+    timeLimits: z.record(isoDate, z.enum(['do30', 'do60'])).default({}),
+    tagIds: z.array(z.string().min(1).max(40)).max(20).default([]),
+    leftoverDays: z.number().int().min(0).max(3).default(0),
+    seed: z.number().int().min(0).max(2_147_483_647).default(1),
+    /** Nahradiť aj obsadené políčka (inak sa ich obsah berie ako „už máme“). */
+    replace: z.boolean().default(false),
+  })
+  .refine((r) => {
+    const dates = r.cells.map((c) => c.date).sort()
+    return daysBetween(dates[0]!, dates[dates.length - 1]!) < MAX_COMPOSE_DAYS
+  }, `Najviac ${MAX_COMPOSE_DAYS} dní.`)
+export type ComposeRequestInput = z.output<typeof composeRequestSchema>
+
+export const composeApplySchema = z.object({
+  replace: z.boolean().default(false),
+  items: z
+    .array(
+      z.object({
+        key: z.string().min(1).max(120),
+        date: isoDate,
+        slotId: z.string().min(1).max(40),
+        recipeId: z.string().min(1).max(40),
+        leftoverOf: z.string().min(1).max(120).nullable(),
+        leftoverDays: z.number().int().min(0).max(3).default(0),
+      }),
+    )
+    .min(1)
+    .max(200),
+})
+export type ComposeApplyInput = z.output<typeof composeApplySchema>

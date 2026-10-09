@@ -172,7 +172,12 @@ async function loadPlanForShopping(
     .from(mealPlanEntries)
     .leftJoin(recipes, eq(recipes.id, mealPlanEntries.recipeId))
     .where(
-      and(eq(mealPlanEntries.householdId, householdId), between(mealPlanEntries.date, input.from, input.to)),
+      and(
+        eq(mealPlanEntries.householdId, householdId),
+        between(mealPlanEntries.date, input.from, input.to),
+        // Zvyšky sa nevaria znova – suroviny sú už v porciách varenia.
+        isNull(mealPlanEntries.leftoverOfEntryId),
+      ),
     )
     .orderBy(asc(mealPlanEntries.date), asc(mealPlanEntries.sortOrder))
 

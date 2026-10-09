@@ -696,12 +696,12 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
     >
       <!-- Na počítači sú v paneli len Detské a Recepty od iných, ostatné je v riadku nad zoznamom. -->
       <RecipeQuickFilters
-        :visibility-only="mdAndUp"
         v-model:favorite="favorite"
         v-model:verified="verified"
         v-model:kids="kids"
         v-model:public-mode="publicMode"
         v-model:pantry-mode="pantryMode"
+        :visibility-only="mdAndUp"
         :sort-key="sortKey"
         :kids-enabled="kidsEnabled"
         :kids-items="kidsItems"

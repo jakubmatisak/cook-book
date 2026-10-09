@@ -1,0 +1,2 @@
+ALTER TABLE `meal_plan_entries` ADD `leftover_of_entry_id` text REFERENCES meal_plan_entries(id) ON DELETE cascade;--> statement-breakpoint
+CREATE INDEX `meal_plan_entries_leftover_idx` ON `meal_plan_entries` (`leftover_of_entry_id`);

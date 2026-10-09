@@ -85,6 +85,13 @@
       "when": 1791559756436,
       "tag": "0011_fancy_lilandra",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1791560381039,
+      "tag": "0012_hot_the_hand",
+      "breakpoints": true
     }
   ]
 }

@@ -360,6 +360,8 @@ export interface PlanEntryDto {
   presentGuestIds: string[]
   /** Čo v tomto jedle nesedí rodine (alergia, averzia, diéta); recept sa neskrýva. */
   warnings: PreferenceWarning[]
+  /** Zvyšky: položka, kde sa toto jedlo varí (nevarí sa znova, do nákupu nejde). */
+  leftoverOfEntryId?: string | null
 }
 
 /** Pobyt návštevy: od – do (vrátane); jedlá v týchto dňoch s ňou počítajú automaticky. */

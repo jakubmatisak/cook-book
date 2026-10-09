@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
 import type { PlanCopyResult } from '../../shared/api'
 import {
+  composeApplySchema,
+  composeRequestSchema,
   guestStayInputSchema,
   planCopySchema,
   planEntryInputSchema,
@@ -10,6 +12,7 @@ import {
 } from '../../shared/schemas/plan'
 import type { AppEnv } from '../env'
 import { parseBody } from '../http'
+import { applyComposition, composeProposal } from '../services/compose'
 import { copyPlan, createEntry, deleteEntry, listPlan, updateEntry } from '../services/plan'
 import { createStays, deleteStay, listStays } from '../services/stays'
 import { applyTemplate, deleteTemplate, listTemplates, saveTemplate } from '../services/templates'
@@ -30,6 +33,16 @@ export const planRoutes = new Hono<AppEnv>()
   .delete('/entries/:id', async (c) => {
     await deleteEntry(c.get('db'), c.get('user').householdId, c.req.param('id'))
     return c.body(null, 204)
+  })
+  // Zostaviť jedálniček: návrh (nič sa neukladá) a uloženie potvrdeného návrhu.
+  .post('/compose', async (c) => {
+    const input = await parseBody(c, composeRequestSchema)
+    const user = c.get('user')
+    return c.json(await composeProposal(c.get('db'), user.householdId, user.id, input))
+  })
+  .post('/compose/apply', async (c) => {
+    const input = await parseBody(c, composeApplySchema)
+    return c.json({ added: await applyComposition(c.get('db'), c.get('user').householdId, input) }, 201)
   })
   .get('/templates', async (c) => c.json(await listTemplates(c.get('db'), c.get('user').householdId)))
   .post('/templates', async (c) => {

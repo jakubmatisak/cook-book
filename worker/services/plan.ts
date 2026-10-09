@@ -72,6 +72,7 @@ function toEntryDto(row: JoinedRow): EntryBase {
     audience: e.audience,
     guestIds: [],
     presentGuestIds: [],
+    leftoverOfEntryId: e.leftoverOfEntryId,
   }
 }
 
@@ -307,6 +308,13 @@ export async function updateEntry(
       sortOrder: moved ? await nextSortOrder(db, householdId, input.date, input.slotId) : current.sortOrder,
     })
     .where(eq(mealPlanEntries.id, id))
+  // Zvyšky nasledujú recept varenia.
+  if (input.recipeId !== current.recipeId && input.recipeId) {
+    await db
+      .update(mealPlanEntries)
+      .set({ recipeId: input.recipeId })
+      .where(eq(mealPlanEntries.leftoverOfEntryId, id))
+  }
   await setGuests(db, id, input.guestIds)
   return getEntryDto(db, householdId, id)
 }
@@ -358,6 +366,8 @@ export async function copyPlan(db: Db, householdId: string, input: PlanCopyInput
       statements.push(db.delete(mealPlanEntries).where(and(own, inArray(mealPlanEntries.id, ids))))
     }
   }
+  // Zvyšky ostanú naviazané na skopírované varenie (ak sa kopíruje spolu s nimi).
+  const newIds = new Map(source.map((e) => [e.id, newId()]))
   for (const e of source) {
     const date = addDays(e.date, offset)
     const key = `${date}|${e.slotId}`
@@ -365,9 +375,11 @@ export async function copyPlan(db: Db, householdId: string, input: PlanCopyInput
     nextOrder.set(key, sortOrder + 1)
     statements.push(
       db.insert(mealPlanEntries).values({
+        id: newIds.get(e.id)!,
         householdId,
         date,
         slotId: e.slotId,
+        leftoverOfEntryId: e.leftoverOfEntryId ? (newIds.get(e.leftoverOfEntryId) ?? null) : null,
         recipeId: e.recipeId,
         freeText: e.freeText,
         servingsOverride: e.servingsOverride,

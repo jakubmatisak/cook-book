@@ -1,6 +1,7 @@
 import { and, asc, between, eq, inArray, isNotNull, isNull, ne, or, gte } from 'drizzle-orm'
+import type { ComposeCandidate } from '../../shared/compose'
 import { addDays } from '../../shared/dates'
-import { scoreSuggestions, type Suggestion, type SuggestCandidate } from '../../shared/suggest'
+import { scoreSuggestions, type Suggestion } from '../../shared/suggest'
 import type { Db } from '../db/client'
 import {
   images,
@@ -20,15 +21,14 @@ import { imageUrl, isFavoriteSql, lastCookedSql } from './recipes'
 const PLANNED_WINDOW_DAYS = 3
 
 /**
- * Čo uvariť v daný deň: recepty domácnosti ohodnotené podľa toho, čo je doma, kedy sa naposledy
- * varilo, obľúbenosti a preferencií rodiny. Naplánované recepty a alergény sa vynechajú.
+ * Recepty domácnosti s údajmi na hodnotenie návrhov (ingrediencie, tagy, posledné varenie, obľúbené). Detské jedlá
+ * (kaše, príkrmy) sa do návrhov nepoužívajú.
  */
-export async function suggestRecipes(
+export async function loadCandidates(
   db: Db,
   householdId: string,
   userId: string,
-  date: string,
-): Promise<Suggestion[]> {
+): Promise<ComposeCandidate[]> {
   const rows = await db
     .select({
       recipe: recipes,
@@ -38,7 +38,6 @@ export async function suggestRecipes(
     })
     .from(recipes)
     .leftJoin(images, eq(images.id, recipes.coverImageId))
-    // Detské jedlá (kaše, príkrmy) sa do návrhov „čo uvariť dnes“ nepoužívajú.
     .where(
       and(eq(recipes.householdId, householdId), isNull(recipes.deletedAt), ne(recipes.category, 'detske')),
     )
@@ -83,17 +82,53 @@ export async function suggestRecipes(
     for (const r of tagRows) tagsOf.set(r.recipeId, [...(tagsOf.get(r.recipeId) ?? []), r.tagId])
   }
 
-  const [pantryRows, plannedRows, members] = await Promise.all([
-    // Exspirovaná zásoba sa nepočíta ako doma.
-    db
-      .select({ ingredientId: pantryItems.ingredientId })
-      .from(pantryItems)
-      .where(
-        and(
-          eq(pantryItems.householdId, householdId),
-          or(isNull(pantryItems.expiresOn), gte(pantryItems.expiresOn, date)),
-        ),
+  return rows.map(({ recipe, r2Key, isFavorite, lastCookedAt }) => ({
+    id: recipe.id,
+    title: recipe.title,
+    coverImageUrl: r2Key ? imageUrl(r2Key) : null,
+    isFavorite,
+    isVerified: recipe.isVerified,
+    category: recipe.category,
+    totalMinutes:
+      recipe.prepMinutes === null && recipe.cookMinutes === null
+        ? null
+        : (recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0),
+    required: required.get(recipe.id) ?? [],
+    allIngredientIds: allIngredients.get(recipe.id) ?? [],
+    tagIds: tagsOf.get(recipe.id) ?? [],
+    lastCookedOn: lastCookedAt,
+  }))
+}
+
+/** Čo je doma k danému dňu (exspirovaná zásoba sa nepočíta). */
+export async function pantryIngredientIds(db: Db, householdId: string, date: string): Promise<string[]> {
+  const rows = await db
+    .select({ ingredientId: pantryItems.ingredientId })
+    .from(pantryItems)
+    .where(
+      and(
+        eq(pantryItems.householdId, householdId),
+        or(isNull(pantryItems.expiresOn), gte(pantryItems.expiresOn, date)),
       ),
+    )
+  return rows.map((r) => r.ingredientId)
+}
+
+/**
+ * Čo uvariť v daný deň: recepty domácnosti ohodnotené podľa toho, čo je doma, kedy sa naposledy
+ * varilo, obľúbenosti a preferencií rodiny. Naplánované recepty a alergény sa vynechajú.
+ */
+export async function suggestRecipes(
+  db: Db,
+  householdId: string,
+  userId: string,
+  date: string,
+): Promise<Suggestion[]> {
+  const candidates = await loadCandidates(db, householdId, userId)
+  if (candidates.length === 0) return []
+
+  const [pantry, plannedRows, members] = await Promise.all([
+    pantryIngredientIds(db, householdId, date),
     db
       .select({ recipeId: mealPlanEntries.recipeId })
       .from(mealPlanEntries)
@@ -111,24 +146,9 @@ export async function suggestRecipes(
     listMembers(db, householdId),
   ])
 
-  const candidates: SuggestCandidate[] = rows.map(({ recipe, r2Key, isFavorite, lastCookedAt }) => ({
-    id: recipe.id,
-    title: recipe.title,
-    coverImageUrl: r2Key ? imageUrl(r2Key) : null,
-    isFavorite,
-    totalMinutes:
-      recipe.prepMinutes === null && recipe.cookMinutes === null
-        ? null
-        : (recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0),
-    required: required.get(recipe.id) ?? [],
-    allIngredientIds: allIngredients.get(recipe.id) ?? [],
-    tagIds: tagsOf.get(recipe.id) ?? [],
-    lastCookedOn: lastCookedAt,
-  }))
-
   return scoreSuggestions({
     candidates,
-    pantryIngredientIds: pantryRows.map((p) => p.ingredientId),
+    pantryIngredientIds: pantry,
     plannedRecipeIds: plannedRows.flatMap((p) => (p.recipeId ? [p.recipeId] : [])),
     members,
     today: date,

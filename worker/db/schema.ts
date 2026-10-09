@@ -375,10 +375,17 @@ export const mealPlanEntries = sqliteTable(
     note: text('note'),
     sortOrder: integer('sort_order').notNull().default(0),
     audience: text('audience', { enum: PLAN_AUDIENCES }).notNull().default('all'),
+    /** Zvyšky: položka, kde sa varí (pri nej sú porcie na viac dní); zmazanie varenia zmaže aj zvyšky. */
+    leftoverOfEntryId: text('leftover_of_entry_id').references((): AnySQLiteColumn => mealPlanEntries.id, {
+      onDelete: 'cascade',
+    }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index('meal_plan_entries_household_date_idx').on(t.householdId, t.date)],
+  (t) => [
+    index('meal_plan_entries_household_date_idx').on(t.householdId, t.date),
+    index('meal_plan_entries_leftover_idx').on(t.leftoverOfEntryId),
+  ],
 )
 
 export const mealPlanEntryMembers = sqliteTable(

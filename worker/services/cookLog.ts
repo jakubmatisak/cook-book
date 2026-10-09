@@ -24,6 +24,8 @@ export async function backfillCookLog(db: Db, householdId: string, today: string
       and(
         eq(mealPlanEntries.householdId, householdId),
         isNotNull(mealPlanEntries.recipeId),
+        // Zvyšky nie sú ďalšie varenie.
+        isNull(mealPlanEntries.leftoverOfEntryId),
         lt(mealPlanEntries.date, today),
         isNull(cookLog.id),
       ),
