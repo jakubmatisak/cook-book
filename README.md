@@ -1,11 +1,11 @@
-# Kuchárska kniha (Family Cookbook)
+# Peace in Kitchen (Kuchárska kniha)
 
 A private family web app (PWA) for recipes, a weekly meal plan and a shopping list. It runs entirely on the
 free tier of Cloudflare: one Worker serves the Vue frontend and the API, data lives in D1, photos in R2 and
 sign-in is handled by Cloudflare Access.
 
 > The app UI is in **Slovak and English**. This README is in English first, [Slovenská verzia](#slovenská-verzia) is below.
-> Status: **1.8.1**.
+> Status: **1.9.0**.
 
 - Website with screenshots: <https://jakubmatisak.github.io/cook-book-website/>
 - Design and phases: [docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md](docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md) (Slovak)
@@ -230,9 +230,9 @@ The repository contains no secrets or personal addresses: they live in Worker se
 
 # Slovenská verzia
 
-Rodinná webová aplikácia (PWA) na recepty, týždenný jedálniček a nákupný zoznam. Beží celá zadarmo na
+**Peace in Kitchen** (pôvodne Kuchárska kniha) je rodinná webová aplikácia (PWA) na recepty, týždenný jedálniček a nákupný zoznam. Beží celá zadarmo na
 Cloudflare: jeden Worker servíruje Vue frontend aj API, dáta sú v D1, fotky v R2 a prihlásenie rieši
-Cloudflare Access. Verzia **1.8.1**.
+Cloudflare Access. Verzia **1.9.0**.
 
 Stránka so screenshotmi: <https://jakubmatisak.github.io/cook-book-website/>
 

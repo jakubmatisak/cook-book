@@ -8,6 +8,6 @@ describe('formatAppVersion', () => {
   })
 
   it('verzia aplikácie je z package.json a stabilná verzia nemá štádium', () => {
-    expect(APP_VERSION_LABEL).toBe('1.8.1')
+    expect(APP_VERSION_LABEL).toBe('1.9.0')
   })
 })

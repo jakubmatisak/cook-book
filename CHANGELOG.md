@@ -1,5 +1,15 @@
 # Zmeny
 
+## 1.9.0 – 2026-10-09
+
+### Nové
+
+- Aplikácia sa volá **Peace in Kitchen** a má nové logo – vidlička v znaku mieru na šalviovom kruhu (ikona
+  v lište, na karte prehliadača, na ploche telefónu aj v náhľade odkazu).
+- **Farebné schémy:** v Nastaveniach → Vzhľad si každý vyberie z 8 schém (Šalvia a horčica, Šalvia a terakota,
+  Eukalyptus a slivka, Šalvia a paprika, Terakota, Modrotlač, Paprika a krém, Grafit a horčica), každú vo svetlom
+  aj tmavom režime. Voľba sa ukladá pri človeku a platí na všetkých zariadeniach. Predvolená je Šalvia a horčica.
+
 ## 1.8.1 – 2026-10-09
 
 ### Opravy
@@ -24,6 +34,16 @@
   obľúbené aj tvoje úpravy ostanú.
 
 ### Zmeny
+
+## 1.9.0 – 2026-10-09
+
+### Nové
+
+- Aplikácia sa volá **Peace in Kitchen** a má nové logo – vidlička v znaku mieru na šalviovom kruhu (ikona
+  v lište, na karte prehliadača, na ploche telefónu aj v náhľade odkazu).
+- **Farebné schémy:** v Nastaveniach → Vzhľad si každý vyberie z 8 schém (Šalvia a horčica, Šalvia a terakota,
+  Eukalyptus a slivka, Šalvia a paprika, Terakota, Modrotlač, Paprika a krém, Grafit a horčica), každú vo svetlom
+  aj tmavom režime. Voľba sa ukladá pri človeku a platí na všetkých zariadeniach. Predvolená je Šalvia a horčica.
 
 ## 1.8.1 – 2026-10-09
 

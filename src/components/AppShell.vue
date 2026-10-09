@@ -95,7 +95,7 @@ const mobileMenu = ref(false)
           :aria-label="t('common.shell.home', { name: t('common.app.name') })"
           data-test="logo"
         >
-          <v-avatar size="32" rounded="sm"><v-img src="/favicon.svg" alt="" /></v-avatar>
+          <v-avatar size="32"><v-img src="/favicon.svg" alt="" /></v-avatar>
         </v-btn>
         <v-app-bar-nav-icon
           v-if="mdAndUp"
