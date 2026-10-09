@@ -1,5 +1,13 @@
 # Zmeny
 
+## 1.7.3 – 2026-10-09
+
+### Nové
+
+- Nákup: v menu (⋮) pribudlo **Označiť všetko ako kúpené** a **Zrušiť označenie všetkého** – naraz, s tlačidlom
+  Späť, aj bez signálu (zmeny sa odošlú po pripojení).
+- Nákup: **Vymazať celý zoznam** – po potvrdení zmaže kúpené aj nekúpené položky.
+
 ## 1.7.2 – 2026-10-09
 
 ### Opravy

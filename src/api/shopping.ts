@@ -87,6 +87,59 @@ export function useToggleItem(): UseMutationReturnType<'sent' | 'queued', Error,
   })
 }
 
+export interface CheckManyVars {
+  listId: string
+  ids: string[]
+  isChecked: boolean
+}
+
+/**
+ * Označiť všetko / zrušiť označenie: hneď v UI, čas zmeny určí server. Bez signálu sa zmeny uložia do fronty ako
+ * jednotlivé odškrtnutia a odošlú sa po pripojení.
+ */
+export function useCheckMany(): UseMutationReturnType<'sent' | 'queued', Error, CheckManyVars, void> {
+  const client = useQueryClient()
+  const patch = (listId: string, ids: string[], isChecked: boolean) => {
+    const set = new Set(ids)
+    const at = new Date().toISOString()
+    client.setQueryData<ShoppingItemDto[]>(shoppingKeys.items(listId), (old) =>
+      old?.map((i) => (set.has(i.id) ? { ...i, isChecked, checkedAt: isChecked ? at : null } : i)),
+    )
+  }
+  return useMutation({
+    mutationKey: TOGGLE_KEY,
+    networkMode: 'always',
+    mutationFn: async ({ listId, ids, isChecked }: CheckManyVars) => {
+      try {
+        await apiFetch(`/shopping/lists/${listId}/check`, json('POST', { isChecked, ids }))
+        return 'sent' as const
+      } catch (error) {
+        if (error instanceof ApiError && error.code === 'network_error') {
+          const at = new Date().toISOString()
+          for (const id of ids) await offlineQueue.enqueue({ id, isChecked, at })
+          return 'queued' as const
+        }
+        throw error
+      }
+    },
+    onMutate: async ({ listId, ids, isChecked }) => {
+      await client.cancelQueries({ queryKey: shoppingKeys.items(listId) })
+      patch(listId, ids, isChecked)
+    },
+    onError: (_error, { listId, ids, isChecked }) => patch(listId, ids, !isChecked),
+  })
+}
+
+/** Vymaže celý zoznam (kúpené aj nekúpené položky). */
+export function useClearAll(): UseMutationReturnType<{ removed: number }, Error, string, unknown> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (listId: string) =>
+      apiFetch<{ removed: number }>(`/shopping/lists/${listId}/clear-all`, { method: 'POST' }),
+    onSuccess: (_r, listId) => invalidateItems(client, listId),
+  })
+}
+
 const invalidateItems = (client: ReturnType<typeof useQueryClient>, listId: string) =>
   client.invalidateQueries({ queryKey: shoppingKeys.items(listId) })
 

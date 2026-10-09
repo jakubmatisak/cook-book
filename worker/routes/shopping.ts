@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import {
   generateSchema,
   itemBatchSchema,
+  itemCheckSchema,
   itemCreateSchema,
   itemPatchSchema,
 } from '../../shared/schemas/shopping'
@@ -9,6 +10,8 @@ import type { AppEnv } from '../env'
 import { parseBody } from '../http'
 import {
   applyBatch,
+  checkItems,
+  clearAll,
   clearChecked,
   moveCheckedToPantry,
   createItem,
@@ -35,6 +38,14 @@ export const shoppingRoutes = new Hono<AppEnv>()
   })
   .post('/lists/:id/clear-checked', async (c) => {
     const removed = await clearChecked(c.get('db'), c.get('user').householdId, c.req.param('id'))
+    return c.json({ removed })
+  })
+  .post('/lists/:id/check', async (c) => {
+    const input = await parseBody(c, itemCheckSchema)
+    return c.json({ changed: await checkItems(c.get('db'), c.get('user'), c.req.param('id'), input) })
+  })
+  .post('/lists/:id/clear-all', async (c) => {
+    const removed = await clearAll(c.get('db'), c.get('user').householdId, c.req.param('id'))
     return c.json({ removed })
   })
   .post('/lists/:id/move-to-pantry', async (c) =>

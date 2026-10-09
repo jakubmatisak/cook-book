@@ -63,3 +63,10 @@ export const itemBatchSchema = z.object({
     .max(500),
 })
 export type ItemBatchInput = z.output<typeof itemBatchSchema>
+
+/** Označiť / zrušiť označenie viacerých položiek naraz (čas zmení server). */
+export const itemCheckSchema = z.object({
+  isChecked: z.boolean(),
+  ids: z.array(z.string().min(1).max(40)).min(1).max(1000),
+})
+export type ItemCheckInput = z.output<typeof itemCheckSchema>

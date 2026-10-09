@@ -5,6 +5,7 @@ import { newId } from '../../shared/ids'
 import type {
   GenerateInput,
   ItemBatchInput,
+  ItemCheckInput,
   ItemCreateInput,
   ItemPatchInput,
 } from '../../shared/schemas/shopping'
@@ -433,6 +434,47 @@ export async function clearChecked(db: Db, householdId: string, listId: string):
   const deleted = await db
     .delete(shoppingItems)
     .where(and(eq(shoppingItems.listId, listId), eq(shoppingItems.isChecked, true)))
+    .returning({ id: shoppingItems.id })
+  return deleted.length
+}
+
+/** Označí alebo odznačí položky zoznamu naraz; vráti počet zmenených. */
+export async function checkItems(
+  db: Db,
+  user: UserRow,
+  listId: string,
+  input: ItemCheckInput,
+): Promise<number> {
+  await assertList(db, user.householdId, listId)
+  const now = new Date().toISOString()
+  let changed = 0
+  for (const ids of chunk([...new Set(input.ids)], 90)) {
+    const rows = await db
+      .update(shoppingItems)
+      .set({
+        isChecked: input.isChecked,
+        checkedAt: input.isChecked ? now : null,
+        checkedBy: input.isChecked ? user.id : null,
+      })
+      .where(
+        and(
+          eq(shoppingItems.listId, listId),
+          inArray(shoppingItems.id, ids),
+          eq(shoppingItems.isChecked, !input.isChecked),
+        ),
+      )
+      .returning({ id: shoppingItems.id })
+    changed += rows.length
+  }
+  return changed
+}
+
+/** Vymaže celý zoznam – kúpené aj nekúpené položky. */
+export async function clearAll(db: Db, householdId: string, listId: string): Promise<number> {
+  await assertList(db, householdId, listId)
+  const deleted = await db
+    .delete(shoppingItems)
+    .where(eq(shoppingItems.listId, listId))
     .returning({ id: shoppingItems.id })
   return deleted.length
 }

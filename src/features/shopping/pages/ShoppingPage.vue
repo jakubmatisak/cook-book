@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import {
   mdiCartOutline,
+  mdiCartRemove,
   mdiCheckAll,
+  mdiDeleteForeverOutline,
   mdiChevronDown,
   mdiChevronUp,
   mdiCloudOffOutline,
@@ -23,6 +25,8 @@ import {
   offlineQueue,
   shoppingKeys,
   useAddItem,
+  useCheckMany,
+  useClearAll,
   useClearChecked,
   useMoveCheckedToPantry,
   useDeleteItem,
@@ -55,7 +59,11 @@ const { data: items, isPending, error } = useShoppingItems(listId)
 const { data: categories } = useShopCategories()
 
 const snackbar = ref({ show: false, text: '', color: 'success' })
-const notify = (text: string, color = 'success') => (snackbar.value = { show: true, text, color })
+const undo = ref<(() => Promise<void>) | null>(null)
+const notify = (text: string, color = 'success', onUndo: (() => Promise<void>) | null = null) => {
+  undo.value = onUndo
+  snackbar.value = { show: true, text, color }
+}
 
 // Odoslanie odškrtnutí urobených bez signálu
 const queued = ref(0)
@@ -137,6 +145,52 @@ async function onClearChecked() {
   notify(t('shopping.snackbar.cleared', { items: tc('common.plural.items', removed) }))
 }
 
+// Označiť všetko / zrušiť označenie (so Späť) a vymazať celý zoznam (po potvrdení).
+const checkMany = useCheckMany()
+async function setAll(isChecked: boolean) {
+  const listIdValue = listId.value
+  const ids = (isChecked ? toBuy.value : inCart.value).map((i) => i.id)
+  if (!listIdValue || !ids.length) return
+  const run = async (checked: boolean) => {
+    const result = await checkMany.mutateAsync({ listId: listIdValue, ids, isChecked: checked })
+    if (result === 'queued') queued.value = await offlineQueue.size()
+  }
+  try {
+    await run(isChecked)
+    const items = tc('common.plural.items', ids.length)
+    notify(
+      t(isChecked ? 'shopping.snackbar.checkedAll' : 'shopping.snackbar.uncheckedAll', { items }),
+      'success',
+      () => run(!isChecked),
+    )
+  } catch (e) {
+    notify(errorText(e, 'shopping.snackbar.toggleFailed'), 'error')
+  }
+}
+async function onUndo() {
+  const run = undo.value
+  undo.value = null
+  snackbar.value.show = false
+  try {
+    await run?.()
+  } catch (e) {
+    notify(errorText(e, 'shopping.snackbar.toggleFailed'), 'error')
+  }
+}
+
+const clearAll = useClearAll()
+const clearAllOpen = ref(false)
+async function onClearAll() {
+  if (!listId.value) return
+  try {
+    const { removed } = await clearAll.mutateAsync(listId.value)
+    clearAllOpen.value = false
+    notify(t('shopping.snackbar.clearedAll', { items: tc('common.plural.items', removed) }))
+  } catch (e) {
+    notify(errorText(e, 'shopping.snackbar.removeFailed'), 'error')
+  }
+}
+
 const moveToPantry = useMoveCheckedToPantry()
 async function onMoveToPantry() {
   if (!listId.value) return
@@ -182,12 +236,34 @@ function onGenerated(result: GenerateResult) {
             />
           </template>
           <v-list>
+            <v-list-item
+              :prepend-icon="mdiCheckAll"
+              :title="t('shopping.checkAll')"
+              :disabled="!toBuy.length"
+              data-test="check-all"
+              @click="setAll(true)"
+            />
+            <v-list-item
+              :prepend-icon="mdiCartRemove"
+              :title="t('shopping.uncheckAll')"
+              :disabled="!inCart.length"
+              data-test="uncheck-all"
+              @click="setAll(false)"
+            />
             <v-list-item :prepend-icon="mdiPrinterOutline" :title="t('shopping.print')" @click="printList" />
             <v-list-item
               :prepend-icon="mdiDeleteSweepOutline"
               :title="t('shopping.clearChecked')"
               :disabled="!inCart.length"
               @click="onClearChecked"
+            />
+            <v-list-item
+              :prepend-icon="mdiDeleteForeverOutline"
+              :title="t('shopping.clearAll.action')"
+              :disabled="!items?.length"
+              base-color="error"
+              data-test="clear-all"
+              @click="clearAllOpen = true"
             />
           </v-list>
         </v-menu>
@@ -334,8 +410,32 @@ function onGenerated(result: GenerateResult) {
       @done="onGenerated"
     />
     <ItemEditDialog v-model="editOpen" :item="editing" />
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">{{
-      snackbar.text
-    }}</v-snackbar>
+    <v-dialog v-model="clearAllOpen" max-width="420">
+      <v-card :title="t('shopping.clearAll.title')" data-test="clear-all-dialog">
+        <v-card-text>
+          {{ t('shopping.clearAll.text', { items: tc('common.plural.items', items?.length ?? 0) }) }}
+        </v-card-text>
+        <v-card-actions class="px-4 pb-4">
+          <v-spacer />
+          <v-btn variant="text" @click="clearAllOpen = false">{{ t('common.actions.cancel') }}</v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            :loading="clearAll.isPending.value"
+            data-test="clear-all-confirm"
+            @click="onClearAll"
+          >
+            {{ t('shopping.clearAll.confirm') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="5000">
+      {{ snackbar.text }}
+      <template v-if="undo" #actions>
+        <v-btn variant="text" @click="onUndo">{{ t('shopping.undo') }}</v-btn>
+      </template>
+    </v-snackbar>
   </ListLayout>
 </template>

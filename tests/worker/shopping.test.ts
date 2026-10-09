@@ -251,6 +251,44 @@ describe('nákupný zoznam – ručné položky a odškrtávanie', () => {
     expect((await send(app, 'DELETE', api(`/shopping/items/${b.id}`))).status).toBe(204)
     expect((await items(listId)).map((i) => i.name)).toEqual(['Syr'])
   })
+
+  it('označí a odznačí viac položiek naraz podľa času servera; len položky zoznamu', async () => {
+    const { listId } = await setup()
+    const add = async (name: string) =>
+      (await send(app, 'POST', api(`/shopping/lists/${listId}/items`), { name })).json<ShoppingItemDto>()
+    const [a, b] = [await add('Chlieb'), await add('Maslo')]
+    await add('Syr')
+    const res = await send(app, 'POST', api(`/shopping/lists/${listId}/check`), {
+      isChecked: true,
+      ids: [a.id, b.id, 'neexistuje'],
+    })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ changed: 2 })
+    let list = await items(listId)
+    expect(list.filter((i) => i.isChecked).map((i) => i.name)).toEqual(['Chlieb', 'Maslo'])
+    expect(byName(list, 'Chlieb').checkedAt).not.toBeNull()
+
+    await send(app, 'POST', api(`/shopping/lists/${listId}/check`), { isChecked: false, ids: [a.id] })
+    list = await items(listId)
+    expect(list.filter((i) => i.isChecked).map((i) => i.name)).toEqual(['Maslo'])
+    expect(
+      (await send(app, 'POST', api('/shopping/lists/cudzi/check'), { isChecked: true, ids: [a.id] })).status,
+    ).toBe(404)
+  })
+
+  it('vymaže celý zoznam (kúpené aj nekúpené); cudzí zoznam je 404', async () => {
+    const { listId } = await setup()
+    const a = await (
+      await send(app, 'POST', api(`/shopping/lists/${listId}/items`), { name: 'Chlieb' })
+    ).json<ShoppingItemDto>()
+    await send(app, 'POST', api(`/shopping/lists/${listId}/items`), { name: 'Maslo' })
+    await send(app, 'PATCH', api(`/shopping/items/${a.id}`), { isChecked: true })
+    const res = await send(app, 'POST', api(`/shopping/lists/${listId}/clear-all`))
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ removed: 2 })
+    expect(await items(listId)).toEqual([])
+    expect((await send(app, 'POST', api('/shopping/lists/cudzi/clear-all'))).status).toBe(404)
+  })
 })
 
 describe('nákupný zoznam – úprava položky', () => {
