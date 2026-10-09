@@ -56,6 +56,10 @@ Nad mriežkou sú **farebné štetce** (v-chip-group, jeden zvolený):
 - Ťuknutie na políčko ho vyfarbí zvoleným štetcom; ťuknutie na **deň** alebo **jedlo dňa** vyfarbí celý riadok
   alebo stĺpec. Predvolene je všetko „Všetky“, obsadené políčka (ak sa nenahrádzajú) sú „Nevypĺňať“ a ukazujú, čo
   v nich je.
+- **Čas na varenie po dňoch:** na začiatku riadku každého dňa výber „Do 30 min / Do 60 min / Bez limitu“ (celkový čas
+  receptu = príprava + varenie, rovnaké pásma ako filter Čas v receptoch). Predvoľby nad mriežkou: „Pracovné dni do
+  30 min“, „Víkend bez limitu“. Predvolene bez limitu. Recept bez zadaného času limit spĺňa, ale navrhuje sa až
+  po receptoch so známym časom; zvyšky sa limitom neriadia (nevarí sa).
 - Pod mriežkou súhrn: „Naplní sa 12 políčok: 8× Všetky, 4× Nové“.
 - Farby sú tokeny v `src/design/tokens.ts` (success / info / error / surface-variant), nie natvrdo.
 
@@ -95,7 +99,7 @@ Pri každom políčku:
 - V jedálničku sa zvyšky zobrazia s odznakom „Zvyšky“; zmazanie uvarenej položky zmaže aj jej zvyšky.
 
 ### API
-- `POST /plan/compose` – vstup: políčka (deň, jedlo dňa, štetec), typy jedál dňa, polievka k obedu, tagy, zvyšky; výstup: návrh (bez zápisu).
+- `POST /plan/compose` – vstup: políčka (deň, jedlo dňa, štetec), časový limit po dňoch, typy jedál dňa, polievka k obedu, tagy, zvyšky; výstup: návrh (bez zápisu).
 - `POST /plan/compose/apply` – vstup: potvrdený návrh (zoznam políčok s receptom, porciami, väzbou zvyškov);
   zapíše položky v jednej dávke (D1 batch, po 15 riadkoch kvôli limitu parametrov) a vráti uložené položky.
 - „Iný návrh“ pre jedno políčko volá `compose` s parametrom políčka a zoznamom už použitých receptov.
