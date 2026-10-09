@@ -1,5 +1,16 @@
 # Zmeny
 
+## 1.7.2 – 2026-10-09
+
+### Opravy
+
+- Zostaviť jedálniček: „Aj polievka“ a „Variť na viac dní“ sú zaškrtávacie políčka zarovnané pod jedlom dňa a
+  poľami, nie prepínače vytŕčajúce doľava.
+- Odznak „Zvyšky“ je v jedálničku na konci karty (pod porciami) a modrý, aby sa odlíšil od farby receptu; rovnako
+  „Zvyšky z …“ v kontrole sprievodcu.
+- Prázdne políčko v kontrole vysvetľuje, prečo nič nevyhovuje (typ jedla, farba z kroku Čo naplniť, čas, tagy) a
+  že recept sa dá vybrať ručne lupou.
+
 ## 1.7.1 – 2026-10-09
 
 ### Opravy

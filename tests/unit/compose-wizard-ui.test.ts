@@ -163,6 +163,9 @@ describe('sprievodca Zostaviť jedálniček', () => {
     const cards = [...document.body.querySelectorAll('[data-test="compose-slot-card"]')]
     expect(cards).toHaveLength(2)
     for (const card of cards) expect(card.classList.contains('h-100')).toBe(true)
+    // polievka aj varenie na viac dní sú zaškrtávacie políčka ako jedlo dňa (zarovnané pod sebou)
+    expect(q('[data-test="compose-soup-s1"]')!.classList.contains('v-checkbox')).toBe(true)
+    expect(q('[data-test="compose-leftovers"]')!.classList.contains('v-checkbox')).toBe(true)
   })
 
   it('obsadené políčko sa celým dňom neprefarbí a po ťuknutí sa najprv opýta', async () => {
@@ -222,6 +225,10 @@ describe('zvyšky v jedálničku', () => {
       props: { entry, members: [] },
       global: { plugins: mountPlugins() },
     })
-    expect(wrapper.find('[data-test="leftover-badge"]').text()).toBe('Zvyšky')
+    const badge = wrapper.find('[data-test="leftover-badge"]')
+    expect(badge.text()).toBe('Zvyšky')
+    // na konci karty, za porciami, a inou farbou ako karta receptu
+    expect(wrapper.text().indexOf('porc.')).toBeLessThan(wrapper.text().indexOf('Zvyšky'))
+    expect(badge.classes()).toContain('bg-info')
   })
 })

@@ -146,7 +146,8 @@ export default {
     review: {
       again: 'Navrhnúť znova',
       summary: '{meals} · varenie: {cooked} · zvyšky: {leftovers}',
-      empty: 'Nič nevyhovuje – zmeň štetec alebo vyber ručne',
+      empty:
+        'Žiadny recept nevyhovuje (typ jedla, farba z kroku Čo naplniť, čas, tagy). Vyber ho ručne lupou.',
       other: 'Iný návrh',
       pick: 'Vybrať recept',
       clear: 'Vymazať',

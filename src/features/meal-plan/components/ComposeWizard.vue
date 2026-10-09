@@ -404,12 +404,11 @@ function back() {
                       density="compact"
                       class="mt-2"
                     />
-                    <v-switch
+                    <v-checkbox
                       v-if="slot.categories.includes('hlavne')"
                       v-model="slot.withSoup"
                       :label="t('plan.compose.slots.withSoup')"
                       :disabled="!slot.selected"
-                      color="primary"
                       hide-details
                       density="compact"
                       :data-test="`compose-soup-${slot.slotId}`"
@@ -439,10 +438,9 @@ function back() {
             />
 
             <div class="d-flex flex-wrap align-center ga-3">
-              <v-switch
+              <v-checkbox
                 v-model="cookAhead"
                 :label="t('plan.compose.leftovers.label')"
-                color="primary"
                 hide-details
                 density="compact"
                 class="flex-grow-0"
@@ -627,7 +625,7 @@ function back() {
                         {{ it.title ?? t('plan.compose.review.empty') }}
                       </div>
                       <div class="d-flex flex-wrap ga-1 mt-1">
-                        <v-chip v-if="it.leftoverOf" size="x-small" color="secondary" variant="flat">
+                        <v-chip v-if="it.leftoverOf" size="x-small" color="info" variant="flat">
                           {{ t('plan.compose.review.leftoverOf', { day: sourceDay(it) }) }}
                         </v-chip>
                         <v-chip

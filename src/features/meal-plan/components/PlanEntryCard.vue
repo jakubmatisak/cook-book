@@ -71,19 +71,19 @@ const subtitle = computed(() => {
       >
         {{ title }}
       </v-card-subtitle>
+      <v-card-subtitle v-if="subtitle" class="text-body-small">
+        <v-icon v-if="entry.note && dense" :icon="mdiNoteTextOutline" size="12" class="me-1" />{{ subtitle }}
+      </v-card-subtitle>
       <v-chip
         v-if="entry.leftoverOfEntryId"
         size="x-small"
-        color="secondary"
+        color="info"
         variant="flat"
-        class="ms-2 mb-1"
+        class="mt-1"
         data-test="leftover-badge"
       >
         {{ t('plan.card.leftover') }}
       </v-chip>
-      <v-card-subtitle v-if="subtitle" class="text-body-small">
-        <v-icon v-if="entry.note && dense" :icon="mdiNoteTextOutline" size="12" class="me-1" />{{ subtitle }}
-      </v-card-subtitle>
     </v-card-item>
   </v-card>
 </template>

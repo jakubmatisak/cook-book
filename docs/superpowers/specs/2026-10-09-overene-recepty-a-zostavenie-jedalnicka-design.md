@@ -86,7 +86,7 @@ Pri každom políčku:
   niekto z nich **nemá rád** (Časť D) alebo obsahujú jeho averziu na surovinu, sa navrhujú až keď nič iné nie je;
   alergény sa nenavrhnú nikdy. Každé políčko v kontrole ukáže upozornenie („Peter nemá rád“, „Babka: averzia –
   cibuľa“), aj keď recept človek vybral ručne.
-- Keď kandidáti dôjdu, políčko ostane prázdne s textom „Nič nevyhovuje – zmeň štetec alebo vyber ručne“.
+- Keď kandidáti dôjdu, políčko ostane prázdne s textom, prečo nič nevyhovuje (typ jedla, farba, čas, tagy) a že recept sa dá vybrať ručne.
 - **Zvyšky:** po uvarení s „+N“ dostanú nasledujúcich N vybraných dní v tom istom jedle dňa zvyšky. Ak nasledujúci
   deň v rozsahu nie je (koniec rozsahu, vynechaný deň), zvyšky pokračujú na najbližší ďalší vybraný deň – takto
   sa nedeľné varenie dostane aj na pondelok ďalšieho týždňa, ak je v rozsahu.

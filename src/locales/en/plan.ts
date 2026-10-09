@@ -146,7 +146,8 @@ export default {
     review: {
       again: 'Suggest again',
       summary: '{meals} · cooking: {cooked} · leftovers: {leftovers}',
-      empty: 'Nothing fits – change the brush or pick manually',
+      empty:
+        'No recipe fits (meal type, colour from What to fill, time, tags). Pick one manually with the magnifier.',
       other: 'Another suggestion',
       pick: 'Pick recipe',
       clear: 'Clear',
