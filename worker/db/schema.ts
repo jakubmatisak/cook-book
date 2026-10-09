@@ -185,6 +185,8 @@ export const recipes = sqliteTable(
     category: text('category', { enum: RECIPE_CATEGORIES }).notNull().default('hlavne'),
     /** „Hodí sa aj ako“: ďalšie typy jedla okrem hlavného (bez neho, v poradí kategórií). */
     alsoCategories: text('also_categories', { mode: 'json' }).$type<RecipeCategory[]>().notNull().default([]),
+    /** Kľúč základného receptu z Nastavení (null pri vlastných receptoch) – podľa neho sa balík doplní či odstráni. */
+    sampleKey: text('sample_key'),
     servings: integer('servings').notNull().default(4),
     prepMinutes: integer('prep_minutes'),
     cookMinutes: integer('cook_minutes'),

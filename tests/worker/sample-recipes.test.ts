@@ -23,37 +23,37 @@ const titles = async () =>
   )
 
 describe('ukážkové recepty na serveri', () => {
-  it('pridáva sa po dávkach (kvôli limitu dopytov), až kým nie sú všetky 21', async () => {
+  it('pridáva sa po dávkach (kvôli limitu dopytov), až kým nie sú všetky 61', async () => {
     await ensureUser(getDb(env), OWNER)
     const first = await addSamples()
     expect(first.added).toBeGreaterThan(0)
     expect(first.added).toBeLessThanOrEqual(4)
-    expect(first.remaining).toBe(21 - first.added)
+    expect(first.remaining).toBe(61 - first.added)
 
     let total = first.added
-    for (let guard = 0; guard < 10; guard++) {
+    for (let guard = 0; guard < 30; guard++) {
       const next = await addSamples()
       total += next.added
       if (next.remaining === 0) break
     }
-    expect(total).toBe(21)
-    expect(await titles()).toHaveLength(21)
+    expect(total).toBe(61)
+    expect(await titles()).toHaveLength(61)
   })
 
   it('opakované volanie nič nezdvojí', async () => {
     await ensureUser(getDb(env), OWNER)
-    for (let guard = 0; guard < 10; guard++) if ((await addSamples()).remaining === 0) break
+    for (let guard = 0; guard < 30; guard++) if ((await addSamples()).remaining === 0) break
     const again = await addSamples()
     expect(again).toEqual({ added: 0, remaining: 0 })
-    expect(await titles()).toHaveLength(21)
+    expect(await titles()).toHaveLength(61)
   })
 
   it('preskočí recepty, ktoré domácnosť už má (podľa názvu bez diakritiky)', async () => {
     await ensureUser(getDb(env), OWNER)
     await send(app, 'POST', api('/recipes'), { title: 'bryndzove halusky', servings: 2 }, as(OWNER))
-    for (let guard = 0; guard < 10; guard++) if ((await addSamples()).remaining === 0) break
+    for (let guard = 0; guard < 30; guard++) if ((await addSamples()).remaining === 0) break
     const all = await titles()
-    expect(all).toHaveLength(21) // 20 ukážkových + vlastný
+    expect(all).toHaveLength(61) // 60 ukážkových + vlastný
     expect(all.filter((t) => /halu/i.test(t))).toHaveLength(1)
   })
 
@@ -113,8 +113,8 @@ describe('detské ukážkové recepty na serveri', () => {
   it('základná a detská sada sú nezávislé', async () => {
     await ensureUser(getDb(env), OWNER)
     for (let guard = 0; guard < 12; guard++) if ((await addKids()).remaining === 0) break
-    for (let guard = 0; guard < 10; guard++) if ((await addSamples()).remaining === 0) break
-    expect(await titles()).toHaveLength(21)
+    for (let guard = 0; guard < 30; guard++) if ((await addSamples()).remaining === 0) break
+    expect(await titles()).toHaveLength(61)
     expect(await kidsTitles()).toHaveLength(23)
   })
 

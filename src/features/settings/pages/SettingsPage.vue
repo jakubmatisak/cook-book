@@ -20,7 +20,7 @@ import { ApiError, downloadFile } from '@/api/http'
 import { useIsOwner, useMe } from '@/api/me'
 import PageHeader from '@/components/PageHeader.vue'
 import HouseholdMembersCard from '@/features/households/components/HouseholdMembersCard.vue'
-import SampleRecipesButton from '@/features/recipes/components/SampleRecipesButton.vue'
+import SampleGroupsCard from '../components/SampleGroupsCard.vue'
 import LanguageCard from '../components/LanguageCard.vue'
 import { importBookmarklet } from '../bookmarklet'
 import { useThemePreference } from '@/composables/useThemePreference'
@@ -348,13 +348,7 @@ async function exportRecipes() {
       </v-card-text>
     </v-card>
 
-    <v-card v-if="me && isOwner" :title="t('samples.title')" data-test="samples-card">
-      <v-card-text class="text-body-medium">{{ t('samples.text') }}</v-card-text>
-      <v-card-actions class="px-4 pb-4 ga-2 flex-wrap">
-        <SampleRecipesButton />
-        <SampleRecipesButton v-if="kidsEnabled" set="kids" class="ms-0" />
-      </v-card-actions>
-    </v-card>
+    <SampleGroupsCard v-if="me && isOwner" :kids-enabled="kidsEnabled" />
 
     <v-card v-if="me" :title="t('settings.pantry.title')">
       <v-card-text>

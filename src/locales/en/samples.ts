@@ -1,10 +1,27 @@
-/** Sample recipes: button that adds basic recipes to the household. */
+/** Basic recipes in Settings: packs by category, adding and removing. */
 export default {
-  button: 'Add sample recipes',
-  title: 'Sample recipes',
-  text: 'Adds 21 basic Slovak recipes (soups, main courses, salads, breakfast, desserts) that you can edit. Baby food recipes (23 porridges and fruit, vegetable and meat purees for up to 18 months, without salt or sugar) are added separately and appear in the list with the "With baby food" switch. Recipes you already have are not duplicated.',
-  kidsButton: 'Add baby food recipes',
-  kidsNone: 'You already have all the baby food recipes.',
+  title: 'Basic recipes',
+  text: 'Typical Slovak recipes with a photo, split into packs. Add or remove each pack separately; you can edit the recipes afterwards. Recipes you already have are not duplicated and your own recipes are never deleted when a pack is removed.',
+  status: '{imported} of {total}',
+  add: 'Add',
+  remove: 'Remove',
+  groups: {
+    ranajky: 'Breakfast',
+    desiata: 'Snack',
+    olovrant: 'Afternoon snack',
+    vecera: 'Dinner',
+    polievky: 'Soups',
+    hlavne: 'Main courses',
+    salaty: 'Salads and sides',
+    dezerty: 'Desserts',
+    kids: 'Baby food (porridges and purees up to 18 months)',
+  },
+  removeDialog: {
+    title: 'Remove the {group} pack?',
+    text: '{recipes} from this pack will be deleted, including their meals in the plan. Your own recipes stay.',
+    confirm: 'Remove',
+  },
   added: 'Added: {recipes}.',
-  none: 'You already have all the sample recipes.',
+  none: 'You already have all recipes from this pack.',
+  removed: 'Removed: {recipes}.',
 }

@@ -2,30 +2,12 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { h } from 'vue'
 import { VApp } from 'vuetify/components'
+import type { SampleGroupStatusDto } from '@shared/api'
 import { setLocale } from '@/i18n'
 import SettingsPage from '@/features/settings/pages/SettingsPage.vue'
-import SampleRecipesButton from '@/features/recipes/components/SampleRecipesButton.vue'
 import { jsonResponse, me, mountPlugins, stubApi } from './helpers/apiStub'
 
-/** Falošný server: dávky po 4 recepty z 21, ako skutočný. */
-function batches(total: number) {
-  let remaining = total
-  return () => {
-    const added = Math.min(4, remaining)
-    remaining -= added
-    return jsonResponse({ added, remaining })
-  }
-}
-
-async function mountButton() {
-  const calls = stubApi({ 'POST /recipes/samples': batches(21) })
-  const wrapper = mount(
-    { render: () => h(VApp, null, () => h(SampleRecipesButton)) },
-    { global: { plugins: mountPlugins() }, attachTo: document.body },
-  )
-  await flushPromises()
-  return { calls, wrapper }
-}
+vi.mock('idb-keyval', () => ({ get: async () => undefined, set: async () => {}, del: async () => {} }))
 
 afterEach(() => {
   setLocale('sk')
@@ -33,98 +15,91 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('Ukážkové recepty – tlačidlo', () => {
-  it('volá server po dávkach, kým nie sú všetky, a ohlási počet', async () => {
-    const { calls, wrapper } = await mountButton()
-    await wrapper.find('[data-test="sample-recipes"]').trigger('click')
+const STATUS: SampleGroupStatusDto[] = [
+  { set: 'ranajky', total: 12, imported: 2 },
+  { set: 'desiata', total: 10, imported: 0 },
+  { set: 'olovrant', total: 10, imported: 0 },
+  { set: 'vecera', total: 10, imported: 10 },
+  { set: 'polievky', total: 4, imported: 4 },
+  { set: 'hlavne', total: 8, imported: 8 },
+  { set: 'salaty', total: 3, imported: 3 },
+  { set: 'dezerty', total: 4, imported: 4 },
+  { set: 'kids', total: 23, imported: 0 },
+]
+
+/** Falošný server: dávky po 3 receptoch, ako skutočný. */
+function batches(total: number) {
+  let remaining = total
+  return () => {
+    const added = Math.min(3, remaining)
+    remaining -= added
+    return jsonResponse({ added, remaining })
+  }
+}
+
+async function mountSettings(role: 'owner' | 'member' = 'owner', userSettings: object = {}) {
+  const calls = stubApi({
+    '/me': { ...me(role), userSettings },
+    '/recipes/samples': STATUS,
+    'POST /recipes/samples': batches(10),
+    'POST /recipes/samples/remove': () => jsonResponse({ removed: 10 }),
+    '/household/members': [],
+    '/households': [{ id: 'h1', name: 'Doma', role }],
+  })
+  const wrapper = mount(
+    { render: () => h(VApp, null, () => h(SettingsPage)) },
+    { global: { plugins: mountPlugins() }, attachTo: document.body },
+  )
+  await flushPromises()
+  return { calls, wrapper }
+}
+
+const row = (set: string) => document.body.querySelector<HTMLElement>(`[data-test="sample-group-${set}"]`)!
+
+describe('Základné recepty v Nastaveniach', () => {
+  it('ukáže balíky s počtom, koľko z nich máš; detské len pri zapnutých detských jedlách', async () => {
+    await mountSettings('owner', { kidsEnabled: false })
+    expect(row('ranajky').textContent).toContain('Raňajky')
+    expect(row('ranajky').textContent).toContain('2 z 12')
+    expect(row('vecera').textContent).toContain('10 z 10')
+    expect(document.body.querySelector('[data-test="sample-group-kids"]')).toBeNull()
+    document.body.innerHTML = ''
+    await mountSettings()
+    expect(row('kids').textContent).toContain('Detské')
+  })
+
+  it('Pridať zavolá server po dávkach pre daný balík a ohlási počet', async () => {
+    const { calls } = await mountSettings()
+    row('desiata').querySelector<HTMLElement>('[data-test="sample-add"]')!.click()
     await flushPromises()
     const posts = calls.filter((c) => c.method === 'POST' && c.path === '/recipes/samples')
-    expect(posts).toHaveLength(6) // 4 + 4 + 4 + 4 + 4 + 1
-    expect(document.body.textContent).toContain('Pridané: 21 receptov.')
+    expect(posts).toHaveLength(4)
+    expect(posts.every((c) => c.url.includes('set=desiata'))).toBe(true)
+    expect(document.body.textContent).toContain('Pridané: 10 receptov.')
   })
 
-  it('keď už všetko je, povie to a nič nehlási ako pridané', async () => {
-    stubApi({ 'POST /recipes/samples': () => jsonResponse({ added: 0, remaining: 0 }) })
-    const wrapper = mount(
-      { render: () => h(VApp, null, () => h(SampleRecipesButton)) },
-      { global: { plugins: mountPlugins() }, attachTo: document.body },
-    )
-    await wrapper.find('[data-test="sample-recipes"]').trigger('click')
+  it('Odstrániť sa najprv opýta, potom zmaže recepty balíka', async () => {
+    const { calls } = await mountSettings()
+    expect(row('desiata').querySelector('[data-test="sample-remove"]')!.hasAttribute('disabled')).toBe(true)
+    row('vecera').querySelector<HTMLElement>('[data-test="sample-remove"]')!.click()
     await flushPromises()
-    expect(document.body.textContent).toContain('Všetky ukážkové recepty už máš.')
+    expect(calls.some((c) => c.path === '/recipes/samples/remove')).toBe(false)
+    expect(document.body.querySelector('[data-test="sample-remove-dialog"]')!.textContent).toContain('Večera')
+    document.body.querySelector<HTMLElement>('[data-test="sample-remove-confirm"]')!.click()
+    await flushPromises()
+    const remove = calls.find((c) => c.path === '/recipes/samples/remove')!
+    expect(remove.url).toContain('set=vecera')
+    expect(document.body.textContent).toContain('Odstránené: 10 receptov.')
   })
 
-  it('v angličtine ohlási po anglicky', async () => {
+  it('v angličtine má balíky po anglicky', async () => {
     setLocale('en')
-    const { wrapper } = await mountButton()
-    expect(wrapper.text()).toContain('Add sample recipes')
-    await wrapper.find('[data-test="sample-recipes"]').trigger('click')
-    await flushPromises()
-    expect(document.body.textContent).toContain('Added: 21 recipes.')
+    await mountSettings()
+    expect(row('olovrant').textContent).toContain('Afternoon snack')
   })
 
-  it('chybu servera ukáže používateľovi', async () => {
-    stubApi({
-      'POST /recipes/samples': () =>
-        jsonResponse(
-          { error: { code: 'owner_required', message: 'Túto zmenu môže urobiť len vlastník domácnosti.' } },
-          403,
-        ),
-    })
-    const wrapper = mount(
-      { render: () => h(VApp, null, () => h(SampleRecipesButton)) },
-      { global: { plugins: mountPlugins() }, attachTo: document.body },
-    )
-    await wrapper.find('[data-test="sample-recipes"]').trigger('click')
-    await flushPromises()
-    expect(document.body.textContent).toContain('Túto zmenu môže urobiť len vlastník domácnosti.')
-  })
-})
-
-describe('Detské ukážkové recepty – tlačidlo', () => {
-  it('volá server so sadou kids po dávkach a ohlási počet', async () => {
-    const calls = stubApi({ 'POST /recipes/samples': batches(23) })
-    const wrapper = mount(
-      { render: () => h(VApp, null, () => h(SampleRecipesButton, { set: 'kids' })) },
-      { global: { plugins: mountPlugins() }, attachTo: document.body },
-    )
-    expect(wrapper.text()).toContain('Pridať detské recepty')
-    await wrapper.find('[data-test="sample-recipes-kids"]').trigger('click')
-    await flushPromises()
-    const posts = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.map((c) =>
-      String(c[0]),
-    )
-    expect(posts.every((u) => u.includes('/recipes/samples?set=kids') || !u.includes('samples'))).toBe(true)
-    expect(calls.filter((c) => c.path === '/recipes/samples')).toHaveLength(6) // 4 × 5 + 3
-    expect(document.body.textContent).toContain('Pridané: 23 receptov.')
-  })
-})
-
-describe('Ukážkové recepty v Nastaveniach', () => {
-  async function mountSettings(role: 'owner' | 'member') {
-    stubApi({ '/me': me(role), '/household/members': [], '/households': [{ id: 'h1', name: 'Doma', role }] })
-    const wrapper = mount(SettingsPage, { global: { plugins: mountPlugins() }, attachTo: document.body })
-    await flushPromises()
-    return wrapper
-  }
-
-  it('detské tlačidlo je len keď sú detské recepty zapnuté', async () => {
-    expect((await mountSettings('owner')).find('[data-test="sample-recipes-kids"]').exists()).toBe(true)
-    document.body.innerHTML = ''
-    stubApi({
-      '/me': { ...me('owner'), userSettings: { kidsEnabled: false } },
-      '/household/members': [],
-      '/households': [{ id: 'h1', name: 'Doma', role: 'owner' }],
-    })
-    const off = mount(SettingsPage, { global: { plugins: mountPlugins() }, attachTo: document.body })
-    await flushPromises()
-    expect(off.find('[data-test="samples-card"]').exists()).toBe(true)
-    expect(off.find('[data-test="sample-recipes-kids"]').exists()).toBe(false)
-  })
-
-  it('vlastník ich vidí, člen nie', async () => {
-    expect((await mountSettings('owner')).find('[data-test="samples-card"]').exists()).toBe(true)
-    document.body.innerHTML = ''
-    expect((await mountSettings('member')).find('[data-test="samples-card"]').exists()).toBe(false)
+  it('člen domácnosti kartu nevidí', async () => {
+    await mountSettings('member')
+    expect(document.body.querySelector('[data-test="samples-card"]')).toBeNull()
   })
 })

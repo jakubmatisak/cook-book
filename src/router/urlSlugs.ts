@@ -14,6 +14,7 @@ export const CATEGORY_SLUGS: Readonly<Record<RecipeCategory, string>> = {
   dezert: 'dessert',
   ranajky: 'breakfast',
   desiata: 'snack',
+  vecera: 'dinner',
   napoj: 'drink',
   detske: 'kids',
   ine: 'other',

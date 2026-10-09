@@ -13,15 +13,16 @@ import { defaultSlotKey } from '@/i18n/defaults'
 
 /** Sprievodca Zostaviť jedálniček: maľovanie políčok (krok 2) a úpravy návrhu (krok 3). Všetko bez zápisu. */
 
-const SLOT_CATEGORIES: Readonly<Record<string, RecipeCategory>> = {
-  breakfast: 'ranajky',
-  snack: 'desiata',
-  afternoonSnack: 'desiata',
+const SLOT_CATEGORIES: Readonly<Record<string, RecipeCategory[]>> = {
+  breakfast: ['ranajky'],
+  snack: ['desiata'],
+  afternoonSnack: ['desiata'],
+  dinner: ['hlavne', 'vecera'],
 }
 
 /** Predvolené typy jedla podľa predvoleného jedla dňa (premenované a ostatné = hlavné jedlo). */
 export const defaultCategories = (slotName: string): RecipeCategory[] => [
-  SLOT_CATEGORIES[defaultSlotKey(slotName.trim()) ?? ''] ?? 'hlavne',
+  ...(SLOT_CATEGORIES[defaultSlotKey(slotName.trim()) ?? ''] ?? ['hlavne']),
 ]
 
 export function rangeDates(from: string, to: string): string[] {

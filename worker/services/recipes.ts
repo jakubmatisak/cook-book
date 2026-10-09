@@ -1,12 +1,6 @@
 import { and, asc, desc, eq, exists, inArray, isNull, ne, or, sql } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
-import type {
-  RecipeDetailDto,
-  RecipeListDto,
-  RecipeSummaryDto,
-  SampleRecipesResult,
-  TagDto,
-} from '../../shared/api'
+import type { RecipeDetailDto, RecipeListDto, RecipeSummaryDto, TagDto } from '../../shared/api'
 import {
   applyRecipeFilters,
   computeFacets,
@@ -17,8 +11,7 @@ import {
   type SortKey,
 } from '../../shared/recipeFacets'
 import { normalizeAlsoCategories, type RecipeVisibility } from '../../shared/recipes'
-import { SAMPLE_SETS, type SampleSet } from '../../shared/data/sampleSets'
-import { recipeInputSchema, type RecipeInput } from '../../shared/schemas/recipe'
+import type { RecipeInput } from '../../shared/schemas/recipe'
 import { normalizeText, slugify } from '../../shared/text'
 import { newId } from '../../shared/ids'
 import type { Db } from '../db/client'
@@ -136,6 +129,8 @@ export async function saveRecipe(
   input: RecipeInput,
   id?: string,
   bucket?: R2Bucket,
+  /** Len pri základných receptoch z Nastavení. */
+  sampleKey?: string,
 ): Promise<string> {
   const householdId = user.householdId
   const existing = id ? await findLive(db, householdId, id) : undefined
@@ -195,6 +190,7 @@ export async function saveRecipe(
       // Chýbajúce poznámky (staršia verzia aplikácie) sa nemenia.
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
       ...(input.isVerified !== undefined ? { isVerified: input.isVerified } : {}),
+      ...(sampleKey ? { sampleKey } : {}),
     }
 
     const statements: BatchItem<'sqlite'>[] = existing
@@ -249,29 +245,6 @@ export async function saveRecipe(
     const [first, ...rest] = statements
     return [first!, ...rest]
   }
-}
-
-/** Najviac toľko ukážkových receptov sa pridá na jedno volanie (limit dopytov na jedno spustenie Workera). */
-const SAMPLE_BATCH = 4
-
-/**
- * Pridá ukážkové recepty, ktoré domácnosť ešte nemá (podľa názvu bez diakritiky), po dávkach.
- * Vráti, koľko sa pridalo a koľko ešte chýba; volá sa opakovane, kým `remaining` nie je 0.
- */
-export async function addSampleRecipes(
-  db: Db,
-  user: UserRow,
-  set: SampleSet = 'basic',
-): Promise<SampleRecipesResult> {
-  const existing = await db
-    .select({ title: recipes.titleNormalized })
-    .from(recipes)
-    .where(and(eq(recipes.householdId, user.householdId), isNull(recipes.deletedAt)))
-  const have = new Set(existing.map((r) => r.title))
-  const missing = SAMPLE_SETS[set].filter((r) => !have.has(normalizeText(r.title)))
-  const batch = missing.slice(0, SAMPLE_BATCH)
-  for (const sample of batch) await saveRecipe(db, user, recipeInputSchema.parse(sample))
-  return { added: batch.length, remaining: missing.length - batch.length }
 }
 
 /** Zmení viditeľnosť receptu domácnosti (súkromný ↔ verejný). */

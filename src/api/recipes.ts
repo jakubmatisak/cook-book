@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationReturnType } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type {
+  SampleGroupStatusDto,
   RecipeShareDto,
   ImageDto,
   ImportRecipeResultDto,
@@ -102,26 +103,45 @@ export function useSaveRecipe(): UseMutationReturnType<RecipeDetailDto, Error, S
   })
 }
 
-/** Pridá ukážkové recepty po dávkach (server má limit dopytov) a vráti, koľko ich pribudlo. */
-export function useAddSampleRecipes(
-  set: SampleSet = 'basic',
-): UseMutationReturnType<number, Error, void, unknown> {
+export const sampleStatusKey = ['recipes', 'samples'] as const
+
+/** Balíky základných receptov a koľko z nich domácnosť má. */
+export const useSampleStatus = () =>
+  useQuery({ queryKey: sampleStatusKey, queryFn: () => apiFetch<SampleGroupStatusDto[]>('/recipes/samples') })
+
+const refreshAfterSamples = (client: ReturnType<typeof useQueryClient>) => {
+  void client.invalidateQueries({ queryKey: ['recipes'] })
+  void client.invalidateQueries({ queryKey: ['tags'] })
+  markIngredientsStale(client)
+}
+
+/** Pridá recepty balíka po dávkach (server má limit dopytov) a vráti, koľko ich pribudlo. */
+export function useAddSampleRecipes(): UseMutationReturnType<number, Error, SampleSet, unknown> {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (set: SampleSet) => {
       let total = 0
-      // Najviac 21 receptov po štyroch, poistka proti nekonečnému cyklu.
-      for (let batch = 0; batch < 10; batch++) {
+      // Poistka proti nekonečnému cyklu: najväčší balík má desiatky receptov po troch.
+      for (let batch = 0; batch < 40; batch++) {
         const result = await apiFetch<SampleRecipesResult>(`/recipes/samples?set=${set}`, { method: 'POST' })
         total += result.added
         if (result.remaining === 0 || result.added === 0) break
       }
       return total
     },
+    onSettled: () => refreshAfterSamples(client),
+  })
+}
+
+/** Odstráni recepty balíka (vlastné recepty ostanú); vráti ich počet. */
+export function useRemoveSampleGroup(): UseMutationReturnType<number, Error, SampleSet, unknown> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: async (set: SampleSet) =>
+      (await apiFetch<{ removed: number }>(`/recipes/samples/remove?set=${set}`, { method: 'POST' })).removed,
     onSettled: () => {
-      void client.invalidateQueries({ queryKey: ['recipes', 'list'] })
-      void client.invalidateQueries({ queryKey: ['tags'] })
-      markIngredientsStale(client)
+      refreshAfterSamples(client)
+      void client.invalidateQueries({ queryKey: ['plan'] })
     },
   })
 }

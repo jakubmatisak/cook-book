@@ -1,10 +1,27 @@
-/** Ukážkové recepty: tlačidlo na pridanie základných receptov do domácnosti. */
+/** Základné recepty v Nastaveniach: balíky po kategóriách, pridanie a odstránenie. */
 export default {
-  button: 'Pridať ukážkové recepty',
-  title: 'Ukážkové recepty',
-  text: 'Pridá 21 základných slovenských receptov (polievky, hlavné jedlá, šaláty, raňajky, dezerty), ktoré si môžeš upraviť. Detské recepty (23 kaší a ovocných, zeleninových a mäsových príkrmov do 18 mesiacov, bez soli a cukru) sa pridajú zvlášť a v zozname ich nájdeš cez prepínač „Aj detské“. Recepty, ktoré už máš, sa nezdvoja.',
-  kidsButton: 'Pridať detské recepty',
-  kidsNone: 'Všetky detské recepty už máš.',
+  title: 'Základné recepty',
+  text: 'Typické slovenské recepty s fotkou, rozdelené do balíkov. Každý balík pridáš alebo odstrániš zvlášť; recepty si potom môžeš upraviť. Recepty, ktoré už máš, sa nezdvoja a tvoje vlastné recepty sa pri odstránení balíka nezmažú.',
+  status: '{imported} z {total}',
+  add: 'Pridať',
+  remove: 'Odstrániť',
+  groups: {
+    ranajky: 'Raňajky',
+    desiata: 'Desiata',
+    olovrant: 'Olovrant',
+    vecera: 'Večera',
+    polievky: 'Polievky',
+    hlavne: 'Hlavné jedlá',
+    salaty: 'Šaláty a prílohy',
+    dezerty: 'Dezerty',
+    kids: 'Detské (kaše a príkrmy do 18 mesiacov)',
+  },
+  removeDialog: {
+    title: 'Odstrániť balík {group}?',
+    text: 'Zmaže sa {recipes} z tohto balíka aj s ich jedlami v jedálničku. Tvoje vlastné recepty ostanú.',
+    confirm: 'Odstrániť',
+  },
   added: 'Pridané: {recipes}.',
-  none: 'Všetky ukážkové recepty už máš.',
+  none: 'Všetky recepty z balíka už máš.',
+  removed: 'Odstránené: {recipes}.',
 }

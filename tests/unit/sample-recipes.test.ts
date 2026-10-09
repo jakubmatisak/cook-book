@@ -55,3 +55,37 @@ describe('detské ukážkové recepty', () => {
     for (const bad of ['voda', 'sol', 'cukor', 'med']) expect(names).not.toContain(bad)
   })
 })
+
+describe('základné recepty po balíkoch', () => {
+  it('každý recept má jedinečný kľúč a balík, všetky prejdú overením', async () => {
+    const { ALL_SAMPLES, SAMPLE_GROUPS } = await import('@shared/data/sampleSets')
+    const keys = ALL_SAMPLES.map((r) => r.key)
+    expect(new Set(keys).size).toBe(keys.length)
+    const titles = ALL_SAMPLES.map((r) => normalizeText(r.title))
+    expect(new Set(titles).size).toBe(titles.length)
+    for (const r of ALL_SAMPLES) {
+      expect(SAMPLE_GROUPS, r.title).toContain(r.group)
+      expect(recipeInputSchema.safeParse(r).success, r.title).toBe(true)
+      expect(r.alsoCategories ?? [], r.title).not.toContain(r.category)
+    }
+  })
+
+  it('raňajky, desiata, olovrant a večera majú po 10 nových receptoch, ostatné balíky nie sú prázdne', async () => {
+    const { samplesOf, SAMPLE_GROUPS } = await import('@shared/data/sampleSets')
+    expect(samplesOf('ranajky').length).toBe(12)
+    expect(samplesOf('desiata')).toHaveLength(10)
+    expect(samplesOf('olovrant')).toHaveLength(10)
+    expect(samplesOf('vecera')).toHaveLength(10)
+    for (const group of SAMPLE_GROUPS) expect(samplesOf(group).length, group).toBeGreaterThan(0)
+    expect(samplesOf('kids')).toHaveLength(23)
+    expect(samplesOf('basic').length).toBe(61)
+    expect(samplesOf('basic').some((r) => r.group === 'kids')).toBe(false)
+  })
+
+  it('studené večere majú typ Večera, lievance sa hodia aj na raňajky a desiatu', async () => {
+    const { ALL_SAMPLES } = await import('@shared/data/sampleSets')
+    const by = (title: string) => ALL_SAMPLES.find((r) => r.title === title)!
+    expect(by('Obložená misa').category).toBe('vecera')
+    expect(by('Americké lievance').alsoCategories).toEqual(expect.arrayContaining(['ranajky', 'desiata']))
+  })
+})

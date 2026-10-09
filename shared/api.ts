@@ -1,3 +1,4 @@
+import type { SampleGroup } from './data/sampleSets'
 import type { HouseholdRole, MemberKind, PlanAudience } from './family'
 import type { MemberPreference, PreferenceWarning } from './preferences'
 import type { Suggestion } from './suggest'
@@ -286,6 +287,13 @@ export interface IngredientBulkDeleteResult {
 }
 
 /** Pridávanie ukážkových receptov po dávkach: koľko sa práve pridalo a koľko ešte ostáva. */
+/** Balík základných receptov v Nastaveniach: koľko receptov má a koľko z nich domácnosť má. */
+export interface SampleGroupStatusDto {
+  set: SampleGroup
+  total: number
+  imported: number
+}
+
 export interface SampleRecipesResult {
   added: number
   remaining: number

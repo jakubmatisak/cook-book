@@ -18,11 +18,12 @@ import { suggestRecipes } from '../services/suggestions'
 import { bulkDeleteRecipes, bulkUpdateRecipes } from '../services/bulk'
 import { bulkIdsSchema, recipeBulkUpdateSchema } from '../../shared/schemas/bulk'
 import { HttpError } from '../errors'
+import { SAMPLE_PHOTOS, samplePhotoCredit } from '../../shared/data/samplePhotos'
+import { addSampleRecipes, removeSampleGroup, sampleStatus, type SamplePhotos } from '../services/samples'
 import { getUserSettings } from '../services/userSettings'
 import { requireOwner } from '../middleware/owner'
 import { shareRecipe, unshareRecipe } from '../services/share'
 import {
-  addSampleRecipes,
   deleteRecipe,
   getRecipeDetail,
   listRecipes,
@@ -75,9 +76,28 @@ export const recipeRoutes = new Hono<AppEnv>()
     return c.json(await getRecipeDetail(c.get('db'), user.householdId, user.id, id), 201)
   })
   // Ukážkové recepty pridáva vlastník domácnosti po dávkach (opakuje sa, kým `remaining` nie je 0).
+  .get('/samples', async (c) => c.json(await sampleStatus(c.get('db'), c.get('user').householdId)))
   .post('/samples', requireOwner, async (c) => {
     const { set } = sampleSetQuerySchema.parse(c.req.query())
-    return c.json(await addSampleRecipes(c.get('db'), c.get('user'), set))
+    const assets = c.env.ASSETS
+    // Fotky sú v balíku aplikácie (public/samples); každá domácnosť dostane vlastnú kópiu v úložisku.
+    const photos: SamplePhotos | undefined = assets && {
+      bucket: c.env.BUCKET,
+      load: async (key) => {
+        const credit = SAMPLE_PHOTOS[key]
+        if (!credit) return null
+        const res = await assets.fetch(new Request(`https://assets.local/samples/${key}.webp`))
+        if (!res.ok) return null
+        return { bytes: new Uint8Array(await res.arrayBuffer()), credit: samplePhotoCredit(credit) }
+      },
+    }
+    return c.json(await addSampleRecipes(c.get('db'), c.get('user'), set, photos))
+  })
+  .post('/samples/remove', requireOwner, async (c) => {
+    const { set } = sampleSetQuerySchema.parse(c.req.query())
+    return c.json({
+      removed: await removeSampleGroup(c.get('db'), c.get('user').householdId, set, c.env.BUCKET),
+    })
   })
   // Hromadné mazanie a úprava vybraných receptov (viditeľnosť smie meniť len vlastník).
   .post('/bulk/delete', async (c) => {

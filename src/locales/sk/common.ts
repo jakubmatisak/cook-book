@@ -95,6 +95,7 @@ export default {
     dezert: 'Dezert',
     ranajky: 'Raňajky',
     desiata: 'Desiata',
+    vecera: 'Večera',
     detske: 'Detské',
     napoj: 'Nápoj',
     ine: 'Iné',

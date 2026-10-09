@@ -1,0 +1,1 @@
+ALTER TABLE `recipes` ADD `sample_key` text;
