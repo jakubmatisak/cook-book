@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, like } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, like, or, sql } from 'drizzle-orm'
 import type { PublicRecipeDetailDto, PublicRecipeSummaryDto, RecipeDetailDto, TagDto } from '../../shared/api'
 import type { RecipeCategory } from '../../shared/recipes'
 import { recipeInputSchema } from '../../shared/schemas/recipe'
@@ -33,7 +33,16 @@ export async function listPublicRecipes(
         eq(recipes.visibility, 'public'),
         isNull(recipes.deletedAt),
         needle ? like(recipes.titleNormalized, `%${needle}%`) : undefined,
-        query.category.length ? inArray(recipes.category, query.category) : undefined,
+        query.category.length
+          ? or(
+              inArray(recipes.category, query.category),
+              // „Hodí sa aj ako“ (JSON pole typov jedla).
+              sql`exists (select 1 from json_each(${recipes.alsoCategories}) where value in (${sql.join(
+                query.category.map((c) => sql`${c}`),
+                sql`, `,
+              )}))`,
+            )
+          : undefined,
       ),
     )
     .orderBy(desc(recipes.createdAt))
@@ -120,6 +129,7 @@ export async function copyPublicRecipe(
     title: source.title,
     description: source.description,
     category: source.category,
+    alsoCategories: source.alsoCategories ?? [],
     servings: source.servings,
     prepMinutes: source.prepMinutes,
     cookMinutes: source.cookMinutes,

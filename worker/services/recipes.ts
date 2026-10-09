@@ -16,7 +16,7 @@ import {
   type SortDir,
   type SortKey,
 } from '../../shared/recipeFacets'
-import type { RecipeVisibility } from '../../shared/recipes'
+import { normalizeAlsoCategories, type RecipeVisibility } from '../../shared/recipes'
 import { SAMPLE_SETS, type SampleSet } from '../../shared/data/sampleSets'
 import { recipeInputSchema, type RecipeInput } from '../../shared/schemas/recipe'
 import { normalizeText, slugify } from '../../shared/text'
@@ -180,6 +180,11 @@ export async function saveRecipe(
       slug,
       description: input.description,
       category: input.category,
+      // Bez poľa (staršia verzia aplikácie) ostanú doterajšie; hlavný typ medzi nimi nebýva.
+      alsoCategories: normalizeAlsoCategories(
+        input.category,
+        input.alsoCategories ?? existing?.alsoCategories ?? [],
+      ),
       servings: input.servings,
       prepMinutes: input.prepMinutes,
       cookMinutes: input.cookMinutes,
@@ -350,6 +355,7 @@ export function toSummary(
     title: row.title,
     slug: row.slug,
     category: row.category,
+    alsoCategories: row.alsoCategories,
     servings: row.servings,
     prepMinutes: row.prepMinutes,
     cookMinutes: row.cookMinutes,
@@ -626,6 +632,7 @@ export async function listRecipes(
       id: summary.id,
       title: summary.title,
       category: summary.category,
+      alsoCategories: summary.alsoCategories,
       difficulty: summary.difficulty,
       totalMinutes: totalMinutes(summary),
       tagIds,

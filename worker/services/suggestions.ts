@@ -89,6 +89,7 @@ export async function loadCandidates(
     isFavorite,
     isVerified: recipe.isVerified,
     category: recipe.category,
+    alsoCategories: recipe.alsoCategories,
     totalMinutes:
       recipe.prepMinutes === null && recipe.cookMinutes === null
         ? null

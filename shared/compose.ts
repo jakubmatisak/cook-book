@@ -20,6 +20,8 @@ export type ComposeCourse = 'soup' | 'main'
 
 export interface ComposeCandidate extends SuggestCandidate {
   category: RecipeCategory
+  /** „Hodí sa aj ako“: recept sa ponúkne aj v jedlách dňa s týmito typmi. */
+  alsoCategories?: readonly RecipeCategory[]
   isVerified: boolean
 }
 
@@ -190,7 +192,9 @@ export function composePlan(req: ComposeRequest, ctx: ComposeContext): ComposeIt
 
       const limit = req.timeLimits[cell.date]
       const ranked = ctx.candidates
-        .filter((c) => categories.includes(c.category))
+        .filter(
+          (c) => categories.includes(c.category) || !!c.alsoCategories?.some((a) => categories.includes(a)),
+        )
         .filter((c) => passesBrush(c, cell.brush))
         .filter((c) => tagFilter.size === 0 || c.tagIds.some((t) => tagFilter.has(t)))
         .filter((c) => !limit || c.totalMinutes === null || c.totalMinutes <= LIMIT_MINUTES[limit])

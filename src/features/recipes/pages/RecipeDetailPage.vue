@@ -92,6 +92,14 @@ interface Chip {
   color?: string
 }
 
+// „Hodí sa aj ako“: ďalšie typy jedla v jednom riadku.
+const alsoLine = computed(() => {
+  const also = recipe.value?.alsoCategories ?? []
+  return also.length
+    ? t('recipes.detail.alsoCategories', { list: also.map((c) => t(`common.category.${c}`)).join(', ') })
+    : ''
+})
+
 const chips = computed<Chip[]>(() => {
   const r = recipe.value
   if (!r) return []
@@ -387,6 +395,13 @@ function goBack() {
           <div class="text-label-large text-uppercase text-primary font-weight-bold">
             {{ t(`common.category.${recipe.category}`) }}
           </div>
+          <div
+            v-if="alsoLine"
+            class="text-body-medium text-medium-emphasis mt-n2"
+            data-test="also-categories-line"
+          >
+            {{ alsoLine }}
+          </div>
           <h1 class="text-display-small font-weight-bold">{{ recipe.title }}</h1>
           <p
             v-if="recipe.description"
@@ -480,6 +495,9 @@ function goBack() {
           {{ chip.text }}
         </v-chip>
       </div>
+      <p v-if="alsoLine" class="text-body-medium text-medium-emphasis mb-3" data-test="also-categories-line">
+        {{ alsoLine }}
+      </p>
       <v-btn
         color="primary"
         variant="tonal"

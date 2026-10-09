@@ -118,6 +118,7 @@ describe('formulár receptu', () => {
       title: 'Guláš',
       description: 'Popis',
       category: 'polievka',
+      alsoCategories: [],
       servings: 6,
       prepMinutes: 15,
       cookMinutes: null,

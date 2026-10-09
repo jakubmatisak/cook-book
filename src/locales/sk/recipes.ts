@@ -170,6 +170,8 @@ export default {
     itemField: '{what} {n} – {sub}: {message}',
   },
   editor: {
+    alsoCategories: 'Hodí sa aj ako',
+    alsoCategoriesHint: 'Ďalšie typy jedla – recept sa ponúkne aj vo filtri a v sprievodcovi jedálnička.',
     newTitle: 'Nový recept',
     kidsFlag: 'Detský recept (kaša, príkrm – do 18 mesiacov)',
     verified: 'Overený recept – uvarili sme a funguje',
@@ -213,6 +215,7 @@ export default {
     source: 'Zdroj: {source}',
   },
   detail: {
+    alsoCategories: 'Hodí sa aj ako: {list}',
     plan: 'Naplánovať',
     more: 'Ďalšie akcie',
     copyText: 'Kopírovať ako text',

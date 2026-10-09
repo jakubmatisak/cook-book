@@ -20,6 +20,8 @@ const save = useBulkUpdateRecipes()
 
 const category = ref<RecipeCategory | null>(null)
 const addTags = ref<string[]>([])
+const addCategories = ref<RecipeCategory[]>([])
+const removeCategories = ref<RecipeCategory[]>([])
 const removeTags = ref<string[]>([])
 const favorite = ref<'keep' | 'add' | 'remove'>('keep')
 const verified = ref<'keep' | 'add' | 'remove'>('keep')
@@ -31,6 +33,8 @@ watch(open, (isOpen) => {
   category.value = null
   addTags.value = []
   removeTags.value = []
+  addCategories.value = []
+  removeCategories.value = []
   favorite.value = 'keep'
   verified.value = 'keep'
   visibility.value = 'keep'
@@ -49,6 +53,8 @@ const tagNames = computed(() => tags.value?.map((tag) => tag.name) ?? [])
 /** Len vyplnené polia; prázdne nechajú recepty tak, ako sú. */
 const change = computed<RecipeChange>(() => ({
   ...(category.value ? { category: category.value } : {}),
+  ...(addCategories.value.length ? { addCategories: addCategories.value } : {}),
+  ...(removeCategories.value.length ? { removeCategories: removeCategories.value } : {}),
   ...(addTags.value.length ? { addTags: addTags.value } : {}),
   ...(removeTags.value.length ? { removeTags: removeTags.value } : {}),
   ...(favorite.value !== 'keep' ? { favorite: favorite.value === 'add' } : {}),
@@ -88,6 +94,26 @@ async function submit() {
           clearable
           hide-details
           data-test="bulk-category"
+        />
+        <v-select
+          v-model="addCategories"
+          :items="categoryItems"
+          :label="t('bulk.recipes.addCategories')"
+          multiple
+          chips
+          closable-chips
+          hide-details
+          data-test="bulk-add-categories"
+        />
+        <v-select
+          v-model="removeCategories"
+          :items="categoryItems"
+          :label="t('bulk.recipes.removeCategories')"
+          multiple
+          chips
+          closable-chips
+          hide-details
+          data-test="bulk-remove-categories"
         />
         <v-combobox
           v-model="addTags"

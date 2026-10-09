@@ -14,7 +14,7 @@ import {
 } from 'drizzle-orm/sqlite-core'
 import { newId } from '../../shared/ids'
 import { UNIT_CODES } from '../../shared/units'
-import { RECIPE_CATEGORIES, RECIPE_VISIBILITIES } from '../../shared/recipes'
+import { RECIPE_CATEGORIES, RECIPE_VISIBILITIES, type RecipeCategory } from '../../shared/recipes'
 import { HOUSEHOLD_ROLES, MEMBER_KINDS, PLAN_AUDIENCES } from '../../shared/family'
 
 const nowIso = () => new Date().toISOString()
@@ -183,6 +183,8 @@ export const recipes = sqliteTable(
     slug: text('slug').notNull(),
     description: text('description'),
     category: text('category', { enum: RECIPE_CATEGORIES }).notNull().default('hlavne'),
+    /** „Hodí sa aj ako“: ďalšie typy jedla okrem hlavného (bez neho, v poradí kategórií). */
+    alsoCategories: text('also_categories', { mode: 'json' }).$type<RecipeCategory[]>().notNull().default([]),
     servings: integer('servings').notNull().default(4),
     prepMinutes: integer('prep_minutes'),
     cookMinutes: integer('cook_minutes'),

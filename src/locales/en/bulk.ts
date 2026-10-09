@@ -27,6 +27,8 @@ export default {
     favoriteRemove: 'Remove',
     verified: 'Tried and tested',
     verifiedAdd: 'Yes',
+    addCategories: 'Add “also works as”',
+    removeCategories: 'Remove “also works as”',
     verifiedRemove: 'No',
     visibility: 'Visibility',
     private: 'Private',

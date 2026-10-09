@@ -202,3 +202,26 @@ describe('chýbajúce suroviny (Čo viem uvariť)', () => {
     expect(computeFacets([row('x')], {}).missing).toEqual({})
   })
 })
+
+describe('Hodí sa aj ako – ďalšie typy jedla', () => {
+  const lievance = row('Lievance', { category: 'ranajky', alsoCategories: ['desiata', 'dezert'] })
+  const kasa = row('Kaša', { category: 'ranajky' })
+
+  it('filter typu jedla nájde recept podľa hlavného typu aj podľa „hodí sa aj ako“', () => {
+    expect(applyRecipeFilters([lievance, kasa], { category: ['desiata'] }).map((r) => r.id)).toEqual([
+      'Lievance',
+    ])
+    expect(applyRecipeFilters([lievance, kasa], { category: ['ranajky'] }).map((r) => r.id)).toEqual([
+      'Lievance',
+      'Kaša',
+    ])
+  })
+
+  it('počty v kategóriách zarátajú recept do každého jeho typu (raz)', () => {
+    const facets = computeFacets(
+      [lievance, kasa, row('Dvakrát', { category: 'dezert', alsoCategories: ['dezert'] })],
+      {},
+    )
+    expect(facets.category).toEqual({ ranajky: 2, desiata: 1, dezert: 2 })
+  })
+})

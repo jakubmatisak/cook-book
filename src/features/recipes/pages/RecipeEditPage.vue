@@ -107,6 +107,10 @@ const categoryItems = computed(() =>
     (value) => kidsEnabled.value || value !== 'detske' || form.value.category === 'detske',
   ).map((value) => ({ value, title: t(`common.category.${value}`) })),
 )
+// „Hodí sa aj ako“: ostatné typy jedla okrem hlavného (detské len pri zapnutých detských jedlách).
+const alsoCategoryItems = computed(() =>
+  categoryItems.value.filter((item) => item.value !== form.value.category && item.value !== 'detske'),
+)
 // Zaškrtávacie pole „Detský recept“ je skratka pre typ jedla Detské: zaškrtnutím sa typ nastaví a odškrtnutím sa vráti
 // predošlý (alebo Hlavné jedlo, ak recept bol detský už pri otvorení).
 const showKidsFlag = computed(() => kidsEnabled.value || form.value.category === 'detske')
@@ -246,6 +250,19 @@ function cancel() {
                 :max="50"
                 control-variant="split"
                 hide-details
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-select
+                v-model="form.alsoCategories"
+                :items="alsoCategoryItems"
+                :label="t('recipes.editor.alsoCategories')"
+                :hint="t('recipes.editor.alsoCategoriesHint')"
+                persistent-hint
+                multiple
+                chips
+                closable-chips
+                data-test="also-categories"
               />
             </v-col>
             <v-col cols="6">

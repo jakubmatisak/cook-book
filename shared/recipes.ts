@@ -14,6 +14,12 @@ export const RECIPE_CATEGORIES = [
 
 export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number]
 
+/** „Hodí sa aj ako“ bez hlavného typu a bez opakovania, v poradí kategórií. */
+export const normalizeAlsoCategories = (
+  main: RecipeCategory,
+  also: readonly RecipeCategory[],
+): RecipeCategory[] => RECIPE_CATEGORIES.filter((c) => c !== main && also.includes(c))
+
 /** Súkromný recept vidí len domácnosť, verejný vidia všetci prihlásení v ktorejkoľvek domácnosti. */
 export const RECIPE_VISIBILITIES = ['private', 'public'] as const
 export type RecipeVisibility = (typeof RECIPE_VISIBILITIES)[number]

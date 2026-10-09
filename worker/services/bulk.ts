@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { BulkAffectedDto, IngredientBulkDeleteResult } from '../../shared/api'
 import type { IngredientBulkUpdate, RecipeBulkUpdate } from '../../shared/schemas/bulk'
+import { normalizeAlsoCategories } from '../../shared/recipes'
 import { normalizeText } from '../../shared/text'
 import type { Db } from '../db/client'
 import {
@@ -78,6 +79,26 @@ export async function bulkUpdateRecipes(
         updatedAt: new Date().toISOString(),
       })
       .where(liveRecipes(user.householdId, live))
+  }
+
+  // „Hodí sa aj ako“: každý recept má vlastný zoznam, preto zmena po riadkoch v jednej dávke.
+  if (input.addCategories?.length || input.removeCategories?.length || input.category !== undefined) {
+    const rows = await db
+      .select({ id: recipes.id, category: recipes.category, alsoCategories: recipes.alsoCategories })
+      .from(recipes)
+      .where(liveRecipes(user.householdId, live))
+    const remove = new Set(input.removeCategories ?? [])
+    const statements = rows.flatMap((row) => {
+      const next = normalizeAlsoCategories(row.category, [
+        ...row.alsoCategories.filter((c) => !remove.has(c)),
+        ...(input.addCategories ?? []).filter((c) => !remove.has(c)),
+      ])
+      return JSON.stringify(next) === JSON.stringify(row.alsoCategories)
+        ? []
+        : [db.update(recipes).set({ alsoCategories: next }).where(eq(recipes.id, row.id))]
+    })
+    const [first, ...rest] = statements
+    if (first) await db.batch([first, ...rest])
   }
 
   if (input.addTags?.length) {

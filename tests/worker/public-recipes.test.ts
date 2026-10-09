@@ -153,6 +153,25 @@ describe('verejné recepty', () => {
     expect(await listPublic(B, '?q=nic')).toEqual([])
   })
 
+  it('typ jedla nájde aj recept, ktorý sa naň len „hodí aj ako“; kópia ho prevezme', async () => {
+    await setup()
+    const lievance = await (
+      await send(
+        app,
+        'POST',
+        api('/recipes'),
+        { title: 'Lievance', category: 'ranajky', alsoCategories: ['desiata'] },
+        as(A),
+      )
+    ).json<RecipeDetailDto>()
+    await publish(lievance.id, 'public')
+    expect((await listPublic(B, '?category=desiata')).map((r) => r.title)).toEqual(['Lievance'])
+    const copy = await (
+      await send(app, 'POST', api(`/public/recipes/${lievance.id}/copy`), undefined, as(B))
+    ).json<RecipeDetailDto>()
+    expect(copy.alsoCategories).toEqual(['desiata'])
+  })
+
   it('kópia do vlastnej domácnosti je nezávislý recept s rovnakým obsahom', async () => {
     const { bId } = await setup()
     const { recipe } = await createRecipe(A)

@@ -63,6 +63,11 @@ export const recipeInputSchema = z.object({
   coverImageId: optionalText(40),
   /** Overený recept; chýba = nemení sa (staršia verzia aplikácie). */
   isVerified: z.boolean().optional(),
+  /** „Hodí sa aj ako“: ďalšie typy jedla; chýba = nemení sa (staršia verzia aplikácie). */
+  alsoCategories: z
+    .array(z.enum(RECIPE_CATEGORIES))
+    .max(RECIPE_CATEGORIES.length * 2)
+    .optional(),
   /** Prílohy (fotky) v poradí galérie; opakované ID sa vynechá. Chýbajúce pole = ponechať doterajšie. */
   attachmentIds: z
     .array(z.string().trim().min(1).max(40))

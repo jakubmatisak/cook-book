@@ -27,6 +27,8 @@ export default {
     favoriteRemove: 'Odobrať',
     verified: 'Overený recept',
     verifiedAdd: 'Áno',
+    addCategories: 'Pridať „hodí sa aj ako“',
+    removeCategories: 'Odobrať „hodí sa aj ako“',
     verifiedRemove: 'Nie',
     visibility: 'Viditeľnosť',
     private: 'Súkromný',

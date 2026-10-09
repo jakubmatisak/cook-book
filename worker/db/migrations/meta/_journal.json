@@ -92,6 +92,13 @@
       "when": 1791560381039,
       "tag": "0012_hot_the_hand",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1791573612633,
+      "tag": "0013_strange_wind_dancer",
+      "breakpoints": true
     }
   ]
 }

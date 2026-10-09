@@ -18,6 +18,9 @@ export const recipeBulkUpdateSchema = z
   .object({
     ids,
     category: z.enum(RECIPE_CATEGORIES).optional(),
+    /** „Hodí sa aj ako“: pridať a odobrať typy jedla. */
+    addCategories: z.array(z.enum(RECIPE_CATEGORIES)).max(RECIPE_CATEGORIES.length).optional(),
+    removeCategories: z.array(z.enum(RECIPE_CATEGORIES)).max(RECIPE_CATEGORIES.length).optional(),
     addTags: tagNames.optional(),
     removeTags: tagNames.optional(),
     favorite: z.boolean().optional(),

@@ -13,6 +13,8 @@ export interface FacetRow {
   id: string
   title: string
   category: string
+  /** „Hodí sa aj ako“: ďalšie typy jedla okrem hlavného. */
+  alsoCategories?: readonly string[]
   difficulty: number
   totalMinutes: number | null
   tagIds: string[]
@@ -58,6 +60,11 @@ export function timeBucket(minutes: number | null): TimeBucket | null {
   return 'nad60'
 }
 
+/** Hlavný typ jedla a typy „hodí sa aj ako“, každý raz. */
+export const rowCategories = (row: Pick<FacetRow, 'category' | 'alsoCategories'>): string[] => [
+  ...new Set([row.category, ...(row.alsoCategories ?? [])]),
+]
+
 const matches = (row: FacetRow, filters: RecipeFilters, skip?: Dimension): boolean => {
   // Detské jedlá (kaše, príkrmy) sa v bežnom zozname skrývajú, kým sa nezapnú alebo nezvolí kategória Detské.
   const isKids = row.category === 'detske'
@@ -70,7 +77,11 @@ const matches = (row: FacetRow, filters: RecipeFilters, skip?: Dimension): boole
   }
   if (filters.favorite && !row.isFavorite) return false
   if (filters.verified && !row.isVerified) return false
-  if (skip !== 'category' && filters.category?.length && !filters.category.includes(row.category))
+  if (
+    skip !== 'category' &&
+    filters.category?.length &&
+    !rowCategories(row).some((c) => filters.category!.includes(c))
+  )
     return false
   if (skip !== 'tag' && filters.tag?.length && !filters.tag.some((t) => row.tagIds.includes(t))) return false
   if (skip !== 'difficulty' && filters.difficulty?.length && !filters.difficulty.includes(row.difficulty)) {
@@ -101,7 +112,7 @@ const bump = <K extends string | number>(into: Record<K, number>, key: K) => {
 export function computeFacets(rows: readonly FacetRow[], filters: RecipeFilters): RecipeFacets {
   const facets: RecipeFacets = { category: {}, tag: {}, difficulty: {}, time: {}, missing: {} }
   for (const row of rows) {
-    if (matches(row, filters, 'category')) bump(facets.category, row.category)
+    if (matches(row, filters, 'category')) for (const c of rowCategories(row)) bump(facets.category, c)
     if (matches(row, filters, 'tag')) for (const t of row.tagIds) bump(facets.tag, t)
     if (matches(row, filters, 'difficulty')) bump(facets.difficulty, row.difficulty)
     if (matches(row, filters, 'time')) {

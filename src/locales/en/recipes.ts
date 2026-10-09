@@ -175,6 +175,8 @@ export default {
     itemField: '{what} {n} – {sub}: {message}',
   },
   editor: {
+    alsoCategories: 'Also works as',
+    alsoCategoriesHint: 'More meal types – the recipe also shows up in filters and in the meal plan wizard.',
     newTitle: 'New recipe',
     kidsFlag: 'Baby food recipe (porridge, puree – up to 18 months)',
     verified: 'Tried and tested – we cooked it and it works',
@@ -218,6 +220,7 @@ export default {
     source: 'Source: {source}',
   },
   detail: {
+    alsoCategories: 'Also works as: {list}',
     plan: 'Add to plan',
     more: 'More actions',
     copyText: 'Copy as text',

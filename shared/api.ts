@@ -172,6 +172,8 @@ export interface RecipeSummaryDto {
   title: string
   slug: string
   category: RecipeCategory
+  /** „Hodí sa aj ako“: ďalšie typy jedla okrem hlavného (chýba pri starších dátach = žiadne). */
+  alsoCategories?: RecipeCategory[]
   servings: number
   prepMinutes: number | null
   cookMinutes: number | null

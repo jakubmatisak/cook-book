@@ -1,0 +1,1 @@
+ALTER TABLE `recipes` ADD `also_categories` text DEFAULT '[]' NOT NULL;

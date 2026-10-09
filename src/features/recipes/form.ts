@@ -25,6 +25,8 @@ export interface RecipeForm {
   title: string
   description: string
   category: RecipeCategory
+  /** „Hodí sa aj ako“: ďalšie typy jedla. */
+  alsoCategories: RecipeCategory[]
   /** null, keď používateľ pole vymaže – pri uložení sa použije predvolená hodnota. */
   servings: number | null
   prepMinutes: string
@@ -65,6 +67,7 @@ export function emptyRecipeForm(): RecipeForm {
     title: '',
     description: '',
     category: 'hlavne',
+    alsoCategories: [],
     servings: 4,
     prepMinutes: '',
     cookMinutes: '',
@@ -119,6 +122,7 @@ export function recipeToForm(detail: RecipeDetailDto): RecipeForm {
     title: detail.title,
     description: detail.description ?? '',
     category: detail.category,
+    alsoCategories: [...(detail.alsoCategories ?? [])],
     servings: detail.servings,
     prepMinutes: detail.prepMinutes === null ? '' : String(detail.prepMinutes),
     cookMinutes: detail.cookMinutes === null ? '' : String(detail.cookMinutes),
@@ -157,6 +161,7 @@ export function formToInput(form: RecipeForm): RecipeInputRaw {
     title: form.title.trim(),
     description: textOrNull(form.description),
     category: form.category,
+    alsoCategories: form.alsoCategories.filter((c) => c !== form.category),
     servings: form.servings ?? undefined,
     prepMinutes: intOrNull(form.prepMinutes),
     cookMinutes: intOrNull(form.cookMinutes),
@@ -241,6 +246,7 @@ export function importToForm(result: ImportRecipeResultDto): RecipeForm {
     title: r.title,
     description: textOf(r.description),
     category: r.category ?? 'hlavne',
+    alsoCategories: [],
     servings: r.servings ?? 4,
     prepMinutes: typeof r.prepMinutes === 'number' ? String(r.prepMinutes) : '',
     cookMinutes: typeof r.cookMinutes === 'number' ? String(r.cookMinutes) : '',
