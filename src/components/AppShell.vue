@@ -203,17 +203,6 @@ const mobileMenu = ref(false)
           data-test="nav-item"
         />
       </v-list>
-      <template v-if="showLogout" #append>
-        <v-list nav density="comfortable">
-          <v-list-item
-            :href="ACCESS_LOGOUT_PATH"
-            :title="t('common.shell.logout')"
-            :prepend-icon="mdiLogout"
-            rounded="sm"
-            data-test="nav-logout"
-          />
-        </v-list>
-      </template>
     </v-navigation-drawer>
 
     <v-navigation-drawer
@@ -236,16 +225,6 @@ const mobileMenu = ref(false)
           data-test="nav-item"
           @click="mobileMenu = false"
         />
-        <template v-if="showLogout">
-          <v-divider class="my-2" />
-          <v-list-item
-            :href="ACCESS_LOGOUT_PATH"
-            :title="t('common.shell.logout')"
-            :prepend-icon="mdiLogout"
-            rounded="sm"
-            data-test="nav-logout"
-          />
-        </template>
       </v-list>
     </v-navigation-drawer>
 
