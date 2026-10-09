@@ -168,7 +168,12 @@ async function attachWarnings(db: Db, householdId: string, entries: EntryBase[])
     warnings:
       e.recipe && !e.recipe.deleted
         ? preferenceConflicts(
-            { ingredientIds: ingredientsOf.get(e.recipeId!) ?? [], tagIds: tagsOf.get(e.recipeId!) ?? [] },
+            {
+              id: e.recipeId!,
+              title: e.recipe.title,
+              ingredientIds: ingredientsOf.get(e.recipeId!) ?? [],
+              tagIds: tagsOf.get(e.recipeId!) ?? [],
+            },
             members,
             e.audience,
             e.presentGuestIds,

@@ -70,6 +70,8 @@ const warnings = computed(() => {
   if (!recipe || recipe.id !== selectedRecipeId.value) return []
   return preferenceConflicts(
     {
+      id: recipe.id,
+      title: recipe.title,
       ingredientIds: recipe.ingredients.map((i) => i.ingredientId),
       tagIds: recipe.tags.map((tag) => tag.id),
     },

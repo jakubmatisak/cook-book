@@ -221,3 +221,46 @@ describe('upozornenia v jedálničku', () => {
     expect((await res.json<PlanEntryDto>()).warnings).toEqual([])
   })
 })
+
+describe('neobľúbené jedlá člena', () => {
+  const addEntry = async (recipeId: string, slotId: string) =>
+    (await send(app, 'POST', api('/plan/entries'), { date: DAY, slotId, recipeId })).json<PlanEntryDto>()
+
+  it('uloží recept z kuchárky aj voľný text; staršia aplikácia bez poľa ich nezmaže', async () => {
+    const { mama, guláš, ing } = await setup()
+    const res = await setPrefs(mama, {
+      allergies: [],
+      dislikes: [],
+      diets: [],
+      dislikedRecipes: [{ recipeId: guláš }, { text: 'rybacia polievka' }],
+    })
+    expect(res.status).toBe(200)
+    const saved = (await res.json<FamilyMemberDto>()).preferences.filter((p) => p.kind === 'dislike_recipe')
+    expect(saved.map((p) => [p.recipeId ?? null, p.label])).toEqual([
+      [guláš, 'Guláš'],
+      [null, 'rybacia polievka'],
+    ])
+
+    await setPrefs(mama, { allergies: [ing('Orechy')], dislikes: [], diets: [] })
+    const after = (await members()).find((m) => m.id === mama)!.preferences
+    expect(after.filter((p) => p.kind === 'dislike_recipe')).toHaveLength(2)
+  })
+
+  it('cudzí alebo neexistujúci recept je 400', async () => {
+    const { mama } = await setup()
+    const res = await setPrefs(mama, { dislikedRecipes: [{ recipeId: 'neexistuje' }] })
+    expect(res.status).toBe(400)
+  })
+
+  it('jedálniček upozorní na neobľúbené jedlo – podľa receptu aj podľa názvu', async () => {
+    const { mama, ema, guláš, huby, slotId } = await setup()
+    await setPrefs(mama, { dislikedRecipes: [{ recipeId: guláš }] })
+    await setPrefs(ema, { dislikedRecipes: [{ text: 'hubová' }] })
+    const a = await addEntry(guláš, slotId)
+    expect(a.warnings.map((w) => [w.memberName, w.kind])).toEqual([['Mama', 'dislike_recipe']])
+    const b = await addEntry(huby, slotId)
+    expect(b.warnings.map((w) => [w.memberName, w.kind, w.label])).toEqual([
+      ['Ema', 'dislike_recipe', 'hubová'],
+    ])
+  })
+})

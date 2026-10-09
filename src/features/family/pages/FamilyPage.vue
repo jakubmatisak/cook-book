@@ -113,10 +113,10 @@ const memberSubtitle = (m: FamilyMemberDto) =>
               <span class="d-flex flex-wrap ga-1 mt-1">
                 <v-chip
                   v-for="p in member.preferences"
-                  :key="p.kind + (p.ingredientId ?? p.tagId)"
+                  :key="p.kind + (p.ingredientId ?? p.tagId ?? p.recipeId ?? p.label)"
                   size="x-small"
                   variant="tonal"
-                  :color="p.kind === 'allergy' ? 'error' : p.kind === 'dislike' ? 'warning' : 'secondary'"
+                  :color="p.kind === 'allergy' ? 'error' : p.kind === 'diet' ? 'secondary' : 'warning'"
                 >
                   {{ t(`common.preference.${p.kind}`) }}: {{ p.label }}
                 </v-chip>

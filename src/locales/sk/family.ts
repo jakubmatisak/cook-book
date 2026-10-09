@@ -33,6 +33,9 @@ export default {
     allergiesHint: 'Pri plánovaní jedla s touto ingredienciou ťa upozorníme.',
     dislikes: 'Averzie',
     dislikesHint: 'Ingrediencie, ktoré nechutia. Len upozornenie, recept ostane v pláne.',
+    dislikedRecipes: 'Neobľúbené jedlá',
+    dislikedRecipesHint:
+      'Vyber recept z kuchárky, alebo napíš jedlo, ktoré v kuchárke nemáš, a potvrď Enterom.',
     diets: 'Diéta (tagy, ktoré recept má mať)',
     dietsHint: 'Napr. Vegetariánske. Upozorníme na recepty bez tohto tagu.',
     noIngredient: 'Žiadna ingrediencia',

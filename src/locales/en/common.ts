@@ -139,9 +139,11 @@ export default {
   preference: {
     allergy: 'Allergy',
     dislike: 'Dislike',
+    dislike_recipe: 'Disliked dish',
     diet: 'Diet',
     warning: {
       allergy: '{name}: allergic to {label}',
+      dislike_recipe: '{name}: dislikes this dish',
       dislike: '{name}: dislikes {label}',
       diet: '{name}: the recipe is not "{label}"',
     },

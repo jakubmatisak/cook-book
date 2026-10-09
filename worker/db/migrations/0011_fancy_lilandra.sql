@@ -1,0 +1,2 @@
+ALTER TABLE `member_preferences` ADD `recipe_id` text REFERENCES recipes(id) ON DELETE set null;--> statement-breakpoint
+CREATE INDEX `member_preferences_recipe_idx` ON `member_preferences` (`recipe_id`);

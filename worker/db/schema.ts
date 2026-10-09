@@ -26,7 +26,7 @@ const deletedAt = () => text('deleted_at')
 const bool = (name: string) => integer(name, { mode: 'boolean' })
 const unit = (name: string) => text(name, { enum: UNIT_CODES })
 
-export const PREFERENCE_KINDS = ['dislike', 'allergy', 'diet'] as const
+export const PREFERENCE_KINDS = ['dislike', 'allergy', 'diet', 'dislike_recipe'] as const
 export const SHOPPING_ITEM_SOURCES = ['manual', 'generated', 'staple'] as const
 
 // ─── Ľudia ───────────────────────────────────────────────────────────────────
@@ -115,11 +115,16 @@ export const memberPreferences = sqliteTable(
       onDelete: 'set null',
     }),
     tagId: text('tag_id').references((): AnySQLiteColumn => tags.id, { onDelete: 'set null' }),
+    /** Neobľúbené jedlo z kuchárky (`dislike_recipe`); jedlo, ktoré v kuchárke nie je, je text v `note`. */
+    recipeId: text('recipe_id').references((): AnySQLiteColumn => recipes.id, { onDelete: 'set null' }),
     note: text('note'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index('member_preferences_ingredient_idx').on(t.ingredientId)],
+  (t) => [
+    index('member_preferences_ingredient_idx').on(t.ingredientId),
+    index('member_preferences_recipe_idx').on(t.recipeId),
+  ],
 )
 
 // ─── Katalóg ─────────────────────────────────────────────────────────────────

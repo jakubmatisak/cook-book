@@ -34,6 +34,9 @@ export default {
     allergiesHint: 'We will warn you when planning a meal with this ingredient.',
     dislikes: 'Dislikes',
     dislikesHint: 'Ingredients they do not like. Just a warning, the recipe stays in the plan.',
+    dislikedRecipes: 'Disliked dishes',
+    dislikedRecipesHint:
+      'Pick a recipe from the cookbook, or type a dish you do not have in it and press Enter.',
     diets: 'Diet (tags a recipe should have)',
     dietsHint: 'E.g. Vegetarian. We will warn about recipes without this tag.',
     noIngredient: 'No ingredient',

@@ -56,9 +56,19 @@ export type SettingsUpdate = z.output<typeof settingsUpdateSchema>
 const idList = z.array(z.string().min(1).max(40)).max(50).default([])
 
 /** Preferencie člena: ingrediencie (alergie, averzie) a tagy (diéty) podľa id; ukladajú sa naraz. */
+/** Neobľúbené jedlo: recept z kuchárky, alebo voľný text, keď v kuchárke nie je. */
+const dislikedRecipe = z
+  .object({
+    recipeId: z.string().min(1).max(40).nullish(),
+    text: z.string().trim().max(120).nullish(),
+  })
+  .refine((r) => Boolean(r.recipeId) || Boolean(r.text), 'Vyber recept alebo napíš názov jedla.')
+
 export const memberPreferencesSchema = z.object({
   allergies: idList,
   dislikes: idList,
   diets: idList,
+  /** Chýba = nemení sa (staršia verzia aplikácie). */
+  dislikedRecipes: z.array(dislikedRecipe).max(50).optional(),
 })
 export type MemberPreferencesInput = z.output<typeof memberPreferencesSchema>

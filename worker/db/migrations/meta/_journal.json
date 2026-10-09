@@ -78,6 +78,13 @@
       "when": 1791558868158,
       "tag": "0010_dapper_kronos",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1791559756436,
+      "tag": "0011_fancy_lilandra",
+      "breakpoints": true
     }
   ]
 }

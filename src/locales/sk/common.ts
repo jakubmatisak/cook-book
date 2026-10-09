@@ -138,9 +138,11 @@ export default {
   preference: {
     allergy: 'Alergia',
     dislike: 'Averzia',
+    dislike_recipe: 'Neobľúbené jedlo',
     diet: 'Diéta',
     warning: {
       allergy: '{name}: alergia na {label}',
+      dislike_recipe: '{name}: neobľúbené jedlo',
       dislike: '{name}: averzia na {label}',
       diet: '{name}: recept nie je „{label}“',
     },

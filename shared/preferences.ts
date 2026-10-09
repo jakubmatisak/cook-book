@@ -1,13 +1,18 @@
 import type { MemberKind, PlanAudience } from './family'
+import { normalizeText } from './text'
 
-export const PREFERENCE_KINDS = ['allergy', 'dislike', 'diet'] as const
+export const PREFERENCE_KINDS = ['allergy', 'dislike_recipe', 'dislike', 'diet'] as const
 export type PreferenceKind = (typeof PREFERENCE_KINDS)[number]
 
-/** Jedna preferencia člena: alergia a averzia sa viažu na ingredienciu, diéta na tag receptu. */
+/**
+ * Jedna preferencia člena: alergia a averzia sa viažu na ingredienciu, diéta na tag receptu, neobľúbené jedlo na
+ * recept z kuchárky (`recipeId`) alebo na voľný text (`label`, keď recept v kuchárke nie je).
+ */
 export interface MemberPreference {
   kind: PreferenceKind
   ingredientId: string | null
   tagId: string | null
+  recipeId?: string | null
   /** Názov ingrediencie alebo tagu na zobrazenie. */
   label: string
 }
@@ -27,7 +32,7 @@ export interface PreferenceWarning {
   label: string
 }
 
-const ORDER: Record<PreferenceKind, number> = { allergy: 0, dislike: 1, diet: 2 }
+const ORDER: Record<PreferenceKind, number> = { allergy: 0, dislike_recipe: 1, dislike: 2, diet: 3 }
 
 /**
  * Kto sa jedla týka: aktívni členovia podľa cieľovej skupiny záznamu. Ručný výber členov
@@ -45,11 +50,20 @@ const eats = (member: PreferenceMember, audience: PlanAudience, guestIds: readon
 }
 
 /**
+ * Neobľúbené jedlo: ten istý recept, alebo voľný text, ktorý sa (bez diakritiky a veľkých písmen) nachádza v názve.
+ */
+function dislikesRecipe(pref: MemberPreference, recipe: { id?: string; title?: string }): boolean {
+  if (pref.recipeId) return pref.recipeId === recipe.id
+  const text = normalizeText(pref.label)
+  return text.length > 0 && recipe.title !== undefined && normalizeText(recipe.title).includes(text)
+}
+
+/**
  * Upozornenia pre recept a členov, ktorí ho budú jesť: alergia a averzia na ingredienciu v recepte,
  * diéta, ktorej recept nezodpovedá (nemá požadovaný tag). Alergie idú prvé. Recepty sa neskrývajú.
  */
 export function preferenceConflicts(
-  recipe: { ingredientIds: readonly string[]; tagIds: readonly string[] },
+  recipe: { id?: string; title?: string; ingredientIds: readonly string[]; tagIds: readonly string[] },
   members: readonly PreferenceMember[],
   audience: PlanAudience,
   guestIds: readonly string[] = [],
@@ -62,10 +76,12 @@ export function preferenceConflicts(
     const seen = new Set<string>()
     for (const pref of member.preferences) {
       const hit =
-        pref.kind === 'diet'
-          ? pref.tagId !== null && !tags.has(pref.tagId)
-          : pref.ingredientId !== null && ingredients.has(pref.ingredientId)
-      const key = `${pref.kind}|${pref.ingredientId ?? pref.tagId}`
+        pref.kind === 'dislike_recipe'
+          ? dislikesRecipe(pref, recipe)
+          : pref.kind === 'diet'
+            ? pref.tagId !== null && !tags.has(pref.tagId)
+            : pref.ingredientId !== null && ingredients.has(pref.ingredientId)
+      const key = `${pref.kind}|${pref.ingredientId ?? pref.tagId ?? pref.recipeId ?? pref.label}`
       if (!hit || seen.has(key)) continue
       seen.add(key)
       warnings.push({ memberId: member.id, memberName: member.name, kind: pref.kind, label: pref.label })
@@ -83,6 +99,8 @@ export function describeWarning(w: PreferenceWarning): string {
   switch (w.kind) {
     case 'allergy':
       return `${w.memberName}: alergia na ${w.label}`
+    case 'dislike_recipe':
+      return `${w.memberName}: neobľúbené jedlo`
     case 'dislike':
       return `${w.memberName}: averzia na ${w.label}`
     case 'diet':
@@ -93,6 +111,7 @@ export function describeWarning(w: PreferenceWarning): string {
 /** Krátke názvy druhov preferencií (čipy v zozname rodiny). */
 export const PREFERENCE_CHIP_LABELS: Readonly<Record<PreferenceKind, string>> = {
   allergy: 'Alergia',
+  dislike_recipe: 'Neobľúbené jedlo',
   dislike: 'Averzia',
   diet: 'Diéta',
 }

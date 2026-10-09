@@ -6,6 +6,7 @@ import type { FamilyMemberDto } from '@shared/api'
 import { MEMBER_COLORS, type MemberKind } from '@shared/family'
 import { useIngredients, useTags } from '@/api/catalog'
 import { useDeleteMember, useSaveMember, useSaveMemberPreferences } from '@/api/family'
+import { useRecipes } from '@/api/recipes'
 import { errorText } from '@/i18n/errors'
 import { formatNumber } from '@/i18n/format'
 
@@ -24,6 +25,9 @@ const confirmDelete = ref(false)
 const allergies = ref<string[]>([])
 const dislikes = ref<string[]>([])
 const diets = ref<string[]>([])
+/** Neobľúbené jedlá: recept z kuchárky (položka s id) alebo dopísaný text, keď recept v kuchárke nie je. */
+type DislikedItem = { title: string; value: string } | string
+const dislikedRecipes = ref<DislikedItem[]>([])
 
 const save = useSaveMember()
 const savePreferences = useSaveMemberPreferences()
@@ -34,6 +38,10 @@ const { data: ingredients } = useIngredients()
 const { data: tags } = useTags()
 const ingredientItems = computed(() => ingredients.value?.map((i) => ({ title: i.name, value: i.id })) ?? [])
 const tagItems = computed(() => tags.value?.map((tag) => ({ title: tag.name, value: tag.id })) ?? [])
+const { data: recipeList } = useRecipes(() => ({ kids: 'include', public: 'hide' }))
+const recipeItems = computed(
+  () => recipeList.value?.items.map((r) => ({ title: r.title, value: r.id })) ?? [],
+)
 
 const idsOf = (member: FamilyMemberDto | null, kind: 'allergy' | 'dislike' | 'diet') =>
   (member?.preferences ?? [])
@@ -52,6 +60,9 @@ watch(open, (isOpen) => {
   allergies.value = idsOf(m, 'allergy')
   dislikes.value = idsOf(m, 'dislike')
   diets.value = idsOf(m, 'diet')
+  dislikedRecipes.value = (m?.preferences ?? [])
+    .filter((p) => p.kind === 'dislike_recipe')
+    .map((p) => (p.recipeId ? { title: p.label, value: p.recipeId } : p.label))
   error.value = ''
   confirmDelete.value = false
 })
@@ -82,6 +93,9 @@ async function onSave() {
       allergies: allergies.value,
       dislikes: dislikes.value,
       diets: diets.value,
+      dislikedRecipes: dislikedRecipes.value.flatMap<{ recipeId?: string; text?: string }>((d) =>
+        typeof d === 'string' ? (d.trim() ? [{ text: d.trim() }] : []) : [{ recipeId: d.value }],
+      ),
     })
     open.value = false
   } catch (e) {
@@ -187,6 +201,17 @@ async function onDelete() {
               closable-chips
               :no-data-text="t('family.member.noIngredient')"
             />
+            <v-combobox
+              v-model="dislikedRecipes"
+              :items="recipeItems"
+              :label="t('family.member.dislikedRecipes')"
+              :hint="t('family.member.dislikedRecipesHint')"
+              persistent-hint
+              multiple
+              chips
+              closable-chips
+              data-test="disliked-recipes"
+            />
             <v-autocomplete
               v-model="diets"
               :items="tagItems"
@@ -222,7 +247,9 @@ async function onDelete() {
         </template>
         <v-spacer />
         <v-btn variant="text" @click="open = false">{{ t('common.actions.cancel') }}</v-btn>
-        <v-btn color="primary" :loading="saving" @click="onSave">{{ t('common.actions.save') }}</v-btn>
+        <v-btn color="primary" :loading="saving" data-test="member-save" @click="onSave">{{
+          t('common.actions.save')
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
