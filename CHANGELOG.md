@@ -1,5 +1,13 @@
 # Zmeny
 
+## 1.8.1 – 2026-10-09
+
+### Opravy
+
+- Panel filtrov v receptoch sa na počítači už nezatvorí po zaškrtnutí kategórie, tagu či času.
+- Pridávanie základných receptov v Nastaveniach ukazuje v tlačidle priebeh („Pridávam… 4 z 10“) namiesto
+  kolieska cez celé tlačidlo.
+
 ## 1.8.0 – 2026-10-09
 
 ### Nové
@@ -16,6 +24,14 @@
   obľúbené aj tvoje úpravy ostanú.
 
 ### Zmeny
+
+## 1.8.1 – 2026-10-09
+
+### Opravy
+
+- Panel filtrov v receptoch sa na počítači už nezatvorí po zaškrtnutí kategórie, tagu či času.
+- Pridávanie základných receptov v Nastaveniach ukazuje v tlačidle priebeh („Pridávam… 4 z 10“) namiesto
+  kolieska cez celé tlačidlo.
 
 - Odhlásiť sa je len v ponuke účtu vpravo hore (a v Nastaveniach), už nie v bočnom menu.
 

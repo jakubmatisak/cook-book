@@ -22,7 +22,15 @@ const { mdAndUp } = useDisplay()
 
 <template>
   <!-- Na počítači panel zboku, na telefóne celá obrazovka. -->
-  <v-navigation-drawer v-if="mdAndUp" v-model="open" location="end" temporary width="340">
+  <!-- Zmena filtra mení adresu; bez disable-route-watcher by ju Vuetify bral ako navigáciu a panel zavrel. -->
+  <v-navigation-drawer
+    v-if="mdAndUp"
+    v-model="open"
+    location="end"
+    temporary
+    disable-route-watcher
+    width="340"
+  >
     <RecipeFilterCard
       :state="state"
       :facets="facets"
