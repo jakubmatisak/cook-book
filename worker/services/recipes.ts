@@ -189,6 +189,7 @@ export async function saveRecipe(
       coverImageId: input.coverImageId,
       // Chýbajúce poznámky (staršia verzia aplikácie) sa nemenia.
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      ...(input.isVerified !== undefined ? { isVerified: input.isVerified } : {}),
     }
 
     const statements: BatchItem<'sqlite'>[] = existing
@@ -311,6 +312,12 @@ export async function deleteRecipe(
   if (bucket) await releaseImages(db, bucket, householdId, [deleted[0]!.coverImageId, ...attached])
 }
 
+/** Overený recept – príznak domácnosti, mení sa bez otvárania editora. */
+export async function setVerified(db: Db, householdId: string, id: string, verified: boolean): Promise<void> {
+  await findLive(db, householdId, id)
+  await db.update(recipes).set({ isVerified: verified }).where(eq(recipes.id, id))
+}
+
 export async function setFavorite(db: Db, user: UserRow, id: string, favorite: boolean): Promise<void> {
   await findLive(db, user.householdId, id)
   if (favorite) {
@@ -350,6 +357,7 @@ export function toSummary(
     coverImageUrl: r2Key ? imageUrl(r2Key) : null,
     tags: tagList,
     isFavorite,
+    isVerified: row.isVerified,
     visibility: row.visibility,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -606,6 +614,8 @@ export async function listRecipes(
     const tagList = tagsByRecipe.get(recipe.id) ?? []
     const summary: RecipeSummaryDto = {
       ...toSummary(recipe, r2Key, isFavorite, tagList, lastCookedAt),
+      // Overenie patrí domácnosti – cudzí recept ho nemá.
+      ...(householdName ? { isVerified: false } : {}),
       ...(missing ? { missing: missing.get(recipe.id) ?? [] } : {}),
       ...(householdName ? { householdName } : {}),
     }
@@ -620,6 +630,7 @@ export async function listRecipes(
       totalMinutes: totalMinutes(summary),
       tagIds,
       isFavorite: summary.isFavorite,
+      isVerified: summary.isVerified,
       createdAt: summary.createdAt,
       lastCookedAt: summary.lastCookedAt,
       missing: summary.missing,

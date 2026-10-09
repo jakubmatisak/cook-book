@@ -21,6 +21,7 @@ export const recipeBulkUpdateSchema = z
     addTags: tagNames.optional(),
     removeTags: tagNames.optional(),
     favorite: z.boolean().optional(),
+    verified: z.boolean().optional(),
     visibility: z.enum(RECIPE_VISIBILITIES).optional(),
   })
   .refine(hasChange, 'Nie je čo zmeniť.')

@@ -186,6 +186,8 @@ export const recipes = sqliteTable(
     sourceText: text('source_text'),
     /** Voľné poznámky k receptu (napr. čo je odhad, pôvodný zápis zo zošita). */
     notes: text('notes'),
+    /** Overený recept (uvarili sme a funguje) – platí pre celú domácnosť. */
+    isVerified: bool('is_verified').notNull().default(false),
     /** `public` = vidia ho všetci prihlásení z každej domácnosti (nie len členovia domácnosti). */
     visibility: text('visibility', { enum: RECIPE_VISIBILITIES }).notNull().default('private'),
     coverImageId: text('cover_image_id').references(() => images.id, { onDelete: 'set null' }),

@@ -17,6 +17,7 @@ export interface FacetRow {
   totalMinutes: number | null
   tagIds: string[]
   isFavorite: boolean
+  isVerified?: boolean
   createdAt: string
   lastCookedAt: string | null
   missing?: string[] | undefined
@@ -28,6 +29,8 @@ export interface RecipeFilters {
   difficulty?: number[]
   time?: TimeBucket[]
   favorite?: boolean
+  /** Len overené recepty. */
+  verified?: boolean
   /**
    * Detské recepty (kategória `detske`): predvolene skryté, `include` ich pridá, `only` ukáže len ich,
    * `off` (detské jedlá vypnuté v nastaveniach) ich skryje vždy.
@@ -66,6 +69,7 @@ const matches = (row: FacetRow, filters: RecipeFilters, skip?: Dimension): boole
     if (!shown) return false
   }
   if (filters.favorite && !row.isFavorite) return false
+  if (filters.verified && !row.isVerified) return false
   if (skip !== 'category' && filters.category?.length && !filters.category.includes(row.category))
     return false
   if (skip !== 'tag' && filters.tag?.length && !filters.tag.some((t) => row.tagIds.includes(t))) return false

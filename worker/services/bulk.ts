@@ -68,12 +68,13 @@ export async function bulkUpdateRecipes(
   ).map((r) => r.id)
   if (live.length === 0) return { affected: 0 }
 
-  if (input.category !== undefined || input.visibility !== undefined) {
+  if (input.category !== undefined || input.visibility !== undefined || input.verified !== undefined) {
     await db
       .update(recipes)
       .set({
         ...(input.category !== undefined ? { category: input.category } : {}),
         ...(input.visibility !== undefined ? { visibility: input.visibility } : {}),
+        ...(input.verified !== undefined ? { isVerified: input.verified } : {}),
         updatedAt: new Date().toISOString(),
       })
       .where(liveRecipes(user.householdId, live))

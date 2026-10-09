@@ -61,6 +61,8 @@ export const recipeInputSchema = z.object({
    */
   notes: z.preprocess(emptyToNull, z.string().trim().max(20_000).nullish()),
   coverImageId: optionalText(40),
+  /** Overený recept; chýba = nemení sa (staršia verzia aplikácie). */
+  isVerified: z.boolean().optional(),
   /** Prílohy (fotky) v poradí galérie; opakované ID sa vynechá. Chýbajúce pole = ponechať doterajšie. */
   attachmentIds: z
     .array(z.string().trim().min(1).max(40))
@@ -125,6 +127,11 @@ export const recipeListQuerySchema = z.object({
   sort: z.enum(SORT_KEYS).optional(),
   dir: z.enum(['asc', 'desc']).optional(),
   favorite: z
+    .enum(['1', 'true'])
+    .optional()
+    .transform((v) => v !== undefined),
+  /** Len overené recepty domácnosti. */
+  verified: z
     .enum(['1', 'true'])
     .optional()
     .transform((v) => v !== undefined),

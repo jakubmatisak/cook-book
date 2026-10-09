@@ -179,6 +179,8 @@ export interface RecipeSummaryDto {
   coverImageUrl: string | null
   tags: TagDto[]
   isFavorite: boolean
+  /** Overený recept domácnosti (uvarili sme a funguje); cudzie recepty ho nemajú. */
+  isVerified?: boolean
   /** Súkromný (len domácnosť) alebo verejný (vidia ho všetci prihlásení). */
   visibility: RecipeVisibility
   createdAt: string

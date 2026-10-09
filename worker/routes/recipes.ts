@@ -29,6 +29,7 @@ import {
   saveRecipe,
   setFavorite,
   setRecipeVisibility,
+  setVerified,
 } from '../services/recipes'
 
 const HOUSEHOLD_TIME_ZONE = 'Europe/Bratislava'
@@ -128,6 +129,14 @@ export const recipeRoutes = new Hono<AppEnv>()
   })
   .delete('/:id', async (c) => {
     await deleteRecipe(c.get('db'), c.get('user').householdId, c.req.param('id'), c.env.BUCKET)
+    return c.body(null, 204)
+  })
+  .put('/:id/verified', async (c) => {
+    await setVerified(c.get('db'), c.get('user').householdId, c.req.param('id'), true)
+    return c.body(null, 204)
+  })
+  .delete('/:id/verified', async (c) => {
+    await setVerified(c.get('db'), c.get('user').householdId, c.req.param('id'), false)
     return c.body(null, 204)
   })
   .put('/:id/favorite', async (c) => {
