@@ -86,6 +86,16 @@ export const planCopySchema = z.object({
 })
 export type PlanCopyInput = z.output<typeof planCopySchema>
 
+/** Vymazať všetky jedlá vybraných dní (najviac mesiac naraz). */
+export const planClearSchema = z.object({
+  dates: z
+    .array(isoDate)
+    .min(1, 'Vyber aspoň jeden deň.')
+    .max(31)
+    .transform((dates) => [...new Set(dates)]),
+})
+export type PlanClearInput = z.output<typeof planClearSchema>
+
 export const templateCreateSchema = z.object({
   name: z.string().trim().min(1, 'Zadaj názov šablóny.').max(60, 'Názov môže mať najviac 60 znakov.'),
   fromDate: isoDate,

@@ -4,7 +4,7 @@ import type { PlanEntryDto } from '../../shared/api'
 import { preferenceConflicts } from '../../shared/preferences'
 import { addDays, daysBetween } from '../../shared/dates'
 import { newId } from '../../shared/ids'
-import type { PlanCopyInput, PlanEntryInput } from '../../shared/schemas/plan'
+import type { PlanClearInput, PlanCopyInput, PlanEntryInput } from '../../shared/schemas/plan'
 import type { Db } from '../db/client'
 import {
   cookLog,
@@ -323,6 +323,32 @@ export async function deleteEntry(db: Db, householdId: string, id: string): Prom
   await findEntry(db, householdId, id)
   await db.delete(cookLog).where(eq(cookLog.planEntryId, id))
   await db.delete(mealPlanEntries).where(eq(mealPlanEntries.id, id))
+}
+
+/**
+ * Zmaže všetky jedlá vybraných dní (ako jednotlivé mazanie aj so záznamom varenia); zvyšky zmazaného varenia v iné
+ * dni zmaže databáza kaskádou.
+ */
+export async function clearDays(db: Db, householdId: string, input: PlanClearInput): Promise<number> {
+  const rows = await db
+    .select({ id: mealPlanEntries.id })
+    .from(mealPlanEntries)
+    .where(and(eq(mealPlanEntries.householdId, householdId), inArray(mealPlanEntries.date, input.dates)))
+  const statements: BatchItem<'sqlite'>[] = []
+  for (const ids of chunk(
+    rows.map((r) => r.id),
+    90,
+  )) {
+    statements.push(db.delete(cookLog).where(inArray(cookLog.planEntryId, ids)))
+    statements.push(
+      db
+        .delete(mealPlanEntries)
+        .where(and(eq(mealPlanEntries.householdId, householdId), inArray(mealPlanEntries.id, ids))),
+    )
+  }
+  const [first, ...rest] = statements
+  if (first) await db.batch([first, ...rest])
+  return rows.length
 }
 
 /** Skopíruje jedlá z `days` dní od `fromDate` na rovnaké dni od `toDate`; `replace` najprv cieľ vyprázdni. */

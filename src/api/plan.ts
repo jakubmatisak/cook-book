@@ -81,6 +81,15 @@ export function useCopyPlan(): UseMutationReturnType<PlanCopyResult, Error, Copy
   })
 }
 
+/** Vymaže všetky jedlá vybraných dní. */
+export function useClearDays(): UseMutationReturnType<{ removed: number }, Error, string[], unknown> {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (dates: string[]) => apiFetch<{ removed: number }>('/plan/clear', json('POST', { dates })),
+    onSuccess: () => invalidatePlan(client),
+  })
+}
+
 // ─── Zostaviť jedálniček ─────────────────────────────────────────────────────
 
 /** Návrh jedálnička pre vymaľované políčka (nič sa neukladá). */

@@ -38,6 +38,16 @@ export default {
     saveTemplate: 'Uložiť týždeň ako šablónu',
     print: 'Tlačiť týždeň',
     applyTemplate: 'Použiť šablónu na tento týždeň',
+    clearDays: 'Vymazať jedlá…',
+  },
+  clearDays: {
+    title: 'Vymazať jedlá',
+    text: 'Vyber dni, z ktorých sa zmažú všetky jedlá. Nákupný zoznam ani špajza sa nemenia.',
+    wholeWeek: 'Celý týždeň',
+    count: 'Zmaže sa {meals}.',
+    leftovers: 'Ak sa v niektorý z vybraných dní varí na viac dní, zmažú sa aj jeho zvyšky v ďalšie dni.',
+    confirm: 'Vymazať',
+    failed: 'Jedlá sa nepodarilo vymazať.',
   },
   noMembers: {
     text: 'Pridaj členov rodiny v sekcii {link} a porcie sa budú počítať automaticky.',
@@ -195,5 +205,6 @@ export default {
     undoFailed: 'Vrátenie zlyhalo.',
     weekCopied: 'Skopírované: {meals}.',
     copyFailed: 'Kopírovanie zlyhalo.',
+    daysCleared: 'Vymazané: {meals}.',
   },
 }

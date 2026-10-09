@@ -4,6 +4,7 @@ import {
   composeApplySchema,
   composeRequestSchema,
   guestStayInputSchema,
+  planClearSchema,
   planCopySchema,
   planEntryInputSchema,
   planRangeQuerySchema,
@@ -13,7 +14,7 @@ import {
 import type { AppEnv } from '../env'
 import { parseBody } from '../http'
 import { applyComposition, composeProposal } from '../services/compose'
-import { copyPlan, createEntry, deleteEntry, listPlan, updateEntry } from '../services/plan'
+import { clearDays, copyPlan, createEntry, deleteEntry, listPlan, updateEntry } from '../services/plan'
 import { createStays, deleteStay, listStays } from '../services/stays'
 import { applyTemplate, deleteTemplate, listTemplates, saveTemplate } from '../services/templates'
 
@@ -35,6 +36,10 @@ export const planRoutes = new Hono<AppEnv>()
     return c.body(null, 204)
   })
   // Zostaviť jedálniček: návrh (nič sa neukladá) a uloženie potvrdeného návrhu.
+  .post('/clear', async (c) => {
+    const input = await parseBody(c, planClearSchema)
+    return c.json({ removed: await clearDays(c.get('db'), c.get('user').householdId, input) })
+  })
   .post('/compose', async (c) => {
     const input = await parseBody(c, composeRequestSchema)
     const user = c.get('user')

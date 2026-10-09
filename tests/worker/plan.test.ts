@@ -216,3 +216,22 @@ describe('jedálniček – veľké týždne', () => {
     expect(await res.json<PlanCopyResult>()).toEqual({ copied: 120 })
   })
 })
+
+describe('jedálniček – vymazať dni', () => {
+  it('zmaže všetky jedlá vybraných dní, ostatné dni nechá', async () => {
+    const { obed, vecera, recipe } = await setup()
+    await addEntry({ date: '2026-10-05', slotId: obed, recipeId: recipe.id })
+    await addEntry({ date: '2026-10-05', slotId: vecera, freeText: 'Pizza' })
+    await addEntry({ date: '2026-10-06', slotId: obed, recipeId: recipe.id })
+    await addEntry({ date: '2026-10-07', slotId: obed, freeText: 'Zvyšky' })
+    const res = await send(app, 'POST', api('/plan/clear'), { dates: ['2026-10-05', '2026-10-06'] })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ removed: 3 })
+    expect((await week('2026-10-05', '2026-10-11')).map((e) => e.date)).toEqual(['2026-10-07'])
+  })
+
+  it('bez dní je 400', async () => {
+    await setup()
+    expect((await send(app, 'POST', api('/plan/clear'), { dates: [] })).status).toBe(400)
+  })
+})

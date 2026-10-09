@@ -37,6 +37,7 @@ export default {
     copyNext: 'Copy to next week',
     saveTemplate: 'Save week as template',
     print: 'Print week',
+    clearDays: 'Delete meals…',
     applyTemplate: 'Apply template to this week',
   },
   noMembers: {
@@ -163,6 +164,16 @@ export default {
     applied: 'Saved: {meals}.',
     applyFailed: 'Saving failed.',
   },
+  clearDays: {
+    title: 'Delete meals',
+    text: 'Pick the days whose meals will all be deleted. The shopping list and pantry stay as they are.',
+    wholeWeek: 'Whole week',
+    count: '{meals} will be deleted.',
+    leftovers:
+      'If a selected day cooks for several days, its leftovers on the following days are deleted too.',
+    confirm: 'Delete',
+    failed: 'The meals could not be deleted.',
+  },
   copyWeek: {
     text: 'All meals from the week of {from} will be copied to the week of {to}.',
   },
@@ -194,6 +205,7 @@ export default {
     moveFailed: 'Moving failed.',
     undoFailed: 'Undo failed.',
     weekCopied: 'Copied: {meals}.',
+    daysCleared: 'Deleted: {meals}.',
     copyFailed: 'Copying failed.',
   },
 }

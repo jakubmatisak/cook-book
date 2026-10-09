@@ -1,5 +1,12 @@
 # Zmeny
 
+## 1.7.4 – 2026-10-09
+
+### Nové
+
+- Jedálniček: v menu (⋮) **Vymazať jedlá…** – vyber dni zobrazeného týždňa (alebo celý týždeň), okno ukáže počet
+  jedál a po potvrdení ich zmaže. Upozorní, ak sa zmažú aj zvyšky v iné dni. Nákup a špajza sa nemenia.
+
 ## 1.7.3 – 2026-10-09
 
 ### Nové

@@ -6,6 +6,7 @@ import {
   mdiChevronRight,
   mdiContentCopy,
   mdiContentSaveOutline,
+  mdiDeleteSweepOutline,
   mdiDotsVertical,
   mdiCalendarImport,
   mdiPrinterOutline,
@@ -25,6 +26,7 @@ import { printPage } from '@/composables/usePrintMode'
 import { errorText } from '@/i18n/errors'
 import { formatWeekRange, tc } from '@/i18n/format'
 import ApplyTemplateDialog from '../components/ApplyTemplateDialog.vue'
+import ClearDaysDialog from '../components/ClearDaysDialog.vue'
 import ComposeWizard from '../components/ComposeWizard.vue'
 import EntryDialog from '../components/EntryDialog.vue'
 import GuestStayDialog from '../components/GuestStayDialog.vue'
@@ -167,6 +169,8 @@ function onTemplateApplied(result: TemplateApplyResult) {
     color: 'success',
   }
 }
+
+const clearDaysOpen = ref(false)
 
 // Zostaviť jedálniček: po uložení sa ukáže týždeň, kde zostavenie začína.
 const composeOpen = ref(false)
@@ -313,6 +317,14 @@ async function copyToNextWeek() {
           :title="t('plan.menu.applyTemplate')"
           @click="applyTemplateOpen = true"
         />
+        <v-list-item
+          :prepend-icon="mdiDeleteSweepOutline"
+          :title="t('plan.menu.clearDays')"
+          :disabled="!entries?.length"
+          base-color="error"
+          data-test="clear-days"
+          @click="clearDaysOpen = true"
+        />
       </v-list>
     </v-menu>
   </PageHeader>
@@ -426,6 +438,13 @@ async function copyToNextWeek() {
     :slots="me?.slots ?? []"
     :members="members"
     @applied="onComposed"
+  />
+
+  <ClearDaysDialog
+    v-model="clearDaysOpen"
+    :dates="dates"
+    :entries="entries ?? []"
+    @cleared="notify(t('plan.snackbar.daysCleared', { meals: tc('common.plural.meals', $event) }))"
   />
 
   <SaveTemplateDialog
