@@ -1,5 +1,30 @@
 # Zmeny
 
+## 1.7.0 – 2026-10-09
+
+### Nové
+
+- **Zostaviť jedálniček** – sprievodca v jedálničku v troch krokoch:
+  - obdobie (najviac 14 dní), jedlá dňa s typmi jedla, k obedu aj polievka, tagy, varenie na viac dní (+1 až +3)
+    a voľba nahradiť obsadené políčka;
+  - mriežka dni × jedlá dňa, ktorú vymaľuješ štetcami Všetky, Overené, Nové, Obľúbené alebo Nevypĺňať (políčko,
+    celý deň aj celé jedlo dňa) a čas na varenie po dňoch (Do 30 min / Do 60 min / Bez limitu, predvoľby
+    „Pracovné dni do 30 min“ a „Víkend bez limitu“);
+  - kontrola návrhu: iný návrh, vybrať recept, vymazať, zvyšky +0 až +3 dni, odznak „Už máme“ a upozornenia
+    pre ľudí pri stole; Potvrdiť uloží všetko naraz.
+  - Hlavné jedlá a polievky sa neopakujú, alergény ľudí pri stole (aj návštev s pobytom v ten deň) sa nenavrhnú
+    nikdy, neobľúbené jedlá až nakoniec. Recept bez zadaného času limit spĺňa, ale ide až za receptami so
+    známym časom.
+- **Zvyšky** v jedálničku: varenie má porcie na viac dní, zvyšky majú odznak „Zvyšky“, do nákupu ani do
+  „naposledy varené“ nevstupujú a zmažú sa spolu s varením.
+- **Overené recepty:** prepínač v detaile a v editore, odznak na karte, filter „Overené“ a hromadná úprava.
+  Príznak patrí domácnosti.
+- **Neobľúbené jedlá** pri každom človeku v Pri stole: recept z kuchárky alebo voľný text; upozornia v jedálničku
+  aj v sprievodcovi.
+- Detail receptu na počítači má novú hlavičku na celú šírku s fotkou, údajmi (porcie, náročnosť, čas, naposledy
+  varené, zdroj) a tlačidlami Režim varenia a Naplánovať. Mobil ostáva bez zmeny.
+- Zoznam receptov: na mobile je prepínač mriežka/tabuľka priamo vedľa hľadania, na počítači sú ovládače vpravo.
+
 ## 1.6.0 – 2026-10-08
 
 ### Nové

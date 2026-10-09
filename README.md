@@ -5,7 +5,7 @@ free tier of Cloudflare: one Worker serves the Vue frontend and the API, data li
 sign-in is handled by Cloudflare Access.
 
 > The app UI is in **Slovak and English**. This README is in English first, [Slovenská verzia](#slovenská-verzia) is below.
-> Status: **1.6.0**.
+> Status: **1.7.0**.
 
 - Website with screenshots: <https://jakubmatisak.github.io/cook-book-website/>
 - Design and phases: [docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md](docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md) (Slovak)
@@ -38,10 +38,15 @@ sign-in is handled by Cloudflare Access.
 - **Languages and personal settings:** the whole app is available in Slovak and English. Language, appearance, the
   list view and the last-used recipe filters are saved per user (with a button to reset all filters), so they
   follow you across devices and households.
-- **At the table (Family):** adults and children with portion factors; allergies, dislikes and diets produce warnings when
-  planning meals.
+- **At the table (Family):** adults and children with portion factors; allergies, dislikes, diets and disliked dishes
+  (a recipe from the cookbook or free text) produce warnings when planning meals.
 - **Weekly meal plan:** meal slots, drag and drop, copy a week, week templates, and "what to cook today"
   suggestions based on the pantry and what you cooked recently.
+- **Build meal plan wizard:** pick up to 14 days and meals of the day, paint the slots with brushes (All, Verified,
+  New, Favorites), set cooking time per day (weekdays up to 30 min) and review the proposal: another suggestion,
+  pick a recipe, cook for several days with leftovers (+1 to +3 days, counted once in shopping). It respects
+  who is at the table that day, including visitors: allergens never, disliked dishes only as a last resort.
+- **Verified recipes:** the household marks recipes it has tried; a badge on the card, a filter and bulk edit.
 - **Shopping list:** generated from the plan scaled to family portions (units are converted and summed, pantry stock
   is subtracted), recurring staple items, manual items typed as one line ("2 kg potatoes"), grouped by store
   category, ticking works offline and syncs between household members.
@@ -223,7 +228,7 @@ The repository contains no secrets or personal addresses: they live in Worker se
 
 Rodinná webová aplikácia (PWA) na recepty, týždenný jedálniček a nákupný zoznam. Beží celá zadarmo na
 Cloudflare: jeden Worker servíruje Vue frontend aj API, dáta sú v D1, fotky v R2 a prihlásenie rieši
-Cloudflare Access. Verzia **1.6.0**.
+Cloudflare Access. Verzia **1.7.0**.
 
 Stránka so screenshotmi: <https://jakubmatisak.github.io/cook-book-website/>
 
@@ -257,9 +262,15 @@ Stránka so screenshotmi: <https://jakubmatisak.github.io/cook-book-website/>
 - **Jazyky a osobné nastavenia:** celá aplikácia je po slovensky aj anglicky. Jazyk, vzhľad, pohľad zoznamu a
   naposledy použité filtre receptov sa ukladajú na človeka (s tlačidlom na úplný reset filtrov), takže ho
   nasledujú na všetkých zariadeniach aj domácnostiach.
-- **Pri stole (Rodina):** dospelí a deti s veľkosťou porcie; alergie, averzie a diéty členov upozornia pri plánovaní jedla.
+- **Pri stole (Rodina):** dospelí a deti s veľkosťou porcie; alergie, averzie, diéty a neobľúbené jedlá (recept z kuchárky
+  alebo voľný text) upozornia pri plánovaní jedla.
 - **Týždenný jedálniček:** jedlá dňa, presun ťahaním, kopírovanie týždňa, šablóny týždňov a návrhy „Čo uvariť
   dnes“ podľa špajze a toho, kedy sa varilo naposledy.
+- **Zostaviť jedálniček:** sprievodca na najviac 14 dní – vyber jedlá dňa, vymaľuj políčka štetcami (Všetky,
+  Overené, Nové, Obľúbené), nastav čas na varenie po dňoch (pracovné dni do 30 min) a skontroluj návrh: iný
+  návrh, vlastný recept, varenie na viac dní so zvyškami (+1 až +3 dni, v nákupe len raz). Berie do úvahy, kto je
+  v ten deň pri stole, aj návštevy: alergény nikdy, neobľúbené jedlá až keď nič iné nie je.
+- **Overené recepty:** domácnosť si označí vyskúšané recepty; odznak na karte, filter a hromadná úprava.
 - **Nákupný zoznam:** vygenerovaný z jedálnička podľa porcií rodiny (sčítané ingrediencie, prevody jednotiek,
   odpočet špajze), stále položky, ručné položky jedným riadkom („2 kg zemiaky“), skupiny podľa kategórie obchodu,
   odškrtávanie zdieľané medzi vami aj bez signálu.
