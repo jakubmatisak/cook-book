@@ -15,15 +15,21 @@ const groups = computed(() => (status.value ?? []).filter((g) => props.kidsEnabl
 const add = useAddSampleRecipes()
 const remove = useRemoveSampleGroup()
 const busy = ref<SampleGroup | null>(null)
+// Priebeh pridávania: koľko receptov z chýbajúcich už pribudlo.
+const progress = ref({ done: 0, of: 0 })
 const removing = ref<{ set: SampleGroup; imported: number } | null>(null)
 const snackbar = ref({ show: false, text: '', color: 'success' })
 const notify = (text: string, color = 'success') => (snackbar.value = { show: true, text, color })
 const groupName = (set: SampleGroup) => t(`samples.groups.${set}`)
 
-async function onAdd(set: SampleGroup) {
+async function onAdd(set: SampleGroup, missing: number) {
   busy.value = set
+  progress.value = { done: 0, of: missing }
   try {
-    const added = await add.mutateAsync(set)
+    const added = await add.mutateAsync({
+      set,
+      onProgress: (done) => (progress.value = { done, of: missing }),
+    })
     notify(
       added > 0 ? t('samples.added', { recipes: tc('common.plural.recipes', added) }) : t('samples.none'),
     )
@@ -64,18 +70,24 @@ async function onRemove() {
           <template #append>
             <div class="d-flex ga-1">
               <v-btn
-                :prepend-icon="mdiPlus"
                 size="small"
                 variant="tonal"
                 color="primary"
                 :disabled="group.imported >= group.total || (busy !== null && busy !== group.set)"
-                :loading="busy === group.set"
                 data-test="sample-add"
-                @click="onAdd(group.set)"
+                @click="busy === null && onAdd(group.set, group.total - group.imported)"
               >
-                {{ t('samples.add') }}
+                <template v-if="busy === group.set">
+                  <v-progress-circular indeterminate size="14" width="2" class="me-2" />
+                  {{ t('samples.adding', progress) }}
+                </template>
+                <template v-else>
+                  <v-icon :icon="mdiPlus" start />
+                  {{ t('samples.add') }}
+                </template>
               </v-btn>
               <v-btn
+                v-if="busy !== group.set"
                 :icon="mdiDeleteOutline"
                 size="small"
                 variant="text"

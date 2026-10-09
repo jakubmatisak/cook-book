@@ -4,6 +4,7 @@ export default {
   text: 'Typical Slovak recipes split into packs. Add or remove each pack separately; you can edit the recipes afterwards. Recipes you already have are not duplicated and your own recipes are never deleted when a pack is removed.',
   status: '{imported} of {total}',
   add: 'Add',
+  adding: 'Adding… {done} of {of}',
   remove: 'Remove',
   groups: {
     ranajky: 'Breakfast',

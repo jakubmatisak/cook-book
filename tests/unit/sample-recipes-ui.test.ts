@@ -103,3 +103,35 @@ describe('Základné recepty v Nastaveniach', () => {
     expect(document.body.querySelector('[data-test="samples-card"]')).toBeNull()
   })
 })
+
+describe('Základné recepty – priebeh pridávania', () => {
+  it('počas pridávania ukáže v tlačidle text s priebehom, nie prekrývajúce koliesko', async () => {
+    let release: () => void = () => {}
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    let calls = 0
+    stubApi({
+      '/me': me('owner'),
+      '/recipes/samples': STATUS,
+      'POST /recipes/samples': async () => {
+        calls++
+        if (calls === 2) await gate
+        return jsonResponse({ added: 4, remaining: calls === 1 ? 6 : 2 })
+      },
+      '/household/members': [],
+      '/households': [{ id: 'h1', name: 'Doma', role: 'owner' }],
+    })
+    mount(
+      { render: () => h(VApp, null, () => h(SettingsPage)) },
+      { global: { plugins: mountPlugins() }, attachTo: document.body },
+    )
+    await flushPromises()
+    row('desiata').querySelector<HTMLElement>('[data-test="sample-add"]')!.click()
+    await flushPromises()
+    const button = row('desiata').querySelector<HTMLElement>('[data-test="sample-add"]')!
+    expect(button.classList.contains('v-btn--loading')).toBe(false)
+    expect(button.textContent).toContain('Pridávam… 4 z 10')
+    expect(row('desiata').querySelector('[data-test="sample-remove"]')).toBeNull()
+    release()
+    await flushPromises()
+  })
+})

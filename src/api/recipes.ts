@@ -116,15 +116,22 @@ const refreshAfterSamples = (client: ReturnType<typeof useQueryClient>) => {
 }
 
 /** Pridá recepty balíka po dávkach (server má limit dopytov) a vráti, koľko ich pribudlo. */
-export function useAddSampleRecipes(): UseMutationReturnType<number, Error, SampleSet, unknown> {
+export interface AddSamplesVars {
+  set: SampleSet
+  /** Po každej dávke: koľko receptov už pribudlo. */
+  onProgress?: (added: number) => void
+}
+
+export function useAddSampleRecipes(): UseMutationReturnType<number, Error, AddSamplesVars, unknown> {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: async (set: SampleSet) => {
+    mutationFn: async ({ set, onProgress }: AddSamplesVars) => {
       let total = 0
       // Poistka proti nekonečnému cyklu: najväčší balík má desiatky receptov po troch.
       for (let batch = 0; batch < 40; batch++) {
         const result = await apiFetch<SampleRecipesResult>(`/recipes/samples?set=${set}`, { method: 'POST' })
         total += result.added
+        onProgress?.(total)
         if (result.remaining === 0 || result.added === 0) break
       }
       return total

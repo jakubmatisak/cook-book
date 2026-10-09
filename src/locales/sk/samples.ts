@@ -4,6 +4,7 @@ export default {
   text: 'Typické slovenské recepty rozdelené do balíkov. Každý balík pridáš alebo odstrániš zvlášť; recepty si potom môžeš upraviť. Recepty, ktoré už máš, sa nezdvoja a tvoje vlastné recepty sa pri odstránení balíka nezmažú.',
   status: '{imported} z {total}',
   add: 'Pridať',
+  adding: 'Pridávam… {done} z {of}',
   remove: 'Odstrániť',
   groups: {
     ranajky: 'Raňajky',
