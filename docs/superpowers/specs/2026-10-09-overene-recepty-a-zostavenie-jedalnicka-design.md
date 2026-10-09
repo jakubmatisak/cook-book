@@ -78,6 +78,10 @@ Pri každom políčku:
   recepty, ktoré už sú v jedálničku v zostavovanom rozsahu. Ostatné typy (raňajky, desiata, …) sa opakovať môžu,
   ale prednosť majú tie, ktoré ešte nepadli. Opakovaný návrh má v kontrole odznak **„Už máme: Po“** (dni, kedy je
   ten istý recept v jedálničku alebo v návrhu).
+- **Kto je pri stole:** pre každý deň aktívni členovia rodiny a návštevy, ktoré majú v ten deň pobyt. Recepty, ktoré
+  niekto z nich **nemá rád** (Časť D) alebo obsahujú jeho averziu na surovinu, sa navrhujú až keď nič iné nie je;
+  alergény sa nenavrhnú nikdy. Každé políčko v kontrole ukáže upozornenie („Peter nemá rád“, „Babka: averzia –
+  cibuľa“), aj keď recept človek vybral ručne.
 - Keď kandidáti dôjdu, políčko ostane prázdne s textom „Nič nevyhovuje – zmeň štetec alebo vyber ručne“.
 - **Zvyšky:** po uvarení s „+N“ dostanú nasledujúcich N vybraných dní v tom istom jedle dňa zvyšky. Ak nasledujúci
   deň v rozsahu nie je (koniec rozsahu, vynechaný deň), zvyšky pokračujú na najbližší ďalší vybraný deň – takto
@@ -104,6 +108,30 @@ Pri každom políčku:
   vpravo (Filtre · Obľúbené · Čo viem uvariť · Zoradenie · smer · Mriežka/Tabuľka · Výber). Panel filtrov sa otvára
   sprava ako doteraz.
 
+## Časť D – Pri stole: jedlá, ktoré niekto nemá rád
+
+- Každý človek (člen aj návšteva) má v karte Pri stole sekciu **Nemá rád jedlá**: combobox, kde sa vyberie recept
+  z kuchárky, alebo sa napíše voľný text („rybacia polievka“), ak recept v kuchárke nie je. Zobrazujú sa ako čipy
+  s krížikom.
+- Dáta: nový druh preferencie `dislike_recipe` v `member_preferences` + stĺpec `recipe_id` (odkaz na recept,
+  `on delete set null`); voľný text v `note`. Migrácia.
+- Zhoda s receptom: rovnaký `recipe_id`, alebo voľný text, ktorý sa po normalizácii (bez diakritiky, malé písmená)
+  zhoduje s názvom receptu alebo je v ňom obsiahnutý.
+- Upozornenia v jedálničku (existujúce upozornenia na alergie a averzie) ukážu aj „Peter nemá rád“ – rovnako pre
+  návštevy vybrané pri jedle. Sprievodca Zostaviť jedálniček ich berie do úvahy (Časť B, Kto je pri stole).
+
+## Časť E – Detail receptu na počítači (rozloženie B)
+
+Podľa návrhu B (canvas „Detail receptu – desktop“), len od `mdAndUp`; mobil ostáva bez zmeny.
+
+- **Hlavička na celú šírku** (v-card, `surface`): vľavo štvorcová fotka 280 × 280; vpravo kategória kapitálkami,
+  názov, tagy a odznak „Overený“, riadok údajov (Porcie · Náročnosť · Naposledy varené · Zdroj) a tlačidlá Režim
+  varenia (primárne) a Naplánovať. Ikonové akcie (obľúbené, upraviť, ponuka) ostávajú v lište hore.
+- Recept bez fotky: hlavička bez fotky, text na celú šírku.
+- **Telo:** stĺpec Suroviny (380 px, s počtom porcií a skupinami) oddelený linkou od stĺpca Postup (max. 820 px).
+- Pod postupom prílohy a poznámky ako doteraz; zdroj je na počítači v riadku údajov hlavičky (na mobile ostáva
+  úplne dole).
+
 ## Mimo rozsahu
 - Automatické naplánovanie nákupu (nákup sa generuje ako doteraz).
 - Šablóny zostavenia (uložené nastavenia sprievodcu) – prípadne neskôr.
@@ -114,4 +142,5 @@ Pri každom políčku:
   alergény, odznak „Už máme“, zvyšky cez koniec týždňa, obsadené políčka); apply (dávka, porcie × (1+N), zvyšky
   mimo nákupu a cook logu, kaskádové mazanie).
 - Unit: prepínač v detaile, editore a hromadných úpravách; sprievodca – kroky, maľovanie štetcom (políčko, riadok, stĺpec), iný návrh, zvyšky +N, potvrdenie; zoznam receptov – prepínač pohľadu na mobile mimo panela, ovládače vpravo na počítači.
+- Worker aj unit: averzia na jedlo (recept aj voľný text), upozornenie v jedálničku a v sprievodcovi, návšteva s pobytom; detail na počítači v rozložení B.
 - Verzia 1.7.0 (CHANGELOG, README, tag), migrácia pred nasadením.
