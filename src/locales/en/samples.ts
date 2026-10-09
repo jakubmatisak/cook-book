@@ -1,7 +1,7 @@
 /** Basic recipes in Settings: packs by category, adding and removing. */
 export default {
   title: 'Basic recipes',
-  text: 'Typical Slovak recipes with a photo, split into packs. Add or remove each pack separately; you can edit the recipes afterwards. Recipes you already have are not duplicated and your own recipes are never deleted when a pack is removed.',
+  text: 'Typical Slovak recipes split into packs. Add or remove each pack separately; you can edit the recipes afterwards. Recipes you already have are not duplicated and your own recipes are never deleted when a pack is removed.',
   status: '{imported} of {total}',
   add: 'Add',
   remove: 'Remove',

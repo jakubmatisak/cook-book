@@ -1,5 +1,24 @@
 # Zmeny
 
+## 1.8.0 – 2026-10-09
+
+### Nové
+
+- **Hodí sa aj ako:** recept má hlavný typ jedla a k nemu ďalšie (napr. lievance – Dezert, hodia sa aj ako Raňajky,
+  Desiata, Večera). Nastavíš ich v editore alebo hromadne; detail ich ukáže pod typom jedla. Filter typu jedla,
+  počty v Prehľade, verejné recepty aj sprievodca Zostaviť jedálniček berú do úvahy aj tieto typy.
+- **Typ jedla Večera** (napr. studené večere). Jedlo dňa Večera v sprievodcovi ponúka hlavné jedlá aj večere.
+- **Základné recepty po balíkoch** v Nastaveniach: Raňajky, Desiata, Olovrant, Večera, Polievky, Hlavné jedlá,
+  Šaláty a prílohy, Dezerty, Detské. Pri každom vidíš, koľko receptov z neho máš, a môžeš ho pridať alebo
+  odstrániť (po potvrdení; tvoje vlastné recepty sa nezmažú).
+- **40 nových základných receptov** typickej slovenskej kuchyne – 10 raňajok, 10 desiat, 10 olovrantov a 10 večerí.
+- Už pridané základné recepty sa pri pridaní balíka nezdvoja, len sa doplnia o „hodí sa aj ako“; jedálniček,
+  obľúbené aj tvoje úpravy ostanú.
+
+### Zmeny
+
+- Odhlásiť sa je len v ponuke účtu vpravo hore (a v Nastaveniach), už nie v bočnom menu.
+
 ## 1.7.4 – 2026-10-09
 
 ### Nové

@@ -10,8 +10,6 @@ import type { Membership } from './services/memberships'
 export interface Bindings {
   DB: D1Database
   BUCKET: R2Bucket
-  /** Statické súbory aplikácie (fotky základných receptov v `public/samples`); v testoch chýba. */
-  ASSETS?: Fetcher
   ALLOWED_EMAILS?: string
   DEV_USER_EMAIL?: string
   ACCESS_TEAM_DOMAIN?: string

@@ -6,14 +6,12 @@ import { createApp } from '../../worker/app'
 import { getDb } from '../../worker/db/client'
 import { ensureUser } from '../../worker/services/household'
 import { inviteMember } from '../../worker/services/memberships'
-import { addSampleRecipes } from '../../worker/services/samples'
 import { api, send } from './helpers'
 
 const app = createApp()
 const OWNER = 'ja@example.com'
 const MEMBER = 'clen@example.com'
 const as = (email: string) => ({ as: email })
-const WEBP = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 9, 9])
 
 const importAll = async (set: string) => {
   for (let guard = 0; guard < 30; guard++) {
@@ -49,28 +47,6 @@ describe('základné recepty po balíkoch', () => {
     await importAll('desiata')
     expect(await statusOf('desiata')).toEqual({ set: 'desiata', total: 10, imported: 10 })
     expect(await recipes()).toHaveLength(10)
-  })
-
-  it('import uloží fotku do úložiska domácnosti a autora fotky do poznámky', async () => {
-    const user = await ensureUser(getDb(env), OWNER)
-    const first = samplesOf('desiata')[0]!
-    const photos = {
-      bucket: env.BUCKET,
-      load: async (key: string) =>
-        key === first.key ? { bytes: WEBP, credit: 'Fotka: Autor, CC BY-SA 4.0, Wikimedia Commons' } : null,
-    }
-    for (let guard = 0; guard < 10; guard++) {
-      if ((await addSampleRecipes(getDb(env), user, 'desiata', photos)).remaining === 0) break
-    }
-    const list = await recipes()
-    const withPhoto = list.find((r) => r.title === first.title)!
-    expect(withPhoto.coverImageUrl).toMatch(/^\/img\//)
-    expect(list.filter((r) => r.coverImageUrl)).toHaveLength(1)
-    const detail = await (
-      await send(app, 'GET', api(`/recipes/${withPhoto.id}`), undefined, as(OWNER))
-    ).json<RecipeDetailDto>()
-    expect(detail.notes).toContain('Wikimedia Commons')
-    expect(detail.alsoCategories).toEqual(first.alsoCategories)
   })
 
   it('starší import (rovnaký názov a popis, bez fotky) doplní namiesto zdvojenia', async () => {

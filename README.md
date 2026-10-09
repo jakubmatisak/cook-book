@@ -5,7 +5,7 @@ free tier of Cloudflare: one Worker serves the Vue frontend and the API, data li
 sign-in is handled by Cloudflare Access.
 
 > The app UI is in **Slovak and English**. This README is in English first, [Slovenská verzia](#slovenská-verzia) is below.
-> Status: **1.7.4**.
+> Status: **1.8.0**.
 
 - Website with screenshots: <https://jakubmatisak.github.io/cook-book-website/>
 - Design and phases: [docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md](docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md) (Slovak)
@@ -47,6 +47,10 @@ sign-in is handled by Cloudflare Access.
   pick a recipe, cook for several days with leftovers (+1 to +3 days, counted once in shopping). It respects
   who is at the table that day, including visitors: allergens never, disliked dishes only as a last resort.
 - **Verified recipes:** the household marks recipes it has tried; a badge on the card, a filter and bulk edit.
+- **Also works as:** besides its main meal type a recipe can have more (pancakes are a dessert that also works as
+  breakfast, snack or dinner); filters, the overview counts and the meal plan wizard use all of them.
+- **Basic recipes by pack:** in Settings, add or remove packs of typical Slovak recipes (breakfast, snack, afternoon
+  snack, dinner, soups, main courses, salads, desserts, baby food) – your own recipes are never deleted.
 - **Shopping list:** generated from the plan scaled to family portions (units are converted and summed, pantry stock
   is subtracted), recurring staple items, manual items typed as one line ("2 kg potatoes"), grouped by store
   category, ticking works offline and syncs between household members.
@@ -228,7 +232,7 @@ The repository contains no secrets or personal addresses: they live in Worker se
 
 Rodinná webová aplikácia (PWA) na recepty, týždenný jedálniček a nákupný zoznam. Beží celá zadarmo na
 Cloudflare: jeden Worker servíruje Vue frontend aj API, dáta sú v D1, fotky v R2 a prihlásenie rieši
-Cloudflare Access. Verzia **1.7.4**.
+Cloudflare Access. Verzia **1.8.0**.
 
 Stránka so screenshotmi: <https://jakubmatisak.github.io/cook-book-website/>
 
@@ -271,6 +275,10 @@ Stránka so screenshotmi: <https://jakubmatisak.github.io/cook-book-website/>
   návrh, vlastný recept, varenie na viac dní so zvyškami (+1 až +3 dni, v nákupe len raz). Berie do úvahy, kto je
   v ten deň pri stole, aj návštevy: alergény nikdy, neobľúbené jedlá až keď nič iné nie je.
 - **Overené recepty:** domácnosť si označí vyskúšané recepty; odznak na karte, filter a hromadná úprava.
+- **Hodí sa aj ako:** okrem hlavného typu jedla môže mať recept ďalšie (lievance sú dezert, hodia sa aj na raňajky,
+  desiatu či večeru); filtre, počty v Prehľade aj sprievodca jedálnička berú do úvahy všetky.
+- **Základné recepty po balíkoch:** v Nastaveniach pridáš alebo odstrániš balíky typických slovenských receptov
+  (raňajky, desiata, olovrant, večera, polievky, hlavné jedlá, šaláty, dezerty, detské) – vlastné recepty sa nezmažú.
 - **Nákupný zoznam:** vygenerovaný z jedálnička podľa porcií rodiny (sčítané ingrediencie, prevody jednotiek,
   odpočet špajze), stále položky, ručné položky jedným riadkom („2 kg zemiaky“), skupiny podľa kategórie obchodu,
   odškrtávanie zdieľané medzi vami aj bez signálu.

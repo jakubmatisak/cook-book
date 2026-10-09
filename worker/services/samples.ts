@@ -16,17 +16,10 @@ import { recipes, recipeSteps } from '../db/schema'
 import type { UserRow } from '../env'
 import { chunk } from '../http'
 import { bulkDeleteRecipes } from './bulk'
-import { storeImage } from './images'
 import { saveRecipe } from './recipes'
 
-/** Fotka základného receptu (z balíka aplikácie) a riadok o autorovi do poznámky. */
-export interface SamplePhotos {
-  bucket: R2Bucket
-  load: (key: string) => Promise<{ bytes: Uint8Array; credit: string } | null>
-}
-
-/** Najviac toľko receptov na jedno volanie (limit dopytov na jedno spustenie Workera, fotka pridá zápisy). */
-const SAMPLE_BATCH = 3
+/** Najviac toľko receptov na jedno volanie (limit dopytov na jedno spustenie Workera). */
+const SAMPLE_BATCH = 4
 
 const groupOf = new Map(ALL_SAMPLES.map((r) => [r.key, r.group]))
 
@@ -87,14 +80,13 @@ export async function sampleStatus(db: Db, householdId: string): Promise<SampleG
 
 /**
  * Pridá chýbajúce recepty balíka po dávkach (volá sa opakovane, kým `remaining` nie je 0). Rovnomenný recept bez
- * fotky, ktorý má ešte pôvodný popis alebo prvý krok (starší import), sa nevytvorí znova, ale doplní: kľúč, fotka,
- * „hodí sa aj ako“ a autor fotky. Iný rovnomenný recept (vlastný) sa nechá tak a balík ho preskočí.
+ * fotky, ktorý má ešte pôvodný popis alebo prvý krok (starší import), sa nevytvorí znova, ale doplní: kľúč a
+ * „hodí sa aj ako“. Iný rovnomenný recept (vlastný) sa nechá tak a balík ho preskočí.
  */
 export async function addSampleRecipes(
   db: Db,
   user: UserRow,
   set: SampleSet = 'basic',
-  photos?: SamplePhotos,
 ): Promise<SampleRecipesResult> {
   const live = await liveRecipes(db, user.householdId)
   const byKey = new Set(live.flatMap((r) => (r.sampleKey ? [r.sampleKey] : [])))
@@ -120,32 +112,21 @@ export async function addSampleRecipes(
   const batch = pending.slice(0, SAMPLE_BATCH)
 
   for (const sample of batch) {
-    const photo = photos ? await photos.load(sample.key) : null
-    const cover = photo && photos ? await storeImage(db, photos.bucket, user, photo.bytes) : null
     const old = adoptable(sample)
     if (old) {
       await db
         .update(recipes)
         .set({
           sampleKey: sample.key,
-          ...(cover ? { coverImageId: cover.id } : {}),
           ...(old.alsoCategories.length
             ? {}
             : { alsoCategories: normalizeAlsoCategories(old.category, sample.alsoCategories ?? []) }),
-          ...(photo && !old.notes ? { notes: photo.credit } : {}),
         })
         .where(eq(recipes.id, old.id))
       continue
     }
     const { key, group: _group, ...input } = sample
-    await saveRecipe(
-      db,
-      user,
-      recipeInputSchema.parse({ ...input, coverImageId: cover?.id ?? null, notes: photo?.credit ?? null }),
-      undefined,
-      undefined,
-      key,
-    )
+    await saveRecipe(db, user, recipeInputSchema.parse(input), undefined, undefined, key)
   }
   return { added: batch.length, remaining: pending.length - batch.length }
 }

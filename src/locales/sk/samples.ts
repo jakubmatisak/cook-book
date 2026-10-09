@@ -1,7 +1,7 @@
 /** Základné recepty v Nastaveniach: balíky po kategóriách, pridanie a odstránenie. */
 export default {
   title: 'Základné recepty',
-  text: 'Typické slovenské recepty s fotkou, rozdelené do balíkov. Každý balík pridáš alebo odstrániš zvlášť; recepty si potom môžeš upraviť. Recepty, ktoré už máš, sa nezdvoja a tvoje vlastné recepty sa pri odstránení balíka nezmažú.',
+  text: 'Typické slovenské recepty rozdelené do balíkov. Každý balík pridáš alebo odstrániš zvlášť; recepty si potom môžeš upraviť. Recepty, ktoré už máš, sa nezdvoja a tvoje vlastné recepty sa pri odstránení balíka nezmažú.',
   status: '{imported} z {total}',
   add: 'Pridať',
   remove: 'Odstrániť',
