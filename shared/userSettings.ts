@@ -5,6 +5,20 @@ export type Locale = (typeof LOCALES)[number]
 export const THEME_PREFERENCES = ['system', 'light', 'dark'] as const
 export type ThemePreference = (typeof THEME_PREFERENCES)[number]
 
+/** Farebné schémy (svetlá aj tmavá každá); predvolená je Šalvia a horčica. */
+export const COLOR_SCHEMES = [
+  'salvia-horcica',
+  'salvia-terakota',
+  'eukalyptus',
+  'salvia-paprika',
+  'terakota',
+  'modrotlac',
+  'paprika',
+  'grafit-horcica',
+] as const
+export type ColorScheme = (typeof COLOR_SCHEMES)[number]
+export const DEFAULT_COLOR_SCHEME: ColorScheme = 'salvia-horcica'
+
 export const RECIPE_VIEWS = ['grid', 'table'] as const
 export type RecipeViewPreference = (typeof RECIPE_VIEWS)[number]
 
@@ -19,6 +33,8 @@ export type Density = (typeof DENSITIES)[number]
 export interface UserSettingsDto {
   locale?: Locale
   theme?: ThemePreference
+  /** Farebná schéma; predvolená Šalvia a horčica. */
+  colorScheme?: ColorScheme
   recipeView?: RecipeViewPreference
   recipeQuery?: Record<string, string>
   /** Detské recepty (kaše, príkrmy) v aplikácii; `false` ich skryje všade. Predvolene zapnuté. */

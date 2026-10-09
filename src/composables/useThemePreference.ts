@@ -1,9 +1,18 @@
 import { computed, ref, watchEffect, type Ref } from 'vue'
 import { useTheme } from 'vuetify'
+import { COLOR_SCHEMES, DEFAULT_COLOR_SCHEME, type ColorScheme } from '@shared/userSettings'
+import { schemes } from '@/design/tokens'
 
 export type ThemePreference = 'light' | 'dark' | 'system'
 
 const KEY = 'kniha:theme'
+const SCHEME_KEY = 'kniha:color-scheme'
+
+export const parseColorScheme = (raw: string | null | undefined): ColorScheme =>
+  (COLOR_SCHEMES as readonly string[]).includes(raw ?? '') ? (raw as ColorScheme) : DEFAULT_COLOR_SCHEME
+
+/** Názov Vuetify témy: farebná schéma a svetlý či tmavý režim. */
+export const themeName = (scheme: ColorScheme, mode: 'light' | 'dark') => `${scheme}-${mode}`
 
 export const parseThemePreference = (raw: string | null | undefined): ThemePreference =>
   raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system'
@@ -19,8 +28,17 @@ function readStored(): ThemePreference {
   }
 }
 
+function readStoredScheme(): ColorScheme {
+  try {
+    return parseColorScheme(localStorage.getItem(SCHEME_KEY))
+  } catch {
+    return DEFAULT_COLOR_SCHEME
+  }
+}
+
 // Spoločný stav pre prepínač v hlavičke aj v nastaveniach.
 const preference = ref<ThemePreference>(readStored())
+const scheme = ref<ColorScheme>(readStoredScheme())
 const systemDark = ref(
   typeof matchMedia === 'undefined' ? false : matchMedia('(prefers-color-scheme: dark)').matches,
 )
@@ -45,10 +63,21 @@ export function useThemePreference() {
     }
   }
 
+  function setScheme(value: ColorScheme) {
+    scheme.value = value
+    try {
+      localStorage.setItem(SCHEME_KEY, value)
+    } catch {
+      // súkromné okno a pod.
+    }
+  }
+
   return {
     preference,
     resolved,
     set,
+    scheme,
+    setScheme,
     /** Prepne systém → svetlá → tmavá → systém. */
     cycle: () => set(ORDER[(ORDER.indexOf(preference.value) + 1) % ORDER.length]!),
   }
@@ -58,6 +87,13 @@ export function useThemePreference() {
 /** `forceLight`: počas tlače sa použije svetlá téma bez ohľadu na voľbu (inak by svetlý text zmizol na papieri). */
 export function useApplyTheme(forceLight?: Ref<boolean>) {
   const theme = useTheme()
-  const { resolved } = useThemePreference()
-  watchEffect(() => theme.change(forceLight?.value ? 'light' : resolved.value))
+  const { resolved, scheme } = useThemePreference()
+  watchEffect(() => {
+    const mode = forceLight?.value ? 'light' : resolved.value
+    theme.change(themeName(scheme.value, mode))
+    // Farba lišty prehliadača a nainštalovanej aplikácie podľa schémy.
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', schemes[scheme.value][mode].primary)
+  })
 }

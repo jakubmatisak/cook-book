@@ -46,7 +46,7 @@ export default {
     nothingFoundTitle: 'Nothing found',
     nothingFoundText: 'Try another word or clear the filters.',
     clearFilters: 'Clear filters',
-    welcomeTitle: 'Welcome to the cookbook',
+    welcomeTitle: 'Welcome to Peace in Kitchen',
     welcomeText:
       'Start with recipes, then add your family and plan the week. The shopping list is generated for you.',
     onboarding: {

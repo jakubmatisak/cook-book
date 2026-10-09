@@ -10,7 +10,7 @@ const meta = (attr: 'property' | 'name', key: string) =>
 describe('náhľad pri zdieľaní odkazu (Open Graph, Twitter)', () => {
   it('má Open Graph značky s názvom, popisom a obrázkom', () => {
     expect(meta('property', 'og:type')).toBe('website')
-    expect(meta('property', 'og:site_name')).toBe('Kuchárska kniha')
+    expect(meta('property', 'og:site_name')).toBe('Peace in Kitchen')
     expect(meta('property', 'og:title')).toBeTruthy()
     expect(meta('property', 'og:description')).toBeTruthy()
     expect(meta('property', 'og:locale')).toBe('sk_SK')

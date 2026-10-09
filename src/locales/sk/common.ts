@@ -1,6 +1,6 @@
 /** Spoločné texty: názov aplikácie, tlačidlá, čas, navigácia, číselníky a hlášky chýb API. */
 export default {
-  app: { name: 'Kuchárska kniha', version: 'Verzia {version}' },
+  app: { name: 'Peace in Kitchen', version: 'Verzia {version}' },
   shell: {
     home: '{name}, úvod',
     expandMenu: 'Rozbaliť menu',

@@ -82,3 +82,13 @@ describe('vypnuté detské recepty v nastaveniach', () => {
     expect((await list('?kids=only')).items.map((r) => r.title)).toEqual(['Ovsená kaša nemliečna'])
   })
 })
+
+describe('farebná schéma pri človeku', () => {
+  it('uloží sa a vráti v /me; neznáma je chyba', async () => {
+    const saved = await send(app, 'PUT', api('/me/settings'), { colorScheme: 'modrotlac' })
+    expect(saved.status).toBe(200)
+    const me = await (await send(app, 'GET', api('/me'))).json<{ userSettings: { colorScheme?: string } }>()
+    expect(me.userSettings.colorScheme).toBe('modrotlac')
+    expect((await send(app, 'PUT', api('/me/settings'), { colorScheme: 'ruzova' })).status).toBe(400)
+  })
+})

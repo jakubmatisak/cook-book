@@ -119,7 +119,7 @@ describe('Recipes in English', () => {
     const wrapper = await mountAt('/recipes', RecipesPage, {
       '/recipes': { items: [], facets },
     })
-    expect(wrapper.text()).toContain('Welcome to the cookbook')
+    expect(wrapper.text()).toContain('Welcome to Peace in Kitchen')
     expect(wrapper.text()).toContain('1. Add recipes')
     expect(wrapper.text()).toContain('Add your first recipe')
     expect(wrapper.text()).not.toContain('Vitaj')
@@ -181,7 +181,7 @@ describe('Recipes in English', () => {
     expect(text).toContain('Method')
     expect(text).not.toContain('Príprava')
     expect(text).not.toContain('voliteľné')
-    expect(document.title).toBe('Goulash · Cookbook')
+    expect(document.title).toBe('Goulash · Peace in Kitchen')
   })
 
   it('detail page of a missing recipe shows the English empty state', async () => {

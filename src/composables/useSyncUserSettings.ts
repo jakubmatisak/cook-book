@@ -1,4 +1,5 @@
 import { ref, watch } from 'vue'
+import { DEFAULT_COLOR_SCHEME } from '@shared/userSettings'
 import { useMe } from '@/api/me'
 import { useSaveUserSettings } from '@/api/userSettings'
 import { currentLocale, i18n, setLocale } from '@/i18n'
@@ -12,7 +13,7 @@ import { useThemePreference } from './useThemePreference'
 export function useSyncUserSettings() {
   const { data: me } = useMe()
   const save = useSaveUserSettings()
-  const { preference, set } = useThemePreference()
+  const { preference, set, scheme, setScheme } = useThemePreference()
   const synced = ref(false)
 
   watch(
@@ -21,6 +22,10 @@ export function useSyncUserSettings() {
       if (!settings || synced.value) return
       if (settings.theme && settings.theme !== preference.value) set(settings.theme)
       else if (!settings.theme && preference.value !== 'system') save.mutate({ theme: preference.value })
+      // Farebná schéma: rovnako ako vzhľad
+      if (settings.colorScheme && settings.colorScheme !== scheme.value) setScheme(settings.colorScheme)
+      else if (!settings.colorScheme && scheme.value !== DEFAULT_COLOR_SCHEME)
+        save.mutate({ colorScheme: scheme.value })
       // Jazyk: rovnako ako vzhľad (server má prednosť, jazyk zvolený na zariadení sa prenesie na server)
       if (settings.locale && settings.locale !== currentLocale()) setLocale(settings.locale)
       else if (!settings.locale && currentLocale() !== 'sk') save.mutate({ locale: currentLocale() })
@@ -32,6 +37,12 @@ export function useSyncUserSettings() {
   watch(i18n.global.locale, () => {
     if (!synced.value) return
     if (currentLocale() !== (me.value?.userSettings.locale ?? 'sk')) save.mutate({ locale: currentLocale() })
+  })
+
+  watch(scheme, (value) => {
+    if (!synced.value) return
+    if (value !== (me.value?.userSettings.colorScheme ?? DEFAULT_COLOR_SCHEME))
+      save.mutate({ colorScheme: value })
   })
 
   watch(preference, (value) => {

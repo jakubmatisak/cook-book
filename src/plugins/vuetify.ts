@@ -3,7 +3,8 @@ import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 import { createVueI18nAdapter } from 'vuetify/locale/adapters/vue-i18n'
 import { useI18n } from 'vue-i18n'
 import 'vuetify/styles'
-import { colors } from '@/design/tokens'
+import { COLOR_SCHEMES, DEFAULT_COLOR_SCHEME } from '@shared/userSettings'
+import { schemes } from '@/design/tokens'
 import { i18n as appI18n } from '@/i18n'
 
 /**
@@ -21,12 +22,15 @@ export const createAppVuetify = (i18n: AdapterI18n = appI18n as unknown as Adapt
       mobileBreakpoint: 'md',
       thresholds: { xs: 0, sm: 600, md: 1200, lg: 1440, xl: 1920, xxl: 2560 },
     },
+    // Každá farebná schéma má svetlú a tmavú tému (`<schéma>-light`, `<schéma>-dark`); vyberá ich useApplyTheme.
     theme: {
-      defaultTheme: 'light',
-      themes: {
-        light: { dark: false, colors: { ...colors.light } },
-        dark: { dark: true, colors: { ...colors.dark } },
-      },
+      defaultTheme: `${DEFAULT_COLOR_SCHEME}-light`,
+      themes: Object.fromEntries(
+        COLOR_SCHEMES.flatMap((scheme) => [
+          [`${scheme}-light`, { dark: false, colors: { ...schemes[scheme].light } }],
+          [`${scheme}-dark`, { dark: true, colors: { ...schemes[scheme].dark } }],
+        ]),
+      ),
     },
     defaults: {
       VBtn: { rounded: 'sm', variant: 'flat' },

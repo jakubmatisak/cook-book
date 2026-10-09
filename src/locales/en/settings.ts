@@ -17,6 +17,17 @@ export default {
     system: 'Match device',
     light: 'Light',
     dark: 'Dark',
+    scheme: 'Colour scheme',
+    schemes: {
+      'salvia-horcica': 'Sage and mustard',
+      'salvia-terakota': 'Sage and terracotta',
+      eukalyptus: 'Eucalyptus and plum',
+      'salvia-paprika': 'Sage and paprika',
+      terakota: 'Terracotta',
+      modrotlac: 'Blueprint',
+      paprika: 'Paprika and cream',
+      'grafit-horcica': 'Graphite and mustard',
+    },
   },
   density: {
     title: 'Interface density',
@@ -40,8 +51,8 @@ export default {
     title: 'Add a recipe from the web with one click',
     bookmarkTitle: 'Browser bookmark (easiest)',
     bookmarkText:
-      'Works in any browser, nothing to install. Drag the button below to your bookmarks bar. When you are on a recipe page, click that bookmark and the recipe is loaded into the Cookbook.',
-    bookmarkButton: 'To the cookbook',
+      'Works in any browser, nothing to install. Drag the button below to your bookmarks bar. When you are on a recipe page, click that bookmark and the recipe is loaded into Peace in Kitchen.',
+    bookmarkButton: 'To Peace in Kitchen',
     bookmarkHint:
       'Do not click the button here, just drag it to the bookmarks bar (or right-click it and choose "Add bookmark").',
     extensionTitle: 'Chrome extension',

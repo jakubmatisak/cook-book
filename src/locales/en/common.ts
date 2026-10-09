@@ -1,6 +1,6 @@
 /** Shared texts: app name, buttons, time, navigation, lookups and API error messages. */
 export default {
-  app: { name: 'Cookbook', version: 'Version {version}' },
+  app: { name: 'Peace in Kitchen', version: 'Version {version}' },
   shell: {
     home: '{name}, home',
     expandMenu: 'Expand menu',

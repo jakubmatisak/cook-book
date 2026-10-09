@@ -20,6 +20,7 @@ import { ApiError, downloadFile } from '@/api/http'
 import { useIsOwner, useMe } from '@/api/me'
 import PageHeader from '@/components/PageHeader.vue'
 import HouseholdMembersCard from '@/features/households/components/HouseholdMembersCard.vue'
+import ColorSchemePicker from '../components/ColorSchemePicker.vue'
 import SampleGroupsCard from '../components/SampleGroupsCard.vue'
 import LanguageCard from '../components/LanguageCard.vue'
 import { importBookmarklet } from '../bookmarklet'
@@ -188,6 +189,7 @@ async function exportRecipes() {
           <v-btn value="light">{{ t('settings.appearance.light') }}</v-btn>
           <v-btn value="dark">{{ t('settings.appearance.dark') }}</v-btn>
         </v-btn-toggle>
+        <ColorSchemePicker class="mt-4" />
       </v-card-text>
     </v-card>
 

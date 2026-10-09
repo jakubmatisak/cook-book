@@ -114,7 +114,7 @@ export const authMiddleware = (deps: AuthDeps = {}) =>
       c.set('user', { ...newcomer, householdId: '', role: 'member' })
       return next()
     }
-    if (!user) throw new HttpError(403, 'forbidden', 'Tento účet nemá prístup ku kuchárskej knihe.')
+    if (!user) throw new HttpError(403, 'forbidden', 'Tento účet nemá prístup do Peace in Kitchen.')
 
     const requested = c.req.query('h')
     const active = requested

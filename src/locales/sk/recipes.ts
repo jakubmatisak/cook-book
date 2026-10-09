@@ -45,7 +45,7 @@ export default {
     nothingFoundTitle: 'Nič sa nenašlo',
     nothingFoundText: 'Skús iné slovo alebo zruš filtre.',
     clearFilters: 'Zrušiť filtre',
-    welcomeTitle: 'Vitaj v kuchárskej knihe',
+    welcomeTitle: 'Vitaj v Peace in Kitchen',
     welcomeText: 'Začni receptami, potom pridaj rodinu a naplánuj týždeň. Nákupný zoznam sa vygeneruje sám.',
     onboarding: {
       recipes: { title: 'Pridaj recepty', text: 'Napíš vlastné alebo ich neskôr importuj z webu.' },

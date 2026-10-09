@@ -13,15 +13,15 @@ export const pwaOptions: Partial<VitePWAOptions> = {
   useCredentials: true,
   includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon-180x180.png'],
   manifest: {
-    name: 'Kuchárska kniha',
-    short_name: 'Kniha',
+    name: 'Peace in Kitchen',
+    short_name: 'Peace in Kitchen',
     description: 'Rodinné recepty, týždenný jedálniček a nákupný zoznam.',
     lang: 'sk',
     start_url: '/',
     scope: '/',
     display: 'standalone',
     background_color: '#FBF7F1',
-    theme_color: '#B4532A',
+    theme_color: '#577A54',
     icons: [
       { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
       { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },

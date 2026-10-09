@@ -17,6 +17,17 @@ export default {
     system: 'Podľa zariadenia',
     light: 'Svetlý',
     dark: 'Tmavý',
+    scheme: 'Farebná schéma',
+    schemes: {
+      'salvia-horcica': 'Šalvia a horčica',
+      'salvia-terakota': 'Šalvia a terakota',
+      eukalyptus: 'Eukalyptus a slivka',
+      'salvia-paprika': 'Šalvia a paprika',
+      terakota: 'Terakota',
+      modrotlac: 'Modrotlač',
+      paprika: 'Paprika a krém',
+      'grafit-horcica': 'Grafit a horčica',
+    },
   },
   density: {
     title: 'Hustota rozhrania',
@@ -40,8 +51,8 @@ export default {
     title: 'Pridať recept z internetu jedným klikom',
     bookmarkTitle: 'Záložka v prehliadači (najjednoduchšie)',
     bookmarkText:
-      'Funguje v každom prehliadači, nič sa neinštaluje. Pretiahni tlačidlo nižšie na lištu záložiek. Keď si na stránke s receptom, klikni na túto záložku a recept sa načíta do Kuchárskej knihy.',
-    bookmarkButton: 'Do kuchárskej knihy',
+      'Funguje v každom prehliadači, nič sa neinštaluje. Pretiahni tlačidlo nižšie na lištu záložiek. Keď si na stránke s receptom, klikni na túto záložku a recept sa načíta do Peace in Kitchen.',
+    bookmarkButton: 'Do Peace in Kitchen',
     bookmarkHint:
       'Tlačidlo nekliknite tu, len ho pretiahnite myšou na lištu záložiek (alebo naň kliknite pravým a zvoľte „Pridať záložku“).',
     extensionTitle: 'Rozšírenie do Chromu',
