@@ -161,23 +161,34 @@ const SAVED_QUERY_KEYS = [
 /** Všetky parametre zoznamu receptov vrátane hľadania; ak je niektorý v adrese, uložené filtre sa nevracajú. */
 const LIST_QUERY_KEYS = ['q', ...SAVED_QUERY_KEYS] as const
 
-/** Filtre a zoradenie z adresy na uloženie k používateľovi; bez filtrov `null` (uložené sa vymažú). */
-export function savableListQuery(query: Query): Record<string, string> | null {
+/** Kľúč s domácnosťou, v ktorej sa filtre uložili (tagy a pod. patria jednej domácnosti). */
+const HOUSEHOLD_KEY = 'household'
+
+/**
+ * Filtre a zoradenie z adresy na uloženie k používateľovi; bez filtrov `null` (uložené sa vymažú). S `household`
+ * sa uložia spolu s domácnosťou, aby sa po prechode do inej domácnosti nevrátili.
+ */
+export function savableListQuery(query: Query, household?: string | null): Record<string, string> | null {
   const saved: Record<string, string> = {}
   for (const key of SAVED_QUERY_KEYS) {
     const value = one(query[key])
     if (value) saved[key] = value
   }
-  return Object.keys(saved).length > 0 ? saved : null
+  if (Object.keys(saved).length === 0) return null
+  return household ? { ...saved, [HOUSEHOLD_KEY]: household } : saved
 }
 
 /** Uložené filtre na obnovenie pri otvorení Receptov bez filtrov v adrese, inak `null`. */
 export function queryToRestore(
   query: Query,
   saved: Record<string, string> | undefined,
+  household?: string | null,
 ): Record<string, string> | null {
   if (!saved || Object.keys(saved).length === 0) return null
   if (LIST_QUERY_KEYS.some((key) => one(query[key]))) return null
+  // Filtre inej domácnosti (alebo staršie, bez domácnosti) sa po prechode medzi domácnosťami nevracajú.
+  if (household && saved[HOUSEHOLD_KEY] !== household) return null
+  const { [HOUSEHOLD_KEY]: _household, ...filters } = saved
   // Filtre uložené pred prechodom na anglické adresy majú slovenské názvy.
-  return translateLegacyQuery(saved) as Record<string, string>
+  return translateLegacyQuery(filters) as Record<string, string>
 }

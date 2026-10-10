@@ -139,3 +139,21 @@ describe('úvodná stránka (prehľad)', () => {
     expect(wrapper.find('[data-test="tile-all"]').text()).toContain('All recipes')
   })
 })
+
+describe('prázdny Prehľad', () => {
+  it('ponúkne zapnúť recepty od iných priamo na Prehľade', async () => {
+    const { calls } = await mountHome([])
+    const button = document.querySelector<HTMLElement>('[data-test="home-show-others"]')
+    expect(button?.textContent).toContain('Zobrazovať recepty od iných')
+    button!.click()
+    await flushPromises()
+    expect(calls.find((c) => c.method === 'PUT' && c.path === '/me/settings')?.body).toEqual({
+      showOthersRecipes: true,
+    })
+  })
+
+  it('keď sú recepty od iných už zapnuté, tlačidlo sa neponúka', async () => {
+    await mountHome([], { showOthersRecipes: true })
+    expect(document.querySelector('[data-test="home-show-others"]')).toBeNull()
+  })
+})

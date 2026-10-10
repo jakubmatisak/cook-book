@@ -7,4 +7,5 @@ export default {
   emptyTitle: 'Zatiaľ tu nie sú žiadne recepty',
   emptyText: 'Pridaj prvý recept alebo ukážkové recepty v Nastaveniach. Tu potom uvidíš typy jedla.',
   addFirst: 'Pridať recept',
+  showOthers: 'Zobrazovať recepty od iných',
 }

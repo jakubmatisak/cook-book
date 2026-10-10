@@ -7,4 +7,5 @@ export default {
   emptyTitle: 'No recipes yet',
   emptyText: 'Add your first recipe or the sample recipes in Settings. The meal types will show up here.',
   addFirst: 'Add a recipe',
+  showOthers: 'Show recipes from others',
 }

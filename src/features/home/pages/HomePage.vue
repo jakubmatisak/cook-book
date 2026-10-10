@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { mdiBookOpenPageVariantOutline, mdiHeart, mdiPlus } from '@mdi/js'
+import { mdiBookOpenPageVariantOutline, mdiEarth, mdiHeart, mdiPlus } from '@mdi/js'
+import { useQueryClient } from '@tanstack/vue-query'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
 import { RECIPE_CATEGORIES } from '@shared/recipes'
-import { useRecipes } from '@/api/recipes'
+import { useMe } from '@/api/me'
+import { recipeKeys, useRecipes } from '@/api/recipes'
+import { useSaveUserSettings } from '@/api/userSettings'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import ShareNoticeCards from '@/features/sharing/components/ShareNoticeCards.vue'
@@ -21,6 +24,18 @@ const { xs: mobile } = useDisplay()
 const { data: list, isPending, error } = useRecipes(() => ({ kids: 'include' }))
 
 const items = computed(() => list.value?.items ?? [])
+
+// Prázdna kuchárka (napr. nová domácnosť): recepty od iných sa dajú zapnúť rovno tu, nielen v Nastaveniach.
+const { data: me } = useMe()
+const showOthers = computed(() => me.value?.userSettings.showOthersRecipes === true)
+const saveSettings = useSaveUserSettings()
+const client = useQueryClient()
+function enableOthers() {
+  saveSettings.mutate(
+    { showOthersRecipes: true },
+    { onSuccess: () => client.invalidateQueries({ queryKey: recipeKeys.all }) },
+  )
+}
 const regular = computed(() => items.value.filter((r) => r.category !== 'detske'))
 
 interface Tile {
@@ -82,7 +97,19 @@ const tiles = computed<Tile[]>(() => {
     :text="t('home.emptyText')"
     data-test="home-empty"
   >
-    <v-btn color="primary" :prepend-icon="mdiPlus" to="/recipes/new">{{ t('home.addFirst') }}</v-btn>
+    <div class="d-flex flex-wrap justify-center ga-2">
+      <v-btn color="primary" :prepend-icon="mdiPlus" to="/recipes/new">{{ t('home.addFirst') }}</v-btn>
+      <v-btn
+        v-if="me && !showOthers"
+        variant="outlined"
+        :prepend-icon="mdiEarth"
+        :loading="saveSettings.isPending.value"
+        data-test="home-show-others"
+        @click="enableOthers"
+      >
+        {{ t('home.showOthers') }}
+      </v-btn>
+    </div>
   </EmptyState>
   <!-- Na mobile dlaždice pod sebou ako riadky (ikona vľavo, počet vpravo), od sm mriežka s ikonou nad textom. -->
   <v-row v-else density="compact" data-test="home-tiles">

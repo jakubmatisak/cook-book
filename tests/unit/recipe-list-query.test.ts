@@ -169,3 +169,18 @@ describe('predvolené filtre (pamätajú sa na používateľa)', () => {
     expect(queryToRestore({}, {})).toBeNull()
   })
 })
+
+describe('uložené filtre patria domácnosti', () => {
+  it('ukladajú sa spolu s domácnosťou', () => {
+    expect(savableListQuery({ category: 'dessert' }, 'h1')).toEqual({ category: 'dessert', household: 'h1' })
+    expect(savableListQuery({}, 'h1')).toBeNull()
+  })
+
+  it('po prechode do inej domácnosti sa nevrátia (napr. tag z inej domácnosti)', () => {
+    const saved = { tag: 't-z-a', household: 'h1' }
+    expect(queryToRestore({}, saved, 'h1')).toEqual({ tag: 't-z-a' })
+    expect(queryToRestore({}, saved, 'h2')).toBeNull()
+    // Staršie uložené filtre bez domácnosti sa nevracajú – nevieme, odkiaľ sú.
+    expect(queryToRestore({}, { category: 'dessert' }, 'h1')).toBeNull()
+  })
+})

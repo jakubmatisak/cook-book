@@ -41,6 +41,7 @@ import { useSelection } from '@/composables/useSelection'
 import ImportRecipeDialog from '../components/ImportRecipeDialog.vue'
 import RecipeBulkEditDialog from '../components/RecipeBulkEditDialog.vue'
 import ShareWithDialog from '@/features/sharing/components/ShareWithDialog.vue'
+import { activeHousehold } from '@/lib/household'
 import RecipeCard from '../components/RecipeCard.vue'
 import RecipeFilterPanel from '../components/RecipeFilterPanel.vue'
 import RecipeQuickFilters from '../components/RecipeQuickFilters.vue'
@@ -143,7 +144,7 @@ watch(
   (settings) => {
     if (!settings || settingsRestored.value) return
     settingsRestored.value = true
-    const restore = queryToRestore(route.query, settings.recipeQuery)
+    const restore = queryToRestore(route.query, settings.recipeQuery, activeHousehold.value)
     if (restore) void router.replace({ query: { ...route.query, ...restore } })
     if (settings.recipeView) view.value = settings.recipeView
   },
@@ -152,12 +153,12 @@ watch(
 
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 watch(
-  () => JSON.stringify(savableListQuery(route.query)),
+  () => JSON.stringify(savableListQuery(route.query, activeHousehold.value)),
   (serialized) => {
     if (!settingsRestored.value) return
     clearTimeout(saveTimer)
     saveTimer = setTimeout(() => {
-      const wanted = savableListQuery(route.query)
+      const wanted = savableListQuery(route.query, activeHousehold.value)
       const stored = me.value?.userSettings.recipeQuery
       if (JSON.stringify(wanted) !== JSON.stringify(stored ?? null))
         saveSettings.mutate({ recipeQuery: wanted })
