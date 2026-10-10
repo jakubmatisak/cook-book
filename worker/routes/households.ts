@@ -6,6 +6,7 @@ import { HttpError } from '../errors'
 import { parseBody } from '../http'
 import { isAllowedEmail } from '../services/accessList'
 import { createOwnHousehold } from '../services/household'
+import { pendingShareCount } from '../services/sharing'
 import { toHouseholdSummary } from './me'
 
 /**
@@ -18,8 +19,13 @@ const canCreate = (c: Context<AppEnv>) =>
 /** Domácnosti prihláseného používateľa; fungujú aj bez výberu domácnosti (slúžia výberu a zakladaniu). */
 export const householdsRoutes = new Hono<AppEnv>()
   .get('/', (c) => c.json(c.get('memberships').map(toHouseholdSummary)))
-  .get('/account', (c) => {
-    const body: HouseholdAccountDto = { email: c.get('user').email, canCreate: canCreate(c) }
+  .get('/account', async (c) => {
+    const email = c.get('user').email
+    const body: HouseholdAccountDto = {
+      email,
+      canCreate: canCreate(c),
+      pendingShares: await pendingShareCount(c.get('db'), email),
+    }
     return c.json(body)
   })
   .post('/', async (c) => {

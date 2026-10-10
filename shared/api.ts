@@ -55,6 +55,8 @@ export interface HouseholdSummaryDto {
 export interface HouseholdAccountDto {
   email: string
   canCreate: boolean
+  /** Čakajúce ponuky zdieľania receptov na tento e-mail (nováčik ich uvidí po založení domácnosti). */
+  pendingShares?: number
 }
 
 export type { MemberKind }

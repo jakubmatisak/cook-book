@@ -22,6 +22,7 @@ import { addSampleRecipes, removeSampleGroup, sampleStatus } from '../services/s
 import { getUserSettings } from '../services/userSettings'
 import { requireOwner } from '../middleware/owner'
 import { shareRecipe, unshareRecipe } from '../services/share'
+import { replaceFromSource } from '../services/publicRecipes'
 import {
   deleteRecipe,
   getRecipeDetail,
@@ -101,6 +102,10 @@ export const recipeRoutes = new Hono<AppEnv>()
     }
     return c.json(await bulkUpdateRecipes(c.get('db'), user, input))
   })
+  // Kópia cudzieho receptu dostane aktuálnu verziu originálu (ak ho domácnosť ešte smie čítať).
+  .post('/:id/replace-from-source', async (c) =>
+    c.json(await replaceFromSource(c.get('db'), c.env.BUCKET, c.get('user'), c.req.param('id'))),
+  )
   // Zverejnenie a skrytie receptu smie len vlastník domácnosti.
   .put('/:id/visibility', requireOwner, async (c) => {
     const { visibility } = await parseBody(c, recipeVisibilitySchema)

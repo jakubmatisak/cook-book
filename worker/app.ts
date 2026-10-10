@@ -16,6 +16,7 @@ import { publicRoutes } from './routes/public'
 import { recipeRoutes } from './routes/recipes'
 import { sharedRoutes } from './routes/shared'
 import { sharingRoutes } from './routes/sharing'
+import { contactRoutes } from './routes/contacts'
 import { shoppingRoutes } from './routes/shopping'
 import { stapleRoutes } from './routes/staples'
 
@@ -50,6 +51,7 @@ export function createApp(deps: AppDeps = {}) {
   app.route('/api/v1/recipes', recipeRoutes)
   app.route('/api/v1/public', publicRoutes)
   app.route('/api/v1/sharing', sharingRoutes)
+  app.route('/api/v1/contacts', contactRoutes)
   app.route('/api/v1/ingredients', ingredientRoutes)
   app.route('/api/v1/tags', tagRoutes)
   app.route('/api/v1/shop-categories', shopCategoryRoutes)

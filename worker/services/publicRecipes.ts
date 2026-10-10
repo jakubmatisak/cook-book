@@ -111,18 +111,8 @@ export async function getPublicRecipe(
   }
 }
 
-/** Skopíruje verejný recept do aktívnej domácnosti ako nezávislý súkromný recept (aj s fotkou). */
-export async function copyPublicRecipe(
-  db: Db,
-  bucket: R2Bucket,
-  user: AuthUser,
-  id: string,
-): Promise<RecipeDetailDto> {
-  const source = await getPublicRecipe(db, user, id)
-  if (source.ownedByMe) {
-    throw new HttpError(400, 'own_recipe', 'Tento recept už máš vo svojej domácnosti.')
-  }
-
+/** Obsah cudzieho receptu ako vstup nového vlastného receptu (obal sa skopíruje do mojej domácnosti). */
+async function copyInput(db: Db, bucket: R2Bucket, user: AuthUser, source: PublicRecipeDetailDto) {
   let coverImageId: string | null = null
   const sourceKey = source.coverImageUrl?.replace(/^\/img\//, '')
   if (sourceKey) {
@@ -141,7 +131,7 @@ export async function copyPublicRecipe(
     }
   }
 
-  const input = recipeInputSchema.parse({
+  return recipeInputSchema.parse({
     title: source.title,
     description: source.description,
     category: source.category,
@@ -165,16 +155,52 @@ export async function copyPublicRecipe(
     steps: source.steps.map((s) => ({ text: s.text, timerSeconds: s.timerSeconds })),
     tags: source.tags.map((t) => t.name),
   })
-  const copyId = await saveRecipe(db, user, input)
-  // Pôvod kópie: ukazuje na pôvodný recept (po jeho zmazaní sa väzba sama zruší), od koho je a ako vyzeral.
-  await db
+}
+
+/** Pôvod kópie: pôvodný recept (po jeho zmazaní sa väzba sama zruší), od koho je a kedy sa naposledy zhodovala. */
+const markCopy = (db: Db, copyId: string, source: PublicRecipeDetailDto) =>
+  db
     .update(recipes)
     .set({
-      parentRecipeId: id,
+      parentRecipeId: source.id,
       copiedFromName: source.sharedFrom || source.householdName,
       copiedSourceUpdatedAt: source.updatedAt,
     })
     .where(eq(recipes.id, copyId))
+
+/** Skopíruje verejný alebo zdieľaný recept do aktívnej domácnosti ako nezávislý súkromný recept (aj s fotkou). */
+export async function copyPublicRecipe(
+  db: Db,
+  bucket: R2Bucket,
+  user: AuthUser,
+  id: string,
+): Promise<RecipeDetailDto> {
+  const source = await getPublicRecipe(db, user, id)
+  if (source.ownedByMe) {
+    throw new HttpError(400, 'own_recipe', 'Tento recept už máš vo svojej domácnosti.')
+  }
+  const copyId = await saveRecipe(db, user, await copyInput(db, bucket, user, source))
+  await markCopy(db, copyId, source)
+  return getRecipeDetail(db, user.householdId, user.id, copyId)
+}
+
+/** Prepíše vlastnú kópiu aktuálnou verziou originálu (ak ho domácnosť ešte smie čítať). */
+export async function replaceFromSource(
+  db: Db,
+  bucket: R2Bucket,
+  user: AuthUser,
+  copyId: string,
+): Promise<RecipeDetailDto> {
+  const copy = await db
+    .select({ parentRecipeId: recipes.parentRecipeId })
+    .from(recipes)
+    .where(and(eq(recipes.id, copyId), eq(recipes.householdId, user.householdId), isNull(recipes.deletedAt)))
+    .get()
+  if (!copy?.parentRecipeId) throw notFound()
+  const source = await getPublicRecipe(db, user, copy.parentRecipeId)
+  if (source.ownedByMe) throw notFound()
+  await saveRecipe(db, user, await copyInput(db, bucket, user, source), copyId, bucket)
+  await markCopy(db, copyId, source)
   return getRecipeDetail(db, user.householdId, user.id, copyId)
 }
 

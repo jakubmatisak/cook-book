@@ -16,7 +16,11 @@ describe('človek bez domácnosti (pustil ho Cloudflare Access)', () => {
     expect(await households.json()).toEqual([])
 
     const account = await send(app, 'GET', api('/households/account'), undefined, as(NEWCOMER))
-    expect(await account.json<HouseholdAccountDto>()).toEqual({ email: NEWCOMER, canCreate: true })
+    expect(await account.json<HouseholdAccountDto>()).toEqual({
+      email: NEWCOMER,
+      canCreate: true,
+      pendingShares: 0,
+    })
 
     const me = await send(app, 'GET', api('/me'), undefined, as(NEWCOMER))
     expect(me.status).toBe(403)

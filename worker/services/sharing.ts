@@ -1,5 +1,11 @@
-import { and, desc, eq, inArray, isNull, or, sql, type SQL } from 'drizzle-orm'
-import type { CreateSharesResult, IncomingShareDto, OutgoingShareDto } from '../../shared/api'
+import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, or, sql, type SQL } from 'drizzle-orm'
+import type {
+  ContactDto,
+  CreateSharesResult,
+  IncomingShareDto,
+  OutgoingShareDto,
+  ShareNoticeDto,
+} from '../../shared/api'
 import { newId } from '../../shared/ids'
 import type { CreateShareInput } from '../../shared/schemas/sharing'
 import { SHARE_LIMITS } from '../../shared/sharing'
@@ -492,4 +498,134 @@ export async function removeShareItems(
 export async function markShareSeen(db: Db, householdId: string, id: string): Promise<void> {
   const s = await findShare(db, id, eq(recipeShares.toHouseholdId, householdId))
   await db.update(recipeShares).set({ seenAt: new Date().toISOString() }).where(eq(recipeShares.id, s.id))
+}
+
+/** Vlastné kópie cudzích receptov, ktorých originál (stále čitateľný) sa od kópie zmenil. */
+async function changedCopies(db: Db, householdId: string): Promise<ShareNoticeDto[]> {
+  const copies = await db
+    .select({
+      id: recipes.id,
+      title: recipes.title,
+      parentId: recipes.parentRecipeId,
+      fromName: recipes.copiedFromName,
+      since: recipes.copiedSourceUpdatedAt,
+    })
+    .from(recipes)
+    .where(
+      and(
+        eq(recipes.householdId, householdId),
+        isNull(recipes.deletedAt),
+        isNotNull(recipes.parentRecipeId),
+        isNotNull(recipes.copiedSourceUpdatedAt),
+      ),
+    )
+  if (copies.length === 0) return []
+  const parents = await db
+    .select({ id: recipes.id, updatedAt: recipes.updatedAt })
+    .from(recipes)
+    .where(
+      and(
+        sql`${recipes.id} in (select value from json_each(${jsonIds(copies.map((c) => c.parentId!))}))`,
+        isNull(recipes.deletedAt),
+        ne(recipes.householdId, householdId),
+        or(eq(recipes.visibility, 'public'), sharedWithHouseholds([householdId])),
+      ),
+    )
+  const updatedAt = new Map(parents.map((p) => [p.id, p.updatedAt]))
+  return copies.flatMap((c) => {
+    const current = updatedAt.get(c.parentId!)
+    return current && current > c.since!
+      ? [
+          {
+            kind: 'changed' as const,
+            recipeId: c.id,
+            title: c.title,
+            fromName: c.fromName ?? '',
+            sourceId: c.parentId!,
+          },
+        ]
+      : []
+  })
+}
+
+/** Upozornenia na Prehľade: nové ponuky, pribudnuté recepty v prijatých kategóriách a tagoch, zmenené originály. */
+export async function listNotices(db: Db, user: AuthUser): Promise<ShareNoticeDto[]> {
+  const incoming = await listIncoming(db, user)
+  const offers: ShareNoticeDto[] = incoming
+    .filter((s) => s.status === 'pending')
+    .map((s) => ({
+      kind: 'offer',
+      shareId: s.id,
+      fromName: s.fromName,
+      count: s.recipes.length,
+      message: s.message,
+    }))
+  const fresh: ShareNoticeDto[] = incoming
+    .filter((s) => s.status === 'accepted' && s.newCount > 0)
+    .map((s) => ({
+      kind: 'new',
+      shareId: s.id,
+      fromName: s.fromName,
+      label: s.tagName ?? s.category ?? '',
+      count: s.newCount,
+    }))
+  return [...offers, ...fresh, ...(await changedCopies(db, user.householdId))]
+}
+
+/** Skryje upozornenie na zmenený originál: kópia sa odteraz porovnáva s jeho aktuálnou verziou. */
+export async function dismissChangedNotice(db: Db, householdId: string, recipeId: string): Promise<void> {
+  await db
+    .update(recipes)
+    .set({
+      copiedSourceUpdatedAt: sql`(select p.updated_at from recipes p where p.id = ${recipes.parentRecipeId})`,
+    })
+    .where(
+      and(eq(recipes.id, recipeId), eq(recipes.householdId, householdId), isNotNull(recipes.parentRecipeId)),
+    )
+}
+
+/** Počet čakajúcich ponúk na e-mail (aj pre človeka, ktorý ešte nemá domácnosť). */
+export async function pendingShareCount(db: Db, email: string): Promise<number> {
+  const row = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(recipeShares)
+    .where(and(eq(recipeShares.toEmail, email.toLowerCase()), eq(recipeShares.status, 'pending')))
+    .get()
+  return row?.n ?? 0
+}
+
+// ─── Kontakty ────────────────────────────────────────────────────────────────
+
+const contactNotFound = () => new HttpError(404, 'not_found', 'Kontakt neexistuje.')
+
+/** Kontakty domácnosti podľa e-mailu. */
+export async function listContacts(db: Db, householdId: string): Promise<ContactDto[]> {
+  return db
+    .select({ id: contacts.id, email: contacts.email, name: contacts.name })
+    .from(contacts)
+    .where(eq(contacts.householdId, householdId))
+    .orderBy(asc(contacts.email))
+}
+
+export async function renameContact(
+  db: Db,
+  householdId: string,
+  id: string,
+  name: string | null,
+): Promise<void> {
+  const res = await db
+    .update(contacts)
+    .set({ name })
+    .where(and(eq(contacts.id, id), eq(contacts.householdId, householdId)))
+    .returning({ id: contacts.id })
+  if (res.length === 0) throw contactNotFound()
+}
+
+/** Zmaže kontakt; zdieľania s ním ostávajú. */
+export async function deleteContact(db: Db, householdId: string, id: string): Promise<void> {
+  const res = await db
+    .delete(contacts)
+    .where(and(eq(contacts.id, id), eq(contacts.householdId, householdId)))
+    .returning({ id: contacts.id })
+  if (res.length === 0) throw contactNotFound()
 }

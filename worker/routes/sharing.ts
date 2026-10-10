@@ -1,13 +1,20 @@
 import { Hono } from 'hono'
-import { acceptShareSchema, createShareSchema, shareItemsSchema } from '../../shared/schemas/sharing'
+import {
+  acceptShareSchema,
+  createShareSchema,
+  dismissNoticeSchema,
+  shareItemsSchema,
+} from '../../shared/schemas/sharing'
 import type { AppEnv } from '../env'
 import { parseBody } from '../http'
 import {
   acceptShare,
   createShares,
   declineShare,
+  dismissChangedNotice,
   leaveShare,
   listIncoming,
+  listNotices,
   listOutgoing,
   markShareSeen,
   removeShareItems,
@@ -24,6 +31,12 @@ export const sharingRoutes = new Hono<AppEnv>()
   })
   .get('/outgoing', async (c) => c.json(await listOutgoing(c.get('db'), c.get('user').householdId)))
   .get('/incoming', async (c) => c.json(await listIncoming(c.get('db'), c.get('user'))))
+  .get('/notices', async (c) => c.json(await listNotices(c.get('db'), c.get('user'))))
+  .post('/notices/dismiss', async (c) => {
+    const { recipeId } = await parseBody(c, dismissNoticeSchema)
+    await dismissChangedNotice(c.get('db'), c.get('user').householdId, recipeId)
+    return c.json(ok)
+  })
   .post('/:id/accept', async (c) => {
     // Bez tela = prijať všetko.
     const body = c.req.header('content-type')?.includes('json') ? await parseBody(c, acceptShareSchema) : {}
