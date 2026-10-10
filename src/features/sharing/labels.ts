@@ -19,7 +19,7 @@ export function shareWhat(share: {
 /** Farba čipu stavu ponuky (z témy). */
 export const STATUS_COLORS: Readonly<Record<ShareStatus, string>> = {
   pending: 'warning',
-  accepted: 'success',
+  accepted: 'primary',
   declined: 'error',
   revoked: 'secondary',
 }

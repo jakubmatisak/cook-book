@@ -34,10 +34,16 @@ export const SECONDARY_NAV: readonly NavItem[] = [
   { to: '/ingredients', titleKey: 'common.nav.ingredients', icon: mdiFormatListChecks },
   { to: '/tags', titleKey: 'common.nav.tags', icon: mdiTagMultipleOutline },
   { to: '/pantry', titleKey: 'common.nav.pantry', icon: mdiFridgeOutline },
-  { to: '/sharing', titleKey: 'common.nav.sharing', icon: mdiShareVariantOutline },
 ]
 
 /** Nastavenia: v ponuke účtu vpravo hore (spolu s odhlásením a verziou), nie v bočnom menu. */
 export const SETTINGS_NAV: NavItem = { to: '/settings', titleKey: 'common.nav.settings', icon: mdiCogOutline }
 
-export const NAV_ITEMS: readonly NavItem[] = [...PRIMARY_NAV, ...SECONDARY_NAV, SETTINGS_NAV]
+/** Zdieľanie receptov: tiež v ponuke účtu, s počtom čakajúcich ponúk. */
+export const SHARING_NAV: NavItem = {
+  to: '/sharing',
+  titleKey: 'common.nav.sharing',
+  icon: mdiShareVariantOutline,
+}
+
+export const NAV_ITEMS: readonly NavItem[] = [...PRIMARY_NAV, ...SECONDARY_NAV, SHARING_NAV, SETTINGS_NAV]

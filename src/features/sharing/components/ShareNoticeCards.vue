@@ -87,63 +87,66 @@ async function showNew(shareId: string) {
 
 <template>
   <div v-if="list.length" class="d-flex flex-column ga-3 mb-4">
+    <!-- Kompaktný riadok: ikona a text vľavo, akcie vpravo (na úzkom displeji sa zalomia pod text). -->
     <v-card v-for="n in list" :key="keyOf(n)" variant="tonal" color="primary" data-test="share-notice">
-      <v-card-item :prepend-icon="n.kind === 'changed' ? mdiSourceFork : mdiAccountMultipleOutline">
-        <v-card-title class="text-wrap text-title-medium">{{ text(n) }}</v-card-title>
-        <v-card-subtitle v-if="n.kind === 'offer' && n.message" class="text-wrap"
-          >„{{ n.message }}“</v-card-subtitle
-        >
-      </v-card-item>
-      <v-card-actions class="flex-wrap ga-1 px-4 pb-3">
-        <template v-if="n.kind === 'offer'">
-          <v-btn
-            variant="flat"
-            color="primary"
-            :loading="accept.isPending.value"
-            data-test="notice-accept"
-            @click="run(() => accept.mutateAsync({ id: n.shareId }), t('sharing.done.accepted'))"
-          >
-            {{ t('sharing.actions.accept') }}
-          </v-btn>
-          <v-btn variant="text" data-test="notice-pick" @click="pick(n.shareId)">
-            {{ t('sharing.actions.pick') }}
-          </v-btn>
-          <v-btn
-            variant="text"
-            data-test="notice-decline"
-            @click="run(() => decline.mutateAsync({ id: n.shareId }), t('sharing.done.declined'))"
-          >
-            {{ t('sharing.actions.decline') }}
-          </v-btn>
-        </template>
-        <template v-else-if="n.kind === 'new'">
-          <v-btn variant="flat" color="primary" data-test="notice-show" @click="showNew(n.shareId)">
-            {{ t('sharing.actions.show') }}
-          </v-btn>
-          <v-btn
-            variant="text"
-            data-test="notice-hide"
-            @click="run(() => seen.mutateAsync({ id: n.shareId }))"
-          >
-            {{ t('sharing.actions.hide') }}
-          </v-btn>
-        </template>
-        <template v-else>
-          <v-btn variant="flat" color="primary" :to="`/public/${n.sourceId}`" data-test="notice-original">
-            {{ t('sharing.actions.openOriginal') }}
-          </v-btn>
-          <v-btn variant="text" data-test="notice-replace" @click="askReplace(n)">
-            {{ t('sharing.actions.replaceCopy') }}
-          </v-btn>
-          <v-btn
-            variant="text"
-            data-test="notice-dismiss"
-            @click="run(() => dismiss.mutateAsync(n.recipeId))"
-          >
-            {{ t('sharing.actions.hide') }}
-          </v-btn>
-        </template>
-      </v-card-actions>
+      <div class="d-flex flex-wrap align-center ga-3 pa-3">
+        <div class="d-flex align-center ga-3 flex-grow-1" style="min-width: 220px">
+          <v-icon :icon="n.kind === 'changed' ? mdiSourceFork : mdiAccountMultipleOutline" class="ms-1" />
+          <div>
+            <div class="text-body-large font-weight-medium">{{ text(n) }}</div>
+            <div v-if="n.kind === 'offer' && n.message" class="text-body-medium">„{{ n.message }}“</div>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap ga-2">
+          <template v-if="n.kind === 'offer'">
+            <v-btn
+              color="primary"
+              :loading="accept.isPending.value"
+              data-test="notice-accept"
+              @click="run(() => accept.mutateAsync({ id: n.shareId }), t('sharing.done.accepted'))"
+            >
+              {{ t('sharing.actions.accept') }}
+            </v-btn>
+            <v-btn variant="outlined" data-test="notice-pick" @click="pick(n.shareId)">
+              {{ t('sharing.actions.pick') }}
+            </v-btn>
+            <v-btn
+              variant="text"
+              data-test="notice-decline"
+              @click="run(() => decline.mutateAsync({ id: n.shareId }), t('sharing.done.declined'))"
+            >
+              {{ t('sharing.actions.decline') }}
+            </v-btn>
+          </template>
+          <template v-else-if="n.kind === 'new'">
+            <v-btn color="primary" data-test="notice-show" @click="showNew(n.shareId)">
+              {{ t('sharing.actions.show') }}
+            </v-btn>
+            <v-btn
+              variant="text"
+              data-test="notice-hide"
+              @click="run(() => seen.mutateAsync({ id: n.shareId }))"
+            >
+              {{ t('sharing.actions.hide') }}
+            </v-btn>
+          </template>
+          <template v-else>
+            <v-btn color="primary" data-test="notice-original" @click="router.push(`/public/${n.sourceId}`)">
+              {{ t('sharing.actions.openOriginal') }}
+            </v-btn>
+            <v-btn variant="outlined" data-test="notice-replace" @click="askReplace(n)">
+              {{ t('sharing.actions.replaceCopy') }}
+            </v-btn>
+            <v-btn
+              variant="text"
+              data-test="notice-dismiss"
+              @click="run(() => dismiss.mutateAsync(n.recipeId))"
+            >
+              {{ t('sharing.actions.hide') }}
+            </v-btn>
+          </template>
+        </div>
+      </div>
     </v-card>
 
     <AcceptShareDialog v-if="picking" v-model="pickOpen" :share="picking" @done="notify" />

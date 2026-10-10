@@ -15,7 +15,7 @@ import {
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { errorText } from '@/i18n/errors'
-import { formatDate } from '@/i18n/format'
+import { formatDate, tc } from '@/i18n/format'
 import AcceptShareDialog from '../components/AcceptShareDialog.vue'
 import { shareWhat, STATUS_COLORS } from '../labels'
 
@@ -104,7 +104,7 @@ function pick(share: IncomingShareDto) {
                 v-for="recipe in share.recipes"
                 :key="recipe.id"
                 size="small"
-                variant="outlined"
+                variant="tonal"
                 :closable="share.status === 'pending' || share.status === 'accepted'"
                 :close-label="t('sharing.actions.removeRecipe')"
                 :data-test="`share-recipe-${recipe.id}`"
@@ -171,22 +171,16 @@ function pick(share: IncomingShareDto) {
             <v-divider v-if="index > 0" />
             <v-list-item data-test="incoming-share">
               <v-list-item-title class="font-weight-medium">{{ shareWhat(share) }}</v-list-item-title>
-              <v-list-item-subtitle>
-                {{ t('sharing.fromHousehold', { name: share.fromName, household: share.fromHouseholdName }) }}
-                ·
-                {{ formatDate(share.createdAt) }}
-              </v-list-item-subtitle>
+              <v-list-item-subtitle>{{ formatDate(share.createdAt) }}</v-list-item-subtitle>
               <div v-if="share.message" class="text-body-medium mt-1">„{{ share.message }}“</div>
-              <div
-                v-if="share.status === 'accepted' && share.recipes.length"
-                class="d-flex flex-wrap ga-1 mt-2"
-              >
+              <!-- Čakajúca ponuka ukáže, čo obsahuje; po prijatí čipy otvárajú recept na čítanie. -->
+              <div v-if="share.recipes.length" class="d-flex flex-wrap ga-1 mt-2">
                 <v-chip
                   v-for="recipe in share.recipes"
                   :key="recipe.id"
                   size="small"
-                  variant="outlined"
-                  :to="`/public/${recipe.id}`"
+                  variant="tonal"
+                  :to="share.status === 'accepted' ? `/public/${recipe.id}` : undefined"
                 >
                   {{ recipe.title }}
                 </v-chip>
@@ -194,19 +188,16 @@ function pick(share: IncomingShareDto) {
               <div v-if="share.status === 'pending'" class="d-flex flex-wrap ga-2 mt-3">
                 <v-btn
                   color="primary"
-                  variant="flat"
-                  size="small"
                   data-test="share-accept"
                   @click="run(() => accept.mutateAsync({ id: share.id }), t('sharing.done.accepted'))"
                 >
                   {{ t('sharing.actions.accept') }}
                 </v-btn>
-                <v-btn v-if="share.kind === 'recipes'" variant="text" size="small" @click="pick(share)">
+                <v-btn v-if="share.kind === 'recipes'" variant="outlined" @click="pick(share)">
                   {{ t('sharing.actions.pick') }}
                 </v-btn>
                 <v-btn
                   variant="text"
-                  size="small"
                   data-test="share-decline"
                   @click="run(() => decline.mutateAsync({ id: share.id }), t('sharing.done.declined'))"
                 >
@@ -215,7 +206,9 @@ function pick(share: IncomingShareDto) {
               </div>
               <template #append>
                 <div class="d-flex align-center ga-1">
-                  <v-badge v-if="share.newCount" :content="share.newCount" color="primary" inline />
+                  <v-chip v-if="share.newCount" color="primary" variant="flat" size="small">
+                    {{ tc('sharing.newCount', share.newCount) }}
+                  </v-chip>
                   <v-chip :color="STATUS_COLORS[share.status]" variant="tonal" size="small">
                     {{ t(`sharing.status.${share.status}`) }}
                   </v-chip>

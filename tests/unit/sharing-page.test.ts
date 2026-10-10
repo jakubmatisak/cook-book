@@ -113,7 +113,8 @@ describe('stránka Zdieľanie', () => {
     await wrapper.find('[data-test="tab-incoming"]').trigger('click')
     await flushPromises()
     const row = wrapper.find('[data-test="incoming-share"]')
-    expect(row.text()).toContain('Od Jakub (Matisákovci)')
+    expect(wrapper.text()).toContain('Od: Jakub (Matisákovci)')
+    expect(row.text()).toContain('Bábovka')
     expect(row.text()).toContain('Z Vianoc')
     await row.find('[data-test="share-accept"]').trigger('click')
     await flushPromises()
@@ -168,7 +169,7 @@ describe('upozornenia na Prehľade', () => {
       '/sharing/incoming': [],
       'POST /recipes/c1/replace-from-source': { id: 'c1', title: 'Bábovka' },
     })
-    expect(wrapper.text()).toContain('Recept Bábovka, ktorý máš skopírovaný, sa u Jakub zmenil')
+    expect(wrapper.text()).toContain('Originál receptu Bábovka sa zmenil · zdieľa Jakub')
     await wrapper.find('[data-test="notice-replace"]').trigger('click')
     await flushPromises()
     await click('[data-test="confirm-ok"]')

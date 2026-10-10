@@ -27,7 +27,7 @@ import { APP_VERSION_LABEL } from '@/lib/version'
 import { LOGO_ICON } from '@/design/logo'
 import { useApplyTheme, useThemePreference, type ThemePreference } from '@/composables/useThemePreference'
 import { navigationPending } from '@/router/navigationPending'
-import { PRIMARY_NAV, SECONDARY_NAV, SETTINGS_NAV } from './navigation'
+import { PRIMARY_NAV, SECONDARY_NAV, SETTINGS_NAV, SHARING_NAV } from './navigation'
 
 const { mdAndUp } = useDisplay()
 const showLogout = typeof location !== 'undefined' && canLogout(location.hostname)
@@ -83,11 +83,11 @@ watch(rail, (value) => {
   }
 })
 
-// Odznak pri Zdieľaní: počet čakajúcich ponúk receptov.
+// Odznak pri Zdieľaní (v ponuke účtu aj na ikone účtu): počet čakajúcich ponúk receptov.
 const { data: notices } = useShareNotices()
-const badges = computed<Record<string, number>>(() => ({
-  '/sharing': (Array.isArray(notices.value) ? notices.value : []).filter((n) => n.kind === 'offer').length,
-}))
+const pendingOffers = computed(
+  () => (Array.isArray(notices.value) ? notices.value : []).filter((n) => n.kind === 'offer').length,
+)
 
 /** Mobil: menu so všetkými stránkami otvorené tlačidlom. */
 const mobileMenu = ref(false)
@@ -143,18 +143,38 @@ const mobileMenu = ref(false)
           data-test="theme-toggle"
           @click="cycle"
         />
-        <!-- Pravý roh: nastavenia, odhlásenie (len pri Cloudflare Access) a pod tým názov a verzia aplikácie. -->
+        <!-- Pravý roh: zdieľanie (s počtom čakajúcich ponúk), nastavenia, odhlásenie (len pri Cloudflare Access) a pod tým názov a verzia aplikácie. -->
         <v-menu>
           <template #activator="{ props }">
             <v-btn
               v-bind="props"
-              :icon="mdiAccountCircleOutline"
+              icon
               variant="text"
               :aria-label="t('common.shell.account')"
               data-test="account"
-            />
+            >
+              <v-badge
+                v-if="pendingOffers"
+                :content="pendingOffers"
+                color="primary"
+                data-test="account-badge"
+              >
+                <v-icon :icon="mdiAccountCircleOutline" />
+              </v-badge>
+              <v-icon v-else :icon="mdiAccountCircleOutline" />
+            </v-btn>
           </template>
           <v-list min-width="240" data-test="account-menu">
+            <v-list-item
+              :to="SHARING_NAV.to"
+              :title="t(SHARING_NAV.titleKey)"
+              :prepend-icon="SHARING_NAV.icon"
+              data-test="account-sharing"
+            >
+              <template v-if="pendingOffers" #append>
+                <v-badge :content="pendingOffers" color="primary" inline data-test="nav-badge" />
+              </template>
+            </v-list-item>
             <v-list-item
               :to="SETTINGS_NAV.to"
               :title="t(SETTINGS_NAV.titleKey)"
@@ -213,11 +233,7 @@ const mobileMenu = ref(false)
           :title="t(item.titleKey)"
           rounded="sm"
           data-test="nav-item"
-        >
-          <template v-if="badges[item.to]" #append>
-            <v-badge :content="badges[item.to]" color="primary" inline data-test="nav-badge" />
-          </template>
-        </v-list-item>
+        />
       </v-list>
       <!-- Zbalenie a rozbalenie bočného menu: šípka dolu v menu. -->
       <template #append>
@@ -253,11 +269,7 @@ const mobileMenu = ref(false)
           rounded="sm"
           data-test="nav-item"
           @click="mobileMenu = false"
-        >
-          <template v-if="badges[item.to]" #append>
-            <v-badge :content="badges[item.to]" color="primary" inline data-test="nav-badge" />
-          </template>
-        </v-list-item>
+        />
       </v-list>
     </v-navigation-drawer>
 

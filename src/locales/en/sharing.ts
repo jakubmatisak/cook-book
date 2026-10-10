@@ -24,7 +24,7 @@ export default {
     send: 'Share',
     sent: 'Share offer sent.',
     accessHint:
-      'So that {emails} can sign in to the app, add their e-mail to Cloudflare Access. The share will wait for them.',
+      'New e-mails ({emails}) need to be added to Cloudflare Access, otherwise they cannot sign in. The share will wait for them.',
   },
   tabs: { outgoing: 'I share', incoming: 'Shared with me' },
   status: {
@@ -38,9 +38,9 @@ export default {
     category: 'Category {name}',
     tag: 'Tag {name}',
   },
-  from: 'From {name}',
-  fromHousehold: 'From {name} ({household})',
-  to: 'For {name}',
+  from: 'From: {name}',
+  fromHousehold: 'From: {name} ({household})',
+  newCount: '+{n} new',
   actions: {
     revoke: 'Stop sharing',
     removeRecipe: 'Remove from share',
@@ -73,9 +73,9 @@ export default {
   },
   notice: {
     offer: '{name} wants to share {recipes} with you',
-    newTag: '{recipes} added to the tag {label} from {name}',
-    newCategory: '{recipes} added to the category {label} from {name}',
-    changed: 'The recipe {title} you copied has changed at {name}',
+    newTag: 'New in the tag {label}: {recipes} · shared by {name}',
+    newCategory: 'New in the category {label}: {recipes} · shared by {name}',
+    changed: 'The original of {title} has changed · shared by {name}',
   },
   empty: {
     outgoingTitle: 'You are not sharing anything yet',
@@ -86,8 +86,8 @@ export default {
   },
   recipe: {
     sharedWith: 'Shared with: {names}',
-    copiedFrom: 'Copied from {name}',
-    sharedFrom: 'From {name}',
+    copiedFrom: 'Copied from: {name}',
+    sharedFrom: 'From: {name}',
     addToPlan: 'Add to plan',
     copyFailed: 'Copying the recipe failed.',
   },

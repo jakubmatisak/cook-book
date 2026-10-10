@@ -89,7 +89,7 @@ describe('zdieľané recepty v zozname', () => {
       global: { plugins: [...mountPlugins(), router] },
     })
     mounted.push(wrapper)
-    expect(wrapper.find('[data-test="shared-badge"]').text()).toBe('Od Jakub')
+    expect(wrapper.find('[data-test="shared-badge"]').text()).toBe('Od: Jakub')
     expect(wrapper.find('[data-test="public-badge"]').exists()).toBe(false)
     expect(wrapper.find('a').attributes('href')).toBe('/public/r1')
   })
@@ -120,7 +120,7 @@ describe('detail zdieľaného receptu', () => {
       },
       '/public/:id',
     )
-    expect(wrapper.find('[data-test="shared-from"]').text()).toBe('Od Jakub')
+    expect(wrapper.find('[data-test="shared-from"]').text()).toBe('Od: Jakub')
     await wrapper.find('[data-test="shared-plan"]').trigger('click')
     await flushPromises()
     expect(calls.some((c) => c.method === 'POST' && c.path === '/public/recipes/r1/copy')).toBe(true)

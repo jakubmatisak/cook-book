@@ -24,7 +24,7 @@ export default {
     send: 'Zdieľať',
     sent: 'Ponuka zdieľania odoslaná.',
     accessHint:
-      'Aby sa {emails} mohli prihlásiť do aplikácie, pridaj ich e-mail do Cloudflare Access. Zdieľanie na nich počká.',
+      'Nové e-maily ({emails}) treba pridať do Cloudflare Access, inak sa do aplikácie neprihlásia. Zdieľanie na ne počká.',
   },
   tabs: { outgoing: 'Zdieľam', incoming: 'Zdieľané so mnou' },
   status: {
@@ -38,9 +38,9 @@ export default {
     category: 'Kategória {name}',
     tag: 'Tag {name}',
   },
-  from: 'Od {name}',
-  fromHousehold: 'Od {name} ({household})',
-  to: 'Pre {name}',
+  from: 'Od: {name}',
+  fromHousehold: 'Od: {name} ({household})',
+  newCount: '+{n} nový | +{n} nové | +{n} nových',
   actions: {
     revoke: 'Zrušiť zdieľanie',
     removeRecipe: 'Odobrať zo zdieľania',
@@ -73,9 +73,9 @@ export default {
   },
   notice: {
     offer: '{name} s tebou chce zdieľať {recipes}',
-    newTag: 'V tagu {label} od {name} pribudli {recipes}',
-    newCategory: 'V kategórii {label} od {name} pribudli {recipes}',
-    changed: 'Recept {title}, ktorý máš skopírovaný, sa u {name} zmenil',
+    newTag: 'Nové v tagu {label}: {recipes} · zdieľa {name}',
+    newCategory: 'Nové v kategórii {label}: {recipes} · zdieľa {name}',
+    changed: 'Originál receptu {title} sa zmenil · zdieľa {name}',
   },
   empty: {
     outgoingTitle: 'Zatiaľ nič nezdieľaš',
@@ -86,8 +86,8 @@ export default {
   },
   recipe: {
     sharedWith: 'Zdieľané so: {names}',
-    copiedFrom: 'Skopírované od {name}',
-    sharedFrom: 'Od {name}',
+    copiedFrom: 'Skopírované od: {name}',
+    sharedFrom: 'Od: {name}',
     addToPlan: 'Pridať do plánu',
     copyFailed: 'Kópia receptu zlyhala.',
   },

@@ -8,17 +8,7 @@ import { NAV_ITEMS } from '@/components/navigation'
 import { setActiveHousehold } from '@/lib/household'
 import { createAppVuetify } from '@/plugins/vuetify'
 
-const ALL_TITLES = [
-  'Prehľad',
-  'Recepty',
-  'Plán',
-  'Nákup',
-  'Pri stole',
-  'Ingrediencie',
-  'Tagy',
-  'Špajza',
-  'Zdieľanie',
-]
+const ALL_TITLES = ['Prehľad', 'Recepty', 'Plán', 'Nákup', 'Pri stole', 'Ingrediencie', 'Tagy', 'Špajza']
 
 function setViewport(width: number) {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
@@ -152,7 +142,7 @@ describe('AppShell', () => {
 })
 
 describe('zdieľanie v menu', () => {
-  it('položka Zdieľanie má odznak s počtom čakajúcich ponúk', async () => {
+  it('Zdieľanie je v ponuke účtu (nie v bočnom menu) a čakajúce ponuky ukazuje odznak aj na ikone účtu', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockImplementation((url: string) => {
@@ -171,10 +161,14 @@ describe('zdieľanie v menu', () => {
       }),
     )
     const wrapper = await mountShell(1440)
-    const item = wrapper
-      .findAll('[data-test="side-nav"] [data-test="nav-item"]')
-      .find((i) => i.text().includes('Zdieľanie'))
-    expect(item?.find('[data-test="nav-badge"]').text()).toBe('2')
+    expect(navTitles(wrapper, 'side-nav')).not.toContain('Zdieľanie')
+    expect(wrapper.find('[data-test="account-badge"]').text()).toBe('2')
+    await wrapper.find('[data-test="account"]').trigger('click')
+    await flushPromises()
+    const sharing = document.querySelector<HTMLAnchorElement>('[data-test="account-sharing"]')
+    expect(sharing?.getAttribute('href')).toBe('/sharing')
+    expect(sharing?.textContent).toContain('Zdieľanie')
+    expect(sharing?.querySelector('[data-test="nav-badge"]')?.textContent).toBe('2')
   })
 })
 
