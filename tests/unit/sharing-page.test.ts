@@ -77,31 +77,73 @@ const posted = (calls: { method: string; path: string; body: unknown }[], path: 
   calls.find((c) => c.method === 'POST' && c.path === path)
 
 describe('stránka Zdieľanie', () => {
-  it('karta Zdieľam ukáže komu, čo a stav; zrušenie zavolá API', async () => {
-    const { wrapper, calls } = await mountWith(SharingPage, {
-      '/sharing/outgoing': [outgoing],
-      '/sharing/incoming': [],
-      'POST /sharing/s1/revoke': { ok: true },
-    })
+  it('karta Zdieľam: krátky riadok s ukážkou receptov, nie zoznam všetkých', async () => {
+    const many = {
+      ...outgoing,
+      recipeCount: 7,
+      recipes: ['Anýzové', 'Bábovka', 'Croissant', 'Dobošova', 'Erdbeer', 'Fánky', 'Guláš'].map(
+        (title, i) => ({
+          id: `m${i}`,
+          title,
+        }),
+      ),
+    }
+    const { wrapper } = await mountWith(SharingPage, { '/sharing/outgoing': [many], '/sharing/incoming': [] })
     const row = wrapper.find('[data-test="outgoing-share"]')
     expect(row.text()).toContain('Svokra')
-    expect(row.text()).toContain('2 recepty')
+    expect(row.text()).toContain('7 receptov')
     expect(row.text()).toContain('Prijaté')
-    await row.find('[data-test="share-actions"]').trigger('click')
+    expect(row.find('[data-test="share-preview"]').text()).toBe('Anýzové, Bábovka, Croissant a ďalšie 4')
+    expect(row.findAll('.v-chip').length).toBe(1)
+  })
+
+  it('okno zdieľania: hľadanie, hromadné odobratie a zrušenie celého zdieľania', async () => {
+    const big = {
+      ...outgoing,
+      recipeCount: 7,
+      recipes: [
+        ...['Anýz', 'Croissant', 'Dobošova', 'Erdbeer', 'Fánky'].map((title, i) => ({ id: `f${i}`, title })),
+        ...outgoing.recipes,
+      ],
+    }
+    const { wrapper, calls } = await mountWith(SharingPage, {
+      '/sharing/outgoing': [big],
+      '/sharing/incoming': [],
+      'POST /sharing/s1/items/remove': { ok: true },
+      'POST /sharing/s1/revoke': { ok: true },
+    })
+    await wrapper.find('[data-test="outgoing-share"]').trigger('click')
     await flushPromises()
+    const dialog = () => document.querySelector('[data-test="share-detail"]')!
+    expect(dialog().textContent).toContain('Bábovka')
+
+    const search = dialog().querySelector<HTMLInputElement>('[data-test="share-search"] input')!
+    search.value = 'gul'
+    search.dispatchEvent(new Event('input'))
+    await flushPromises()
+    expect(dialog().textContent).not.toContain('Bábovka')
+    await click('[data-test="share-item-r2"]')
+    await click('[data-test="share-remove-selected"]')
+    expect(posted(calls, '/sharing/s1/items/remove')?.body).toEqual({ recipeIds: ['r2'] })
+
     await click('[data-test="share-revoke"]')
+    await click('[data-test="confirm-ok"]')
     expect(posted(calls, '/sharing/s1/revoke')).toBeTruthy()
   })
 
-  it('recept sa dá odobrať zo zdieľania', async () => {
-    const { wrapper, calls } = await mountWith(SharingPage, {
-      '/sharing/outgoing': [outgoing],
-      '/sharing/incoming': [],
-      'POST /sharing/s1/items/remove': { ok: true },
+  it('okno prijatého zdieľania ukáže recepty ako odkazy na čítanie', async () => {
+    const accepted = { ...pending, id: 's3', status: 'accepted' as const }
+    const { wrapper } = await mountWith(SharingPage, {
+      '/sharing/outgoing': [],
+      '/sharing/incoming': [accepted],
     })
-    await wrapper.find('[data-test="share-recipe-r2"] .v-chip__close').trigger('click')
+    await wrapper.find('[data-test="tab-incoming"]').trigger('click')
     await flushPromises()
-    expect(posted(calls, '/sharing/s1/items/remove')?.body).toEqual({ recipeIds: ['r2'] })
+    await wrapper.find('[data-test="incoming-share"]').trigger('click')
+    await flushPromises()
+    const link = document.querySelector<HTMLAnchorElement>('[data-test="share-detail"] a[href="/public/r1"]')
+    expect(link?.textContent).toContain('Bábovka')
+    expect(document.querySelector('[data-test="share-remove-selected"]')).toBeNull()
   })
 
   it('karta Zdieľané so mnou ukáže čakajúcu ponuku s prijatím', async () => {

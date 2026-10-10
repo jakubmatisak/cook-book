@@ -41,6 +41,14 @@ export default {
   from: 'From: {name}',
   fromHousehold: 'From: {name} ({household})',
   newCount: '+{n} new',
+  preview: { more: '{names} and {n} more | {names} and {n} more' },
+  detail: {
+    search: 'Search recipe',
+    selectAll: 'Select all ({n})',
+    noMatch: 'No recipe matches the search.',
+    removeSelected: 'Remove selected | Remove selected ({n})',
+    revokeText: 'The share will be cancelled; the recipient loses the recipes, their copies stay.',
+  },
   actions: {
     revoke: 'Stop sharing',
     removeRecipe: 'Remove from share',

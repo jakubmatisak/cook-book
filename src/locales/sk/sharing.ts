@@ -41,6 +41,14 @@ export default {
   from: 'Od: {name}',
   fromHousehold: 'Od: {name} ({household})',
   newCount: '+{n} nový | +{n} nové | +{n} nových',
+  preview: { more: '{names} a ďalší {n} | {names} a ďalšie {n} | {names} a ďalších {n}' },
+  detail: {
+    search: 'Hľadať recept',
+    selectAll: 'Vybrať všetky ({n})',
+    noMatch: 'Žiadny recept nevyhovuje hľadaniu.',
+    removeSelected: 'Odobrať vybraný | Odobrať vybrané ({n}) | Odobrať vybraných ({n})',
+    revokeText: 'Zdieľanie sa zruší; príjemca recepty stratí, jeho kópie mu ostanú.',
+  },
   actions: {
     revoke: 'Zrušiť zdieľanie',
     removeRecipe: 'Odobrať zo zdieľania',

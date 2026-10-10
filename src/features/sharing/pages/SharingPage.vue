@@ -1,30 +1,27 @@
 <script setup lang="ts">
-import { mdiAccountMultipleOutline, mdiDotsVertical, mdiShareVariantOutline } from '@mdi/js'
+import { mdiAccountMultipleOutline, mdiChevronRight, mdiDotsVertical, mdiShareVariantOutline } from '@mdi/js'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { IncomingShareDto } from '@shared/api'
+import type { IncomingShareDto, OutgoingShareDto } from '@shared/api'
 import {
   useAcceptShare,
   useDeclineShare,
   useIncomingShares,
   useLeaveShare,
   useOutgoingShares,
-  useRemoveShareItems,
-  useRevokeShare,
 } from '@/api/sharing'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { errorText } from '@/i18n/errors'
 import { formatDate, tc } from '@/i18n/format'
 import AcceptShareDialog from '../components/AcceptShareDialog.vue'
+import ShareDetailDialog from '../components/ShareDetailDialog.vue'
 import { shareWhat, STATUS_COLORS } from '../labels'
 
 const { t } = useI18n()
 const tab = ref<'outgoing' | 'incoming'>('outgoing')
 const { data: outgoing, isPending: outgoingPending, error: outgoingError } = useOutgoingShares()
 const { data: incoming, isPending: incomingPending, error: incomingError } = useIncomingShares()
-const revoke = useRevokeShare()
-const removeItems = useRemoveShareItems()
 const accept = useAcceptShare()
 const decline = useDeclineShare()
 const leave = useLeaveShare()
@@ -38,6 +35,17 @@ async function run(action: () => Promise<unknown>, done: string) {
   } catch (e) {
     notify(errorText(e), 'error')
   }
+}
+
+/** Ukážka obsahu v riadku: prvé tri recepty a počet ďalších (celý zoznam je v detaile). */
+const PREVIEW = 3
+function preview(share: { recipes: { title: string }[] }): string {
+  const names = share.recipes
+    .slice(0, PREVIEW)
+    .map((r) => r.title)
+    .join(', ')
+  const rest = share.recipes.length - PREVIEW
+  return rest > 0 ? tc('sharing.preview.more', rest, { names }) : names
 }
 
 /** Prijaté a čakajúce zdieľania zoskupené podľa odosielateľa (domácnosti). */
@@ -62,6 +70,30 @@ function pick(share: IncomingShareDto) {
   picking.value = share
   pickOpen.value = true
 }
+
+// Detail zdieľania (všetky recepty, hľadanie, odobratie). Drží len ID, nech po zmene ukazuje čerstvé dáta.
+const detailId = ref<string | null>(null)
+const detailOpen = ref(false)
+const detail = computed<{
+  share: OutgoingShareDto | IncomingShareDto
+  outgoing: boolean
+  title: string
+} | null>(() => {
+  const out = outgoing.value?.find((s) => s.id === detailId.value)
+  if (out) return { share: out, outgoing: true, title: out.toName ?? out.toEmail }
+  const inc = incoming.value?.find((s) => s.id === detailId.value)
+  return inc
+    ? {
+        share: inc,
+        outgoing: false,
+        title: t('sharing.fromHousehold', { name: inc.fromName, household: inc.fromHouseholdName }),
+      }
+    : null
+})
+function openDetail(id: string) {
+  detailId.value = id
+  detailOpen.value = true
+}
 </script>
 
 <template>
@@ -85,10 +117,10 @@ function pick(share: IncomingShareDto) {
       :text="t('sharing.empty.outgoingText')"
     />
     <v-card v-else>
-      <v-list lines="two">
+      <v-list lines="three">
         <template v-for="(share, index) in outgoing" :key="share.id">
           <v-divider v-if="index > 0" />
-          <v-list-item data-test="outgoing-share">
+          <v-list-item data-test="outgoing-share" @click="openDetail(share.id)">
             <v-list-item-title class="font-weight-medium">
               {{ share.toName ?? share.toEmail }}
             </v-list-item-title>
@@ -97,26 +129,11 @@ function pick(share: IncomingShareDto) {
               {{ formatDate(share.createdAt) }}
             </v-list-item-subtitle>
             <div
-              v-if="share.kind === 'recipes' && share.recipes.length && share.status !== 'revoked'"
-              class="d-flex flex-wrap ga-1 mt-2"
+              v-if="share.recipes.length && share.status !== 'revoked'"
+              class="text-body-medium text-medium-emphasis text-truncate mt-1"
+              data-test="share-preview"
             >
-              <v-chip
-                v-for="recipe in share.recipes"
-                :key="recipe.id"
-                size="small"
-                variant="tonal"
-                :closable="share.status === 'pending' || share.status === 'accepted'"
-                :close-label="t('sharing.actions.removeRecipe')"
-                :data-test="`share-recipe-${recipe.id}`"
-                @click:close="
-                  run(
-                    () => removeItems.mutateAsync({ id: share.id, recipeIds: [recipe.id] }),
-                    t('sharing.done.removed'),
-                  )
-                "
-              >
-                {{ recipe.title }}
-              </v-chip>
+              {{ preview(share) }}
             </div>
             <template #append>
               <div class="d-flex align-center ga-1">
@@ -128,25 +145,7 @@ function pick(share: IncomingShareDto) {
                 >
                   {{ t(`sharing.status.${share.status}`) }}
                 </v-chip>
-                <v-menu v-if="share.status === 'pending' || share.status === 'accepted'">
-                  <template #activator="{ props }">
-                    <v-btn
-                      v-bind="props"
-                      :icon="mdiDotsVertical"
-                      variant="text"
-                      size="small"
-                      :aria-label="t('sharing.actions.more')"
-                      data-test="share-actions"
-                    />
-                  </template>
-                  <v-list density="compact">
-                    <v-list-item
-                      :title="t('sharing.actions.revoke')"
-                      data-test="share-revoke"
-                      @click="run(() => revoke.mutateAsync({ id: share.id }), t('sharing.done.revoked'))"
-                    />
-                  </v-list>
-                </v-menu>
+                <v-icon :icon="mdiChevronRight" />
               </div>
             </template>
           </v-list-item>
@@ -166,40 +165,35 @@ function pick(share: IncomingShareDto) {
     />
     <div v-else class="d-flex flex-column ga-4">
       <v-card v-for="group in incomingGroups" :key="group.title" :title="group.title">
-        <v-list lines="two">
+        <v-list lines="three">
           <template v-for="(share, index) in group.shares" :key="share.id">
             <v-divider v-if="index > 0" />
-            <v-list-item data-test="incoming-share">
+            <v-list-item data-test="incoming-share" @click="openDetail(share.id)">
               <v-list-item-title class="font-weight-medium">{{ shareWhat(share) }}</v-list-item-title>
               <v-list-item-subtitle>{{ formatDate(share.createdAt) }}</v-list-item-subtitle>
               <div v-if="share.message" class="text-body-medium mt-1">„{{ share.message }}“</div>
-              <!-- Čakajúca ponuka ukáže, čo obsahuje; po prijatí čipy otvárajú recept na čítanie. -->
-              <div v-if="share.recipes.length" class="d-flex flex-wrap ga-1 mt-2">
-                <v-chip
-                  v-for="recipe in share.recipes"
-                  :key="recipe.id"
-                  size="small"
-                  variant="tonal"
-                  :to="share.status === 'accepted' ? `/public/${recipe.id}` : undefined"
-                >
-                  {{ recipe.title }}
-                </v-chip>
+              <div
+                v-if="share.recipes.length"
+                class="text-body-medium text-medium-emphasis text-truncate mt-1"
+                data-test="share-preview"
+              >
+                {{ preview(share) }}
               </div>
               <div v-if="share.status === 'pending'" class="d-flex flex-wrap ga-2 mt-3">
                 <v-btn
                   color="primary"
                   data-test="share-accept"
-                  @click="run(() => accept.mutateAsync({ id: share.id }), t('sharing.done.accepted'))"
+                  @click.stop="run(() => accept.mutateAsync({ id: share.id }), t('sharing.done.accepted'))"
                 >
                   {{ t('sharing.actions.accept') }}
                 </v-btn>
-                <v-btn v-if="share.kind === 'recipes'" variant="outlined" @click="pick(share)">
+                <v-btn v-if="share.kind === 'recipes'" variant="outlined" @click.stop="pick(share)">
                   {{ t('sharing.actions.pick') }}
                 </v-btn>
                 <v-btn
                   variant="text"
                   data-test="share-decline"
-                  @click="run(() => decline.mutateAsync({ id: share.id }), t('sharing.done.declined'))"
+                  @click.stop="run(() => decline.mutateAsync({ id: share.id }), t('sharing.done.declined'))"
                 >
                   {{ t('sharing.actions.decline') }}
                 </v-btn>
@@ -220,6 +214,7 @@ function pick(share: IncomingShareDto) {
                         variant="text"
                         size="small"
                         :aria-label="t('sharing.actions.more')"
+                        @click.stop
                       />
                     </template>
                     <v-list density="compact">
@@ -239,6 +234,14 @@ function pick(share: IncomingShareDto) {
     </div>
   </template>
 
+  <ShareDetailDialog
+    v-if="detail"
+    v-model="detailOpen"
+    :share="detail.share"
+    :outgoing="detail.outgoing"
+    :title="detail.title"
+    @done="notify"
+  />
   <AcceptShareDialog v-if="picking" v-model="pickOpen" :share="picking" @done="notify" />
   <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">{{ snackbar.text }}</v-snackbar>
 </template>
