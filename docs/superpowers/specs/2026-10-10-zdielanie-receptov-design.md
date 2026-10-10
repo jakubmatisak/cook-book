@@ -131,3 +131,17 @@ receptov, pôvod kópie s upozornením na zmenu originálu.
 
 Verzia 1.10.0 (bežné miesta verzie), tag. Migrácia do produkčnej D1 a nasadenie až na pokyn používateľa; potom
 pridať e-mail príjemcu do Cloudflare Access a overiť v produkcii.
+
+## H. Spresnenia pri písaní plánu (2026-10-10)
+
+- **Prvé prihlásenie**: aplikácia už dnes pustí každého, koho pustí Cloudflare Access, a človek bez domácnosti si
+  na obrazovke „Založ si domácnosť“ založí vlastnú (`createOwnHousehold`). Automatické zakladanie preto netreba;
+  obrazovka nováčika len ukáže „Čakajú na teba zdieľané recepty“ (`/households/account` → `pendingShares`) a po
+  založení domácnosti uvidí ponuku na Prehľade. Bod B „Prvé prihlásenie“ sa nahrádza týmto.
+- **Pôvod kópie**: namiesto nového `copied_from_recipe_id` sa použije existujúci `recipes.parent_recipe_id` (už ho
+  nastavuje kópia verejného receptu, pri zmazaní originálu sa vynuluje); pribudnú len `copied_from_name` a
+  `copied_source_updated_at`.
+- **Detail zdieľaného receptu** používa existujúcu stránku cudzieho receptu `/public/:id` a API
+  `/public/recipes/:id` (prístup = verejný alebo zdieľaný s mojou domácnosťou).
+- **„Do nákupu“** sa vynecháva: ani vlastný recept nemá priame pridanie do nákupu (nákup vzniká z jedálnička).
+  Ostáva „Pridať do plánu“ cez tichú kópiu.
