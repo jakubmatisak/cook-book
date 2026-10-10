@@ -16,6 +16,7 @@ import { newId } from '../../shared/ids'
 import { UNIT_CODES } from '../../shared/units'
 import { RECIPE_CATEGORIES, RECIPE_VISIBILITIES, type RecipeCategory } from '../../shared/recipes'
 import { HOUSEHOLD_ROLES, MEMBER_KINDS, PLAN_AUDIENCES } from '../../shared/family'
+import { SHARE_KINDS, SHARE_STATUSES } from '../../shared/sharing'
 
 const nowIso = () => new Date().toISOString()
 
@@ -206,6 +207,10 @@ export const recipes = sqliteTable(
       onDelete: 'set null',
     }),
     variantLabel: text('variant_label'),
+    /** Kópia zdieľaného či verejného receptu: od koho je (meno alebo domácnosť) – pôvod ukazuje `parentRecipeId`. */
+    copiedFromName: text('copied_from_name'),
+    /** `updated_at` originálu v čase kópie (alebo poslednej náhrady); novší originál = upozornenie na zmenu. */
+    copiedSourceUpdatedAt: text('copied_source_updated_at'),
     createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -296,6 +301,68 @@ export const recipeTags = sqliteTable(
       .references(() => tags.id, { onDelete: 'cascade' }),
   },
   (t) => [primaryKey({ columns: [t.recipeId, t.tagId] }), index('recipe_tags_tag_idx').on(t.tagId)],
+)
+
+// ─── Zdieľanie receptov s inými domácnosťami ─────────────────────────────────
+
+/** Kontakty domácnosti: e-maily, s ktorými zdieľala recepty, s nepovinným menom (napr. „Svokra“). */
+export const contacts = sqliteTable(
+  'contacts',
+  {
+    id: id(),
+    householdId: householdRef(),
+    email: text('email').notNull(),
+    name: text('name'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('contacts_household_email_uq').on(t.householdId, t.email)],
+)
+
+/**
+ * Ponuka zdieľania: domácnosť ponúka recepty (vybrané, kategóriu alebo tag) na e-mail. Po prijatí ich má
+ * domácnosť príjemcu (`to_household_id`) len na čítanie.
+ */
+export const recipeShares = sqliteTable(
+  'recipe_shares',
+  {
+    id: id(),
+    fromHouseholdId: text('from_household_id')
+      .notNull()
+      .references(() => households.id, { onDelete: 'cascade' }),
+    fromUserId: text('from_user_id').references(() => users.id, { onDelete: 'set null' }),
+    toEmail: text('to_email').notNull(),
+    toHouseholdId: text('to_household_id').references(() => households.id, { onDelete: 'set null' }),
+    kind: text('kind', { enum: SHARE_KINDS }).notNull(),
+    category: text('category', { enum: RECIPE_CATEGORIES }),
+    tagId: text('tag_id').references(() => tags.id, { onDelete: 'cascade' }),
+    message: text('message'),
+    status: text('status', { enum: SHARE_STATUSES }).notNull().default('pending'),
+    createdAt: createdAt(),
+    respondedAt: text('responded_at'),
+    /** Kedy príjemca naposledy videl zdieľanie (recepty pridané neskôr sú „nové“). */
+    seenAt: text('seen_at'),
+  },
+  (t) => [
+    index('recipe_shares_to_email_idx').on(t.toEmail, t.status),
+    index('recipe_shares_to_household_idx').on(t.toHouseholdId, t.status),
+    index('recipe_shares_from_household_idx').on(t.fromHouseholdId, t.status),
+  ],
+)
+
+/** Recepty v ponuke druhu `recipes`. */
+export const recipeShareItems = sqliteTable(
+  'recipe_share_items',
+  {
+    shareId: text('share_id')
+      .notNull()
+      .references(() => recipeShares.id, { onDelete: 'cascade' }),
+    recipeId: recipeRef(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.shareId, t.recipeId] }),
+    index('recipe_share_items_recipe_idx').on(t.recipeId),
+  ],
 )
 
 export const recipeFavorites = sqliteTable(

@@ -4,6 +4,7 @@ import type { MemberPreference, PreferenceWarning } from './preferences'
 import type { Suggestion } from './suggest'
 import type { RecipeFacets } from './recipeFacets'
 import type { RecipeCategory, RecipeVisibility } from './recipes'
+import type { ShareKind, ShareStatus } from './sharing'
 import type { RecipeInputRaw } from './schemas/recipe'
 import type { UnitCode } from './units'
 import type { UserSettingsDto } from './userSettings'
@@ -194,6 +195,8 @@ export interface RecipeSummaryDto {
   missing?: string[]
   /** Len pri cudzom verejnom recepte (zoznam so zapnutými verejnými): názov domácnosti, ktorá ho zverejnila. */
   householdName?: string
+  /** Len pri recepte, ktorý so mnou zdieľa iná domácnosť: od koho (meno človeka alebo názov domácnosti). */
+  sharedFrom?: string
 }
 
 export interface RecipeIngredientDto {
@@ -235,6 +238,10 @@ export interface RecipeDetailDto extends RecipeSummaryDto {
   attachments?: RecipeAttachmentDto[]
   /** Kód odkazu na zdieľanie (`/s/<kód>`); null = recept sa nezdieľa. Len pre vlastnú domácnosť. */
   shareToken?: string | null
+  /** Komu je recept zdieľaný (mená kontaktov alebo e-maily, čakajúce aj prijaté). Len pre vlastnú domácnosť. */
+  sharedWith?: string[]
+  /** Kópia receptu od inej domácnosti: od koho je (napr. „Jakub“). */
+  copiedFrom?: string | null
   ingredients: RecipeIngredientDto[]
   steps: RecipeStepDto[]
 }
@@ -273,6 +280,60 @@ export interface PublicRecipeSummaryDto extends RecipeSummaryDto {
 export interface PublicRecipeDetailDto extends RecipeDetailDto {
   householdName: string
   ownedByMe: boolean
+}
+
+// ─── Zdieľanie receptov s e-mailom ───────────────────────────────────────────
+
+export type { ShareKind, ShareStatus }
+
+/** Odoslaná ponuka zdieľania (prehľad „Zdieľam“). */
+export interface OutgoingShareDto {
+  id: string
+  toEmail: string
+  /** Meno kontaktu, ak ho domácnosť pomenovala. */
+  toName: string | null
+  kind: ShareKind
+  category: RecipeCategory | null
+  tagName: string | null
+  /** Počet živých receptov, ktoré ponuka práve obsahuje. */
+  recipeCount: number
+  recipes: { id: string; title: string }[]
+  status: ShareStatus
+  message: string | null
+  createdAt: string
+}
+
+/** Prijatá alebo čakajúca ponuka (prehľad „Zdieľané so mnou“). */
+export interface IncomingShareDto {
+  id: string
+  fromName: string
+  fromHouseholdName: string
+  kind: ShareKind
+  category: RecipeCategory | null
+  tagName: string | null
+  message: string | null
+  status: ShareStatus
+  recipes: { id: string; title: string }[]
+  /** Recepty pridané po poslednom pozretí (pri kategórii a tagu). */
+  newCount: number
+  createdAt: string
+}
+
+/** Upozornenie na Prehľade: nová ponuka, pribudnuté recepty, zmenený originál kópie. */
+export type ShareNoticeDto =
+  | { kind: 'offer'; shareId: string; fromName: string; count: number; message: string | null }
+  | { kind: 'new'; shareId: string; fromName: string; label: string; count: number }
+  | { kind: 'changed'; recipeId: string; title: string; fromName: string; sourceId: string }
+
+export interface ContactDto {
+  id: string
+  email: string
+  name: string | null
+}
+
+/** Výsledok odoslania – vždy rovnaký, nech sa nedá zistiť, kto aplikáciu používa. */
+export interface CreateSharesResult {
+  sent: number
 }
 
 /** Hromadná úprava či mazanie: na koľkých položkách domácnosti sa zmena uplatnila. */
