@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { mdiCallMerge, mdiClose, mdiDeleteOutline, mdiPencilOutline } from '@mdi/js'
+import {
+  mdiAccountMultiplePlusOutline,
+  mdiCallMerge,
+  mdiClose,
+  mdiDeleteOutline,
+  mdiPencilOutline,
+} from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-/** `mergeable`: zobrazí aj Zlúčiť (ingrediencie), dostupné od dvoch vybraných. */
-defineProps<{ count: number; total: number; mergeable?: boolean }>()
-defineEmits<{ selectAll: []; clear: []; edit: []; merge: []; remove: []; close: [] }>()
+/** `mergeable`: zobrazí aj Zlúčiť (ingrediencie), dostupné od dvoch vybraných; `shareable`: aj Zdieľať s… (recepty). */
+defineProps<{ count: number; total: number; mergeable?: boolean; shareable?: boolean }>()
+defineEmits<{ selectAll: []; clear: []; edit: []; merge: []; share: []; remove: []; close: [] }>()
 </script>
 
 <template>
@@ -53,6 +59,17 @@ defineEmits<{ selectAll: []; clear: []; edit: []; merge: []; remove: []; close: 
         @click="$emit('merge')"
       >
         {{ t('bulk.merge') }}
+      </v-btn>
+      <v-btn
+        v-if="shareable"
+        :prepend-icon="mdiAccountMultiplePlusOutline"
+        variant="flat"
+        color="primary"
+        :disabled="count === 0"
+        data-test="bulk-share"
+        @click="$emit('share')"
+      >
+        {{ t('sharing.shareWith') }}
       </v-btn>
       <v-btn
         :prepend-icon="mdiDeleteOutline"

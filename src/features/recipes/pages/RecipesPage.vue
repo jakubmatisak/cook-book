@@ -40,6 +40,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useSelection } from '@/composables/useSelection'
 import ImportRecipeDialog from '../components/ImportRecipeDialog.vue'
 import RecipeBulkEditDialog from '../components/RecipeBulkEditDialog.vue'
+import ShareWithDialog from '@/features/sharing/components/ShareWithDialog.vue'
 import RecipeCard from '../components/RecipeCard.vue'
 import RecipeFilterPanel from '../components/RecipeFilterPanel.vue'
 import RecipeQuickFilters from '../components/RecipeQuickFilters.vue'
@@ -345,6 +346,7 @@ const selection = useSelection()
 const visibleIds = computed(() => recipes.value?.filter((r) => !r.householdName).map((r) => r.id) ?? [])
 watch(visibleIds, (ids) => selection.keepOnly(ids))
 const bulkEditOpen = ref(false)
+const bulkShareOpen = ref(false)
 const bulkDeleteOpen = ref(false)
 const bulkDelete = useBulkDeleteRecipes()
 const bulkSnackbar = ref({ show: false, text: '', color: 'success' })
@@ -574,10 +576,12 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         v-if="selection.active.value"
         :count="selection.count.value"
         :total="visibleIds.length"
+        shareable
         @select-all="selection.set(visibleIds)"
         @clear="selection.clear()"
         @close="selection.stop()"
         @edit="bulkEditOpen = true"
+        @share="bulkShareOpen = true"
         @remove="bulkDeleteOpen = true"
       />
 
@@ -672,6 +676,7 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
     <ImportRecipeDialog v-model="importOpen" />
 
     <RecipeBulkEditDialog v-model="bulkEditOpen" :ids="selection.selected.value" @saved="onBulkEdited" />
+    <ShareWithDialog v-model="bulkShareOpen" :recipe-ids="selection.selected.value" @done="notifyBulk" />
     <ConfirmDialog
       v-model="bulkDeleteOpen"
       :title="t('bulk.recipes.deleteTitle')"

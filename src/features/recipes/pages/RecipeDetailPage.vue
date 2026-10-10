@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import {
+  mdiAccountMultipleOutline,
+  mdiAccountMultiplePlusOutline,
   mdiArrowLeft,
   mdiChefHat,
   mdiCheckCircle,
@@ -19,6 +21,7 @@ import {
   mdiPrinterOutline,
   mdiShareVariantOutline,
   mdiSilverwareForkKnife,
+  mdiSourceFork,
   mdiTimerOutline,
 } from '@mdi/js'
 import { computed, ref, watch } from 'vue'
@@ -50,6 +53,7 @@ import RecipeAttachmentsGallery from '../components/RecipeAttachmentsGallery.vue
 import RecipeCover from '../components/RecipeCover.vue'
 import RecipeNotes from '../components/RecipeNotes.vue'
 import VisibilityDialog from '../components/VisibilityDialog.vue'
+import ShareWithDialog from '@/features/sharing/components/ShareWithDialog.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -127,6 +131,7 @@ const planOpen = ref(false)
 // Zverejnenie receptu (len vlastník domácnosti): verejný recept vidia a kopírujú všetci prihlásení.
 const isOwner = useIsOwner()
 const visibilityOpen = ref(false)
+const shareWithOpen = ref(false)
 const planDates = computed(() => Array.from({ length: 14 }, (_, i) => addDays(today.value, i)))
 const defaultSlotId = computed(
   () =>
@@ -336,6 +341,12 @@ function goBack() {
             :title="t('recipes.detail.shareLink')"
             data-test="share-link"
             @click="shareLink"
+          />
+          <v-list-item
+            :prepend-icon="mdiAccountMultiplePlusOutline"
+            :title="t('sharing.shareWith')"
+            data-test="share-with"
+            @click="shareWithOpen = true"
           />
           <v-list-item
             :prepend-icon="mdiFileDownloadOutline"
@@ -570,6 +581,31 @@ function goBack() {
         {{ t('recipes.detail.stopSharing') }}
       </v-chip>
     </div>
+    <div
+      v-if="recipe.sharedWith?.length || recipe.copiedFrom"
+      class="d-flex flex-wrap align-center ga-2 mb-3 d-print-none"
+    >
+      <v-chip
+        v-if="recipe.sharedWith?.length"
+        color="primary"
+        variant="tonal"
+        size="small"
+        :prepend-icon="mdiAccountMultipleOutline"
+        to="/sharing"
+        data-test="shared-with"
+      >
+        {{ t('sharing.recipe.sharedWith', { names: recipe.sharedWith.join(', ') }) }}
+      </v-chip>
+      <v-chip
+        v-if="recipe.copiedFrom"
+        variant="tonal"
+        size="small"
+        :prepend-icon="mdiSourceFork"
+        data-test="copied-from"
+      >
+        {{ t('sharing.recipe.copiedFrom', { name: recipe.copiedFrom }) }}
+      </v-chip>
+    </div>
     <v-row :density="printing ? 'compact' : undefined">
       <v-col :cols="printing ? 5 : 12" md="5" lg="4" data-test="recipe-ingredients-col">
         <v-card :title="t('recipes.detail.ingredients')" :border="!printing">
@@ -697,6 +733,8 @@ function goBack() {
     :dates="planDates"
     :members="me.members"
   />
+
+  <ShareWithDialog v-if="recipe" v-model="shareWithOpen" :recipe-ids="[recipe.id]" @done="notify" />
 
   <VisibilityDialog
     v-if="recipe"

@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { mdiCheck, mdiPencilOutline, mdiPlus, mdiTagMultipleOutline } from '@mdi/js'
+import {
+  mdiAccountMultiplePlusOutline,
+  mdiCheck,
+  mdiPencilOutline,
+  mdiPlus,
+  mdiTagMultipleOutline,
+} from '@mdi/js'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TagDto } from '@shared/api'
@@ -9,6 +15,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import ActionButton from '@/components/ActionButton.vue'
 import ListLayout from '@/components/ListLayout.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import ShareWithDialog from '@/features/sharing/components/ShareWithDialog.vue'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
 
@@ -23,6 +30,14 @@ const name = ref('')
 const color = ref<string | null>(null)
 const formError = ref('')
 const confirmDelete = ref(false)
+/** Tag, ktorý sa práve zdieľa (celý, aj s receptami pridanými neskôr). */
+const sharing = ref<TagDto | null>(null)
+const shareOpen = ref(false)
+const shareSnackbar = ref({ show: false, text: '' })
+function openShare(tag: TagDto) {
+  sharing.value = tag
+  shareOpen.value = true
+}
 
 watch(dialogOpen, (open) => {
   if (!open) return
@@ -100,6 +115,15 @@ const usage = (tag: TagDto) =>
           </template>
           <template #append>
             <v-btn
+              :icon="mdiAccountMultiplePlusOutline"
+              variant="text"
+              size="small"
+              :aria-label="t('sharing.shareTag') + ' ' + tag.name"
+              :title="t('sharing.shareTag')"
+              data-test="share-tag"
+              @click.prevent="openShare(tag)"
+            />
+            <v-btn
               :icon="mdiPencilOutline"
               variant="text"
               size="small"
@@ -159,5 +183,15 @@ const usage = (tag: TagDto) =>
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <ShareWithDialog
+      v-if="sharing"
+      v-model="shareOpen"
+      kind="tag"
+      :tag-id="sharing.id"
+      @done="shareSnackbar = { show: true, text: $event }"
+    />
+    <v-snackbar v-model="shareSnackbar.show" color="success" timeout="4000">{{
+      shareSnackbar.text
+    }}</v-snackbar>
   </ListLayout>
 </template>
