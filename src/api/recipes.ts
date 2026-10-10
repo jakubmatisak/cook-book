@@ -33,6 +33,10 @@ export interface RecipeFilters {
   kids?: 'hide' | 'include' | 'only' | undefined
   /** Verejné recepty iných domácností v zozname. */
   public?: 'hide' | 'include' | 'only' | undefined
+  /** `only`: len recepty, ktoré so mnou zdieľajú iné domácnosti. */
+  shared?: 'only' | undefined
+  /** Len moje recepty, ktoré niekomu zdieľam. */
+  sharedByMe?: boolean | undefined
   /** „Čo viem uvariť“: zoradiť podľa toho, čo je doma, s chýbajúcimi ingredienciami. */
   pantry?: boolean | undefined
 }
@@ -58,6 +62,8 @@ function toQuery(filters: RecipeFilters): string {
   if (filters.kids === 'only') params.set('kids', 'only')
   // Bez `public` rozhodne server podľa nastavenia „Zobrazovať recepty od iných“.
   if (filters.public) params.set('public', filters.public)
+  if (filters.shared) params.set('shared', filters.shared)
+  if (filters.sharedByMe) params.set('sharedByMe', '1')
   if (filters.pantry) params.set('pantry', '1')
   if (filters.pantry && filters.missing !== undefined) params.set('missing', String(filters.missing))
   const query = params.toString()

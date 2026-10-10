@@ -50,6 +50,7 @@ import {
   categoriesToParam,
   listToParam,
   timesToParam,
+  SHARED_TO_PARAM,
   parseListQuery,
   queryToRestore,
   savableListQuery,
@@ -60,6 +61,7 @@ import {
   type FilterDimension,
   type KidsMode,
   type PublicMode,
+  type SharedMode,
   type RecipeView,
   type TableSort,
 } from '../listQuery'
@@ -106,6 +108,8 @@ const kidsEnabled = useKidsEnabled()
 const listFilters = computed(() => ({
   ...state.value,
   public: state.value.public === publicDefault.value ? undefined : state.value.public,
+  shared: state.value.shared === 'withMe' ? ('only' as const) : undefined,
+  sharedByMe: state.value.shared === 'byMe' || undefined,
   ...(kidsEnabled.value ? {} : { kids: 'hide' as const }),
 }))
 const { data: list, isPending, error } = useRecipes(listFilters)
@@ -183,7 +187,8 @@ const panelFilterCount = computed(
   () =>
     filterCount.value +
     (state.value.kids !== 'hide' ? 1 : 0) +
-    (state.value.public !== publicDefault.value ? 1 : 0),
+    (state.value.public !== publicDefault.value ? 1 : 0) +
+    (state.value.shared !== 'all' ? 1 : 0),
 )
 /** Na mobile je v paneli aj „Čo viem uvariť“. */
 const mobileFilterCount = computed(() => panelFilterCount.value + (state.value.pantry ? 1 : 0))
@@ -223,6 +228,14 @@ const publicMode = computed({
 const publicItems = computed(() =>
   KIDS_MODES.map((mode) => ({ value: mode, title: t(`recipes.list.public_${mode}`) })),
 )
+const SHARED_MODES: readonly SharedMode[] = ['all', 'withMe', 'byMe']
+const sharedMode = computed({
+  get: () => state.value.shared,
+  set: (value: SharedMode) => setQuery({ shared: SHARED_TO_PARAM[value] }),
+})
+const sharedItems = computed(() =>
+  SHARED_MODES.map((mode) => ({ value: mode, title: t(`sharing.filters.${mode}`) })),
+)
 const kidsItems = computed(() =>
   KIDS_MODES.map((mode) => ({ value: mode, title: t(`recipes.list.kids_${mode}`) })),
 )
@@ -253,6 +266,7 @@ function resetAll() {
     verified: undefined,
     kids: undefined,
     public: undefined,
+    shared: undefined,
     pantry: undefined,
     missing: undefined,
     sort: undefined,
@@ -274,9 +288,16 @@ const activeChips = computed(() => {
   const chips: {
     key: string
     label: string
-    dimension: FilterDimension | 'kids' | 'public'
+    dimension: FilterDimension | 'kids' | 'public' | 'shared'
     value: string | number
   }[] = []
+  if (s.shared !== 'all')
+    chips.push({
+      key: 'shared',
+      label: t(`sharing.filters.${s.shared}`),
+      dimension: 'shared',
+      value: s.shared,
+    })
   if (s.kids !== 'hide')
     chips.push({ key: 'kids', label: t(`recipes.list.kids_${s.kids}`), dimension: 'kids', value: s.kids })
   if (s.public !== publicDefault.value)
@@ -298,8 +319,12 @@ const activeChips = computed(() => {
   return chips
 })
 
-function removeChip(chip: { dimension: FilterDimension | 'kids' | 'public'; value: string | number }) {
+function removeChip(chip: {
+  dimension: FilterDimension | 'kids' | 'public' | 'shared'
+  value: string | number
+}) {
   if (chip.dimension === 'kids') kids.value = 'hide'
+  else if (chip.dimension === 'shared') sharedMode.value = 'all'
   else if (chip.dimension === 'public') publicMode.value = publicDefault.value
   else toggleFilter(chip.dimension, chip.value)
 }
@@ -705,12 +730,14 @@ const hasFilters = computed(() => Boolean(state.value.q || state.value.pantry ||
         v-model:verified="verified"
         v-model:kids="kids"
         v-model:public-mode="publicMode"
+        v-model:shared-mode="sharedMode"
         v-model:pantry-mode="pantryMode"
         :visibility-only="mdAndUp"
         :sort-key="sortKey"
         :kids-enabled="kidsEnabled"
         :kids-items="kidsItems"
         :public-items="publicItems"
+        :shared-items="sharedItems"
         :sort-items="sortItems"
         :sort-dir="sortDir"
         :missing="state.missing ?? 'all'"

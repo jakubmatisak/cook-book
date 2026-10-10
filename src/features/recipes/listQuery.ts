@@ -21,6 +21,8 @@ export interface RecipeListState {
    * Bez parametra platí nastavenie človeka „Zobrazovať recepty od iných“.
    */
   public: PublicMode
+  /** Zdieľanie: všetky (predvolene), len zdieľané so mnou (`shared=with-me`) alebo len moje zdieľané (`shared=by-me`). */
+  shared: SharedMode
   /** Najviac toľko chýbajúcich surovín (0 = viem uvariť, 1 = chýba jedna); len pri „Čo viem uvariť“. */
   missing: 0 | 1 | undefined
   sort: SortKey | undefined
@@ -56,6 +58,14 @@ const KIDS_PARAM: Readonly<Record<string, KidsMode>> = { include: 'include', onl
 export type PublicMode = 'hide' | 'include' | 'only'
 const PUBLIC_PARAM: Readonly<Record<string, PublicMode>> = { hide: 'hide', include: 'include', only: 'only' }
 
+export type SharedMode = 'all' | 'withMe' | 'byMe'
+const SHARED_PARAM: Readonly<Record<string, SharedMode>> = { 'with-me': 'withMe', 'by-me': 'byMe' }
+export const SHARED_TO_PARAM: Readonly<Record<SharedMode, string | undefined>> = {
+  all: undefined,
+  withMe: 'with-me',
+  byMe: 'by-me',
+}
+
 const MISSING_VALUES: Readonly<Record<string, 0 | 1>> = { '0': 0, '1': 1 }
 
 /** `publicDefault` – čo platí bez parametra `public` (podľa nastavenia „Zobrazovať recepty od iných“). */
@@ -75,6 +85,7 @@ export function parseListQuery(query: Query, publicDefault: PublicMode = 'hide')
     pantry: one(query.pantry) === '1',
     kids: KIDS_PARAM[one(query.kids) ?? ''] ?? 'hide',
     public: PUBLIC_PARAM[one(query.public) ?? ''] ?? publicDefault,
+    shared: SHARED_PARAM[one(query.shared) ?? ''] ?? 'all',
     missing: one(query.pantry) === '1' ? MISSING_VALUES[one(query.missing) ?? ''] : undefined,
     sort: SORT_KEYS.find((key) => key === sort),
     dir: dir === 'asc' || dir === 'desc' ? dir : undefined,

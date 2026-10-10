@@ -81,7 +81,7 @@ async function confirmReplace() {
 
 async function showNew(shareId: string) {
   await run(() => seen.mutateAsync({ id: shareId }))
-  void router.push({ path: '/recipes', query: { shared: 'only' } })
+  void router.push({ path: '/recipes', query: { shared: 'with-me' } })
 }
 </script>
 

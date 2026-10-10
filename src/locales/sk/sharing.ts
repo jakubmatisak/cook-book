@@ -91,7 +91,7 @@ export default {
     addToPlan: 'Pridať do plánu',
     copyFailed: 'Kópia receptu zlyhala.',
   },
-  filters: { sharedWithMe: 'Zdieľané so mnou', sharedByMe: 'Zdieľam' },
+  filters: { label: 'Zdieľanie', all: 'Všetky recepty', withMe: 'Zdieľané so mnou', byMe: 'Zdieľam' },
   contacts: {
     title: 'Kontakty',
     subtitle: 'E-maily, s ktorými zdieľaš recepty. Meno sa ukazuje namiesto e-mailu.',

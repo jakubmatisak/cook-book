@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiEarth, mdiPotSteamOutline } from '@mdi/js'
+import { mdiAccountMultipleOutline, mdiEarth, mdiPotSteamOutline } from '@mdi/js'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -115,7 +115,18 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
       <template #item.title="{ item }">
         <div class="font-weight-bold">{{ item.title }}</div>
         <v-chip
-          v-if="item.visibility === 'public'"
+          v-if="item.sharedFrom"
+          size="x-small"
+          color="primary"
+          variant="tonal"
+          :prepend-icon="mdiAccountMultipleOutline"
+          class="mt-1"
+          data-test="shared-badge"
+        >
+          {{ t('sharing.recipe.sharedFrom', { name: item.sharedFrom }) }}
+        </v-chip>
+        <v-chip
+          v-else-if="item.visibility === 'public'"
           size="x-small"
           color="info"
           variant="tonal"

@@ -9,7 +9,7 @@ import {
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import type { SortKey } from '@shared/recipeFacets'
-import type { KidsMode, PublicMode } from '../listQuery'
+import type { KidsMode, PublicMode, SharedMode } from '../listQuery'
 
 /**
  * Rýchle filtre a zoradenie receptov pod sebou – na mobile sú v paneli Filtre, aby nad zoznamom ostalo len
@@ -22,6 +22,7 @@ defineProps<{
   kidsEnabled: boolean
   kidsItems: { value: KidsMode; title: string }[]
   publicItems: { value: PublicMode; title: string }[]
+  sharedItems: { value: SharedMode; title: string }[]
   sortItems: { value: SortKey; title: string }[]
   sortDir: 'asc' | 'desc'
   missing: number | 'all'
@@ -33,6 +34,7 @@ const favorite = defineModel<boolean>('favorite', { required: true })
 const verified = defineModel<boolean>('verified', { required: true })
 const kids = defineModel<KidsMode>('kids', { required: true })
 const publicMode = defineModel<PublicMode>('publicMode', { required: true })
+const sharedMode = defineModel<SharedMode>('sharedMode', { required: true })
 const pantryMode = defineModel<boolean>('pantryMode', { required: true })
 const sortKey = defineModel<SortKey | null>('sortKey', { required: true })
 </script>
@@ -95,6 +97,13 @@ const sortKey = defineModel<SortKey | null>('sortKey', { required: true })
     :label="t('recipes.list.public')"
     hide-details
     data-test="public-select"
+  />
+  <v-select
+    v-model="sharedMode"
+    :items="sharedItems"
+    :label="t('sharing.filters.label')"
+    hide-details
+    data-test="shared-select"
   />
   <div v-if="!visibilityOnly" class="d-flex align-center ga-2">
     <v-select

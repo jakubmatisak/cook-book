@@ -22,6 +22,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import HouseholdMembersCard from '@/features/households/components/HouseholdMembersCard.vue'
 import ColorSchemePicker from '../components/ColorSchemePicker.vue'
 import SampleGroupsCard from '../components/SampleGroupsCard.vue'
+import ContactsCard from '../components/ContactsCard.vue'
 import LanguageCard from '../components/LanguageCard.vue'
 import { importBookmarklet } from '../bookmarklet'
 import { useThemePreference } from '@/composables/useThemePreference'
@@ -351,6 +352,8 @@ async function exportRecipes() {
     </v-card>
 
     <SampleGroupsCard v-if="me && isOwner" :kids-enabled="kidsEnabled" />
+
+    <ContactsCard v-if="me" />
 
     <v-card v-if="me" :title="t('settings.pantry.title')">
       <v-card-text>

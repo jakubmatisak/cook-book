@@ -172,9 +172,7 @@ function pick(share: IncomingShareDto) {
             <v-list-item data-test="incoming-share">
               <v-list-item-title class="font-weight-medium">{{ shareWhat(share) }}</v-list-item-title>
               <v-list-item-subtitle>
-                {{
-                  t('sharing.fromHousehold', { name: share.fromName, household: share.fromHouseholdName })
-                }}
+                {{ t('sharing.fromHousehold', { name: share.fromName, household: share.fromHouseholdName }) }}
                 ·
                 {{ formatDate(share.createdAt) }}
               </v-list-item-subtitle>

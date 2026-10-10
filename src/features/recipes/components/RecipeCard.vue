@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  mdiAccountMultipleOutline,
   mdiCheckCircleOutline,
   mdiCheckDecagram,
   mdiClockOutline,
@@ -115,7 +116,17 @@ const subtitle = computed(() => {
         {{ t('recipes.badge.verified') }}
       </v-chip>
       <v-chip
-        v-if="recipe.visibility === 'public'"
+        v-if="recipe.sharedFrom"
+        size="x-small"
+        color="primary"
+        variant="tonal"
+        :prepend-icon="mdiAccountMultipleOutline"
+        data-test="shared-badge"
+      >
+        {{ t('sharing.recipe.sharedFrom', { name: recipe.sharedFrom }) }}
+      </v-chip>
+      <v-chip
+        v-else-if="recipe.visibility === 'public'"
         size="x-small"
         color="info"
         variant="tonal"
