@@ -1,5 +1,23 @@
 # Zmeny
 
+## 2.0.0 – 2026-10-10
+
+### Nové
+
+- **Zdieľanie na jednom mieste:** v detaile receptu je v ponuke (⋮) len **Zdieľať…**. Okno ponúkne všetky spôsoby –
+  s konkrétnymi ľuďmi (e-mail), odkazom, verejne v aplikácii a ako text cez zdieľanie v telefóne – aj s tým, či
+  a s kým sa recept už zdieľa.
+- Prázdny Prehľad (napr. nová domácnosť) ponúkne tlačidlo **Zobrazovať recepty od iných** – netreba chodiť do
+  Nastavení.
+
+### Opravy
+
+- Uložené filtre receptov (napr. tag) patria domácnosti: po prepnutí do inej domácnosti sa nevrátia a zoznam
+  neostane v čudnom stave.
+- Zdieľanie: ako nové sa v prijatom tagu či kategórii rátajú aj staršie recepty, ktoré odosielateľ otagoval
+  neskôr; upozornenie „originál sa zmenil“ prichádza len pri zmene obsahu receptu (nie pri označení ako overený
+  či odkaze); filter **Zdieľam** neukazuje cudzie verejné recepty; **Pridať do plánu** použije existujúcu kópiu.
+
 ## 1.10.0 – 2026-10-10
 
 ### Nové
