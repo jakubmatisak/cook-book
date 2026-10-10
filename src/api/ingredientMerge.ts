@@ -23,10 +23,19 @@ export function useIgnoreMergeSuggestion(): UseMutationReturnType<{ ok: true }, 
 export const useIngredientUnits = (ids: MaybeRefOrGetter<string[]>, enabled: MaybeRefOrGetter<boolean>) =>
   useQuery({
     queryKey: computed(() => ['ingredients', 'units', [...toValue(ids)].sort()]),
-    queryFn: () =>
-      apiFetch<Record<string, UnitCode[]>>(
-        `/ingredients/units?ids=${encodeURIComponent(toValue(ids).join(','))}`,
-      ),
+    // Server berie najviac 50 ID naraz – viac sa načíta po dávkach.
+    queryFn: async () => {
+      const all = toValue(ids)
+      const parts: Record<string, UnitCode[]>[] = []
+      for (let i = 0; i < all.length; i += 50) {
+        parts.push(
+          await apiFetch<Record<string, UnitCode[]>>(
+            `/ingredients/units?ids=${encodeURIComponent(all.slice(i, i + 50).join(','))}`,
+          ),
+        )
+      }
+      return Object.assign({}, ...parts) as Record<string, UnitCode[]>
+    },
     enabled: computed(() => toValue(enabled) && toValue(ids).length > 1),
     staleTime: 0,
   })

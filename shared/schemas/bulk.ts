@@ -46,6 +46,22 @@ export const ingredientMergeSchema = z
     sourceIds: ids,
     /** Nový názov ponechanej ingrediencie (napr. jeden zo zlučovaných názvov); bez neho ostane jej názov. */
     name: z.string().trim().min(1, 'Zadaj názov.').max(120).optional(),
+    /**
+     * Prepočet jednotiek, ktoré sa inak prepočítať nedajú (napr. 1 ks = 10 g): množstvá v receptoch a v špajzi
+     * sa vynásobia a dostanú novú jednotku.
+     */
+    convert: z
+      .array(
+        z
+          .object({
+            from: z.enum(UNIT_CODES),
+            to: z.enum(UNIT_CODES),
+            factor: z.number().positive('Zadaj kladné číslo.').max(100_000),
+          })
+          .refine((c) => c.from !== c.to, 'Jednotky prepočtu sa musia líšiť.'),
+      )
+      .max(10)
+      .optional(),
   })
   .refine((v) => !v.sourceIds.includes(v.targetId), {
     message: 'Ingrediencia sa nedá zlúčiť sama so sebou.',

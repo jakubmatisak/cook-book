@@ -3,8 +3,8 @@ import { mdiCallMerge } from '@mdi/js'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { IngredientDto } from '@shared/api'
-import { findDuplicateGroups } from '@shared/ingredientDuplicates'
-import { useIgnoreMergeSuggestion, useMergeIgnored } from '@/api/ingredientMerge'
+import { findDuplicateGroups, mixedUnits } from '@shared/ingredientDuplicates'
+import { useIgnoreMergeSuggestion, useIngredientUnits, useMergeIgnored } from '@/api/ingredientMerge'
 import { tc } from '@/i18n/format'
 
 /**
@@ -26,8 +26,22 @@ const groups = computed(() =>
       }))
     : [],
 )
-const label = (item: IngredientDto) =>
-  item.usageCount ? `${item.name} (${tc('ingredients.usedIn', item.usageCount)})` : item.name
+// Jednotky navrhnutých ingrediencií: pri rozdielnych (g a ks) červený štítok, nech je jasné, čo s čím zlúčiť.
+const { data: units } = useIngredientUnits(
+  () => groups.value.flatMap((g) => g.ids),
+  () => groups.value.length > 0,
+)
+const unitsOf = (item: IngredientDto) => [
+  ...new Set([...(units.value?.[item.id] ?? []), ...(item.defaultUnit ? [item.defaultUnit] : [])]),
+]
+const isMixed = (items: IngredientDto[]) => mixedUnits(items.map(unitsOf)).length > 0
+const label = (item: IngredientDto) => {
+  const details = [
+    ...(item.usageCount ? [tc('ingredients.usedIn', item.usageCount)] : []),
+    ...(unitsOf(item).length ? [unitsOf(item).join(', ')] : []),
+  ]
+  return details.length ? `${item.name} (${details.join(', ')})` : item.name
+}
 </script>
 
 <template>
@@ -49,6 +63,16 @@ const label = (item: IngredientDto) =>
             <v-list-item class="px-0" data-test="merge-suggestion">
               <v-list-item-title class="text-wrap">
                 {{ group.items.map(label).join(' · ') }}
+                <v-chip
+                  v-if="isMixed(group.items)"
+                  color="error"
+                  variant="tonal"
+                  size="x-small"
+                  class="ms-1"
+                  data-test="suggestion-mixed-units"
+                >
+                  {{ t('ingredients.suggestions.mixedUnits') }}
+                </v-chip>
               </v-list-item-title>
               <template #append>
                 <div class="d-flex flex-wrap justify-end ga-1">

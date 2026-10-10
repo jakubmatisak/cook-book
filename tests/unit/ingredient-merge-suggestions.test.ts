@@ -116,4 +116,32 @@ describe('návrhy na zlúčenie v Ingredienciách', () => {
     expect(document.querySelector('[data-test="merge-units-warning"]')).toBeNull()
     expect(document.querySelector<HTMLButtonElement>('[data-test="merge-confirm"]')!.disabled).toBe(false)
   })
+
+  it('pri rozdielnych jednotkách ukáže v karte červený štítok a jednotky pri ingredienciách', async () => {
+    const { wrapper } = await mountPage({ '/ingredients/units': { a: ['g'], b: ['ks'] } })
+    await openSuggestions(wrapper)
+    const row = wrapper.find('[data-test="merge-suggestion"]')
+    expect(row.find('[data-test="suggestion-mixed-units"]').exists()).toBe(true)
+    expect(row.text()).toContain('Banán (v 4 receptoch, g)')
+    expect(row.text()).toContain('Banány (v 1 recepte, ks)')
+  })
+
+  it('prepočet: 1 ks = 10 g zlúči bez potvrdzovania a pošle prepočet', async () => {
+    const { wrapper, calls } = await mountPage({ '/ingredients/units': { a: ['g'], b: ['ks'] } })
+    await openSuggestions(wrapper)
+    await wrapper.find('[data-test="suggestion-merge"]').trigger('click')
+    await flushPromises()
+    const input = document.querySelector<HTMLInputElement>('[data-test="merge-convert-ks"] input')!
+    input.value = '10'
+    input.dispatchEvent(new Event('input'))
+    await flushPromises()
+    expect(document.querySelector('[data-test="merge-units-confirm"]')).toBeNull()
+    expect(document.querySelector<HTMLButtonElement>('[data-test="merge-confirm"]')!.disabled).toBe(false)
+    await click('[data-test="merge-confirm"]')
+    expect(calls.find((c) => c.method === 'POST' && c.path === '/ingredients/merge')?.body).toEqual({
+      targetId: 'a',
+      sourceIds: ['b'],
+      convert: [{ from: 'ks', to: 'g', factor: 10 }],
+    })
+  })
 })

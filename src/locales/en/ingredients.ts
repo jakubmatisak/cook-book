@@ -50,6 +50,10 @@ export default {
     unitsWarning:
       'The ingredients use units that cannot be converted ({units}). Recipes keep their amounts, but the shopping list will not add them up.',
     unitsConfirm: 'Yes, merge anyway',
+    convertTitle: 'Unit conversion',
+    targetUnit: 'Unit after merging',
+    convertHint:
+      'Fill in how much one unit is in the new one; amounts in recipes and the pantry are converted (e.g. 1 pc = 10 g, 2 pcs → 20 g). Units left empty stay as they are.',
   },
   categorySuggest: {
     button: 'Suggest categories ({n})',
@@ -63,5 +67,6 @@ export default {
     text: 'Ingredients that differ only in word form or order. New suggestions appear as you add recipes.',
     merge: 'Merge',
     ignore: 'Ignore',
+    mixedUnits: 'Different units',
   },
 }

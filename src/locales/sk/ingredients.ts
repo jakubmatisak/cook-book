@@ -50,6 +50,10 @@ export default {
     unitsWarning:
       'Ingrediencie majú jednotky, ktoré sa nedajú prepočítať ({units}). Recepty si množstvá ponechajú, ale v nákupe sa nesčítajú.',
     unitsConfirm: 'Áno, zlúčiť aj tak',
+    convertTitle: 'Prepočet jednotiek',
+    targetUnit: 'Jednotka po zlúčení',
+    convertHint:
+      'Vyplň, koľko je jedna jednotka v novej; množstvá v receptoch a v špajzi sa prepočítajú (napr. 1 ks = 10 g, 2 ks → 20 g). Nevyplnené ostanú v pôvodnej jednotke.',
   },
   categorySuggest: {
     button: 'Navrhnúť kategórie ({n})',
@@ -63,5 +67,6 @@ export default {
     text: 'Ingrediencie, ktoré sa líšia len tvarom alebo poradím slov. Návrhy pribúdajú samy s novými receptmi.',
     merge: 'Zlúčiť',
     ignore: 'Ignorovať',
+    mixedUnits: 'Rôzne jednotky',
   },
 }

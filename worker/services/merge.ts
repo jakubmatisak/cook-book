@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { BatchItem } from 'drizzle-orm/batch'
 import type { IngredientDto } from '../../shared/api'
 import type { IngredientMergeInput } from '../../shared/schemas/bulk'
@@ -61,7 +61,15 @@ export async function mergeIngredients(
   }
 
   const sourceIds = sources.map((s) => s.id)
-  const [pantry, staples] = await Promise.all([
+  const convert = input.convert ?? []
+  /** Množstvo a jednotka po prepočte (1 ks = 10 g); iné jednotky ostanú. */
+  const converted = <T extends { quantity: number | null; unit: UnitCode | null }>(row: T): T => {
+    const rule = convert.find((c) => c.from === row.unit)
+    return rule
+      ? { ...row, quantity: row.quantity === null ? null : row.quantity * rule.factor, unit: rule.to }
+      : row
+  }
+  const [pantryRows, staples] = await Promise.all([
     db
       .select()
       .from(pantryItems)
@@ -72,11 +80,19 @@ export async function mergeIngredients(
       .where(and(eq(stapleItems.householdId, householdId), inArray(stapleItems.ingredientId, ids))),
   ])
 
+  const pantry = pantryRows.map(converted)
   const statements: BatchItem<'sqlite'>[] = [
     db
       .update(recipeIngredients)
       .set({ ingredientId: target.id })
       .where(inArray(recipeIngredients.ingredientId, sourceIds)),
+    // Prepočet jednotiek v receptoch (po prevedení na ponechanú ingredienciu).
+    ...convert.map((c) =>
+      db
+        .update(recipeIngredients)
+        .set({ unit: c.to, quantity: sql`${recipeIngredients.quantity} * ${c.factor}` })
+        .where(and(eq(recipeIngredients.ingredientId, target.id), eq(recipeIngredients.unit, c.from))),
+    ),
     db
       .update(shoppingItems)
       .set({ ingredientId: target.id })
@@ -98,7 +114,9 @@ export async function mergeIngredients(
       else if (amount.quantity !== null && amount.unit === total.unit)
         total = { ...total, quantity: total.quantity + amount.quantity }
     }
-    const changed = pantry.length > 1 && (total.quantity !== keep.quantity || total.unit !== keep.unit)
+    // Porovnáva sa s uloženým záznamom (prepočet mohol zmeniť jednotku aj jedinej zásoby).
+    const stored = pantryRows.find((p) => p.id === keep.id)!
+    const changed = total.quantity !== stored.quantity || total.unit !== stored.unit
     statements.push(
       db
         .update(pantryItems)
@@ -140,7 +158,10 @@ export async function mergeIngredients(
         aliases: [...aliases.values()],
         shopCategoryId:
           target.shopCategoryId ?? sources.find((s) => s.shopCategoryId)?.shopCategoryId ?? null,
-        defaultUnit: target.defaultUnit ?? sources.find((s) => s.defaultUnit)?.defaultUnit ?? null,
+        defaultUnit: converted({
+          quantity: null,
+          unit: target.defaultUnit ?? sources.find((s) => s.defaultUnit)?.defaultUnit ?? null,
+        }).unit,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(ingredients.id, target.id)),
