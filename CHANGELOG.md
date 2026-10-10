@@ -1,5 +1,26 @@
 # Zmeny
 
+## 2.1.0 – 2026-10-10
+
+### Nové
+
+- **Ingrediencie – návrhy na zlúčenie:** ingrediencie, ktoré sa líšia len tvarom či poradím slov (Paradajka –
+  Paradajky, Hrubá múka – Múka hrubá), sa ukážu ako návrhy so Zlúčiť a Ignorovať. Návrhy pribúdajú samy s novými
+  receptmi; ignorované si domácnosť pamätá.
+- Zlúčenie upozorní, keď ingrediencie používajú jednotky, ktoré sa nedajú prepočítať (napr. g a ks), a pýta
+  potvrdenie.
+- **Navrhnúť kategórie:** nezaradeným ingredienciám aplikácia navrhne kategóriu obchodu podľa názvu; návrhy
+  skontroluješ, zmeníš alebo odznačíš a zaradíš naraz.
+- Nové kategórie obchodu **Pečenie** (múky, cukry, prášky, polevy…) a **Konzervy a zaváraniny** (kompóty, lekváre,
+  nakladané, paradajky v konzerve…).
+- **Zdieľanie:** riadky sú krátke s ukážkou receptov; klik otvorí okno so všetkými receptmi, hľadaním, hromadným
+  odobratím a zrušením zdieľania.
+- Recepty: filter Zdieľanie má aj **Verejné** a karty aj tabuľka ukazujú **Zdieľané s: …** (pri viacerých „+N“).
+
+### Opravy
+
+- Zoznam receptov po prepnutí „Recepty od iných“ už nezmizne – výber sa serveru posiela vždy výslovne.
+
 ## 2.0.0 – 2026-10-10
 
 ### Nové

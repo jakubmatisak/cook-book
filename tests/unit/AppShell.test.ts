@@ -126,7 +126,7 @@ describe('AppShell', () => {
       const wrapper = await mountShell(width)
       await wrapper.find('[data-test="account"]').trigger('click')
       await flushPromises()
-      expect(document.body.textContent).toContain('Verzia 2.0.0')
+      expect(document.body.textContent).toContain('Verzia 2.1.0')
       // Nastavenia sú v ponuke účtu (nie v bočnom menu)
       const settings = document.querySelector<HTMLAnchorElement>('[data-test="account-settings"]')
       expect(settings?.textContent).toContain('Nastavenia')
