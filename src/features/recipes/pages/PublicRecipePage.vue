@@ -78,8 +78,8 @@ const planning = ref(false)
 async function addToPlan() {
   planning.value = true
   try {
-    const created = await copy.mutateAsync(id.value)
-    planRecipeId.value = created.id
+    // Existujúca kópia (napr. z predošlého pridania do plánu) sa použije znova, nevytvára sa ďalšia.
+    planRecipeId.value = recipe.value?.myCopyId ?? (await copy.mutateAsync(id.value)).id
     planOpen.value = true
   } catch (e) {
     snackbar.value = {

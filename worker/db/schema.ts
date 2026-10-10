@@ -207,6 +207,11 @@ export const recipes = sqliteTable(
       onDelete: 'set null',
     }),
     variantLabel: text('variant_label'),
+    /**
+     * Posledná zmena obsahu (názov, ingrediencie, postup, typ jedla, tagy…), nie metadát ako overenie či odkaz na
+     * zdieľanie. Podľa nej kópie u iných domácností vedia, že sa originál zmenil. null = staršie dáta (`updated_at`).
+     */
+    contentUpdatedAt: text('content_updated_at'),
     /** Kópia zdieľaného či verejného receptu: od koho je (meno alebo domácnosť) – pôvod ukazuje `parentRecipeId`. */
     copiedFromName: text('copied_from_name'),
     /** `updated_at` originálu v čase kópie (alebo poslednej náhrady); novší originál = upozornenie na zmenu. */
@@ -342,8 +347,10 @@ export const recipeShares = sqliteTable(
     status: text('status', { enum: SHARE_STATUSES }).notNull().default('pending'),
     createdAt: createdAt(),
     respondedAt: text('responded_at'),
-    /** Kedy príjemca naposledy videl zdieľanie (recepty pridané neskôr sú „nové“). */
+    /** Kedy príjemca naposledy videl zdieľanie. */
     seenAt: text('seen_at'),
+    /** Recepty kategórie či tagu, ktoré príjemca už videl; ostatné sú „nové“ (aj staršie, neskôr otagované). */
+    seenRecipeIds: text('seen_recipe_ids', { mode: 'json' }).$type<string[]>(),
   },
   (t) => [
     index('recipe_shares_to_email_idx').on(t.toEmail, t.status),

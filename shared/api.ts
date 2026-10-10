@@ -282,6 +282,8 @@ export interface PublicRecipeSummaryDto extends RecipeSummaryDto {
 export interface PublicRecipeDetailDto extends RecipeDetailDto {
   householdName: string
   ownedByMe: boolean
+  /** Moja najnovšia kópia tohto receptu (napr. z pridania do plánu); null = ešte žiadna. */
+  myCopyId?: string | null
 }
 
 // ─── Zdieľanie receptov s e-mailom ───────────────────────────────────────────

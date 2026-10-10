@@ -128,6 +128,37 @@ describe('detail zdieľaného receptu', () => {
   })
 })
 
+describe('detail zdieľaného receptu s mojou kópiou', () => {
+  it('Pridať do plánu použije existujúcu kópiu a nevytvára ďalšiu', async () => {
+    const detail: PublicRecipeDetailDto = {
+      ...summary,
+      description: null,
+      sourceUrl: null,
+      sourceText: null,
+      coverImageId: null,
+      ingredients: [],
+      steps: [],
+      ownedByMe: false,
+      householdName: 'Matisákovci',
+      sharedFrom: 'Jakub',
+      myCopyId: 'c9',
+    }
+    const { wrapper, calls } = await mountAt(
+      PublicRecipePage,
+      '/public/r1',
+      {
+        '/public/recipes/r1': detail,
+        '/recipes': { items: [], facets: { category: {}, tag: {}, difficulty: {}, time: {}, missing: {} } },
+      },
+      '/public/:id',
+    )
+    await wrapper.find('[data-test="shared-plan"]').trigger('click')
+    await flushPromises()
+    expect(calls.some((c) => c.method === 'POST' && c.path === '/public/recipes/r1/copy')).toBe(false)
+    expect(document.body.textContent).toContain('Pridať jedlo')
+  })
+})
+
 describe('kontakty v Nastaveniach', () => {
   const contacts = [
     { id: 'c1', email: 'svokra@example.com', name: null },

@@ -196,6 +196,7 @@ export async function saveRecipe(
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
       ...(input.isVerified !== undefined ? { isVerified: input.isVerified } : {}),
       ...(sampleKey ? { sampleKey } : {}),
+      contentUpdatedAt: new Date().toISOString(),
     }
 
     const statements: BatchItem<'sqlite'>[] = existing
@@ -549,7 +550,7 @@ export async function listRecipes(
 
   // Cudzie verejné recepty (nie pri „čo viem uvariť“, kde sa počíta moja špajza).
   const publicRows =
-    options.publicMode && !options.pantry && options.sharedMode !== 'only'
+    options.publicMode && !options.pantry && options.sharedMode !== 'only' && !options.sharedByMe
       ? await db
           .select({ recipe: recipes, r2Key: images.r2Key, householdName: households.name })
           .from(recipes)

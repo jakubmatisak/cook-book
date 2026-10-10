@@ -24,6 +24,8 @@ export function useCopyPublicRecipe(): UseMutationReturnType<RecipeDetailDto, Er
     mutationFn: (id: string) => apiFetch<RecipeDetailDto>(`/public/recipes/${id}/copy`, { method: 'POST' }),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['recipes', 'list'] })
+      // Detail originálu nesie moju kópiu (pridanie do plánu ju potom použije znova).
+      void client.invalidateQueries({ queryKey: publicKeys.all })
       void client.invalidateQueries({ queryKey: ['tags'] })
     },
   })

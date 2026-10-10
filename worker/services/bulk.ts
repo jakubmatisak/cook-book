@@ -109,6 +109,20 @@ export async function bulkUpdateRecipes(
     }
   }
 
+  // Typ jedla a tagy sú obsah receptu: kópie u iných domácností sa dozvedia, že sa originál zmenil.
+  if (
+    input.category !== undefined ||
+    input.addCategories?.length ||
+    input.removeCategories?.length ||
+    input.addTags?.length ||
+    input.removeTags?.length
+  ) {
+    await db
+      .update(recipes)
+      .set({ contentUpdatedAt: new Date().toISOString() })
+      .where(liveRecipes(user.householdId, live))
+  }
+
   if (input.removeTags?.length) {
     const wanted = new Set(input.removeTags.map(normalizeText))
     const existing = await db

@@ -105,7 +105,12 @@ describe('prístup k zdieľaným receptom', () => {
     )
       .bind(copy.id)
       .first<{ parent_recipe_id: string; copied_source_updated_at: string }>()
-    expect(row).toEqual({ parent_recipe_id: r.id, copied_source_updated_at: r.updatedAt })
+    // Kópia si pamätá čas poslednej zmeny obsahu originálu (nie metadát).
+    const source = await env.DB.prepare('select content_updated_at from recipes where id = ?')
+      .bind(r.id)
+      .first<{ content_updated_at: string }>()
+    expect(source?.content_updated_at).toBeTruthy()
+    expect(row).toEqual({ parent_recipe_id: r.id, copied_source_updated_at: source!.content_updated_at })
   })
 
   it('príjemca zdieľaný recept nezmení', async () => {

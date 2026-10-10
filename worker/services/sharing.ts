@@ -409,11 +409,10 @@ export async function listIncoming(db: Db, user: AuthUser): Promise<IncomingShar
   return rows.flatMap(({ share: s, householdName, userName }) => {
     const list = recipesOf.get(s.id) ?? []
     if (s.kind === 'recipes' && list.length === 0) return []
-    const since = s.seenAt ?? s.respondedAt
+    // Nové = recepty kategórie či tagu, ktoré príjemca ešte nevidel (aj staršie, neskôr otagované).
+    const seen = new Set(s.seenRecipeIds ?? list.map((r) => r.id))
     const newCount =
-      s.status === 'accepted' && s.kind !== 'recipes' && since
-        ? list.filter((r) => r.createdAt > since).length
-        : 0
+      s.status === 'accepted' && s.kind !== 'recipes' ? list.filter((r) => !seen.has(r.id)).length : 0
     return [
       {
         id: s.id,
@@ -474,8 +473,20 @@ export async function acceptShare(
   const now = new Date().toISOString()
   await db
     .update(recipeShares)
-    .set({ status: 'accepted', toHouseholdId: user.householdId, respondedAt: now, seenAt: now })
+    .set({
+      status: 'accepted',
+      toHouseholdId: user.householdId,
+      respondedAt: now,
+      seenAt: now,
+      seenRecipeIds: await currentRecipeIds(db, s),
+    })
     .where(eq(recipeShares.id, s.id))
+}
+
+/** Recepty, ktoré kategória či tag práve obsahuje (pri vybraných receptoch netreba – nepribúdajú). */
+async function currentRecipeIds(db: Db, s: ShareRow): Promise<string[] | null> {
+  if (s.kind === 'recipes') return null
+  return ((await recipesOfShares(db, [s])).get(s.id) ?? []).map((r) => r.id)
 }
 
 /** Príjemca ponuku odmietne. */
@@ -523,10 +534,16 @@ export async function removeShareItems(
 /** Príjemca si pozrel zdieľanie: recepty pridané doteraz už nie sú „nové“. */
 export async function markShareSeen(db: Db, householdId: string, id: string): Promise<void> {
   const s = await findShare(db, id, eq(recipeShares.toHouseholdId, householdId))
-  await db.update(recipeShares).set({ seenAt: new Date().toISOString() }).where(eq(recipeShares.id, s.id))
+  await db
+    .update(recipeShares)
+    .set({ seenAt: new Date().toISOString(), seenRecipeIds: await currentRecipeIds(db, s) })
+    .where(eq(recipeShares.id, s.id))
 }
 
-/** Vlastné kópie cudzích receptov, ktorých originál (stále čitateľný) sa od kópie zmenil. */
+/** Posledná zmena obsahu receptu (staršie riadky bez nej: posledná úprava). */
+export const contentUpdatedAtSql = sql<string>`coalesce(${recipes.contentUpdatedAt}, ${recipes.updatedAt})`
+
+/** Vlastné kópie cudzích receptov, ktorých originál (stále čitateľný) sa od kópie zmenil obsahom. */
 async function changedCopies(db: Db, householdId: string): Promise<ShareNoticeDto[]> {
   const copies = await db
     .select({
@@ -547,7 +564,7 @@ async function changedCopies(db: Db, householdId: string): Promise<ShareNoticeDt
     )
   if (copies.length === 0) return []
   const parents = await db
-    .select({ id: recipes.id, updatedAt: recipes.updatedAt })
+    .select({ id: recipes.id, updatedAt: contentUpdatedAtSql })
     .from(recipes)
     .where(
       and(
@@ -604,7 +621,7 @@ export async function dismissChangedNotice(db: Db, householdId: string, recipeId
   await db
     .update(recipes)
     .set({
-      copiedSourceUpdatedAt: sql`(select p.updated_at from recipes p where p.id = ${recipes.parentRecipeId})`,
+      copiedSourceUpdatedAt: sql`(select coalesce(p.content_updated_at, p.updated_at) from recipes p where p.id = ${recipes.parentRecipeId})`,
     })
     .where(
       and(eq(recipes.id, recipeId), eq(recipes.householdId, householdId), isNotNull(recipes.parentRecipeId)),

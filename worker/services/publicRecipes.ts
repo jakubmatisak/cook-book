@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, like, or, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNotNull, isNull, like, or, sql } from 'drizzle-orm'
 import type { PublicRecipeDetailDto, PublicRecipeSummaryDto, RecipeDetailDto, TagDto } from '../../shared/api'
 import type { RecipeCategory } from '../../shared/recipes'
 import { recipeInputSchema } from '../../shared/schemas/recipe'
@@ -10,7 +10,7 @@ import { HttpError } from '../errors'
 import { chunk } from '../http'
 import { storeImage } from './images'
 import { getRecipeDetail, saveRecipe, toSummary } from './recipes'
-import { sharedFromName, sharedWithHouseholds } from './sharing'
+import { contentUpdatedAtSql, sharedFromName, sharedWithHouseholds } from './sharing'
 
 /** Najviac toľko verejných receptov sa vráti naraz (zoznam je určený na prehliadanie, nie na export). */
 const PUBLIC_LIST_LIMIT = 200
@@ -95,6 +95,23 @@ export async function getPublicRecipe(
   const sharedFrom =
     found.shared && !own ? await sharedFromName(db, user.householdId, found.householdId) : undefined
   const detail = await getRecipeDetail(db, found.householdId, user.id, id)
+  // Vlastná kópia tohto receptu (napr. z predošlého pridania do plánu), aby sa nevytvárala znova.
+  const myCopy = own
+    ? undefined
+    : await db
+        .select({ id: recipes.id })
+        .from(recipes)
+        .where(
+          and(
+            eq(recipes.householdId, user.householdId),
+            isNull(recipes.deletedAt),
+            // Kópie majú čas originálu – podmienka použije index kópií, nečíta celú kuchárku.
+            isNotNull(recipes.copiedSourceUpdatedAt),
+            eq(recipes.parentRecipeId, id),
+          ),
+        )
+        .orderBy(desc(recipes.createdAt))
+        .get()
   return {
     ...detail,
     // Špajza patrí inej domácnosti, preto sa o nej nič neprezradí.
@@ -104,6 +121,7 @@ export async function getPublicRecipe(
     householdName: found.householdName,
     ownedByMe: found.householdId === user.householdId,
     ...(sharedFrom !== undefined ? { sharedFrom } : {}),
+    myCopyId: myCopy?.id ?? null,
     // Komu je recept zdieľaný, vie len jeho domácnosť.
     sharedWith: own ? detail.sharedWith : undefined,
     // Kód zdieľania otvorí recept bez prihlásenia – cudzím domácnostiam sa neukáže.
@@ -164,7 +182,7 @@ const markCopy = (db: Db, copyId: string, source: PublicRecipeDetailDto) =>
     .set({
       parentRecipeId: source.id,
       copiedFromName: source.sharedFrom || source.householdName,
-      copiedSourceUpdatedAt: source.updatedAt,
+      copiedSourceUpdatedAt: sql`(select ${contentUpdatedAtSql} from recipes where id = ${source.id})`,
     })
     .where(eq(recipes.id, copyId))
 
