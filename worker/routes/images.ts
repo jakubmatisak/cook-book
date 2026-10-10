@@ -51,7 +51,8 @@ export const imageServeRoutes = new Hono<AppEnv>().get('/:householdId/:file', as
   const { householdId, file } = c.req.param()
   // Fotky nenesú `?h=`, o prístupe rozhoduje členstvo v domácnosti z adresy; fotky verejných receptov vidí každý.
   const isMember = c.get('memberships').some((m) => m.householdId === householdId)
-  if (!isMember && !(await isPublicImage(c.get('db'), `${householdId}/${file}`))) {
+  const mine = c.get('memberships').map((m) => m.householdId)
+  if (!isMember && !(await isPublicImage(c.get('db'), `${householdId}/${file}`, mine))) {
     throw new HttpError(404, 'not_found', 'Fotka neexistuje.')
   }
 

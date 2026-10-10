@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { CreateSharesResult } from '../../shared/api'
 import { newId } from '../../shared/ids'
 import type { CreateShareInput } from '../../shared/schemas/sharing'
@@ -7,6 +7,7 @@ import type { Db } from '../db/client'
 import {
   contacts,
   householdMembers,
+  households,
   recipes,
   recipeShareItems,
   recipeShares,
@@ -158,4 +159,46 @@ export async function createShares(
   ]
   if (statements.length > 0) await db.batch(statements as [(typeof statements)[number], ...typeof statements])
   return { sent: input.emails.length }
+}
+
+/**
+ * Podmienka nad `recipes`: recept iná domácnosť zdieľa s niektorou z domácností `householdIds` a tá zdieľanie
+ * prijala – vybraný recept, celá kategória (hlavný typ aj „hodí sa aj ako“) alebo tag. Len na čítanie.
+ */
+export const sharedWithHouseholds = (householdIds: readonly string[]) => sql`exists (
+  select 1 from recipe_shares s
+  where s.status = 'accepted'
+    and s.to_household_id in (select value from json_each(${JSON.stringify(householdIds)}))
+    and s.from_household_id = ${recipes.householdId}
+    and (
+      (s.kind = 'recipes' and exists (
+        select 1 from recipe_share_items i where i.share_id = s.id and i.recipe_id = ${recipes.id}))
+      or (s.kind = 'category' and (s.category = ${recipes.category} or exists (
+        select 1 from json_each(${recipes.alsoCategories}) where value = s.category)))
+      or (s.kind = 'tag' and exists (
+        select 1 from recipe_tags t where t.tag_id = s.tag_id and t.recipe_id = ${recipes.id}))
+    )
+)`
+
+/** Od koho má domácnosť zdieľané recepty domácnosti `fromHouseholdId`: meno odosielateľa, inak názov domácnosti. */
+export async function sharedFromName(
+  db: Db,
+  toHouseholdId: string,
+  fromHouseholdId: string,
+): Promise<string> {
+  const row = await db
+    .select({ userName: users.name, householdName: households.name })
+    .from(recipeShares)
+    .innerJoin(households, eq(households.id, recipeShares.fromHouseholdId))
+    .leftJoin(users, eq(users.id, recipeShares.fromUserId))
+    .where(
+      and(
+        eq(recipeShares.toHouseholdId, toHouseholdId),
+        eq(recipeShares.fromHouseholdId, fromHouseholdId),
+        eq(recipeShares.status, 'accepted'),
+      ),
+    )
+    .orderBy(desc(recipeShares.respondedAt))
+    .get()
+  return row?.userName ?? row?.householdName ?? ''
 }

@@ -10,6 +10,7 @@ import { HttpError } from '../errors'
 import { chunk } from '../http'
 import { storeImage } from './images'
 import { getRecipeDetail, saveRecipe, toSummary } from './recipes'
+import { sharedFromName, sharedWithHouseholds } from './sharing'
 
 /** Najviac toľko verejných receptov sa vráti naraz (zoznam je určený na prehliadanie, nie na export). */
 const PUBLIC_LIST_LIMIT = 200
@@ -68,19 +69,31 @@ export async function listPublicRecipes(
   }))
 }
 
-/** Detail verejného receptu; súkromný alebo zmazaný recept sa tvári, že neexistuje. */
+/**
+ * Detail cudzieho receptu: verejného alebo zdieľaného s aktívnou domácnosťou (prijaté zdieľanie). Súkromný,
+ * nezdieľaný alebo zmazaný recept sa tvári, že neexistuje.
+ */
 export async function getPublicRecipe(
   db: Db,
   user: Pick<AuthUser, 'id' | 'householdId'>,
   id: string,
 ): Promise<PublicRecipeDetailDto> {
   const found = await db
-    .select({ householdId: recipes.householdId, householdName: households.name })
+    .select({
+      householdId: recipes.householdId,
+      householdName: households.name,
+      visibility: recipes.visibility,
+      shared: user.householdId ? sql<number>`${sharedWithHouseholds([user.householdId])}` : sql<number>`0`,
+    })
     .from(recipes)
     .innerJoin(households, eq(households.id, recipes.householdId))
-    .where(and(eq(recipes.id, id), eq(recipes.visibility, 'public'), isNull(recipes.deletedAt)))
+    .where(and(eq(recipes.id, id), isNull(recipes.deletedAt)))
     .get()
-  if (!found) throw notFound()
+  const own = found?.householdId === user.householdId
+  // Vlastný súkromný recept sa číta cez /recipes, nie tu.
+  if (!found || (found.visibility !== 'public' && (own || !found.shared))) throw notFound()
+  const sharedFrom =
+    found.shared && !own ? await sharedFromName(db, user.householdId, found.householdId) : undefined
   const detail = await getRecipeDetail(db, found.householdId, user.id, id)
   return {
     ...detail,
@@ -90,6 +103,7 @@ export async function getPublicRecipe(
     attachments: found.householdId === user.householdId ? detail.attachments : [],
     householdName: found.householdName,
     ownedByMe: found.householdId === user.householdId,
+    ...(sharedFrom !== undefined ? { sharedFrom } : {}),
     // Kód zdieľania otvorí recept bez prihlásenia – cudzím domácnostiam sa neukáže.
     shareToken: found.householdId === user.householdId ? detail.shareToken : null,
   }
@@ -150,18 +164,37 @@ export async function copyPublicRecipe(
     tags: source.tags.map((t) => t.name),
   })
   const copyId = await saveRecipe(db, user, input)
-  // Pôvod kópie: ukazuje na pôvodný recept (po jeho zmazaní sa väzba sama zruší).
-  await db.update(recipes).set({ parentRecipeId: id }).where(eq(recipes.id, copyId))
+  // Pôvod kópie: ukazuje na pôvodný recept (po jeho zmazaní sa väzba sama zruší), od koho je a ako vyzeral.
+  await db
+    .update(recipes)
+    .set({
+      parentRecipeId: id,
+      copiedFromName: source.sharedFrom || source.householdName,
+      copiedSourceUpdatedAt: source.updatedAt,
+    })
+    .where(eq(recipes.id, copyId))
   return getRecipeDetail(db, user.householdId, user.id, copyId)
 }
 
-/** Fotka verejného receptu sa smie zobraziť aj ľuďom mimo domácnosti. */
-export async function isPublicImage(db: Db, r2Key: string): Promise<boolean> {
+/** Fotka verejného receptu (alebo receptu zdieľaného s niektorou z `householdIds`) sa smie zobraziť aj mimo domácnosti. */
+export async function isPublicImage(
+  db: Db,
+  r2Key: string,
+  householdIds: readonly string[] = [],
+): Promise<boolean> {
   const row = await db
     .select({ id: recipes.id })
     .from(recipes)
     .innerJoin(images, eq(images.id, recipes.coverImageId))
-    .where(and(eq(images.r2Key, r2Key), eq(recipes.visibility, 'public'), isNull(recipes.deletedAt)))
+    .where(
+      and(
+        eq(images.r2Key, r2Key),
+        isNull(recipes.deletedAt),
+        householdIds.length
+          ? or(eq(recipes.visibility, 'public'), sharedWithHouseholds(householdIds))
+          : eq(recipes.visibility, 'public'),
+      ),
+    )
     .get()
   return row !== undefined
 }

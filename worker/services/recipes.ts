@@ -392,6 +392,7 @@ export async function getRecipeDetail(
     sourceText: r.sourceText,
     coverImageId: r.coverImageId,
     shareToken: r.shareToken,
+    copiedFrom: r.copiedFromName,
     notes: r.notes,
     attachments: attachmentRows.map((a) => ({
       id: a.id,
