@@ -137,7 +137,7 @@ async function patch(
   }
 }
 
-const { mdAndUp } = useDisplay()
+const { mdAndUp, xs } = useDisplay()
 
 const editOpen = ref(false)
 const editTarget = ref<IngredientDto | null>(null)
@@ -216,12 +216,14 @@ const usage = (item: IngredientDto) =>
       <PageHeader
         :title="t('common.nav.ingredients')"
         :subtitle="mdAndUp ? t('ingredients.page.subtitle') : undefined"
+        stack-actions
       >
         <v-btn
           v-if="missingStarters > 0"
           variant="tonal"
           :prepend-icon="mdiPlaylistPlus"
           :loading="addStarter.isPending.value"
+          :block="xs"
           data-test="add-starter"
           @click="onAddStarter"
         >
@@ -230,12 +232,14 @@ const usage = (item: IngredientDto) =>
         <CategorySuggestions
           v-if="ingredients"
           :ingredients="ingredients"
+          :block="xs"
           @done="(text, color) => (snackbar = { show: true, color: color ?? 'success', text })"
         />
         <v-btn
           :prepend-icon="mdiCheckboxMarkedOutline"
           :variant="selection.active.value ? 'flat' : 'tonal'"
           :color="selection.active.value ? 'primary' : undefined"
+          :block="xs"
           data-test="select-mode"
           @click="selection.active.value ? selection.stop() : selection.start()"
         >

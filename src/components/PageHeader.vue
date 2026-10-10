@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useDisplay } from 'vuetify'
 
-defineProps<{ title: string; subtitle?: string }>()
+/** `stackActions`: na mobile (pod 600 px) akcie pod nadpisom na celú šírku (dlhé texty tlačidiel). */
+defineProps<{ title: string; subtitle?: string; stackActions?: boolean }>()
 // Na mobile menší nadpis (22 px namiesto 32 px) a menšia medzera, aby hlavička nezaberala veľa miesta. Triedy
 // sú z typografie Vuetify 4 (MD3); staré text-h5/text-h6 vo Vuetify 4 neexistujú.
-const { smAndDown } = useDisplay()
+const { smAndDown, xs } = useDisplay()
 </script>
 
 <template>
@@ -20,7 +21,11 @@ const { smAndDown } = useDisplay()
       </h1>
       <div v-if="subtitle" class="text-body-medium text-medium-emphasis">{{ subtitle }}</div>
     </div>
-    <div v-if="$slots.default" class="d-flex flex-wrap align-center ga-2 d-print-none">
+    <div
+      v-if="$slots.default"
+      class="d-flex flex-wrap align-center ga-2 d-print-none"
+      :class="{ 'flex-column align-stretch w-100': stackActions && xs }"
+    >
       <slot />
     </div>
   </div>

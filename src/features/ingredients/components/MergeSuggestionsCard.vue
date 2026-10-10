@@ -2,6 +2,7 @@
 import { mdiCallMerge } from '@mdi/js'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useDisplay } from 'vuetify'
 import type { IngredientDto } from '@shared/api'
 import { findDuplicateGroups, mixedUnits } from '@shared/ingredientDuplicates'
 import { useIgnoreMergeSuggestion, useIngredientUnits, useMergeIgnored } from '@/api/ingredientMerge'
@@ -14,6 +15,7 @@ import { tc } from '@/i18n/format'
 const props = defineProps<{ ingredients: IngredientDto[] }>()
 const emit = defineEmits<{ merge: [items: IngredientDto[]] }>()
 const { t } = useI18n()
+const { xs } = useDisplay()
 const { data: ignored } = useMergeIgnored()
 const ignore = useIgnoreMergeSuggestion()
 
@@ -61,33 +63,39 @@ const label = (item: IngredientDto) => {
           <template v-for="(group, index) in groups" :key="group.key">
             <v-divider v-if="index > 0" />
             <v-list-item class="px-0" data-test="merge-suggestion">
-              <v-list-item-title class="text-wrap">
-                {{ group.items.map(label).join(' · ') }}
-                <v-chip
-                  v-if="isMixed(group.items)"
-                  color="error"
-                  variant="tonal"
-                  size="x-small"
-                  class="ms-1"
-                  data-test="suggestion-mixed-units"
+              <!-- Na mobile (pod 600 px) sú akcie pod textom, inak vpravo vedľa neho. -->
+              <div class="d-flex flex-column flex-sm-row align-sm-center ga-2">
+                <v-list-item-title class="text-wrap flex-grow-1">
+                  {{ group.items.map(label).join(' · ') }}
+                  <v-chip
+                    v-if="isMixed(group.items)"
+                    color="error"
+                    variant="tonal"
+                    size="x-small"
+                    class="ms-1"
+                    data-test="suggestion-mixed-units"
+                  >
+                    {{ t('ingredients.suggestions.mixedUnits') }}
+                  </v-chip>
+                </v-list-item-title>
+                <div
+                  class="d-flex ga-2 flex-shrink-0"
+                  :data-test="xs ? 'suggestion-actions-below' : 'suggestion-actions'"
                 >
-                  {{ t('ingredients.suggestions.mixedUnits') }}
-                </v-chip>
-              </v-list-item-title>
-              <template #append>
-                <div class="d-flex flex-wrap justify-end ga-1">
                   <v-btn
                     color="primary"
                     variant="tonal"
-                    size="small"
+                    :size="xs ? 'default' : 'small'"
+                    :class="{ 'flex-grow-1': xs }"
                     data-test="suggestion-merge"
                     @click="emit('merge', group.items)"
                   >
                     {{ t('ingredients.suggestions.merge') }}
                   </v-btn>
                   <v-btn
-                    variant="text"
-                    size="small"
+                    variant="outlined"
+                    :size="xs ? 'default' : 'small'"
+                    :class="{ 'flex-grow-1': xs }"
                     :loading="ignore.isPending.value"
                     data-test="suggestion-ignore"
                     @click="ignore.mutate(group.ids)"
@@ -95,7 +103,7 @@ const label = (item: IngredientDto) => {
                     {{ t('ingredients.suggestions.ignore') }}
                   </v-btn>
                 </div>
-              </template>
+              </div>
             </v-list-item>
           </template>
         </v-list>

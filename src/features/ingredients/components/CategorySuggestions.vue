@@ -3,6 +3,7 @@ import { mdiAutoFix } from '@mdi/js'
 import { useQuery } from '@tanstack/vue-query'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useDisplay } from 'vuetify'
 import type { IngredientDto, ShopCategoryDto } from '@shared/api'
 import { suggestShopCategory } from '@shared/shopCategorySuggest'
 import { useBulkUpdateIngredients } from '@/api/bulk'
@@ -15,9 +16,11 @@ import { tc } from '@/i18n/format'
  * Návrh kategórie obchodu pre nezaradené ingrediencie (podľa názvu). Ukáže len tie, pri ktorých si je istý;
  * človek návrhy skontroluje, zmení alebo odznačí a zaradí naraz.
  */
-const props = defineProps<{ ingredients: IngredientDto[] }>()
+const props = defineProps<{ ingredients: IngredientDto[]; block?: boolean }>()
 const emit = defineEmits<{ done: [message: string, color?: string] }>()
 const { t } = useI18n()
+// Na mobile (pod 600 px) je výber kategórie pod názvom na celú šírku.
+const { xs } = useDisplay()
 // Pôvodné (slovenské) názvy kategórií – návrh ich porovnáva s pravidlami, preklad je len na zobrazenie.
 const { data: categories } = useQuery({
   queryKey: ['shop-categories'],
@@ -76,6 +79,7 @@ async function apply() {
   <v-btn
     v-if="suggestions.length"
     variant="tonal"
+    :block="block"
     :prepend-icon="mdiAutoFix"
     data-test="suggest-categories"
     @click="open = true"
@@ -108,8 +112,8 @@ async function apply() {
             :aria-label="t('ingredients.page.shopCategory')"
             density="compact"
             hide-details
-            class="flex-grow-0 flex-shrink-0"
-            style="width: 260px"
+            :class="xs ? 'w-100 ps-10' : 'flex-grow-0 flex-shrink-0'"
+            :style="xs ? undefined : 'width: 260px'"
           />
         </div>
       </v-card-text>
