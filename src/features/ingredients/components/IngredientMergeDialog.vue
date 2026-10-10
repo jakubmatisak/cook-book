@@ -33,6 +33,15 @@ const mixed = computed(() =>
   units.value ? mixedUnits(props.items.map((i) => [...(units.value?.[i.id] ?? []), i.defaultUnit])) : [],
 )
 const unitsConfirmed = ref(false)
+
+/** Popis ingrediencie: názov, použitie a jednotky (nech je pri rozdielnych jednotkách jasné, ktorá je ktorá). */
+function targetLabel(item: IngredientDto): string {
+  const usage = item.usageCount ? tc('ingredients.usedIn', item.usageCount) : t('ingredients.page.unused')
+  const itemUnits = [
+    ...new Set([...(units.value?.[item.id] ?? []), ...(item.defaultUnit ? [item.defaultUnit] : [])]),
+  ]
+  return [item.name, usage, ...(itemUnits.length ? [itemUnits.join(', ')] : [])].join(' · ')
+}
 const sources = computed(() => props.items.filter((i) => i.id !== targetId.value))
 
 watch(open, (value) => {
@@ -76,7 +85,7 @@ async function submit() {
             v-for="item in items"
             :key="item.id"
             :value="item.id"
-            :label="`${item.name} · ${item.usageCount ? tc('ingredients.usedIn', item.usageCount) : t('ingredients.page.unused')}`"
+            :label="targetLabel(item)"
             :data-test="`merge-target-${item.id}`"
           />
         </v-radio-group>

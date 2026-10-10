@@ -98,6 +98,9 @@ describe('návrhy na zlúčenie v Ingredienciách', () => {
     await wrapper.find('[data-test="suggestion-merge"]').trigger('click')
     await flushPromises()
     expect(document.querySelector('[data-test="merge-units-warning"]')?.textContent).toContain('g, ks')
+    // Pri každej ingrediencii vidno jej jednotky, nech je jasné, ktorá je ktorá.
+    expect(document.querySelector('[data-test="merge-target-a"]')?.textContent).toContain('· g')
+    expect(document.querySelector('[data-test="merge-target-b"]')?.textContent).toContain('· ks')
     expect(document.querySelector<HTMLButtonElement>('[data-test="merge-confirm"]')!.disabled).toBe(true)
     await click('[data-test="merge-units-confirm"] input')
     expect(document.querySelector<HTMLButtonElement>('[data-test="merge-confirm"]')!.disabled).toBe(false)
