@@ -1,5 +1,25 @@
 # Zmeny
 
+## 1.10.0 – 2026-10-10
+
+### Nové
+
+- **Zdieľanie receptov s konkrétnym e-mailom:** v detaile receptu (⋮ → Zdieľať s…), hromadne v zozname receptov
+  alebo celý tag zo stránky Tagy. E-maily sa zadávajú ručne, aplikácia ponúka len tvoje kontakty. Zdieľať sa dá aj
+  celá kategória či tag – recepty pridané neskôr pribúdajú samy. K ponuke môžeš pridať správu.
+- Príjemca vidí ponuku na Prehľade („Hanka s tebou chce zdieľať 2 recepty“) a môže prijať všetko, vybrať len
+  niektoré recepty alebo odmietnuť. Prijaté recepty vidí celá jeho domácnosť len na čítanie; môže si ich skopírovať
+  k sebe alebo pridať do plánu (pridá sa kópia).
+- **Zdieľanie** v ponuke účtu vpravo hore (s počtom čakajúcich ponúk): čo zdieľaš ty (stav, zrušenie, odobratie
+  receptu) a čo zdieľajú iní s tebou.
+- Filter **Zdieľanie** v zozname receptov (Zdieľané so mnou / Zdieľam), odznak „Od: …“ na zdieľaných receptoch,
+  v detaile „Zdieľané so: …“ a pri kópii „Skopírované od: …“.
+- Upozornenie, keď v prijatom tagu či kategórii pribudnú recepty alebo keď sa zmení originál receptu, ktorý máš
+  skopírovaný (originál otvoríš alebo ním nahradíš svoju kópiu).
+- **Kontakty** v Nastaveniach: e-maily, s ktorými zdieľaš, s menom (napr. „Svokra“).
+- Kto ešte nemá domácnosť, pri zakladaní vidí, že na neho čakajú zdieľané recepty. Prihlásenie stále riadi
+  Cloudflare Access – nový e-mail treba pridať tam.
+
 ## 1.9.2 – 2026-10-10
 
 ### Zmeny
@@ -10,13 +30,6 @@
 ## 1.9.1 – 2026-10-10
 
 ### Zmeny
-
-## 1.9.2 – 2026-10-10
-
-### Zmeny
-
-- Nastavenia sú v ponuke účtu vpravo hore spolu s odhlásením a verziou, už nie v bočnom menu. Pri názve a verzii
-  aplikácie je logo.
 
 - Logo v hornej lište je samotný znak (vidlička v znaku mieru) vo farbe zvolenej schémy na priehľadnom pozadí;
   vedie na úvod, ale nesvieti ako aktívna položka. Favicon a ikony aplikácie majú rovnaký znak.
@@ -56,46 +69,6 @@
   obľúbené aj tvoje úpravy ostanú.
 
 ### Zmeny
-
-## 1.9.2 – 2026-10-10
-
-### Zmeny
-
-- Nastavenia sú v ponuke účtu vpravo hore spolu s odhlásením a verziou, už nie v bočnom menu. Pri názve a verzii
-  aplikácie je logo.
-
-## 1.9.1 – 2026-10-10
-
-### Zmeny
-
-## 1.9.2 – 2026-10-10
-
-### Zmeny
-
-- Nastavenia sú v ponuke účtu vpravo hore spolu s odhlásením a verziou, už nie v bočnom menu. Pri názve a verzii
-  aplikácie je logo.
-
-- Logo v hornej lište je samotný znak (vidlička v znaku mieru) vo farbe zvolenej schémy na priehľadnom pozadí;
-  vedie na úvod, ale nesvieti ako aktívna položka. Favicon a ikony aplikácie majú rovnaký znak.
-- Bočné menu na počítači sa zbaľuje a rozbaľuje šípkou dolu v menu, hamburger v hornej lište zmizol.
-
-## 1.9.0 – 2026-10-09
-
-### Nové
-
-- Aplikácia sa volá **Peace in Kitchen** a má nové logo – vidlička v znaku mieru na šalviovom kruhu (ikona
-  v lište, na karte prehliadača, na ploche telefónu aj v náhľade odkazu).
-- **Farebné schémy:** v Nastaveniach → Vzhľad si každý vyberie z 8 schém (Šalvia a horčica, Šalvia a terakota,
-  Eukalyptus a slivka, Šalvia a paprika, Terakota, Modrotlač, Paprika a krém, Grafit a horčica), každú vo svetlom
-  aj tmavom režime. Voľba sa ukladá pri človeku a platí na všetkých zariadeniach. Predvolená je Šalvia a horčica.
-
-## 1.8.1 – 2026-10-09
-
-### Opravy
-
-- Panel filtrov v receptoch sa na počítači už nezatvorí po zaškrtnutí kategórie, tagu či času.
-- Pridávanie základných receptov v Nastaveniach ukazuje v tlačidle priebeh („Pridávam… 4 z 10“) namiesto
-  kolieska cez celé tlačidlo.
 
 - Odhlásiť sa je len v ponuke účtu vpravo hore (a v Nastaveniach), už nie v bočnom menu.
 

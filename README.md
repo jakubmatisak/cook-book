@@ -5,7 +5,7 @@ free tier of Cloudflare: one Worker serves the Vue frontend and the API, data li
 sign-in is handled by Cloudflare Access.
 
 > The app UI is in **Slovak and English**. This README is in English first, [Slovenská verzia](#slovenská-verzia) is below.
-> Status: **1.9.2**.
+> Status: **1.10.0**.
 
 - Website with screenshots: <https://jakubmatisak.github.io/cook-book-website/>
 - Design and phases: [docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md](docs/superpowers/specs/2026-10-05-kucharska-kniha-design.md) (Slovak)
@@ -232,7 +232,7 @@ The repository contains no secrets or personal addresses: they live in Worker se
 
 **Peace in Kitchen** (pôvodne Kuchárska kniha) je rodinná webová aplikácia (PWA) na recepty, týždenný jedálniček a nákupný zoznam. Beží celá zadarmo na
 Cloudflare: jeden Worker servíruje Vue frontend aj API, dáta sú v D1, fotky v R2 a prihlásenie rieši
-Cloudflare Access. Verzia **1.9.2**.
+Cloudflare Access. Verzia **1.10.0**.
 
 Stránka so screenshotmi: <https://jakubmatisak.github.io/cook-book-website/>
 
@@ -258,6 +258,9 @@ Stránka so screenshotmi: <https://jakubmatisak.github.io/cook-book-website/>
   nezávislé a súkromné.
 - **Zdieľanie odkazom:** každý recept sa dá zdieľať odkazom, ktorý ho otvorí (s tlačidlom na tlač) komukoľvek, aj
   bez prihlásenia; zdieľanie sa dá kedykoľvek zastaviť.
+- **Zdieľanie s e-mailom:** recepty (vybrané, celú kategóriu alebo tag) ponúkneš na e-mail; príjemca ponuku prijme
+  na Prehľade a jeho domácnosť ich má len na čítanie, môže si ich skopírovať. Prehľad je v ponuke účtu → Zdieľanie,
+  kontakty v Nastaveniach. Príjemcu treba pustiť v Cloudflare Access.
 - **Poznámky a prílohy:** každý recept má voľné poznámky (odhady, pôvodný zápis, tipy) a prílohy – fotky napr.
   strán z pôvodného zošita. V detaile sú prílohy galériou nad poznámkami a otvoria sa na celú obrazovku; zdieľaný
   odkaz a iné domácnosti vidia len poznámky.
