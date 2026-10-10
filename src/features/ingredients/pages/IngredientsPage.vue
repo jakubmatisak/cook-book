@@ -35,6 +35,7 @@ import IngredientBulkEditDialog from '../components/IngredientBulkEditDialog.vue
 import IngredientEditDialog from '../components/IngredientEditDialog.vue'
 import IngredientMergeDialog from '../components/IngredientMergeDialog.vue'
 import MergeSuggestionsCard from '../components/MergeSuggestionsCard.vue'
+import CategorySuggestions from '../components/CategorySuggestions.vue'
 
 const { t } = useI18n()
 const controlHeight = useControlHeight()
@@ -226,6 +227,11 @@ const usage = (item: IngredientDto) =>
         >
           {{ t('ingredients.page.addStartersCount', { n: missingStarters }) }}
         </v-btn>
+        <CategorySuggestions
+          v-if="ingredients"
+          :ingredients="ingredients"
+          @done="(text, color) => (snackbar = { show: true, color: color ?? 'success', text })"
+        />
         <v-btn
           :prepend-icon="mdiCheckboxMarkedOutline"
           :variant="selection.active.value ? 'flat' : 'tonal'"

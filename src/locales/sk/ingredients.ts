@@ -51,6 +51,13 @@ export default {
       'Ingrediencie majú jednotky, ktoré sa nedajú prepočítať ({units}). Recepty si množstvá ponechajú, ale v nákupe sa nesčítajú.',
     unitsConfirm: 'Áno, zlúčiť aj tak',
   },
+  categorySuggest: {
+    button: 'Navrhnúť kategórie ({n})',
+    title: 'Návrh kategórií',
+    text: 'Nezaradené ingrediencie, pri ktorých vieme kategóriu odhadnúť podľa názvu. Skontroluj, zmeň alebo odznač a zaraď.',
+    apply: 'Zaradiť vybrané ({n})',
+    done: 'Zaradené: {items}.',
+  },
   suggestions: {
     title: 'Návrhy na zlúčenie ({n})',
     text: 'Ingrediencie, ktoré sa líšia len tvarom alebo poradím slov. Návrhy pribúdajú samy s novými receptmi.',

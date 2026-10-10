@@ -11,7 +11,13 @@ const categories = async () => (await send(app, 'GET', api('/shop-categories')))
 describe('kategórie obchodu', () => {
   it('vráti predvolené kategórie v poradí', async () => {
     const list = await categories()
-    expect(list).toHaveLength(11)
+    expect(list).toHaveLength(13)
+    expect(list.map((c) => c.name).slice(4, 8)).toEqual([
+      'Pečivo',
+      'Pečenie',
+      'Trvanlivé',
+      'Konzervy a zaváraniny',
+    ])
     expect(list[0]!.name).toBe('Zelenina')
     expect(list.at(-1)!.name).toBe('Iné')
   })

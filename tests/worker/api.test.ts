@@ -24,7 +24,7 @@ describe('/me', () => {
     expect(await count('households')).toBe(1)
     expect(await count('users')).toBe(1)
     expect(await count('meal_slots')).toBe(5)
-    expect(await count('shop_categories')).toBe(11)
+    expect(await count('shop_categories')).toBe(13)
     expect(await count('shopping_lists')).toBe(1)
   })
 
@@ -53,7 +53,7 @@ describe('/export', () => {
     expect(body.tables.households).toHaveLength(1)
     expect(body.tables.users).toHaveLength(1)
     expect(body.tables.mealSlots).toHaveLength(5)
-    expect(body.tables.shopCategories).toHaveLength(11)
+    expect(body.tables.shopCategories).toHaveLength(13)
     expect(body.tables.shoppingLists).toHaveLength(1)
     expect(body.tables.settings).toHaveLength(4)
   })
