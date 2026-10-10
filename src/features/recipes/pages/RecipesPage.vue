@@ -105,16 +105,18 @@ onBeforeUnmount(() => clearTimeout(timer))
 
 const kidsEnabled = useKidsEnabled()
 // Pri vypnutých detských jedlách (nastavenia) sa prepínač ani parameter `detske` neuplatnia.
-// Predvolené „recepty od iných“ server pozná z nastavení, preto sa posiela len iný výber.
+// „Recepty od iných“ sa posielajú vždy výslovne: server sa nespolieha na svoje nastavenie, ktoré môže byť
+// v inej karte či na inom zariadení medzitým iné (zoznam by sa načítal a po obnovení zmizol).
 const listFilters = computed(() => ({
   ...state.value,
-  public: state.value.public === publicDefault.value ? undefined : state.value.public,
+  public: state.value.public,
   shared: state.value.shared === 'withMe' ? ('only' as const) : undefined,
   sharedByMe: state.value.shared === 'byMe' || undefined,
   published: state.value.shared === 'published' || undefined,
   ...(kidsEnabled.value ? {} : { kids: 'hide' as const }),
 }))
-const { data: list, isPending, error } = useRecipes(listFilters)
+// Predvolený výber závisí od nastavení človeka – zoznam sa načíta až s nimi.
+const { data: list, isPending, error } = useRecipes(listFilters, () => Boolean(me.value))
 const { data: tags } = useTags()
 const recipes = computed(() => list.value?.items)
 

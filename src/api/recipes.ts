@@ -73,11 +73,15 @@ function toQuery(filters: RecipeFilters): string {
   return query ? `?${query}` : ''
 }
 
-export function useRecipes(filters: MaybeRefOrGetter<RecipeFilters>) {
+export function useRecipes(
+  filters: MaybeRefOrGetter<RecipeFilters>,
+  enabled: MaybeRefOrGetter<boolean> = true,
+) {
   return useQuery({
     queryKey: computed(() => recipeKeys.list(toValue(filters))),
     queryFn: () => apiFetch<RecipeListDto>(`/recipes${toQuery(toValue(filters))}`),
     placeholderData: (previous) => previous,
+    enabled: computed(() => toValue(enabled)),
   })
 }
 

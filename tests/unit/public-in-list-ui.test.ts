@@ -113,10 +113,12 @@ describe('Verejné recepty v zozname receptov', () => {
     expect(routes.some((r) => r.path === '/public/:id')).toBe(true)
   })
 
-  it('filter je predvolene „Len moje“ a nič neposiela', async () => {
+  it('filter je predvolene „Len moje“ a serveru ho pošle výslovne', async () => {
     const { wrapper } = await mountPage()
     expect(wrapper.find('[data-test="public-select"]').text()).toContain('Len moje')
-    expect(requested().every((u) => !u.includes('public='))).toBe(true)
+    // Výslovne: server sa nespolieha na svoje nastavenie (karta či iné zariadenie ho môže mať inak).
+    expect(requested().length).toBeGreaterThan(0)
+    expect(requested().every((u) => u.includes('public=hide'))).toBe(true)
   })
 
   it('výber „Moje aj cudzie“ a „Len cudzie“ pošle public= a uloží public do adresy', async () => {
@@ -134,8 +136,8 @@ describe('Verejné recepty v zozname receptov', () => {
   it('so zapnutým nastavením je filter predvolene „Moje aj cudzie“; „Len moje“ pošle a uloží public=hide', async () => {
     const { router, wrapper } = await mountPage('/recipes', 'owner', true)
     expect(wrapper.find('[data-test="public-select"]').text()).toContain('Moje aj cudzie')
-    // Predvolené rozhodne server podľa nastavenia, parameter netreba.
-    expect(requested().every((u) => !u.includes('public='))).toBe(true)
+    // Aj predvolený výber sa posiela výslovne – zoznam nesmie závisieť od nastavenia na serveri.
+    expect(requested().every((u) => u.includes('public=include'))).toBe(true)
     expect(wrapper.find('[data-test="active-filters"]').exists()).toBe(false)
 
     await choose(wrapper, 'Len moje')
