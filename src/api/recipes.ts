@@ -37,6 +37,8 @@ export interface RecipeFilters {
   shared?: 'only' | undefined
   /** Len moje recepty, ktoré niekomu zdieľam. */
   sharedByMe?: boolean | undefined
+  /** Len moje zverejnené recepty. */
+  published?: boolean | undefined
   /** „Čo viem uvariť“: zoradiť podľa toho, čo je doma, s chýbajúcimi ingredienciami. */
   pantry?: boolean | undefined
 }
@@ -64,6 +66,7 @@ function toQuery(filters: RecipeFilters): string {
   if (filters.public) params.set('public', filters.public)
   if (filters.shared) params.set('shared', filters.shared)
   if (filters.sharedByMe) params.set('sharedByMe', '1')
+  if (filters.published) params.set('published', '1')
   if (filters.pantry) params.set('pantry', '1')
   if (filters.pantry && filters.missing !== undefined) params.set('missing', String(filters.missing))
   const query = params.toString()

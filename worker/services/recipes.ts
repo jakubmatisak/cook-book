@@ -34,7 +34,13 @@ import { chunk } from '../http'
 import { resolveIngredients, resolveTags } from './catalog'
 import { releaseImages } from './imageCleanup'
 import { ignoredPantryCategoryIds, pantryIngredientIds } from './pantry'
-import { sharedByOwner, sharedFromName, sharedRecipeIds, sharedWithLabels } from './sharing'
+import {
+  sharedByOwner,
+  sharedFromName,
+  sharedRecipeIds,
+  sharedWithByRecipe,
+  sharedWithLabels,
+} from './sharing'
 
 type RecipeRow = typeof recipes.$inferSelect
 
@@ -48,6 +54,8 @@ export interface RecipeListOptions extends FacetFilters {
   sharedMode?: 'only'
   /** Len moje recepty, ktoré niekomu zdieľam (čakajúca alebo prijatá ponuka). */
   sharedByMe?: boolean
+  /** Len moje zverejnené recepty. */
+  published?: boolean
   sort?: SortKey
   dir?: SortDir
 }
@@ -520,6 +528,7 @@ export async function listRecipes(
               isNull(recipes.deletedAt),
               needleSql,
               options.sharedByMe ? sharedByOwner() : undefined,
+              options.published ? eq(recipes.visibility, 'public') : undefined,
             ),
           )
 
@@ -550,7 +559,11 @@ export async function listRecipes(
 
   // Cudzie verejné recepty (nie pri „čo viem uvariť“, kde sa počíta moja špajza).
   const publicRows =
-    options.publicMode && !options.pantry && options.sharedMode !== 'only' && !options.sharedByMe
+    options.publicMode &&
+    !options.pantry &&
+    options.sharedMode !== 'only' &&
+    !options.sharedByMe &&
+    !options.published
       ? await db
           .select({ recipe: recipes, r2Key: images.r2Key, householdName: households.name })
           .from(recipes)
@@ -572,6 +585,8 @@ export async function listRecipes(
     ...publicRows,
   ]
   if (rows.length === 0 && foreignRows.length === 0) return emptyList()
+  // Komu zdieľam vlastné recepty (karty a tabuľka ukážu „Zdieľané s: …“).
+  const sharedWith = rows.length ? await sharedWithByRecipe(db, householdId) : new Map<string, string[]>()
 
   const ids = rows.map((r) => r.recipe.id)
   const tagsByRecipe = new Map<string, TagDto[]>()
@@ -644,6 +659,9 @@ export async function listRecipes(
       ...(missing ? { missing: missing.get(recipe.id) ?? [] } : {}),
       ...(householdName ? { householdName } : {}),
       ...(sharedFrom ? { sharedFrom } : {}),
+      ...(!householdName && sharedWith.get(recipe.id)?.length
+        ? { sharedWith: sharedWith.get(recipe.id) }
+        : {}),
     }
     const tagIds = householdName
       ? tagList.flatMap((t) => myTagIdByName.get(normalizeText(t.name)) ?? [])
@@ -676,6 +694,7 @@ export async function listRecipes(
     publicMode: _publicMode,
     sharedMode: _sharedMode,
     sharedByMe: _sharedByMe,
+    published: _published,
     ...rest
   } = options
   const filters = options.pantry && missingMax !== undefined ? { ...rest, missingMax } : rest

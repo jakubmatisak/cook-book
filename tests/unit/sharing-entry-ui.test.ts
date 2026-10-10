@@ -86,7 +86,7 @@ describe('zdieľanie s e-mailom v detaile receptu', () => {
 
   it('ukáže, komu je recept zdieľaný, a pri kópii od koho je', async () => {
     const wrapper = await mountDetail(detail({ sharedWith: ['Mama', 'Svokra'], copiedFrom: 'Jakub' }))
-    expect(wrapper.find('[data-test="shared-with"]').text()).toBe('Zdieľané so: Mama, Svokra')
+    expect(wrapper.find('[data-test="shared-with"]').text()).toBe('Zdieľané s: Mama, Svokra')
     expect(wrapper.find('[data-test="copied-from"]').text()).toBe('Skopírované od: Jakub')
   })
 

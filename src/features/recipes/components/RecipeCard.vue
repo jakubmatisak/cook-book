@@ -12,6 +12,7 @@ import { useI18n } from 'vue-i18n'
 import type { RecipeSummaryDto } from '@shared/api'
 import { formatMinutes } from '@/i18n/format'
 import { totalMinutes } from '@/lib/format'
+import { sharedWithText } from '@/features/sharing/labels'
 import FavoriteButton from './FavoriteButton.vue'
 
 const props = defineProps<{ recipe: RecipeSummaryDto; selectable?: boolean; selected?: boolean }>()
@@ -136,6 +137,16 @@ const subtitle = computed(() => {
         {{
           foreign ? t('recipes.badge.publicFrom', { name: recipe.householdName }) : t('recipes.badge.public')
         }}
+      </v-chip>
+      <v-chip
+        v-if="recipe.sharedWith?.length"
+        size="x-small"
+        color="primary"
+        variant="tonal"
+        :prepend-icon="mdiAccountMultipleOutline"
+        data-test="shared-with-badge"
+      >
+        {{ sharedWithText(recipe.sharedWith) }}
       </v-chip>
       <v-chip
         v-for="tag in recipe.tags.slice(0, 3)"

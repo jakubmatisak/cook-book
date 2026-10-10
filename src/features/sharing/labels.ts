@@ -16,6 +16,13 @@ export function shareWhat(share: {
   return tc('sharing.what.recipes', share.recipes.length)
 }
 
+/** Komu je recept zdieľaný, krátko: najviac dve mená a „+N“ (napr. „Mama, Svokra +2“). */
+export function sharedWithText(names: readonly string[], max = 2): string {
+  const shown = names.slice(0, max).join(', ')
+  const rest = names.length - max
+  return t('sharing.recipe.sharedWith', { names: rest > 0 ? `${shown} +${rest}` : shown })
+}
+
 /** Farba čipu stavu ponuky (z témy). */
 export const STATUS_COLORS: Readonly<Record<ShareStatus, string>> = {
   pending: 'warning',

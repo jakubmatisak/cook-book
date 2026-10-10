@@ -673,3 +673,40 @@ export async function deleteContact(db: Db, householdId: string, id: string): Pr
     .returning({ id: contacts.id })
   if (res.length === 0) throw contactNotFound()
 }
+
+/**
+ * Komu domácnosť ktorý svoj recept zdieľa (čakajúce aj prijaté ponuky): meno kontaktu, inak e-mail. Pre zoznam
+ * receptov – číta len ponuky domácnosti a ich recepty, nie celú kuchárku (okrem zdieľanej kategórie).
+ */
+export async function sharedWithByRecipe(db: Db, householdId: string): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>()
+  const shares = await db
+    .select()
+    .from(recipeShares)
+    .where(
+      and(
+        eq(recipeShares.fromHouseholdId, householdId),
+        inArray(recipeShares.status, ['pending', 'accepted']),
+      ),
+    )
+  if (shares.length === 0) return result
+  const recipesOf = await recipesOfShares(db, shares)
+  const contactRows = await db
+    .select({ email: contacts.email, name: contacts.name })
+    .from(contacts)
+    .where(eq(contacts.householdId, householdId))
+  const nameOf = new Map(contactRows.map((c) => [c.email, c.name]))
+  for (const s of shares) {
+    const label = nameOf.get(s.toEmail) ?? s.toEmail
+    for (const r of recipesOf.get(s.id) ?? []) {
+      const labels = result.get(r.id) ?? []
+      if (!labels.includes(label)) result.set(r.id, [...labels, label])
+    }
+  }
+  for (const [id, labels] of result)
+    result.set(
+      id,
+      labels.sort((a, b) => a.localeCompare(b, 'sk')),
+    )
+  return result
+}

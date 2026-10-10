@@ -99,7 +99,13 @@ export default {
     addToPlan: 'Add to plan',
     copyFailed: 'Copying the recipe failed.',
   },
-  filters: { label: 'Sharing', all: 'All recipes', withMe: 'Shared with me', byMe: 'I share' },
+  filters: {
+    label: 'Sharing',
+    all: 'All recipes',
+    withMe: 'Shared with me',
+    byMe: 'I share',
+    published: 'Public',
+  },
   contacts: {
     title: 'Contacts',
     subtitle: 'E-mails you share recipes with. The name is shown instead of the e-mail.',

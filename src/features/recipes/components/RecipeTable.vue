@@ -8,6 +8,7 @@ import type { RecipeSummaryDto } from '@shared/api'
 import { formatDate, formatMinutes } from '@/i18n/format'
 import { totalMinutes } from '@/lib/format'
 import type { TableSort } from '../listQuery'
+import { sharedWithText } from '@/features/sharing/labels'
 import FavoriteButton from './FavoriteButton.vue'
 
 const { t } = useI18n()
@@ -124,6 +125,17 @@ const openRecipe = (_event: Event, { item }: { item: RecipeSummaryDto }) => {
           data-test="shared-badge"
         >
           {{ t('sharing.recipe.sharedFrom', { name: item.sharedFrom }) }}
+        </v-chip>
+        <v-chip
+          v-if="item.sharedWith?.length"
+          size="x-small"
+          color="primary"
+          variant="tonal"
+          :prepend-icon="mdiAccountMultipleOutline"
+          class="mt-1 me-1"
+          data-test="shared-with-badge"
+        >
+          {{ sharedWithText(item.sharedWith) }}
         </v-chip>
         <v-chip
           v-else-if="item.visibility === 'public'"

@@ -129,6 +129,11 @@ export const recipeListQuerySchema = z.object({
   public: z.enum(['hide', 'include', 'only']).optional(),
   /** `shared=only`: len recepty, ktoré so mnou zdieľajú iné domácnosti. */
   shared: z.enum(['only']).optional(),
+  /** Len moje zverejnené recepty. */
+  published: z
+    .enum(['1', 'true'])
+    .optional()
+    .transform((v) => v !== undefined),
   /** Len moje recepty, ktoré niekomu zdieľam. */
   sharedByMe: z
     .enum(['1', 'true'])

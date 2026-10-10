@@ -199,6 +199,8 @@ export interface RecipeSummaryDto {
   householdName?: string
   /** Len pri recepte, ktorý so mnou zdieľa iná domácnosť: od koho (meno človeka alebo názov domácnosti). */
   sharedFrom?: string
+  /** Komu je môj recept zdieľaný (mená kontaktov alebo e-maily, čakajúce aj prijaté). Len pre vlastnú domácnosť. */
+  sharedWith?: string[]
 }
 
 export interface RecipeIngredientDto {
@@ -240,8 +242,6 @@ export interface RecipeDetailDto extends RecipeSummaryDto {
   attachments?: RecipeAttachmentDto[]
   /** Kód odkazu na zdieľanie (`/s/<kód>`); null = recept sa nezdieľa. Len pre vlastnú domácnosť. */
   shareToken?: string | null
-  /** Komu je recept zdieľaný (mená kontaktov alebo e-maily, čakajúce aj prijaté). Len pre vlastnú domácnosť. */
-  sharedWith?: string[]
   /** Kópia receptu od inej domácnosti: od koho je (napr. „Jakub“). */
   copiedFrom?: string | null
   ingredients: RecipeIngredientDto[]

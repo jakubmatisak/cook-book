@@ -58,12 +58,17 @@ const KIDS_PARAM: Readonly<Record<string, KidsMode>> = { include: 'include', onl
 export type PublicMode = 'hide' | 'include' | 'only'
 const PUBLIC_PARAM: Readonly<Record<string, PublicMode>> = { hide: 'hide', include: 'include', only: 'only' }
 
-export type SharedMode = 'all' | 'withMe' | 'byMe'
-const SHARED_PARAM: Readonly<Record<string, SharedMode>> = { 'with-me': 'withMe', 'by-me': 'byMe' }
+export type SharedMode = 'all' | 'withMe' | 'byMe' | 'published'
+const SHARED_PARAM: Readonly<Record<string, SharedMode>> = {
+  'with-me': 'withMe',
+  'by-me': 'byMe',
+  published: 'published',
+}
 export const SHARED_TO_PARAM: Readonly<Record<SharedMode, string | undefined>> = {
   all: undefined,
   withMe: 'with-me',
   byMe: 'by-me',
+  published: 'published',
 }
 
 const MISSING_VALUES: Readonly<Record<string, 0 | 1>> = { '0': 0, '1': 1 }

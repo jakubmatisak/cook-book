@@ -5,6 +5,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { VApp } from 'vuetify/components'
 import type { PublicRecipeDetailDto, RecipeSummaryDto } from '@shared/api'
 import RecipeCard from '@/features/recipes/components/RecipeCard.vue'
+import RecipeTable from '@/features/recipes/components/RecipeTable.vue'
 import { parseListQuery } from '@/features/recipes/listQuery'
 import PublicRecipePage from '@/features/recipes/pages/PublicRecipePage.vue'
 import RecipesPage from '@/features/recipes/pages/RecipesPage.vue'
@@ -92,6 +93,59 @@ describe('zdieľané recepty v zozname', () => {
     expect(wrapper.find('[data-test="shared-badge"]').text()).toBe('Od: Jakub')
     expect(wrapper.find('[data-test="public-badge"]').exists()).toBe(false)
     expect(wrapper.find('a').attributes('href')).toBe('/public/r1')
+  })
+})
+
+describe('komu zdieľam a zverejnené v zozname', () => {
+  const own: RecipeSummaryDto = {
+    ...summary,
+    householdName: undefined,
+    sharedFrom: undefined,
+    sharedWith: ['Mama', 'Svokra', 'Teta', 'Ujo'],
+  }
+
+  it('filter Zdieľanie má aj Verejné (moje zverejnené) a pošle published=1', async () => {
+    expect(parseListQuery({ shared: 'published' }).shared).toBe('published')
+    const empty = { items: [], facets: { category: {}, tag: {}, difficulty: {}, time: {}, missing: {} } }
+    const { calls } = await mountAt(
+      RecipesPage,
+      '/recipes?shared=published',
+      { '/recipes': empty },
+      '/recipes',
+    )
+    expect(calls.some((c) => c.path === '/recipes' && c.url.includes('published=1'))).toBe(true)
+  })
+
+  it('karta ukáže, komu je recept zdieľaný; pri viacerých dvoch a +N', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/:p(.*)*', component: Blank }],
+    })
+    stubApi({ '/me': me('owner') })
+    const wrapper = mount(RecipeCard, {
+      props: { recipe: own },
+      global: { plugins: [...mountPlugins(), router] },
+    })
+    mounted.push(wrapper)
+    expect(wrapper.find('[data-test="shared-with-badge"]').text()).toBe('Zdieľané s: Mama, Svokra +2')
+  })
+
+  it('tabuľka ukáže, komu je recept zdieľaný', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/:p(.*)*', component: Blank }],
+    })
+    stubApi({ '/me': me('owner') })
+    const wrapper = mount(
+      {
+        render: () =>
+          h(VApp, null, () => h(RecipeTable, { items: [{ ...own, sharedWith: ['Svokra'] }], sortBy: [] })),
+      },
+      { global: { plugins: [...mountPlugins(), router] }, attachTo: document.body },
+    )
+    mounted.push(wrapper)
+    await flushPromises()
+    expect(wrapper.find('[data-test="shared-with-badge"]').text()).toBe('Zdieľané s: Svokra')
   })
 })
 

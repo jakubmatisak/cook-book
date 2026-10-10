@@ -93,13 +93,19 @@ export default {
     incomingText: 'Keď ti niekto ponúkne recepty, uvidíš ponuku tu aj na Prehľade.',
   },
   recipe: {
-    sharedWith: 'Zdieľané so: {names}',
+    sharedWith: 'Zdieľané s: {names}',
     copiedFrom: 'Skopírované od: {name}',
     sharedFrom: 'Od: {name}',
     addToPlan: 'Pridať do plánu',
     copyFailed: 'Kópia receptu zlyhala.',
   },
-  filters: { label: 'Zdieľanie', all: 'Všetky recepty', withMe: 'Zdieľané so mnou', byMe: 'Zdieľam' },
+  filters: {
+    label: 'Zdieľanie',
+    all: 'Všetky recepty',
+    withMe: 'Zdieľané so mnou',
+    byMe: 'Zdieľam',
+    published: 'Verejné',
+  },
   contacts: {
     title: 'Kontakty',
     subtitle: 'E-maily, s ktorými zdieľaš recepty. Meno sa ukazuje namiesto e-mailu.',

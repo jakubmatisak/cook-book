@@ -111,6 +111,7 @@ const listFilters = computed(() => ({
   public: state.value.public === publicDefault.value ? undefined : state.value.public,
   shared: state.value.shared === 'withMe' ? ('only' as const) : undefined,
   sharedByMe: state.value.shared === 'byMe' || undefined,
+  published: state.value.shared === 'published' || undefined,
   ...(kidsEnabled.value ? {} : { kids: 'hide' as const }),
 }))
 const { data: list, isPending, error } = useRecipes(listFilters)
@@ -229,7 +230,7 @@ const publicMode = computed({
 const publicItems = computed(() =>
   KIDS_MODES.map((mode) => ({ value: mode, title: t(`recipes.list.public_${mode}`) })),
 )
-const SHARED_MODES: readonly SharedMode[] = ['all', 'withMe', 'byMe']
+const SHARED_MODES: readonly SharedMode[] = ['all', 'withMe', 'byMe', 'published']
 const sharedMode = computed({
   get: () => state.value.shared,
   set: (value: SharedMode) => setQuery({ shared: SHARED_TO_PARAM[value] }),
