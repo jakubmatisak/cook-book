@@ -7,6 +7,7 @@ import { bulkIdsSchema, ingredientBulkUpdateSchema, ingredientMergeSchema } from
 import { shopCategories } from '../db/schema'
 import { bulkDeleteIngredients, bulkUpdateIngredients } from '../services/bulk'
 import { mergeIngredients } from '../services/merge'
+import { addMergeIgnored, getMergeIgnored, ingredientUnits } from '../services/ingredientMergeHelp'
 import type { AppEnv } from '../env'
 import { parseBody } from '../http'
 import {
@@ -18,6 +19,19 @@ import {
   updateIngredient,
 } from '../services/catalog'
 import { createTag, deleteTag, listTags, updateTag } from '../services/tags'
+
+const mergeIgnoreSchema = z.object({ ids: z.array(z.string().min(1).max(40)).min(2).max(50) })
+const unitsQuerySchema = z
+  .string()
+  .transform((v) => [
+    ...new Set(
+      v
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean),
+    ),
+  ])
+  .pipe(z.array(z.string().max(40)).min(1).max(50))
 
 export const ingredientRoutes = new Hono<AppEnv>()
   .get('/', async (c) => {
@@ -32,6 +46,17 @@ export const ingredientRoutes = new Hono<AppEnv>()
     const input = await parseBody(c, ingredientBulkUpdateSchema)
     const { ids, ...patch } = input
     return c.json(await bulkUpdateIngredients(c.get('db'), c.get('user').householdId, { ids, ...patch }))
+  })
+  // Návrhy na zlúčenie: ignorované skupiny domácnosti a jednotky pred zlúčením (upozornenie na g vs. ks).
+  .get('/merge-ignored', async (c) => c.json(await getMergeIgnored(c.get('db'), c.get('user').householdId)))
+  .post('/merge-ignored', async (c) => {
+    const { ids } = await parseBody(c, mergeIgnoreSchema)
+    await addMergeIgnored(c.get('db'), c.get('user').householdId, ids)
+    return c.json({ ok: true })
+  })
+  .get('/units', async (c) => {
+    const ids = unitsQuerySchema.parse(c.req.query('ids') ?? '')
+    return c.json(await ingredientUnits(c.get('db'), c.get('user').householdId, ids))
   })
   .post('/merge', async (c) => {
     const input = await parseBody(c, ingredientMergeSchema)
