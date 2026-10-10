@@ -8,17 +8,7 @@ import { NAV_ITEMS } from '@/components/navigation'
 import { setActiveHousehold } from '@/lib/household'
 import { createAppVuetify } from '@/plugins/vuetify'
 
-const ALL_TITLES = [
-  'Prehľad',
-  'Recepty',
-  'Plán',
-  'Nákup',
-  'Pri stole',
-  'Ingrediencie',
-  'Tagy',
-  'Špajza',
-  'Nastavenia',
-]
+const ALL_TITLES = ['Prehľad', 'Recepty', 'Plán', 'Nákup', 'Pri stole', 'Ingrediencie', 'Tagy', 'Špajza']
 
 function setViewport(width: number) {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
@@ -136,7 +126,13 @@ describe('AppShell', () => {
       const wrapper = await mountShell(width)
       await wrapper.find('[data-test="account"]').trigger('click')
       await flushPromises()
-      expect(document.body.textContent).toContain('Verzia 1.9.1')
+      expect(document.body.textContent).toContain('Verzia 1.9.2')
+      // Nastavenia sú v ponuke účtu (nie v bočnom menu)
+      const settings = document.querySelector<HTMLAnchorElement>('[data-test="account-settings"]')
+      expect(settings?.textContent).toContain('Nastavenia')
+      expect(settings?.getAttribute('href')).toBe('/settings')
+      // pri názve a verzii je logo vo farbe schémy
+      expect(document.querySelector('[data-test="app-version"] .v-icon.text-primary')).not.toBeNull()
       // lokálne (bez Cloudflare Access) sa odhlásenie neponúka
       expect(document.querySelector('[data-test="logout"]')).toBeNull()
       wrapper.unmount()

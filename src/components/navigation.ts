@@ -33,7 +33,9 @@ export const SECONDARY_NAV: readonly NavItem[] = [
   { to: '/ingredients', titleKey: 'common.nav.ingredients', icon: mdiFormatListChecks },
   { to: '/tags', titleKey: 'common.nav.tags', icon: mdiTagMultipleOutline },
   { to: '/pantry', titleKey: 'common.nav.pantry', icon: mdiFridgeOutline },
-  { to: '/settings', titleKey: 'common.nav.settings', icon: mdiCogOutline },
 ]
 
-export const NAV_ITEMS: readonly NavItem[] = [...PRIMARY_NAV, ...SECONDARY_NAV]
+/** Nastavenia: v ponuke účtu vpravo hore (spolu s odhlásením a verziou), nie v bočnom menu. */
+export const SETTINGS_NAV: NavItem = { to: '/settings', titleKey: 'common.nav.settings', icon: mdiCogOutline }
+
+export const NAV_ITEMS: readonly NavItem[] = [...PRIMARY_NAV, ...SECONDARY_NAV, SETTINGS_NAV]

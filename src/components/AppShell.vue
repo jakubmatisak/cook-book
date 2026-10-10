@@ -26,7 +26,7 @@ import { APP_VERSION_LABEL } from '@/lib/version'
 import { LOGO_ICON } from '@/design/logo'
 import { useApplyTheme, useThemePreference, type ThemePreference } from '@/composables/useThemePreference'
 import { navigationPending } from '@/router/navigationPending'
-import { PRIMARY_NAV, SECONDARY_NAV } from './navigation'
+import { PRIMARY_NAV, SECONDARY_NAV, SETTINGS_NAV } from './navigation'
 
 const { mdAndUp } = useDisplay()
 const showLogout = typeof location !== 'undefined' && canLogout(location.hostname)
@@ -136,7 +136,7 @@ const mobileMenu = ref(false)
           data-test="theme-toggle"
           @click="cycle"
         />
-        <!-- Pravý roh: odhlásenie (len pri Cloudflare Access) a pod ním názov a verzia aplikácie. -->
+        <!-- Pravý roh: nastavenia, odhlásenie (len pri Cloudflare Access) a pod tým názov a verzia aplikácie. -->
         <v-menu>
           <template #activator="{ props }">
             <v-btn
@@ -148,6 +148,12 @@ const mobileMenu = ref(false)
             />
           </template>
           <v-list min-width="240" data-test="account-menu">
+            <v-list-item
+              :to="SETTINGS_NAV.to"
+              :title="t(SETTINGS_NAV.titleKey)"
+              :prepend-icon="SETTINGS_NAV.icon"
+              data-test="account-settings"
+            />
             <template v-if="showLogout">
               <!-- Celá stránka (nie router): odhlásenie rieši Cloudflare Access. -->
               <v-list-item
@@ -156,13 +162,15 @@ const mobileMenu = ref(false)
                 :prepend-icon="mdiLogout"
                 data-test="logout"
               />
-              <v-divider />
             </template>
+            <v-divider />
             <v-list-item
               :title="t('common.app.name')"
               :subtitle="t('common.app.version', { version: APP_VERSION_LABEL })"
               data-test="app-version"
-            />
+            >
+              <template #prepend><v-icon :icon="LOGO_ICON" color="primary" /></template>
+            </v-list-item>
           </v-list>
         </v-menu>
       </template>

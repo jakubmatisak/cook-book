@@ -1,8 +1,22 @@
 # Zmeny
 
+## 1.9.2 – 2026-10-10
+
+### Zmeny
+
+- Nastavenia sú v ponuke účtu vpravo hore spolu s odhlásením a verziou, už nie v bočnom menu. Pri názve a verzii
+  aplikácie je logo.
+
 ## 1.9.1 – 2026-10-10
 
 ### Zmeny
+
+## 1.9.2 – 2026-10-10
+
+### Zmeny
+
+- Nastavenia sú v ponuke účtu vpravo hore spolu s odhlásením a verziou, už nie v bočnom menu. Pri názve a verzii
+  aplikácie je logo.
 
 - Logo v hornej lište je samotný znak (vidlička v znaku mieru) vo farbe zvolenej schémy na priehľadnom pozadí;
   vedie na úvod, ale nesvieti ako aktívna položka. Favicon a ikony aplikácie majú rovnaký znak.
@@ -43,9 +57,23 @@
 
 ### Zmeny
 
+## 1.9.2 – 2026-10-10
+
+### Zmeny
+
+- Nastavenia sú v ponuke účtu vpravo hore spolu s odhlásením a verziou, už nie v bočnom menu. Pri názve a verzii
+  aplikácie je logo.
+
 ## 1.9.1 – 2026-10-10
 
 ### Zmeny
+
+## 1.9.2 – 2026-10-10
+
+### Zmeny
+
+- Nastavenia sú v ponuke účtu vpravo hore spolu s odhlásením a verziou, už nie v bočnom menu. Pri názve a verzii
+  aplikácie je logo.
 
 - Logo v hornej lište je samotný znak (vidlička v znaku mieru) vo farbe zvolenej schémy na priehľadnom pozadí;
   vedie na úvod, ale nesvieti ako aktívna položka. Favicon a ikony aplikácie majú rovnaký znak.
