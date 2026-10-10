@@ -46,7 +46,7 @@ export default {
     search: 'Hľadať recept',
     selectAll: 'Vybrať všetky ({n})',
     noMatch: 'Žiadny recept nevyhovuje hľadaniu.',
-    removeSelected: 'Odobrať vybraný | Odobrať vybrané ({n}) | Odobrať vybraných ({n})',
+    removeSelected: 'Odobrať vybrané ({n})',
     revokeText: 'Zdieľanie sa zruší; príjemca recepty stratí, jeho kópie mu ostanú.',
   },
   actions: {

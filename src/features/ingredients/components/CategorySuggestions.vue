@@ -94,20 +94,22 @@ async function apply() {
           data-test="category-suggestion"
         >
           <v-checkbox-btn
+            class="flex-grow-0"
             :model-value="checked.includes(s.ingredient.id)"
             color="primary"
             :aria-label="s.ingredient.name"
             :data-test="`category-suggestion-${s.ingredient.id}`"
             @update:model-value="toggle(s.ingredient.id)"
           />
-          <span class="flex-grow-1" style="min-width: 160px">{{ s.ingredient.name }}</span>
+          <span class="flex-grow-1 text-start" style="min-width: 160px">{{ s.ingredient.name }}</span>
           <v-select
             v-model="chosen[s.ingredient.id]"
             :items="categoryItems"
             :aria-label="t('ingredients.page.shopCategory')"
             density="compact"
             hide-details
-            style="max-width: 280px; min-width: 200px"
+            class="flex-grow-0 flex-shrink-0"
+            style="width: 260px"
           />
         </div>
       </v-card-text>

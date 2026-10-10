@@ -46,7 +46,7 @@ export default {
     search: 'Search recipe',
     selectAll: 'Select all ({n})',
     noMatch: 'No recipe matches the search.',
-    removeSelected: 'Remove selected | Remove selected ({n})',
+    removeSelected: 'Remove selected ({n})',
     revokeText: 'The share will be cancelled; the recipient loses the recipes, their copies stay.',
   },
   actions: {

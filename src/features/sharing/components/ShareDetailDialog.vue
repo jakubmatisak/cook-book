@@ -7,7 +7,7 @@ import { normalizeText } from '@shared/text'
 import { useRemoveShareItems, useRevokeShare } from '@/api/sharing'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { errorText } from '@/i18n/errors'
-import { formatDate, tc } from '@/i18n/format'
+import { formatDate } from '@/i18n/format'
 import { shareWhat, STATUS_COLORS } from '../labels'
 
 /**
@@ -160,7 +160,7 @@ async function doRevoke() {
           data-test="share-remove-selected"
           @click="removeSelected"
         >
-          {{ tc('sharing.detail.removeSelected', selected.length) }}
+          {{ t('sharing.detail.removeSelected', { n: selected.length }) }}
         </v-btn>
         <v-btn variant="text" @click="open = false">{{ t('common.actions.close') }}</v-btn>
       </v-card-actions>
