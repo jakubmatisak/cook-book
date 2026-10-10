@@ -47,5 +47,14 @@ export default {
     confirm: 'Zlúčiť',
     done: 'Zlúčené do {name}.',
     failed: 'Zlúčenie zlyhalo.',
+    unitsWarning:
+      'Ingrediencie majú jednotky, ktoré sa nedajú prepočítať ({units}). Recepty si množstvá ponechajú, ale v nákupe sa nesčítajú.',
+    unitsConfirm: 'Áno, zlúčiť aj tak',
+  },
+  suggestions: {
+    title: 'Návrhy na zlúčenie ({n})',
+    text: 'Ingrediencie, ktoré sa líšia len tvarom alebo poradím slov. Návrhy pribúdajú samy s novými receptmi.',
+    merge: 'Zlúčiť',
+    ignore: 'Ignorovať',
   },
 }

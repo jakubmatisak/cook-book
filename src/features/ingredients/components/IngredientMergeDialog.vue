@@ -2,7 +2,9 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { IngredientDto } from '@shared/api'
+import { mixedUnits } from '@shared/ingredientDuplicates'
 import { useMergeIngredients } from '@/api/bulk'
+import { useIngredientUnits } from '@/api/ingredientMerge'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
 
@@ -21,6 +23,16 @@ const name = ref('')
 const error = ref('')
 
 const target = computed(() => props.items.find((i) => i.id === targetId.value))
+
+// Jednotky, ktoré sa nedajú prepočítať (napr. g a ks): recepty si množstvá nechajú, ale v nákupe sa nesčítajú.
+const { data: units } = useIngredientUnits(
+  () => props.items.map((i) => i.id),
+  () => open.value,
+)
+const mixed = computed(() =>
+  units.value ? mixedUnits(props.items.map((i) => [...(units.value?.[i.id] ?? []), i.defaultUnit])) : [],
+)
+const unitsConfirmed = ref(false)
 const sources = computed(() => props.items.filter((i) => i.id !== targetId.value))
 
 watch(open, (value) => {
@@ -29,6 +41,7 @@ watch(open, (value) => {
   targetId.value = mostUsed?.id ?? null
   name.value = mostUsed?.name ?? ''
   error.value = ''
+  unitsConfirmed.value = false
 })
 // Pri zmene ponechanej ingrediencie sa názov nastaví na jej názov (dá sa prepísať).
 watch(targetId, () => {
@@ -82,6 +95,21 @@ async function submit() {
           }}
         </p>
         <p class="text-medium-emphasis">{{ t('ingredients.merge.aliasHint') }}</p>
+        <v-alert
+          v-if="mixed.length"
+          type="warning"
+          density="compact"
+          :text="t('ingredients.merge.unitsWarning', { units: mixed.join(', ') })"
+          data-test="merge-units-warning"
+        />
+        <v-checkbox
+          v-if="mixed.length"
+          v-model="unitsConfirmed"
+          :label="t('ingredients.merge.unitsConfirm')"
+          color="primary"
+          hide-details
+          data-test="merge-units-confirm"
+        />
         <v-alert v-if="error" type="error" :text="error" />
       </v-card-text>
       <v-card-actions>
@@ -89,7 +117,7 @@ async function submit() {
         <v-btn variant="text" @click="open = false">{{ t('common.actions.cancel') }}</v-btn>
         <v-btn
           color="primary"
-          :disabled="!target || !name.trim()"
+          :disabled="!target || !name.trim() || (mixed.length > 0 && !unitsConfirmed)"
           :loading="merge.isPending.value"
           data-test="merge-confirm"
           @click="submit"

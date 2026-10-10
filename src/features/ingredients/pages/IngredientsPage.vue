@@ -34,6 +34,7 @@ import { tc } from '@/i18n/format'
 import IngredientBulkEditDialog from '../components/IngredientBulkEditDialog.vue'
 import IngredientEditDialog from '../components/IngredientEditDialog.vue'
 import IngredientMergeDialog from '../components/IngredientMergeDialog.vue'
+import MergeSuggestionsCard from '../components/MergeSuggestionsCard.vue'
 
 const { t } = useI18n()
 const controlHeight = useControlHeight()
@@ -151,7 +152,19 @@ watch(visibleIds, (ids) => selection.keepOnly(ids))
 const bulkEditOpen = ref(false)
 // Zlúčenie vybraných ingrediencií do jednej (napr. Banán a Banány).
 const mergeOpen = ref(false)
-const mergeItems = computed(() => (ingredients.value ?? []).filter((i) => selection.has(i.id)))
+/** Návrh na zlúčenie (karta návrhov); bez neho sa zlučujú vybrané ingrediencie. */
+const suggested = ref<IngredientDto[] | null>(null)
+const mergeItems = computed(
+  () => suggested.value ?? (ingredients.value ?? []).filter((i) => selection.has(i.id)),
+)
+function mergeSuggested(items: IngredientDto[]) {
+  suggested.value = items
+  mergeOpen.value = true
+}
+function mergeSelected() {
+  suggested.value = null
+  mergeOpen.value = true
+}
 function onMerged(ingredient: IngredientDto) {
   selection.stop()
   snackbar.value = {
@@ -229,13 +242,15 @@ const usage = (item: IngredientDto) =>
         :count="selection.count.value"
         :total="visibleIds.length"
         mergeable
-        @merge="mergeOpen = true"
+        @merge="mergeSelected"
         @select-all="selection.set(visibleIds)"
         @clear="selection.clear()"
         @close="selection.stop()"
         @edit="bulkEditOpen = true"
         @remove="bulkDeleteOpen = true"
       />
+
+      <MergeSuggestionsCard v-if="ingredients" :ingredients="ingredients" @merge="mergeSuggested" />
 
       <div class="d-flex flex-wrap align-center ga-3 mb-4">
         <v-text-field

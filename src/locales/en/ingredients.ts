@@ -47,5 +47,14 @@ export default {
     confirm: 'Merge',
     done: 'Merged into {name}.',
     failed: 'Merging failed.',
+    unitsWarning:
+      'The ingredients use units that cannot be converted ({units}). Recipes keep their amounts, but the shopping list will not add them up.',
+    unitsConfirm: 'Yes, merge anyway',
+  },
+  suggestions: {
+    title: 'Merge suggestions ({n})',
+    text: 'Ingredients that differ only in word form or order. New suggestions appear as you add recipes.',
+    merge: 'Merge',
+    ignore: 'Ignore',
   },
 }
