@@ -171,15 +171,47 @@ export const sharedWithHouseholds = (householdIds: readonly string[]) => sql`exi
   where s.status = 'accepted'
     and s.to_household_id in (select value from json_each(${JSON.stringify(householdIds)}))
     and s.from_household_id = ${recipes.householdId}
-    and (
-      (s.kind = 'recipes' and exists (
-        select 1 from recipe_share_items i where i.share_id = s.id and i.recipe_id = ${recipes.id}))
-      or (s.kind = 'category' and (s.category = ${recipes.category} or exists (
-        select 1 from json_each(${recipes.alsoCategories}) where value = s.category)))
-      or (s.kind = 'tag' and exists (
-        select 1 from recipe_tags t where t.tag_id = s.tag_id and t.recipe_id = ${recipes.id}))
-    )
+    and ${shareCoversRecipe()}
 )`
+
+/** Ponuka `s` obsahuje recept z `recipes`: vybraný recept, kategória (hlavná aj „hodí sa aj ako“) alebo tag. */
+const shareCoversRecipe = () => sql`(
+  (s.kind = 'recipes' and exists (
+    select 1 from recipe_share_items i where i.share_id = s.id and i.recipe_id = ${recipes.id}))
+  or (s.kind = 'category' and (s.category = ${recipes.category} or exists (
+    select 1 from json_each(${recipes.alsoCategories}) where value = s.category)))
+  or (s.kind = 'tag' and exists (
+    select 1 from recipe_tags t where t.tag_id = s.tag_id and t.recipe_id = ${recipes.id}))
+)`
+
+/** Podmienka nad `recipes`: vlastná domácnosť recept niekomu ponúka (čakajúca alebo prijatá ponuka). */
+export const sharedByOwner = () => sql`exists (
+  select 1 from recipe_shares s
+  where s.from_household_id = ${recipes.householdId}
+    and s.status in ('pending', 'accepted')
+    and ${shareCoversRecipe()}
+)`
+
+/** Komu domácnosť recept zdieľa (čakajúce aj prijaté ponuky): meno kontaktu, inak e-mail; zoradené. */
+export async function sharedWithLabels(db: Db, householdId: string, recipeId: string): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ label: sql<string>`coalesce(${contacts.name}, ${recipeShares.toEmail})` })
+    .from(recipeShares)
+    .innerJoin(recipes, eq(recipes.id, recipeId))
+    .leftJoin(
+      contacts,
+      and(eq(contacts.householdId, recipeShares.fromHouseholdId), eq(contacts.email, recipeShares.toEmail)),
+    )
+    .where(
+      and(
+        eq(recipeShares.fromHouseholdId, householdId),
+        eq(recipes.householdId, householdId),
+        inArray(recipeShares.status, ['pending', 'accepted']),
+        sql`exists (select 1 from recipe_shares s where s.id = ${recipeShares.id} and ${shareCoversRecipe()})`,
+      ),
+    )
+  return rows.map((r) => r.label).sort((a, b) => a.localeCompare(b, 'sk'))
+}
 
 /** Od koho má domácnosť zdieľané recepty domácnosti `fromHouseholdId`: meno odosielateľa, inak názov domácnosti. */
 export async function sharedFromName(

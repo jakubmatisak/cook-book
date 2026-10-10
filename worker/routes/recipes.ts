@@ -39,7 +39,7 @@ export const recipeRoutes = new Hono<AppEnv>()
     const filters = recipeListQuerySchema.parse(c.req.query())
     const user = c.get('user')
     await backfillCookLog(c.get('db'), user.householdId, todayInZone(new Date(), HOUSEHOLD_TIME_ZONE))
-    const { missing, kids, public: publicMode, ...rest } = filters
+    const { missing, kids, public: publicMode, shared, sharedByMe, ...rest } = filters
     const settings = await getUserSettings(c.get('db'), user.id)
     // Detské jedlá vypnuté v nastaveniach človeka sa nezobrazia nikde, ani pri výslovne zvolenej kategórii.
     const kidsEnabled = settings.kidsEnabled !== false
@@ -49,6 +49,8 @@ export const recipeRoutes = new Hono<AppEnv>()
       ...rest,
       ...(missing === undefined ? {} : { missingMax: missing }),
       ...(others === 'hide' ? {} : { publicMode: others }),
+      ...(shared ? { sharedMode: shared } : {}),
+      ...(sharedByMe ? { sharedByMe } : {}),
       ...(kidsEnabled ? (kids ? { kids } : {}) : { kids: 'off' as const }),
     }
     return c.json(await listRecipes(c.get('db'), user.householdId, user.id, options))

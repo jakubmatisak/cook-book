@@ -104,6 +104,8 @@ export async function getPublicRecipe(
     householdName: found.householdName,
     ownedByMe: found.householdId === user.householdId,
     ...(sharedFrom !== undefined ? { sharedFrom } : {}),
+    // Komu je recept zdieľaný, vie len jeho domácnosť.
+    sharedWith: own ? detail.sharedWith : undefined,
     // Kód zdieľania otvorí recept bez prihlásenia – cudzím domácnostiam sa neukáže.
     shareToken: found.householdId === user.householdId ? detail.shareToken : null,
   }

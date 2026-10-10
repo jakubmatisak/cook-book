@@ -127,6 +127,13 @@ export const recipeListQuerySchema = z.object({
    * len cudzie. Bez parametra rozhodne nastavenie človeka „Zobrazovať recepty od iných“ (predvolene `hide`).
    */
   public: z.enum(['hide', 'include', 'only']).optional(),
+  /** `shared=only`: len recepty, ktoré so mnou zdieľajú iné domácnosti. */
+  shared: z.enum(['only']).optional(),
+  /** Len moje recepty, ktoré niekomu zdieľam. */
+  sharedByMe: z
+    .enum(['1', 'true'])
+    .optional()
+    .transform((v) => v !== undefined),
   /** Najviac toľko chýbajúcich surovín (len s `pantry=1`). */
   missing: z.coerce.number().int().min(0).max(20).optional(),
   sort: z.enum(SORT_KEYS).optional(),

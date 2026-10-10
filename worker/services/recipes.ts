@@ -34,6 +34,7 @@ import { chunk } from '../http'
 import { resolveIngredients, resolveTags } from './catalog'
 import { releaseImages } from './imageCleanup'
 import { ignoredPantryCategoryIds, pantryIngredientIds } from './pantry'
+import { sharedByOwner, sharedFromName, sharedWithHouseholds, sharedWithLabels } from './sharing'
 
 type RecipeRow = typeof recipes.$inferSelect
 
@@ -43,6 +44,10 @@ export interface RecipeListOptions extends FacetFilters {
   pantry?: boolean
   /** Recepty iných domácností (verejné): `include` ich pridá k mojim, `only` ukáže len cudzie. */
   publicMode?: 'include' | 'only'
+  /** `only`: len cudzie recepty zdieľané s mojou domácnosťou (prijaté zdieľanie). */
+  sharedMode?: 'only'
+  /** Len moje recepty, ktoré niekomu zdieľam (čakajúca alebo prijatá ponuka). */
+  sharedByMe?: boolean
   sort?: SortKey
   dir?: SortDir
 }
@@ -384,6 +389,7 @@ export async function getRecipeDetail(
   const found = head[0]
   if (!found) throw notFound()
   const pantry = await pantryIngredientIds(db, householdId)
+  const sharedWith = await sharedWithLabels(db, householdId, id)
   const r = found.recipe
   return {
     ...toSummary(r, found.r2Key, found.isFavorite, tagRows, found.lastCookedAt),
@@ -393,6 +399,7 @@ export async function getRecipeDetail(
     coverImageId: r.coverImageId,
     shareToken: r.shareToken,
     copiedFrom: r.copiedFromName,
+    sharedWith,
     notes: r.notes,
     attachments: attachmentRows.map((a) => ({
       id: a.id,
@@ -493,9 +500,9 @@ export async function listRecipes(
       )
     : undefined
 
-  // „Len cudzie“: moje recepty (aj tie, ktoré som zdieľal) sa preskočia.
+  // „Len cudzie“ a „Zdieľané so mnou“: moje recepty sa preskočia.
   const rows =
-    options.publicMode === 'only'
+    options.publicMode === 'only' || options.sharedMode === 'only'
       ? []
       : await db
           .select({
@@ -506,11 +513,42 @@ export async function listRecipes(
           })
           .from(recipes)
           .leftJoin(images, eq(images.id, recipes.coverImageId))
-          .where(and(eq(recipes.householdId, householdId), isNull(recipes.deletedAt), needleSql))
+          .where(
+            and(
+              eq(recipes.householdId, householdId),
+              isNull(recipes.deletedAt),
+              needleSql,
+              options.sharedByMe ? sharedByOwner() : undefined,
+            ),
+          )
+
+  // Cudzie recepty zdieľané s mojou domácnosťou.
+  const sharedRows =
+    options.sharedMode === 'only'
+      ? await db
+          .select({ recipe: recipes, r2Key: images.r2Key, householdName: households.name })
+          .from(recipes)
+          .innerJoin(households, eq(households.id, recipes.householdId))
+          .leftJoin(images, eq(images.id, recipes.coverImageId))
+          .where(
+            and(
+              isNull(recipes.deletedAt),
+              ne(recipes.householdId, householdId),
+              sharedWithHouseholds([householdId]),
+              needleSql,
+            ),
+          )
+          .orderBy(desc(recipes.createdAt))
+          .limit(FOREIGN_LIMIT)
+      : []
+  const senderName = new Map<string, string>()
+  for (const id of new Set(sharedRows.map((r) => r.recipe.householdId))) {
+    senderName.set(id, await sharedFromName(db, householdId, id))
+  }
 
   // Cudzie verejné recepty (nie pri „čo viem uvariť“, kde sa počíta moja špajza).
-  const foreignRows =
-    options.publicMode && !options.pantry
+  const publicRows =
+    options.publicMode && !options.pantry && options.sharedMode !== 'only'
       ? await db
           .select({ recipe: recipes, r2Key: images.r2Key, householdName: households.name })
           .from(recipes)
@@ -527,6 +565,10 @@ export async function listRecipes(
           .orderBy(desc(recipes.createdAt))
           .limit(FOREIGN_LIMIT)
       : []
+  const foreignRows: ((typeof publicRows)[number] & { sharedFrom?: string })[] = [
+    ...sharedRows.map((r) => ({ ...r, sharedFrom: senderName.get(r.recipe.householdId) })),
+    ...publicRows,
+  ]
   if (rows.length === 0 && foreignRows.length === 0) return emptyList()
 
   const ids = rows.map((r) => r.recipe.id)
@@ -590,6 +632,7 @@ export async function listRecipes(
     isFavorite: boolean,
     lastCookedAt: string | null,
     householdName?: string,
+    sharedFrom?: string,
   ) => {
     const tagList = tagsByRecipe.get(recipe.id) ?? []
     const summary: RecipeSummaryDto = {
@@ -598,6 +641,7 @@ export async function listRecipes(
       ...(householdName ? { isVerified: false } : {}),
       ...(missing ? { missing: missing.get(recipe.id) ?? [] } : {}),
       ...(householdName ? { householdName } : {}),
+      ...(sharedFrom ? { sharedFrom } : {}),
     }
     const tagIds = householdName
       ? tagList.flatMap((t) => myTagIdByName.get(normalizeText(t.name)) ?? [])
@@ -621,11 +665,17 @@ export async function listRecipes(
   }
   const candidates = [
     ...rows.map((r) => toCandidate(r.recipe, r.r2Key, r.isFavorite, r.lastCookedAt)),
-    ...foreignRows.map((r) => toCandidate(r.recipe, r.r2Key, false, null, r.householdName)),
+    ...foreignRows.map((r) => toCandidate(r.recipe, r.r2Key, false, null, r.householdName, r.sharedFrom)),
   ]
 
   // Filter „chýba najviac N“ dáva zmysel len pri „Čo viem uvariť“, kde recepty nesú chýbajúce suroviny.
-  const { missingMax, publicMode: _publicMode, ...rest } = options
+  const {
+    missingMax,
+    publicMode: _publicMode,
+    sharedMode: _sharedMode,
+    sharedByMe: _sharedByMe,
+    ...rest
+  } = options
   const filters = options.pantry && missingMax !== undefined ? { ...rest, missingMax } : rest
   const filtered = applyRecipeFilters(candidates, filters)
   // „Čo viem uvariť“ bez vlastného zoradenia: najmenej chýbajúceho ako prvé.
