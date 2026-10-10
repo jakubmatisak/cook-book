@@ -324,7 +324,14 @@ export interface IncomingShareDto {
 /** Upozornenie na Prehľade: nová ponuka, pribudnuté recepty, zmenený originál kópie. */
 export type ShareNoticeDto =
   | { kind: 'offer'; shareId: string; fromName: string; count: number; message: string | null }
-  | { kind: 'new'; shareId: string; fromName: string; label: string; count: number }
+  | {
+      kind: 'new'
+      shareId: string
+      fromName: string
+      category: RecipeCategory | null
+      tagName: string | null
+      count: number
+    }
   | { kind: 'changed'; recipeId: string; title: string; fromName: string; sourceId: string }
 
 export interface ContactDto {

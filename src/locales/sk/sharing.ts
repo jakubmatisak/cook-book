@@ -73,8 +73,8 @@ export default {
   },
   notice: {
     offer: '{name} s tebou chce zdieľať {recipes}',
-    offerCategory: '{name} s tebou chce zdieľať kategóriu',
-    new: 'V {label} od {name} pribudli {recipes}',
+    newTag: 'V tagu {label} od {name} pribudli {recipes}',
+    newCategory: 'V kategórii {label} od {name} pribudli {recipes}',
     changed: 'Recept {title}, ktorý máš skopírovaný, sa u {name} zmenil',
   },
   empty: {

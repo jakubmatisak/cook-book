@@ -100,6 +100,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { titleKey: 'common.nav.pantry' },
   },
   {
+    path: '/sharing',
+    name: 'sharing',
+    component: () => import('@/features/sharing/pages/SharingPage.vue'),
+    meta: { titleKey: 'common.nav.sharing' },
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/features/settings/pages/SettingsPage.vue'),

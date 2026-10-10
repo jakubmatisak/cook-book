@@ -73,8 +73,8 @@ export default {
   },
   notice: {
     offer: '{name} wants to share {recipes} with you',
-    offerCategory: '{name} wants to share a category with you',
-    new: '{recipes} added to {label} from {name}',
+    newTag: '{recipes} added to the tag {label} from {name}',
+    newCategory: '{recipes} added to the category {label} from {name}',
     changed: 'The recipe {title} you copied has changed at {name}',
   },
   empty: {

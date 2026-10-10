@@ -7,6 +7,7 @@ import { RECIPE_CATEGORIES } from '@shared/recipes'
 import { useRecipes } from '@/api/recipes'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import ShareNoticeCards from '@/features/sharing/components/ShareNoticeCards.vue'
 import { useKidsEnabled } from '@/composables/useKidsEnabled'
 import { errorText } from '@/i18n/errors'
 import { tc } from '@/i18n/format'
@@ -66,6 +67,7 @@ const tiles = computed<Tile[]>(() => {
 
 <template>
   <PageHeader :title="t('home.title')" :subtitle="t('home.subtitle')" />
+  <ShareNoticeCards />
 
   <v-alert v-if="error" type="error" :text="errorText(error)" />
   <v-row v-else-if="isPending">

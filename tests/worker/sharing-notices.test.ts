@@ -45,7 +45,13 @@ describe('upozornenia zdieľania', () => {
     await env.DB.prepare('update recipes set created_at = ?').bind('1999-01-01T00:00:00.000Z').run()
     await createRecipe(A, 'Medovník', { tags: ['Vianoce'] })
     const [notice] = await notices()
-    expect(notice).toMatchObject({ kind: 'new', label: 'Vianoce', count: 1, fromName: 'ja' })
+    expect(notice).toMatchObject({
+      kind: 'new',
+      tagName: 'Vianoce',
+      category: null,
+      count: 1,
+      fromName: 'ja',
+    })
     await send(app, 'POST', api(`/sharing/${(notice as { shareId: string }).shareId}/seen`), undefined, as(B))
     expect(await notices()).toEqual([])
   })

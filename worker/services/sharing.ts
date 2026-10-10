@@ -566,7 +566,8 @@ export async function listNotices(db: Db, user: AuthUser): Promise<ShareNoticeDt
       kind: 'new',
       shareId: s.id,
       fromName: s.fromName,
-      label: s.tagName ?? s.category ?? '',
+      category: s.category,
+      tagName: s.tagName,
       count: s.newCount,
     }))
   return [...offers, ...fresh, ...(await changedCopies(db, user.householdId))]

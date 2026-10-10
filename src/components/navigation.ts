@@ -6,6 +6,7 @@ import {
   mdiCogOutline,
   mdiFormatListChecks,
   mdiFridgeOutline,
+  mdiShareVariantOutline,
   mdiTagMultipleOutline,
   mdiViewDashboardOutline,
 } from '@mdi/js'
@@ -33,6 +34,7 @@ export const SECONDARY_NAV: readonly NavItem[] = [
   { to: '/ingredients', titleKey: 'common.nav.ingredients', icon: mdiFormatListChecks },
   { to: '/tags', titleKey: 'common.nav.tags', icon: mdiTagMultipleOutline },
   { to: '/pantry', titleKey: 'common.nav.pantry', icon: mdiFridgeOutline },
+  { to: '/sharing', titleKey: 'common.nav.sharing', icon: mdiShareVariantOutline },
 ]
 
 /** Nastavenia: v ponuke účtu vpravo hore (spolu s odhlásením a verziou), nie v bočnom menu. */

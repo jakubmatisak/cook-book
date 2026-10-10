@@ -18,6 +18,7 @@ import { useIsFetching } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useHouseholds } from '@/api/households'
+import { useShareNotices } from '@/api/sharing'
 import { useOnline } from '@/composables/useOnline'
 import { usePrintMode } from '@/composables/usePrintMode'
 import { ACCESS_LOGOUT_PATH, canLogout } from '@/lib/auth'
@@ -81,6 +82,12 @@ watch(rail, (value) => {
     // súkromné okno a pod.
   }
 })
+
+// Odznak pri Zdieľaní: počet čakajúcich ponúk receptov.
+const { data: notices } = useShareNotices()
+const badges = computed<Record<string, number>>(() => ({
+  '/sharing': (Array.isArray(notices.value) ? notices.value : []).filter((n) => n.kind === 'offer').length,
+}))
 
 /** Mobil: menu so všetkými stránkami otvorené tlačidlom. */
 const mobileMenu = ref(false)
@@ -206,7 +213,11 @@ const mobileMenu = ref(false)
           :title="t(item.titleKey)"
           rounded="sm"
           data-test="nav-item"
-        />
+        >
+          <template v-if="badges[item.to]" #append>
+            <v-badge :content="badges[item.to]" color="primary" inline data-test="nav-badge" />
+          </template>
+        </v-list-item>
       </v-list>
       <!-- Zbalenie a rozbalenie bočného menu: šípka dolu v menu. -->
       <template #append>
@@ -242,7 +253,11 @@ const mobileMenu = ref(false)
           rounded="sm"
           data-test="nav-item"
           @click="mobileMenu = false"
-        />
+        >
+          <template v-if="badges[item.to]" #append>
+            <v-badge :content="badges[item.to]" color="primary" inline data-test="nav-badge" />
+          </template>
+        </v-list-item>
       </v-list>
     </v-navigation-drawer>
 

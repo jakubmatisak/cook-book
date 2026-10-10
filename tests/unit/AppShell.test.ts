@@ -8,7 +8,17 @@ import { NAV_ITEMS } from '@/components/navigation'
 import { setActiveHousehold } from '@/lib/household'
 import { createAppVuetify } from '@/plugins/vuetify'
 
-const ALL_TITLES = ['Prehľad', 'Recepty', 'Plán', 'Nákup', 'Pri stole', 'Ingrediencie', 'Tagy', 'Špajza']
+const ALL_TITLES = [
+  'Prehľad',
+  'Recepty',
+  'Plán',
+  'Nákup',
+  'Pri stole',
+  'Ingrediencie',
+  'Tagy',
+  'Špajza',
+  'Zdieľanie',
+]
 
 function setViewport(width: number) {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
@@ -138,6 +148,33 @@ describe('AppShell', () => {
       wrapper.unmount()
       document.body.innerHTML = ''
     }
+  })
+})
+
+describe('zdieľanie v menu', () => {
+  it('položka Zdieľanie má odznak s počtom čakajúcich ponúk', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string) => {
+        const body = String(url).includes('/sharing/notices')
+          ? [
+              { kind: 'offer', shareId: 's1', fromName: 'Jakub', count: 2, message: null },
+              { kind: 'offer', shareId: 's2', fromName: 'Mama', count: 1, message: null },
+            ]
+          : [{ id: 'a', name: 'Doma', role: 'owner' }]
+        return Promise.resolve(
+          new Response(JSON.stringify(body), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        )
+      }),
+    )
+    const wrapper = await mountShell(1440)
+    const item = wrapper
+      .findAll('[data-test="side-nav"] [data-test="nav-item"]')
+      .find((i) => i.text().includes('Zdieľanie'))
+    expect(item?.find('[data-test="nav-badge"]').text()).toBe('2')
   })
 })
 

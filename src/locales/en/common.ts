@@ -35,6 +35,7 @@ export default {
     ingredients: 'Ingredients',
     tags: 'Tags',
     pantry: 'Pantry',
+    sharing: 'Sharing',
     publicRecipes: 'Public recipes',
     settings: 'Settings',
     menu: 'Menu',

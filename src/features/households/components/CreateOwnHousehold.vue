@@ -4,6 +4,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCreateHousehold, useHouseholdAccount } from '@/api/households'
 import { errorText } from '@/i18n/errors'
+import { tc } from '@/i18n/format'
 
 /**
  * Prvé prihlásenie bez domácnosti (pustil ho Cloudflare Access, nikto ho nepozval): založí si vlastnú a je jej
@@ -43,6 +44,14 @@ async function submit() {
     </v-card-item>
     <v-card-text class="d-flex flex-column ga-4">
       <p>{{ t('households.own.text') }}</p>
+      <v-alert
+        v-if="account?.pendingShares"
+        type="info"
+        variant="tonal"
+        density="compact"
+        :text="tc('sharing.newcomer', account.pendingShares)"
+        data-test="newcomer-shares"
+      />
       <v-text-field
         v-model="name"
         :label="t('households.own.name')"
