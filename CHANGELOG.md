@@ -1,5 +1,12 @@
 # Zmeny
 
+## 2.2.1 – 2026-10-10
+
+### Opravy
+
+- Ingrediencie na mobile: tlačidlá v hlavičke sú na celú šírku, návrhy na zlúčenie majú Zlúčiť a Ignorovať pod
+  textom a v okne Návrh kategórií je výber kategórie na celú šírku pod názvom.
+
 ## 2.2.0 – 2026-10-10
 
 ### Nové
