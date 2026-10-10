@@ -1,5 +1,15 @@
 # Zmeny
 
+## 2.2.0 – 2026-10-10
+
+### Nové
+
+- **Zlúčenie s prepočtom jednotiek:** keď zlučované ingrediencie používajú jednotky, ktoré sa nedajú prepočítať
+  (napr. ks a g), okno zlúčenia ponúkne prepočet – zvolíš jednotku po zlúčení a vyplníš, koľko je jedna jednotka
+  v novej (1 ks = 10 g). Množstvá v receptoch a v špajzi sa prepočítajú (2 ks → 20 g).
+- Okno zlúčenia ukazuje pri každej ingrediencii jej jednotky; návrhy na zlúčenie majú pri rozdielnych jednotkách
+  červený štítok **Rôzne jednotky** a jednotky pri každej ingrediencii.
+
 ## 2.1.0 – 2026-10-10
 
 ### Nové
