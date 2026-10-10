@@ -65,10 +65,20 @@ async function mountDetail(recipe: RecipeDetailDto) {
 }
 
 describe('zdieľanie s e-mailom v detaile receptu', () => {
-  it('v ponuke je „Zdieľať s…“, ktoré otvorí dialóg', async () => {
+  it('v ponuke je jediné „Zdieľať…“; okno ponúkne spôsoby a e-mail otvorí dialóg', async () => {
     const wrapper = await mountDetail(detail())
     await wrapper.find('[aria-label="Ďalšie akcie"]').trigger('click')
     await flushPromises()
+    const menu = document.querySelector('.v-overlay--active .v-list')!
+    for (const old of ['share-link', 'share-with', 'visibility', 'share']) {
+      expect(menu.querySelector(`[data-test="${old}"]`), old).toBeNull()
+    }
+    document.querySelector<HTMLElement>('[data-test="share-open"]')!.click()
+    await flushPromises()
+    const options = document.querySelector('[data-test="share-options"]')!
+    expect(options.textContent).toContain('S konkrétnymi ľuďmi')
+    expect(options.textContent).toContain('Odkazom')
+    expect(options.textContent).toContain('Verejne v aplikácii')
     document.querySelector<HTMLElement>('[data-test="share-with"]')!.click()
     await flushPromises()
     expect(document.querySelector('[data-test="share-dialog"]')).not.toBeNull()

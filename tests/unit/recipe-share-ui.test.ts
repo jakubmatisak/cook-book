@@ -76,6 +76,7 @@ describe('zdieľanie receptu odkazom v detaile', () => {
 
     await wrapper.find('[aria-label="Ďalšie akcie"]').trigger('click')
     await flushPromises()
+    await click('[data-test="share-open"]')
     await click('[data-test="share-link"]')
 
     expect(calls.some((c: StubCall) => c.method === 'POST' && c.path === '/recipes/r1/share')).toBe(true)

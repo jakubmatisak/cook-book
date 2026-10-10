@@ -214,7 +214,22 @@ export default {
     notFoundText: 'Zdieľanie receptu bolo zastavené alebo odkaz nie je celý.',
     source: 'Zdroj: {source}',
   },
+  /** Okno Zdieľať recept: všetky spôsoby zdieľania na jednom mieste. */
+  share: {
+    title: 'Zdieľať recept',
+    people: 'S konkrétnymi ľuďmi',
+    peopleText: 'Na e-mail – recept uvidia v aplikácii len na čítanie a môžu si ho skopírovať.',
+    link: 'Odkazom',
+    linkText: 'Vytvorí a skopíruje odkaz, ktorý recept otvorí komukoľvek aj bez prihlásenia.',
+    linkActive: 'Zdieľa sa odkazom – kliknutím odkaz skopíruješ.',
+    public: 'Verejne v aplikácii',
+    publicText: 'Recept uvidia a skopírujú si ho všetky domácnosti v aplikácii.',
+    publicActive: 'Recept je verejný – kliknutím ho skryješ.',
+    text: 'Poslať ako text',
+    textText: 'Celý recept cez zdieľanie v telefóne (správy, e-mail…).',
+  },
   detail: {
+    shareMenu: 'Zdieľať…',
     alsoCategories: 'Hodí sa aj ako: {list}',
     plan: 'Naplánovať',
     more: 'Ďalšie akcie',

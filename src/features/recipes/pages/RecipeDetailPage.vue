@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   mdiAccountMultipleOutline,
-  mdiAccountMultiplePlusOutline,
   mdiArrowLeft,
   mdiChefHat,
   mdiCheckCircle,
@@ -11,7 +10,6 @@ import {
   mdiContentCopy,
   mdiDotsVertical,
   mdiEarth,
-  mdiEarthOff,
   mdiFileDownloadOutline,
   mdiLinkVariant,
   mdiLinkVariantOff,
@@ -54,6 +52,7 @@ import RecipeCover from '../components/RecipeCover.vue'
 import RecipeNotes from '../components/RecipeNotes.vue'
 import VisibilityDialog from '../components/VisibilityDialog.vue'
 import ShareWithDialog from '@/features/sharing/components/ShareWithDialog.vue'
+import ShareRecipeDialog, { type ShareChoice } from '../components/ShareRecipeDialog.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -132,6 +131,17 @@ const planOpen = ref(false)
 const isOwner = useIsOwner()
 const visibilityOpen = ref(false)
 const shareWithOpen = ref(false)
+const shareOpen = ref(false)
+
+function onShareChoice(choice: ShareChoice) {
+  if (!recipe.value) return
+  if (choice === 'people') shareWithOpen.value = true
+  else if (choice === 'link') void shareLink()
+  else if (choice === 'link-copy' && recipe.value.shareToken) void copyShareLink(recipe.value.shareToken)
+  else if (choice === 'link-stop') void stopSharing()
+  else if (choice === 'public') visibilityOpen.value = true
+  else if (choice === 'text') void shareRecipe()
+}
 const planDates = computed(() => Array.from({ length: 14 }, (_, i) => addDays(today.value, i)))
 const defaultSlotId = computed(
   () =>
@@ -328,42 +338,18 @@ function goBack() {
             data-test="copy"
             @click="copyRecipe"
           />
+          <!-- Všetky spôsoby zdieľania (ľudia, odkaz, verejne, text) sú v jednom okne. -->
           <v-list-item
-            v-if="supportsShare"
             :prepend-icon="mdiShareVariantOutline"
-            :title="t('recipes.detail.share')"
-            data-test="share"
-            @click="shareRecipe"
-          />
-          <v-list-item
-            v-if="!recipe.shareToken"
-            :prepend-icon="mdiLinkVariant"
-            :title="t('recipes.detail.shareLink')"
-            data-test="share-link"
-            @click="shareLink"
-          />
-          <v-list-item
-            :prepend-icon="mdiAccountMultiplePlusOutline"
-            :title="t('sharing.shareWith')"
-            data-test="share-with"
-            @click="shareWithOpen = true"
+            :title="t('recipes.detail.shareMenu')"
+            data-test="share-open"
+            @click="shareOpen = true"
           />
           <v-list-item
             :prepend-icon="mdiFileDownloadOutline"
             :title="t('recipes.detail.downloadMd')"
             data-test="download-md"
             @click="downloadMarkdown"
-          />
-          <v-list-item
-            v-if="isOwner"
-            :prepend-icon="recipe.visibility === 'public' ? mdiEarthOff : mdiEarth"
-            :title="
-              recipe.visibility === 'public'
-                ? t('publicRecipes.visibility.hide')
-                : t('publicRecipes.visibility.publish')
-            "
-            data-test="visibility"
-            @click="visibilityOpen = true"
           />
           <v-divider />
           <v-list-item
@@ -734,6 +720,14 @@ function goBack() {
     :members="me.members"
   />
 
+  <ShareRecipeDialog
+    v-if="recipe"
+    v-model="shareOpen"
+    :recipe="recipe"
+    :can-publish="isOwner"
+    :can-share-text="supportsShare"
+    @choose="onShareChoice"
+  />
   <ShareWithDialog v-if="recipe" v-model="shareWithOpen" :recipe-ids="[recipe.id]" @done="notify" />
 
   <VisibilityDialog

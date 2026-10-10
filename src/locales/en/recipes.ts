@@ -219,7 +219,22 @@ export default {
     notFoundText: 'Sharing of the recipe was stopped or the link is incomplete.',
     source: 'Source: {source}',
   },
+  /** Share recipe dialog: every way of sharing in one place. */
+  share: {
+    title: 'Share recipe',
+    people: 'With specific people',
+    peopleText: 'By e-mail – they see the recipe in the app read-only and can copy it.',
+    link: 'Via link',
+    linkText: 'Creates and copies a link that opens the recipe for anyone, even without signing in.',
+    linkActive: 'Shared via link – click to copy the link.',
+    public: 'Publicly in the app',
+    publicText: 'Every household in the app can see and copy the recipe.',
+    publicActive: 'The recipe is public – click to hide it.',
+    text: 'Send as text',
+    textText: 'The whole recipe via your phone’s share sheet (messages, e-mail…).',
+  },
   detail: {
+    shareMenu: 'Share…',
     alsoCategories: 'Also works as: {list}',
     plan: 'Add to plan',
     more: 'More actions',
