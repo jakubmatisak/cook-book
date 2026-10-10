@@ -218,6 +218,8 @@ export const recipes = sqliteTable(
   },
   (t) => [
     index('recipes_household_deleted_idx').on(t.householdId, t.deletedAt),
+    // Upozornenia na zmenený originál čítajú len kópie, nie celú kuchárku (limit prečítaných riadkov D1).
+    index('recipes_household_copied_idx').on(t.householdId, t.deletedAt, t.copiedSourceUpdatedAt),
     uniqueIndex('recipes_household_slug_uq').on(t.householdId, t.slug),
   ],
 )

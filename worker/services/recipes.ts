@@ -34,7 +34,7 @@ import { chunk } from '../http'
 import { resolveIngredients, resolveTags } from './catalog'
 import { releaseImages } from './imageCleanup'
 import { ignoredPantryCategoryIds, pantryIngredientIds } from './pantry'
-import { sharedByOwner, sharedFromName, sharedWithHouseholds, sharedWithLabels } from './sharing'
+import { sharedByOwner, sharedFromName, sharedRecipeIds, sharedWithLabels } from './sharing'
 
 type RecipeRow = typeof recipes.$inferSelect
 
@@ -522,9 +522,10 @@ export async function listRecipes(
             ),
           )
 
-  // Cudzie recepty zdieľané s mojou domácnosťou.
+  // Cudzie recepty zdieľané s mojou domácnosťou: najprv ich ID zo zdieľaní, potom len tie (nie celá tabuľka).
+  const sharedIds = options.sharedMode === 'only' ? await sharedRecipeIds(db, householdId) : []
   const sharedRows =
-    options.sharedMode === 'only'
+    sharedIds.length > 0
       ? await db
           .select({ recipe: recipes, r2Key: images.r2Key, householdName: households.name })
           .from(recipes)
@@ -533,8 +534,8 @@ export async function listRecipes(
           .where(
             and(
               isNull(recipes.deletedAt),
+              sql`${recipes.id} in (select value from json_each(${JSON.stringify(sharedIds)}))`,
               ne(recipes.householdId, householdId),
-              sharedWithHouseholds([householdId]),
               needleSql,
             ),
           )

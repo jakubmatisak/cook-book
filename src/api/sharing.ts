@@ -53,7 +53,12 @@ export const useIncomingShares = () =>
   })
 
 export const useShareNotices = () =>
-  useQuery({ queryKey: sharingKeys.notices, queryFn: () => apiFetch<ShareNoticeDto[]>('/sharing/notices') })
+  useQuery({
+    queryKey: sharingKeys.notices,
+    queryFn: () => apiFetch<ShareNoticeDto[]>('/sharing/notices'),
+    // Upozornenia sú v menu na každej stránke: obnovujú sa najviac raz za 5 minút (a po zmene zdieľania).
+    staleTime: 5 * 60_000,
+  })
 
 export interface CreateSharesVars {
   emails: string[]

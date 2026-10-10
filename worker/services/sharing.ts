@@ -249,73 +249,99 @@ interface SharedRecipe {
   createdAt: string
 }
 
+const sharedRecipeColumns = {
+  id: recipes.id,
+  title: recipes.title,
+  createdAt: recipes.createdAt,
+  householdId: recipes.householdId,
+  category: recipes.category,
+  alsoCategories: recipes.alsoCategories,
+}
+
 /**
- * Živé recepty každej ponuky (vybrané, kategória či tag) – pevný počet dotazov bez ohľadu na počet ponúk
- * (limit dotazov D1 na jednu požiadavku).
+ * Živé recepty každej ponuky (vybrané, kategória či tag). Číta len recepty ponúk (cez položky a tagy), nie celé
+ * kuchárky odosielateľov – limit prečítaných riadkov D1. Výnimkou je zdieľaná kategória, ktorá musí prejsť recepty
+ * odosielateľa (typ jedla „hodí sa aj ako“ je v JSON). Najviac tri dotazy bez ohľadu na počet ponúk.
  */
 async function recipesOfShares(db: Db, shares: readonly ShareRow[]): Promise<Map<string, SharedRecipe[]>> {
   const result = new Map<string, SharedRecipe[]>(shares.map((s) => [s.id, []]))
-  if (shares.length === 0) return result
-  const senders = [...new Set(shares.map((s) => s.fromHouseholdId))]
-  const tagIds = [...new Set(shares.flatMap((s) => (s.tagId ? [s.tagId] : [])))]
-  const [live, items, tagLinks] = await db.batch([
-    db
-      .select({
-        id: recipes.id,
-        title: recipes.title,
-        createdAt: recipes.createdAt,
-        householdId: recipes.householdId,
-        category: recipes.category,
-        alsoCategories: recipes.alsoCategories,
-      })
-      .from(recipes)
-      .where(
-        and(
-          isNull(recipes.deletedAt),
-          sql`${recipes.householdId} in (select value from json_each(${jsonIds(senders)}))`,
-        ),
-      ),
-    db
-      .select({ shareId: recipeShareItems.shareId, recipeId: recipeShareItems.recipeId })
-      .from(recipeShareItems)
-      .where(
-        sql`${recipeShareItems.shareId} in (select value from json_each(${jsonIds(shares.map((s) => s.id))}))`,
-      ),
-    db
-      .select({ tagId: recipeTags.tagId, recipeId: recipeTags.recipeId })
-      .from(recipeTags)
-      .where(sql`${recipeTags.tagId} in (select value from json_each(${jsonIds(tagIds)}))`),
-  ])
-  const byId = new Map(live.map((r) => [r.id, r]))
-  const group = (pairs: { key: string; recipeId: string }[]) => {
-    const map = new Map<string, string[]>()
-    for (const { key, recipeId } of pairs) map.set(key, [...(map.get(key) ?? []), recipeId])
+  const itemShares = shares.filter((s) => s.kind === 'recipes').map((s) => s.id)
+  const tagIds = [...new Set(shares.flatMap((s) => (s.kind === 'tag' && s.tagId ? [s.tagId] : [])))]
+  const categorySenders = [
+    ...new Set(shares.filter((s) => s.kind === 'category').map((s) => s.fromHouseholdId)),
+  ]
+
+  const items = itemShares.length
+    ? await db
+        .select({ key: recipeShareItems.shareId, ...sharedRecipeColumns })
+        .from(recipeShareItems)
+        .innerJoin(recipes, eq(recipes.id, recipeShareItems.recipeId))
+        .where(
+          and(
+            sql`${recipeShareItems.shareId} in (select value from json_each(${jsonIds(itemShares)}))`,
+            isNull(recipes.deletedAt),
+          ),
+        )
+    : []
+  const tagged = tagIds.length
+    ? await db
+        .select({ key: recipeTags.tagId, ...sharedRecipeColumns })
+        .from(recipeTags)
+        .innerJoin(recipes, eq(recipes.id, recipeTags.recipeId))
+        .where(
+          and(
+            sql`${recipeTags.tagId} in (select value from json_each(${jsonIds(tagIds)}))`,
+            isNull(recipes.deletedAt),
+          ),
+        )
+    : []
+  const ofSenders = categorySenders.length
+    ? await db
+        .select(sharedRecipeColumns)
+        .from(recipes)
+        .where(
+          and(
+            sql`${recipes.householdId} in (select value from json_each(${jsonIds(categorySenders)}))`,
+            isNull(recipes.deletedAt),
+          ),
+        )
+    : []
+
+  type Row = (typeof ofSenders)[number]
+  const group = (rows: (Row & { key: string })[]) => {
+    const map = new Map<string, Row[]>()
+    for (const row of rows) map.set(row.key, [...(map.get(row.key) ?? []), row])
     return map
   }
-  const itemsOf = group(items.map((i) => ({ key: i.shareId, recipeId: i.recipeId })))
-  const taggedOf = group(tagLinks.map((l) => ({ key: l.tagId, recipeId: l.recipeId })))
+  const itemsOf = group(items)
+  const taggedOf = group(tagged)
 
   for (const s of shares) {
-    const ids =
+    const rows =
       s.kind === 'recipes'
         ? (itemsOf.get(s.id) ?? [])
         : s.kind === 'tag'
           ? (taggedOf.get(s.tagId ?? '') ?? [])
-          : live
-              .filter((r) => r.category === s.category || r.alsoCategories.includes(s.category!))
-              .map((r) => r.id)
-    const list = ids.flatMap((id) => {
-      const r = byId.get(id)
-      return r && r.householdId === s.fromHouseholdId
-        ? [{ id: r.id, title: r.title, createdAt: r.createdAt }]
-        : []
-    })
+          : ofSenders.filter((r) => r.category === s.category || r.alsoCategories.includes(s.category!))
+    const list = rows
+      .filter((r) => r.householdId === s.fromHouseholdId)
+      .map((r) => ({ id: r.id, title: r.title, createdAt: r.createdAt }))
     result.set(
       s.id,
       list.sort((a, b) => a.title.localeCompare(b.title, 'sk')),
     )
   }
   return result
+}
+
+/** ID cudzích receptov zdieľaných s domácnosťou (prijaté zdieľania), bez čítania celých kuchárok. */
+export async function sharedRecipeIds(db: Db, householdId: string): Promise<string[]> {
+  const shares = await db
+    .select()
+    .from(recipeShares)
+    .where(and(eq(recipeShares.toHouseholdId, householdId), eq(recipeShares.status, 'accepted')))
+  const recipesOf = await recipesOfShares(db, shares)
+  return [...new Set([...recipesOf.values()].flat().map((r) => r.id))]
 }
 
 async function tagNames(db: Db, shares: readonly ShareRow[]): Promise<Map<string, string>> {

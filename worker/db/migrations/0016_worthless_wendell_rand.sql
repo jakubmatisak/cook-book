@@ -1,0 +1,1 @@
+CREATE INDEX `recipes_household_copied_idx` ON `recipes` (`household_id`,`deleted_at`,`copied_source_updated_at`);
