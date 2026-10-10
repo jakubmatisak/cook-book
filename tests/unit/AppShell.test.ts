@@ -80,7 +80,10 @@ describe('AppShell', () => {
 
     const drawer = wrapper.find('[data-test="side-nav"]')
     expect(drawer.classes()).not.toContain('v-navigation-drawer--rail')
-    await wrapper.find('[data-test="menu-toggle"]').trigger('click')
+    // Prepínač je dolu v bočnom menu (šípka), nie hamburger v hornej lište.
+    expect(wrapper.find('.v-app-bar [data-test="menu-toggle"]').exists()).toBe(false)
+    expect(drawer.find('[data-test="menu-toggle"]').exists()).toBe(true)
+    await drawer.find('[data-test="menu-toggle"]').trigger('click')
     await flushPromises()
     expect(drawer.classes()).toContain('v-navigation-drawer--rail')
     expect(localStorage.getItem('kniha:menu-rail')).toBe('1')
@@ -108,6 +111,18 @@ describe('AppShell', () => {
     expect(container.attributes('style')).toContain('max-width: 1920px')
   })
 
+  it('logo je znak v farbe schémy s priehľadným pozadím a na úvode nesvieti ako aktívne', async () => {
+    const wrapper = await mountShell(1440)
+    const router = wrapper.vm.$router
+    await router.push('/')
+    await flushPromises()
+    const logo = wrapper.find('[data-test="logo"]')
+    expect(logo.classes()).not.toContain('v-btn--active')
+    expect(logo.find('img').exists()).toBe(false)
+    expect(logo.find('.v-icon').classes()).toContain('text-primary')
+    wrapper.unmount()
+  })
+
   it('logo v ľavom rohu vedie na úvod a bez ponuky', async () => {
     const wrapper = await mountShell(1440)
     const logo = wrapper.find('[data-test="logo"]')
@@ -121,7 +136,7 @@ describe('AppShell', () => {
       const wrapper = await mountShell(width)
       await wrapper.find('[data-test="account"]').trigger('click')
       await flushPromises()
-      expect(document.body.textContent).toContain('Verzia 1.9.0')
+      expect(document.body.textContent).toContain('Verzia 1.9.1')
       // lokálne (bez Cloudflare Access) sa odhlásenie neponúka
       expect(document.querySelector('[data-test="logout"]')).toBeNull()
       wrapper.unmount()

@@ -1,5 +1,13 @@
 # Zmeny
 
+## 1.9.1 – 2026-10-10
+
+### Zmeny
+
+- Logo v hornej lište je samotný znak (vidlička v znaku mieru) vo farbe zvolenej schémy na priehľadnom pozadí;
+  vedie na úvod, ale nesvieti ako aktívna položka. Favicon a ikony aplikácie majú rovnaký znak.
+- Bočné menu na počítači sa zbaľuje a rozbaľuje šípkou dolu v menu, hamburger v hornej lište zmizol.
+
 ## 1.9.0 – 2026-10-09
 
 ### Nové
@@ -34,6 +42,14 @@
   obľúbené aj tvoje úpravy ostanú.
 
 ### Zmeny
+
+## 1.9.1 – 2026-10-10
+
+### Zmeny
+
+- Logo v hornej lište je samotný znak (vidlička v znaku mieru) vo farbe zvolenej schémy na priehľadnom pozadí;
+  vedie na úvod, ale nesvieti ako aktívna položka. Favicon a ikony aplikácie majú rovnaký znak.
+- Bočné menu na počítači sa zbaľuje a rozbaľuje šípkou dolu v menu, hamburger v hornej lište zmizol.
 
 ## 1.9.0 – 2026-10-09
 

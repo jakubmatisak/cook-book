@@ -2,6 +2,8 @@
 import {
   mdiAccountCircleOutline,
   mdiCheck,
+  mdiChevronDoubleLeft,
+  mdiChevronDoubleRight,
   mdiCloudOffOutline,
   mdiHomeOutline,
   mdiLogout,
@@ -21,6 +23,7 @@ import { usePrintMode } from '@/composables/usePrintMode'
 import { ACCESS_LOGOUT_PATH, canLogout } from '@/lib/auth'
 import { activeHousehold, setActiveHousehold } from '@/lib/household'
 import { APP_VERSION_LABEL } from '@/lib/version'
+import { LOGO_ICON } from '@/design/logo'
 import { useApplyTheme, useThemePreference, type ThemePreference } from '@/composables/useThemePreference'
 import { navigationPending } from '@/router/navigationPending'
 import { PRIMARY_NAV, SECONDARY_NAV } from './navigation'
@@ -92,18 +95,12 @@ const mobileMenu = ref(false)
           icon
           variant="text"
           to="/"
+          :active="false"
           :aria-label="t('common.shell.home', { name: t('common.app.name') })"
           data-test="logo"
         >
-          <v-avatar size="32"><v-img src="/favicon.svg" alt="" /></v-avatar>
+          <v-icon :icon="LOGO_ICON" color="primary" size="32" />
         </v-btn>
-        <v-app-bar-nav-icon
-          v-if="mdAndUp"
-          :icon="mdiMenu"
-          :aria-label="rail ? t('common.shell.expandMenu') : t('common.shell.collapseMenu')"
-          data-test="menu-toggle"
-          @click="rail = !rail"
-        />
       </template>
       <v-app-bar-title class="font-weight-bold">{{ t('common.app.name') }}</v-app-bar-title>
       <template #append>
@@ -203,6 +200,19 @@ const mobileMenu = ref(false)
           data-test="nav-item"
         />
       </v-list>
+      <!-- Zbalenie a rozbalenie bočného menu: šípka dolu v menu. -->
+      <template #append>
+        <v-list nav density="comfortable">
+          <v-list-item
+            :prepend-icon="rail ? mdiChevronDoubleRight : mdiChevronDoubleLeft"
+            :title="rail ? undefined : t('common.shell.collapseMenu')"
+            :aria-label="rail ? t('common.shell.expandMenu') : t('common.shell.collapseMenu')"
+            rounded="sm"
+            data-test="menu-toggle"
+            @click="rail = !rail"
+          />
+        </v-list>
+      </template>
     </v-navigation-drawer>
 
     <v-navigation-drawer
